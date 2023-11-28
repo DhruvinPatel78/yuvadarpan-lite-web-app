@@ -1,20 +1,21 @@
 import React from "react";
-import { Grid } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Card, Grid } from "@mui/material";
+// import { useNavigate } from "react-router-dom";
 
-const CustomeCard = (title, action) => {
-  const navigate = useNavigate();
+const CustomCard = ({ title, action }) => {
+  // const navigate = useNavigate();
+  console.log("CustomeCArd ===> ", title, action);
   return (
     <Grid item xs={4}>
-      <CustomeCard
+      <Card
         className="flex justify-center items-center font-bold h-28 cursor-pointer hover:scale-105 text-2xl uppercase text-[#223354]"
         variant="outlined"
-        action
+        onClick={action}
       >
         {title}
-      </CustomeCard>
+      </Card>
     </Grid>
   );
 };
 
-export default CustomeCard;
+export default CustomCard;

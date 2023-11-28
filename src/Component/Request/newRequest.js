@@ -1,12 +1,16 @@
 import React from "react";
-import CustomTable from "../Common/customTable";
 import { Box, Button, Grid, Modal, Paper, Tooltip } from "@mui/material";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import CustomTextFieldInfo from "../Common/customTextFieldInfo";
-import useUserList from "./useUserList";
+import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
+import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
+import CustomTable from "../Common/customTable";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 import Header from "../Common/header";
+import CustomTextFieldInfo from "../Common/customTextFieldInfo";
+import useNewRequest from "./useNewRequest";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
-const userList = [
+const pendingUsersList = [
   {
     id: 1,
     firstName: "Jon",
@@ -70,73 +74,16 @@ const userList = [
     lastName: "Roxie",
     email: "Harvey@123",
   },
-  {
-    id: 10,
-    firstName: "Jon",
-    middleName: "Wed",
-    lastName: "Snow",
-    email: "jon@123",
-  },
-  {
-    id: 11,
-    firstName: "Cersei",
-    middleName: "Aed",
-    lastName: "Lannister",
-    email: "Cersei@123",
-  },
-  {
-    id: 12,
-    firstName: "Jaime",
-    middleName: "Bed",
-    lastName: "Lannister",
-    email: "Jaime@123",
-  },
-  {
-    id: 13,
-    firstName: "Arya",
-    middleName: "Fed",
-    lastName: "Stark",
-    email: "Arya@123",
-  },
-  {
-    id: 14,
-    firstName: "Daenerys",
-    middleName: "Ged",
-    lastName: "Targaryen",
-    email: "Daenerys@123",
-  },
-  {
-    id: 15,
-    firstName: null,
-    middleName: "Hed",
-    lastName: "Melisandre",
-    email: "Melisandre@123",
-  },
-  {
-    id: 16,
-    firstName: "Ferrara",
-    middleName: "Jed",
-    lastName: "Clifford",
-    email: "Ferrara@123",
-  },
-  {
-    id: 17,
-    firstName: "Rossini",
-    middleName: "Ked",
-    lastName: "Frances",
-    email: "Rossini@123",
-  },
-  {
-    id: 18,
-    firstName: "Harvey",
-    middleName: "Led",
-    lastName: "Roxie",
-    email: "Harvey@123",
-  },
 ];
 
-function UserList() {
-  const usersTableHeader = [
+export default function NewRequest() {
+  const {
+    requestInfoModel,
+    requestData,
+    action: { requestInfoModalOpen, requestInfoModalClose },
+  } = useNewRequest();
+
+  const pendingUsersTableHeader = [
     {
       field: "id",
       headerName: "ID",
@@ -196,34 +143,67 @@ function UserList() {
             <Button
               variant="text"
               className={""}
-              onClick={() => userInfoModalOpen(record.row)}
+              onClick={() => requestInfoModalOpen(record.row)}
             >
               <VisibilityIcon />
+            </Button>
+          </Tooltip>
+          <Tooltip title={"Accept"}>
+            <Button
+              variant="text"
+              className={"!text-[#34c375]"}
+              // onClick={() => handleOpenEditUser(record.row)}
+            >
+              <CheckIcon />
+            </Button>
+          </Tooltip>
+          <Tooltip title={"Reject"}>
+            <Button
+              variant="text"
+              className={"!text-[#ff0000]"}
+              // onClick={() => handleOpenEditUser(record.row)}
+            >
+              <CloseIcon />
             </Button>
           </Tooltip>
         </div>
       ),
     },
   ];
-  const {
-    userInfoModel,
-    userData,
-    action: { userInfoModalOpen, userInfoModalClose },
-  } = useUserList();
 
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
+      <div className="pt-4 pr-4 text-end ">
+        <Tooltip title={"Accept all selected"}>
+          <button
+            className={
+              "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
+            }
+          >
+            <PlaylistAddCheckIcon />
+          </button>
+        </Tooltip>
+        <Tooltip title={"Reject all selected"} className="ml-3">
+          <button
+            className={
+              "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105"
+            }
+          >
+            <PlaylistRemoveIcon />
+          </button>
+        </Tooltip>
+      </div>
       <CustomTable
-        columns={usersTableHeader}
-        data={userList}
-        name={"users"}
+        columns={pendingUsersTableHeader}
+        data={pendingUsersList}
+        name={"pendingUser"}
         pageSize={10}
-        type={"userList"}
+        type={"pendingList"}
       />
       <Modal
-        open={userInfoModel}
-        onClose={userInfoModalClose}
+        open={requestInfoModel}
+        onClose={requestInfoModalClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
         sx={{
@@ -239,22 +219,22 @@ function UserList() {
             <CustomTextFieldInfo
               grid={4}
               label={"First Name"}
-              value={userData?.firstName}
+              value={requestData?.firstName}
             />
             <CustomTextFieldInfo
               grid={4}
               label={"Middle Name"}
-              value={userData?.middleName}
+              value={requestData?.middleName}
             />
             <CustomTextFieldInfo
               grid={4}
               label={"Last Name"}
-              value={userData?.lastName}
+              value={requestData?.lastName}
             />
             <CustomTextFieldInfo
               grid={12}
               label={"E-mail"}
-              value={userData?.email}
+              value={requestData?.email}
             />
           </Grid>
         </Paper>
@@ -262,5 +242,3 @@ function UserList() {
     </Box>
   );
 }
-
-export default UserList;

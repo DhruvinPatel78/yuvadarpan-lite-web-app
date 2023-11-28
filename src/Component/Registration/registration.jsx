@@ -2,7 +2,7 @@ import React from "react";
 import { Grid, Link, Paper, Typography } from "@mui/material";
 import CustomInput from "../Common/customInput";
 
-function Registration() {
+export default function Registration() {
   return (
     <Grid className="h-screen flex justify-center items-center">
       <Paper elevation={20} className="w-2/5 p-8 !rounded-xl">
@@ -96,5 +96,3 @@ function Registration() {
     </Grid>
   );
 }
-
-export default Registration;

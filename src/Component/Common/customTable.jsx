@@ -18,7 +18,7 @@ function CustomTable({ columns, data = [], pageSize, type }) {
 
   return (
     <DataGrid
-      className="bg-white"
+      className="bg-white m-4"
       rows={data}
       columns={columns}
       paginationModel={pagination}
@@ -42,4 +42,4 @@ function CustomTable({ columns, data = [], pageSize, type }) {
   );
 }
 
-export default CustomeTable;
+export default CustomTable;

@@ -1,8 +1,15 @@
 import React from "react";
 import { Grid, Link, Paper, Typography } from "@mui/material";
 import CustomInput from "../Common/customInput";
+import useLogin from "./useLogin";
 
 export default function Login() {
+  const {
+    navigate,
+    errorMsg,
+    values,
+    action: { getUserData, handleSubmit },
+  } = useLogin();
   return (
     <Grid className="h-screen flex justify-center items-center">
       <Paper elevation={10} className="p-8 !rounded-2xl w-2/5">
@@ -20,22 +27,23 @@ export default function Login() {
             placeholder={"Enter Your Username"}
             name="uname"
             grid={12}
-            // onChange={getSeaServicesData}
-            // value={seaServicesData.name}
+            onChange={getUserData}
+            value={values.email}
           />
           <CustomInput
             label={"Password"}
             placeholder={"Enter Your Password"}
             name="psw"
             grid={12}
-            // onChange={getSeaServicesData}
-            // value={seaServicesData.name}
+            onChange={getUserData}
+            value={values.password}
           />
           <Grid item xs={12}>
             <button
               className={
                 "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
               }
+              onChange={handleSubmit}
             >
               Sign In
             </button>
