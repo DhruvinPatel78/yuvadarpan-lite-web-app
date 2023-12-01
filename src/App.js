@@ -19,7 +19,7 @@ function App() {
           pathName === "/" || pathName === "/signin" ? "/dashboard" : pathName,
         );
       } else {
-        navigate(pathName === "/signup" ? pathName : "/");
+        navigate(['/yuvalist','/signup'].includes(pathName) ? pathName : "/");
       }
     });
   }, [navigate, pathName]);
