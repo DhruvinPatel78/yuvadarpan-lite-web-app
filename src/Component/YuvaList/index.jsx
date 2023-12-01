@@ -1,7 +1,7 @@
 import React from "react";
 
 import PDFViewer from "pdf-viewer-reactjs";
-function YuvaList() {
+function Index() {
   return (
     <PDFViewer
       document={{
@@ -11,4 +11,4 @@ function YuvaList() {
   );
 }
 
-export default YuvaList;
+export default Index;

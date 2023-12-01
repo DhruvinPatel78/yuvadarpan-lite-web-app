@@ -4,7 +4,7 @@ import CustomInput from "../Common/customInput";
 import useRegistration from "./useRegistration";
 import { NotificationSnackbar } from "../Common/notification";
 
-export default function Registration() {
+export default function Index() {
   const {
     notification,
     values,
