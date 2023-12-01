@@ -21,25 +21,28 @@ export default function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div className="pt-4 pr-4 text-end ">
-        <Tooltip title={"Accept all selected"}>
-          <button
-            className={
-              "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
-            }
-          >
-            <PlaylistAddCheckIcon />
-          </button>
-        </Tooltip>
-        <Tooltip title={"Reject all selected"} className="ml-3">
-          <button
-            className={
-              "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105"
-            }
-          >
-            <PlaylistRemoveIcon />
-          </button>
-        </Tooltip>
+      <div className={"p-4 pb-0 justify-between flex items-center"}>
+        <p className={"text-3xl font-bold"}>Pending Requests</p>
+        <div className="">
+          <Tooltip title={"Accept all selected"}>
+            <button
+              className={
+                "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
+              }
+            >
+              <PlaylistAddCheckIcon />
+            </button>
+          </Tooltip>
+          <Tooltip title={"Reject all selected"} className="ml-3">
+            <button
+              className={
+                "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105"
+              }
+            >
+              <PlaylistRemoveIcon />
+            </button>
+          </Tooltip>
+        </div>
       </div>
       <CustomTable
         columns={pendingUsersTableHeader}

@@ -19,6 +19,9 @@ function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
+      <div className={"p-4 pb-0 justify-between flex items-center"}>
+        <p className={"text-3xl font-bold"}>Users</p>
+      </div>
       <CustomTable
         columns={usersTableHeader}
         data={userList}

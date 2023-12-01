@@ -1,26 +1,28 @@
 import React from "react";
-import { Grid, Link, Paper, Typography } from "@mui/material";
+import { Grid, Paper } from "@mui/material";
 import CustomInput from "../Common/customInput";
 import useLogin from "./useLogin";
+import { useNavigate } from "react-router-dom";
 import { NotificationSnackbar } from "../Common/notification";
 
 export default function Index() {
+  const navigate = useNavigate();
   const {
     notification,
     values,
     action: { getUserData, handleSubmit },
   } = useLogin();
   return (
-    <Grid className="h-screen flex justify-center items-center">
-      <Paper elevation={10} className="p-8 !rounded-2xl w-2/5">
+    <div className="h-screen flex flex-col justify-center items-center">
+      <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold">
+        YUVADARPAN
+      </p>
+      <Paper elevation={10} className="p-8 !rounded-2xl w-4/5 sm:w-2/5 sm:min-w-[500px]">
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Typography
-              className="text-center text-[#542b2b] !font-bold"
-              variant="h3"
-            >
+            <p className="text-center text-[#542b2b] !font-bold text-2xl">
               Sign In
-            </Typography>
+            </p>
           </Grid>
           <CustomInput
             type={"text"}
@@ -51,19 +53,19 @@ export default function Index() {
             </button>
           </Grid>
           <Grid item xs={12}>
-            <Typography className="flex justify-center">
-              Create a new account ?{" "}
-              <Link
-                href={"/signup"}
-                className="px-1 !text-[#572a2a] !font-black !no-underline"
+            <p className="flex justify-center text-sm sm:text-lg">
+              Create a new account?
+              <span
+                className="px-1 !text-[#572a2a] !font-black !no-underline text-sm sm:text-lg"
+                onClick={() => navigate("/signup")}
               >
                 Registration
-              </Link>
-            </Typography>
+              </span>
+            </p>
           </Grid>
         </Grid>
       </Paper>
       <NotificationSnackbar notification={notification} />
-    </Grid>
+    </div>
   );
 }

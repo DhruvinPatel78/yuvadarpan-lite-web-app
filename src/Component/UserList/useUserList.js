@@ -75,6 +75,7 @@ const useUserList = () => {
       ),
     },
   ];
+  // eslint-disable-next-line no-unused-vars
   const { notification, setNotification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);
   const [userData, setRequestData] = useState(null);
