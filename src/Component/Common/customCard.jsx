@@ -1,10 +1,7 @@
 import React from "react";
 import { Card, Grid } from "@mui/material";
-// import { useNavigate } from "react-router-dom";
 
 const CustomCard = ({ title, action }) => {
-  // const navigate = useNavigate();
-  // console.log("CustomeCArd ===> ", title, action);
   return (
     <Grid item xs={4}>
       <Card

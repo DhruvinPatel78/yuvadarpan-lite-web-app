@@ -42,6 +42,11 @@ function Index() {
         <Paper elevation={10} className="!rounded-2xl p-4 w-1/2">
           <Grid container spacing={2} className="p-4">
             <CustomTextFieldInfo
+              grid={12}
+              label={"Family Id"}
+              value={userData?.familyId}
+            />
+            <CustomTextFieldInfo
               grid={4}
               label={"First Name"}
               value={userData?.firstName}
@@ -57,9 +62,14 @@ function Index() {
               value={userData?.lastName}
             />
             <CustomTextFieldInfo
-              grid={12}
+              grid={6}
               label={"E-mail"}
               value={userData?.email}
+            />
+            <CustomTextFieldInfo
+              grid={6}
+              label={"Mobile"}
+              value={userData?.mobile}
             />
           </Grid>
         </Paper>

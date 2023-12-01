@@ -81,7 +81,6 @@ const useUserList = () => {
   const [userList, setUserList] = useState([]);
 
   useEffect(() => {
-    console.log("useEffect");
     handleUserList();
   }, []);
 
@@ -93,13 +92,8 @@ const useUserList = () => {
     setRequestInfoModel(false);
   };
   const handleUserList = () => {
-    console.log("handleUserList");
     const ref = query(collection(db, "users"));
     getDocs(ref).then((res) => {
-      console.log(
-        "res === >>> ",
-        res.docs.map((doc) => ({ ...doc.data(), id: doc.id })),
-      );
       setUserList(res.docs?.map((doc) => ({ ...doc?.data(), id: doc.id })));
     });
   };
