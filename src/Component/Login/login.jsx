@@ -23,17 +23,19 @@ export default function Login() {
             </Typography>
           </Grid>
           <CustomInput
+            type={"text"}
             label={"Username"}
             placeholder={"Enter Your Username"}
-            name="uname"
+            name="email"
             grid={12}
             onChange={getUserData}
             value={values.email}
           />
           <CustomInput
+            type={"password"}
             label={"Password"}
             placeholder={"Enter Your Password"}
-            name="psw"
+            name="password"
             grid={12}
             onChange={getUserData}
             value={values.password}
@@ -43,7 +45,7 @@ export default function Login() {
               className={
                 "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
               }
-              onChange={handleSubmit}
+              onClick={handleSubmit}
             >
               Sign In
             </button>

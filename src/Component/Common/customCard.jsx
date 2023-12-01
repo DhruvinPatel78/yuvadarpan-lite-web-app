@@ -4,7 +4,7 @@ import { Card, Grid } from "@mui/material";
 
 const CustomCard = ({ title, action }) => {
   // const navigate = useNavigate();
-  console.log("CustomeCArd ===> ", title, action);
+  // console.log("CustomeCArd ===> ", title, action);
   return (
     <Grid item xs={4}>
       <Card

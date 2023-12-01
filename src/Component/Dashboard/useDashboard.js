@@ -11,7 +11,6 @@ const useDashboard = () => {
   };
 
   const pendingListModalOpen = () => {
-    console.log("pendingListModalOpen");
     setPendingListOpen(true);
   };
 

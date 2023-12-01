@@ -8,7 +8,7 @@ export default function Header({ backBtn = false, btnAction }) {
   const {
     anchorEl,
     navigate,
-    action: { handleClose },
+    action: { handleMenu, handleClose, handleLogOut },
   } = useHeader();
   return (
     <AppBar position="static" className="!bg-[#572a2a]">
@@ -30,7 +30,7 @@ export default function Header({ backBtn = false, btnAction }) {
           aria-label="account of current user"
           aria-controls="menu-appbar"
           aria-haspopup="true"
-          // onClick={handleMenu}
+          onClick={handleMenu}
           color="inherit"
         >
           <AccountCircle />
@@ -50,7 +50,7 @@ export default function Header({ backBtn = false, btnAction }) {
           open={Boolean(anchorEl)}
           onClose={handleClose}
         >
-          <MenuItem onClick={handleClose}>Logout</MenuItem>
+          <MenuItem onClick={handleLogOut}>signOut</MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>

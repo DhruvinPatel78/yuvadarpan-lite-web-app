@@ -80,6 +80,7 @@ export default function NewRequest() {
   const {
     requestInfoModel,
     requestData,
+    requests,
     action: { requestInfoModalOpen, requestInfoModalClose },
   } = useNewRequest();
 
@@ -173,6 +174,7 @@ export default function NewRequest() {
 
   return (
     <Box>
+      {console.log(requests)}
       <Header backBtn={true} btnAction="/dashboard" />
       <div className="pt-4 pr-4 text-end ">
         <Tooltip title={"Accept all selected"}>

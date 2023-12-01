@@ -1,15 +1,24 @@
 import React from "react";
 import { Grid, TextField } from "@mui/material";
 
-const CustomInput = ({ label, value, onChange, placeholder, name, grid }) => {
+const CustomInput = ({
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  name,
+  grid,
+}) => {
   return (
     <Grid item xs={grid}>
       <TextField
+        type={type}
         label={label}
         placeholder={placeholder}
         name={name}
-        // onChange={getUserData}
-        // value={values.email}
+        onChange={onChange}
+        value={value}
         fullWidth
         required
       />
