@@ -59,7 +59,7 @@ export default function Registration() {
             value={values.email}
           />
           <CustomInput
-            type={"text"}
+            type={"number"}
             grid={6}
             label={"Mobile"}
             placeholder={"Enter Your Mobile"}
@@ -84,6 +84,15 @@ export default function Registration() {
             name="confirmpassword"
             onChange={getUserData}
             value={values.confirmpassword}
+          />
+          <CustomInput
+            type={"number"}
+            grid={12}
+            label={"Family Id"}
+            placeholder={"Enter Your Family Id"}
+            name="familyId"
+            onChange={getUserData}
+            value={values.familyId}
           />
           <Grid item xs={12}>
             <button

@@ -9,85 +9,25 @@ import Header from "../Common/header";
 import CustomTextFieldInfo from "../Common/customTextFieldInfo";
 import useNewRequest from "./useNewRequest";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
-const pendingUsersList = [
-  {
-    id: 1,
-    firstName: "Jon",
-    middleName: "Wed",
-    lastName: "Snow",
-    email: "jon@123",
-  },
-  {
-    id: 2,
-    firstName: "Cersei",
-    middleName: "Aed",
-    lastName: "Lannister",
-    email: "Cersei@123",
-  },
-  {
-    id: 3,
-    firstName: "Jaime",
-    middleName: "Bed",
-    lastName: "Lannister",
-    email: "Jaime@123",
-  },
-  {
-    id: 4,
-    firstName: "Arya",
-    middleName: "Fed",
-    lastName: "Stark",
-    email: "Arya@123",
-  },
-  {
-    id: 5,
-    firstName: "Daenerys",
-    middleName: "Ged",
-    lastName: "Targaryen",
-    email: "Daenerys@123",
-  },
-  {
-    id: 6,
-    firstName: null,
-    middleName: "Hed",
-    lastName: "Melisandre",
-    email: "Melisandre@123",
-  },
-  {
-    id: 7,
-    firstName: "Ferrara",
-    middleName: "Jed",
-    lastName: "Clifford",
-    email: "Ferrara@123",
-  },
-  {
-    id: 8,
-    firstName: "Rossini",
-    middleName: "Ked",
-    lastName: "Frances",
-    email: "Rossini@123",
-  },
-  {
-    id: 9,
-    firstName: "Harvey",
-    middleName: "Led",
-    lastName: "Roxie",
-    email: "Harvey@123",
-  },
-];
+import { NotificationSnackbar } from "../Common/notification";
 
 export default function NewRequest() {
   const {
     requestInfoModel,
     requestData,
     requests,
-    action: { requestInfoModalOpen, requestInfoModalClose },
+    notification,
+    action: {
+      requestInfoModalOpen,
+      requestInfoModalClose,
+      handleRequestAccept,
+    },
   } = useNewRequest();
 
   const pendingUsersTableHeader = [
     {
-      field: "id",
-      headerName: "ID",
+      field: "familyId",
+      headerName: "Family Id",
       width: 100,
       flex: 2,
       headerClassName: "bg-[#572a2a] text-white",
@@ -153,7 +93,7 @@ export default function NewRequest() {
             <Button
               variant="text"
               className={"!text-[#34c375]"}
-              // onClick={() => handleOpenEditUser(record.row)}
+              onClick={() => handleRequestAccept(record.row)}
             >
               <CheckIcon />
             </Button>
@@ -174,7 +114,6 @@ export default function NewRequest() {
 
   return (
     <Box>
-      {console.log(requests)}
       <Header backBtn={true} btnAction="/dashboard" />
       <div className="pt-4 pr-4 text-end ">
         <Tooltip title={"Accept all selected"}>
@@ -198,7 +137,7 @@ export default function NewRequest() {
       </div>
       <CustomTable
         columns={pendingUsersTableHeader}
-        data={pendingUsersList}
+        data={requests}
         name={"pendingUser"}
         pageSize={10}
         type={"pendingList"}
@@ -241,6 +180,7 @@ export default function NewRequest() {
           </Grid>
         </Paper>
       </Modal>
+      <NotificationSnackbar notification={notification} />
     </Box>
   );
 }

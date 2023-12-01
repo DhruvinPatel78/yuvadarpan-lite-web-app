@@ -4,7 +4,8 @@ import { collection, addDoc } from "firebase/firestore";
 import { NotificationData } from "../Common/notification";
 
 const useRegistration = () => {
-  const [values, setValues] = useState({
+  const defaultValue = {
+    familyId: "",
     firstName: "",
     middleName: "",
     lastName: "",
@@ -12,7 +13,8 @@ const useRegistration = () => {
     email: "",
     password: "",
     confirmpassword: "",
-  });
+  };
+  const [values, setValues] = useState(defaultValue);
   const { notification, setNotification } = NotificationData();
   const getUserData = (e) => {
     let name, value;
@@ -21,9 +23,10 @@ const useRegistration = () => {
     setValues({ ...values, [name]: value });
   };
   const handleSubmit = () => {
-    if (values.password === values.confirmPassword) {
+    if (values.password === values.confirmpassword) {
       try {
-        const docRef = addDoc(collection(db, "users"), {
+        addDoc(collection(db, "users"), {
+          familyId: values?.familyId,
           firstName: values?.firstName,
           middleName: values?.middleName,
           lastName: values?.lastName,
@@ -32,15 +35,7 @@ const useRegistration = () => {
           password: values?.password,
           active: false,
         });
-        setValues({
-          firstName: "",
-          middleName: "",
-          lastName: "",
-          mobile: "",
-          email: "",
-          password: "",
-          confirmpassword: "",
-        });
+        setValues(defaultValue);
         setNotification({ type: "success", message: "Success !" });
       } catch (e) {
         setNotification({
