@@ -3,10 +3,8 @@ import { Grid, Link, Paper, Typography } from "@mui/material";
 import CustomInput from "../Common/customInput";
 import useLogin from "./useLogin";
 
-export default function Login() {
+export default function Index() {
   const {
-    navigate,
-    errorMsg,
     values,
     action: { getUserData, handleSubmit },
   } = useLogin();

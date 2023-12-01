@@ -4,7 +4,7 @@ import CustomCard from "../Common/customCard";
 import useDashboard from "./useDashboard";
 import Header from "../Common/header";
 
-export default function Dashboard() {
+export default function Index() {
   const { navigate } = useDashboard();
 
   return (
