@@ -2,9 +2,11 @@ import React from "react";
 import { Grid, Link, Paper, Typography } from "@mui/material";
 import CustomInput from "../Common/customInput";
 import useLogin from "./useLogin";
+import { NotificationSnackbar } from "../Common/notification";
 
 export default function Index() {
   const {
+    notification,
     values,
     action: { getUserData, handleSubmit },
   } = useLogin();
@@ -61,6 +63,7 @@ export default function Index() {
           </Grid>
         </Grid>
       </Paper>
+      <NotificationSnackbar notification={notification} />
     </Grid>
   );
 }

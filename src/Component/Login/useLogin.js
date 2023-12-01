@@ -2,10 +2,12 @@ import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../firebase";
+import { NotificationData } from "../Common/notification";
 
 const useLogin = () => {
   const navigate = useNavigate();
   const [values, setValues] = useState({ email: "", password: "" });
+  const { notification, setNotification } = NotificationData();
 
   const getUserData = (e) => {
     let name, value;
@@ -14,18 +16,21 @@ const useLogin = () => {
     setValues({ ...values, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = () => {
     const { email, password } = values;
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         navigate("/dashboard");
       })
       .catch((error) => {
-        console.log(error.message);
+        setNotification({
+          type: "error",
+          message: error.message,
+        });
       });
   };
   return {
-    navigate,
+    notification,
     values,
     action: {
       getUserData,

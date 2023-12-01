@@ -18,7 +18,7 @@ const InfoTextField = styled((props) => (
     },
   },
   "& .MuiFormLabel-root": {
-    color: "#657380",
+    color: "#657380 !important",
     fontWeight: "600",
     fontSize: "18px",
   },
@@ -33,7 +33,7 @@ const CustomTextFieldInfo = ({ grid, label, value }) => {
         label={label}
         defaultValue={value}
         variant="filled"
-        style={{ marginTop: 11 }}
+        style={{ marginTop: 11, width: "100%" }}
       />
     </Grid>
   );

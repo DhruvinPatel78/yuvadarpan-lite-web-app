@@ -119,7 +119,10 @@ const useRequest = () => {
       handleRequestList();
       setNotification({ type: "success", message: "Success !" });
     } catch (e) {
-      console.log("error => ", e);
+      setNotification({
+        type: "error",
+        message: e.message,
+      });
     }
   };
   const handleRequestList = () => {
