@@ -20,7 +20,11 @@ const useLogin = () => {
     const { email, password } = values;
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        navigate("/dashboard");
+        email === "admin@yuvadarpan.com" ? navigate("/dashboard") : navigate("/userDashboard");
+        // const data={
+        //   ...userCredential.user
+        // }
+        // localStorage.setItem("userDetails", JSON.stringify(data))
       })
       .catch((error) => {
         setNotification({

@@ -1,19 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+@font-face {
+  font-family: "WorkThin";
+  src: url("./fonts/WorkSans-Thin.ttf");
+}
+
+@font-face {
+  font-family: "WorkExtraLight";
+  src: url("./fonts/WorkSans-ExtraLight.ttf");
+}
+
+@font-face {
+  font-family: "WorkLight";
+  src: url("./fonts/WorkSans-Light.ttf");
+}
+
+@font-face {
+  font-family: "WorkRegular";
+  src: url("./fonts/WorkSans-Regular.ttf");
+}
+
+@font-face {
+  font-family: "WorkMedium";
+  src: url("./fonts/WorkSans-Medium.ttf");
+}
+
+@font-face {
+  font-family: "WorkSemiBold";
+  src: url("./fonts/WorkSans-SemiBold.ttf");
+}
+
+@font-face {
+  font-family: "WorkBold";
+  src: url("./fonts/WorkSans-Bold.ttf");
+}
+
+@font-face {
+  font-family: "WorkExtraBold";
+  src: url("./fonts/WorkSans-ExtraBold.ttf");
+}
+
+@font-face {
+  font-family: "WorkBlack";
+  src: url("./fonts/WorkSans-Black.ttf");
+}
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: "WorkRegular";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f6f7ff;
   min-height: 100vh;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
 }

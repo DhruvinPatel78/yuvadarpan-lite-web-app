@@ -14,13 +14,13 @@ export default function Index() {
   } = useLogin();
   return (
     <div className="h-screen flex flex-col justify-center items-center">
-      <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold">
+      <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold font-WorkBold">
         YUVADARPAN
       </p>
-      <Paper elevation={10} className="p-8 !rounded-2xl w-4/5 sm:w-2/5 sm:min-w-[500px]">
+      <Paper elevation={10} className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]">
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <p className="text-center text-[#542b2b] !font-bold text-2xl">
+            <p className="text-center text-primary !font-bold text-2xl">
               Sign In
             </p>
           </Grid>
@@ -53,10 +53,10 @@ export default function Index() {
             </button>
           </Grid>
           <Grid item xs={12}>
-            <p className="flex justify-center text-sm sm:text-lg">
+            <p className="flex justify-center text-sm sm:text-lg cursor-default">
               Create a new account?
               <span
-                className="px-1 !text-[#572a2a] !font-black !no-underline text-sm sm:text-lg"
+                className="px-1 text-[#572a2a] font-black no-underline text-sm sm:text-lg cursor-pointer"
                 onClick={() => navigate("/signup")}
               >
                 Registration

@@ -7,6 +7,7 @@ import Dashboard from "./Component/Dashboard/index";
 import UserList from "./Component/UserList/index";
 import YuvaList from "./Component/YuvaList/index";
 import Request from "./Component/Request/index";
+import UserDashboard from "./Component/UserDashboard/index";
 import { auth } from "./firebase";
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
     auth.onAuthStateChanged((user) => {
       if (user) {
         navigate(
-          pathName === "/" || pathName === "/signin" ? "/dashboard" : pathName,
+          pathName === "/" || pathName === "/signin" || pathName === "/signup" ? "/dashboard" : pathName,
         );
       } else {
         navigate(['/yuvalist','/signup'].includes(pathName) ? pathName : "/");
@@ -32,6 +33,7 @@ function App() {
       <Route path="/userlist" element={<UserList />} />
       <Route path="/yuvalist" element={<YuvaList />} />
       <Route path="/request" element={<Request />} />
+      <Route path="/userDashboard" element={<UserDashboard />} />
     </Routes>
   );
 }
