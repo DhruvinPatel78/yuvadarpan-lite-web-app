@@ -1,8 +1,8 @@
 import React from "react";
 import { Grid, Link, Paper, Typography } from "@mui/material";
-import CustomInput from "../Common/customInput";
+import CustomInput from "../../Component/Common/customInput";
 import useRegistration from "./useRegistration";
-import { NotificationSnackbar } from "../Common/notification";
+import { NotificationSnackbar } from "../../Component/Common/notification";
 
 export default function Index() {
   const {

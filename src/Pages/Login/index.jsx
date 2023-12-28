@@ -1,9 +1,9 @@
 import React from "react";
 import { Grid, Paper } from "@mui/material";
-import CustomInput from "../Common/customInput";
+import CustomInput from "../../Component/Common/customInput";
 import useLogin from "./useLogin";
 import { useNavigate } from "react-router-dom";
-import { NotificationSnackbar } from "../Common/notification";
+import { NotificationSnackbar } from "../../Component/Common/notification";
 
 export default function Index() {
   const navigate = useNavigate();
