@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 
-function CustomTable({ columns, data = [], pageSize, type }) {
+function CustomTable({ columns, data = [], pageSize, type, onRowSelectionModelChange }) {
   const [pagination, setPagination] = useState({
     page: 0,
     pageSize: 5,
@@ -29,6 +29,7 @@ function CustomTable({ columns, data = [], pageSize, type }) {
       disableRowSelectionOnClick
       pagination={true}
       checkboxSelection={type === "pendingList"}
+      onRowSelectionModelChange={onRowSelectionModelChange}
       sx={{
         "& .MuiDataGrid-menuIconButton .MuiSvgIcon-root, & .MuiDataGrid-sortIcon, & .MuiDataGrid-columnHeaderTitleContainerContent .css-12wnr2w-MuiButtonBase-root-MuiCheckbox-root":
           {

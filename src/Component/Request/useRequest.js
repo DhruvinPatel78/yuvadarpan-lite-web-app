@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { updateDoc, collection, getDocs, query, doc } from "firebase/firestore";
-import { db } from "../../firebase";
+import {
+  deleteDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  doc,
+} from "firebase/firestore";
+import {auth, db} from "../../firebase";
 import { NotificationData } from "../Common/notification";
 import { Button, Tooltip } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 const useRequest = () => {
   const pendingUsersTableHeader = [
@@ -86,7 +94,7 @@ const useRequest = () => {
             <Button
               variant="text"
               className={"!text-[#ff0000]"}
-              // onClick={() => handleOpenEditUser(record.row)}
+              onClick={() => handleRequestReject(record.row)}
             >
               <CloseIcon />
             </Button>
@@ -99,6 +107,7 @@ const useRequest = () => {
   const [requestData, setRequestData] = useState(null);
   const [requests, setRequests] = useState([]);
   const { notification, setNotification } = NotificationData();
+  const [selectedUser, setSelectedUser] = useState([])
 
   useEffect(() => {
     handleRequestList();
@@ -113,9 +122,19 @@ const useRequest = () => {
   };
   const handleRequestAccept = (data) => {
     try {
-      updateDoc(doc(db, "users", data.id), {
-        active: true,
+      handleActiveUser(data)
+      handleRequestList();
+      setNotification({ type: "success", message: "Success !" });
+    } catch (e) {
+      setNotification({
+        type: "error",
+        message: e.message,
       });
+    }
+  };
+  const handleRequestReject = (data) => {
+    try {
+      deleteDoc(doc(db, "users", data.id));
       handleRequestList();
       setNotification({ type: "success", message: "Success !" });
     } catch (e) {
@@ -135,6 +154,41 @@ const useRequest = () => {
       );
     });
   };
+  const handleSelectedUser = (ids) => {
+    setSelectedUser(requests.filter((row) =>
+        new Set(ids).has(row.id.toString()),
+    ));
+  }
+  const handleActiveUser = (data) => {
+    updateDoc(doc(db, "users", data.id), {
+      active: true,
+    })
+    createUserWithEmailAndPassword(auth, data.email, data.password)
+        .then((userCredential) => {
+          setNotification({ type: "success", message: "Success !" });
+    })
+        .catch((e) => {
+          setNotification({
+            type: "error",
+            message: e.message,
+          });
+        });
+  }
+  const handleRequestAcceptAll = () => {
+    try {
+      selectedUser.map((data) => (
+          handleActiveUser(data)
+      ))
+      handleRequestList();
+      setNotification({ type: "success", message: "Success !" });
+    } catch (e) {
+      setNotification({
+        type: "error",
+        message: e.message,
+      });
+    }
+  };
+
   return {
     requestInfoModel,
     requestData,
@@ -145,6 +199,8 @@ const useRequest = () => {
       requestInfoModalOpen,
       requestInfoModalClose,
       handleRequestAccept,
+      handleSelectedUser,
+      handleRequestAcceptAll,
     },
   };
 };

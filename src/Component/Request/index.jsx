@@ -15,7 +15,7 @@ export default function Index() {
     requests,
     notification,
     pendingUsersTableHeader,
-    action: { requestInfoModalClose },
+    action: { requestInfoModalClose, handleSelectedUser, handleRequestAcceptAll },
   } = useRequest();
 
   return (
@@ -29,6 +29,7 @@ export default function Index() {
               className={
                 "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
               }
+              onClick={handleRequestAcceptAll}
             >
               <PlaylistAddCheckIcon />
             </button>
@@ -50,6 +51,7 @@ export default function Index() {
         name={"pendingUser"}
         pageSize={10}
         type={"pendingList"}
+        onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
       />
       <Modal
         open={requestInfoModel}
