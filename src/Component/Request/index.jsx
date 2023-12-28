@@ -3,7 +3,7 @@ import { Box, Grid, Modal, Paper, Tooltip } from "@mui/material";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../Common/customTable";
-import Header from "../Common/header";
+import Header from "../Header";
 import CustomTextFieldInfo from "../Common/customTextFieldInfo";
 import useRequest from "./useRequest";
 import { NotificationSnackbar } from "../Common/notification";

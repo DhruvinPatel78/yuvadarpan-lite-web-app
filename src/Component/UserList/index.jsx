@@ -3,7 +3,7 @@ import CustomTable from "../Common/customTable";
 import { Box, Grid, Modal, Paper } from "@mui/material";
 import CustomTextFieldInfo from "../Common/customTextFieldInfo";
 import useUserList from "./useUserList";
-import Header from "../Common/header";
+import Header from "../Header";
 import { NotificationSnackbar } from "../Common/notification";
 
 function Index() {

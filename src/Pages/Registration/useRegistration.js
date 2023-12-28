@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { db } from "../../firebase";
 import { collection, addDoc } from "firebase/firestore";
-import { NotificationData } from "../Common/notification";
+import { NotificationData } from "../../Component/Common/notification";
 
 const useRegistration = () => {
   const defaultValue = {

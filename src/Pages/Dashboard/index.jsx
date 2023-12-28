@@ -1,8 +1,8 @@
 import React from "react";
 import { Grid } from "@mui/material";
-import CustomCard from "../Common/customCard";
+import CustomCard from "../../Component/Card";
 import useDashboard from "./useDashboard";
-import Header from "../Common/header";
+import Header from "../../Component/Header";
 
 export default function Index() {
   const { navigate } = useDashboard();

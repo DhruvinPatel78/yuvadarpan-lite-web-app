@@ -10,12 +10,12 @@ import Avatar from "@mui/material/Avatar";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import { useEffect, useState } from "react";
-import useHeader from "./useHeader";
+import useHeader from "../Common/useHeader";
 import { auth } from "../../firebase";
 
 const settings = ["Logout"];
 
-function ResponsiveAppBar() {
+const Header = () => {
   const {
     navigate,
     action: { handleLogOut },
@@ -48,7 +48,7 @@ function ResponsiveAppBar() {
   );
 
   return (
-    <AppBar position="static" className={"!bg-[#572a2a] mb-0 sm:mb-4"}>
+    <AppBar position="static" className={"bg-primary mb-0 sm:mb-4"}>
       <Container maxWidth="xl">
         <Toolbar disableGutters className={"justify-between"}>
           <p
@@ -102,4 +102,4 @@ function ResponsiveAppBar() {
     </AppBar>
   );
 }
-export default ResponsiveAppBar;
+export default Header;
