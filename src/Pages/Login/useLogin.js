@@ -1,14 +1,18 @@
-import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-import { auth } from "../../firebase";
+import { useEffect, useState } from "react";
+// import { signInWithEmailAndPassword } from "firebase/auth";
+// import { useNavigate } from "react-router-dom";
+// import { auth } from "../../firebase";
 import { NotificationData } from "../../Component/Common/notification";
 import axios from "axios";
 
 const useLogin = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [values, setValues] = useState({ email: "", password: "" });
   const { notification, setNotification } = NotificationData();
+
+  useEffect(() => {
+    setNotification({ type: "", message: "" }); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getUserData = (e) => {
     let name, value;
