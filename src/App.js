@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Routes, Route, useNavigate, BrowserRouter } from "react-router-dom";
+import React from "react";
+import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login/index";
 import Registration from "./Pages/Registration/index";
@@ -8,11 +8,11 @@ import UserList from "./Component/UserList/index";
 import YuvaList from "./Component/YuvaList/index";
 import Request from "./Component/Request/index";
 import UserDashboard from "./Component/UserDashboard/index";
-import { auth } from "./firebase";
+// import { auth } from "./firebase";
 
 function App() {
-  const navigate = useNavigate();
-  const pathName = window.location.pathname;
+  // const navigate = useNavigate();
+  // const pathName = window.location.pathname;
   // useEffect(() => {
   //   auth.onAuthStateChanged((user) => {
   //     if (user) {
