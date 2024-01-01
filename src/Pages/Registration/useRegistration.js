@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { db } from "../../firebase";
-import { collection, addDoc } from "firebase/firestore";
 import { NotificationData } from "../../Component/Common/notification";
 import useAxios from "../../util/useAxios";
 
