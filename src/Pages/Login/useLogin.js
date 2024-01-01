@@ -24,7 +24,7 @@ const useLogin = () => {
   const handleSubmit = () => {
     axios
       .get(`${process.env.REACT_APP_BASE_URL}/user/list`)
-      .then((res) => console.log("res"));
+      .then((res) => console.log("res", res));
     // const { email, password } = values;
     // signInWithEmailAndPassword(auth, email, password)
     //   .then((userCredential) => {
