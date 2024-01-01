@@ -2,6 +2,7 @@ import { useState } from "react";
 import { db } from "../../firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { NotificationData } from "../../Component/Common/notification";
+import useAxios from "../../util/useAxios";
 
 const useRegistration = () => {
   const defaultValue = {
@@ -25,17 +26,21 @@ const useRegistration = () => {
   const handleSubmit = () => {
     if (values.password === values.confirmpassword) {
       try {
-        addDoc(collection(db, "users"), {
-          familyId: values?.familyId,
-          firstName: values?.firstName,
-          middleName: values?.middleName,
-          lastName: values?.lastName,
-          email: values?.email,
-          mobile: values?.mobile,
-          password: values?.password,
-          active: false,
-        });
-        setValues(defaultValue);
+        useAxios
+          .post("/user/signUp", {
+            familyId: values?.familyId,
+            firstName: values?.firstName,
+            middleName: values?.middleName,
+            lastName: values?.lastName,
+            email: values?.email,
+            mobile: values?.mobile,
+            password: values?.password,
+            active: true,
+            allowed: false,
+          })
+          .then((res) => console.log("res =>", res));
+
+        // setValues(defaultValue);
         setNotification({ type: "success", message: "Success !" });
       } catch (e) {
         setNotification({

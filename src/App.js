@@ -8,6 +8,7 @@ import UserList from "./Component/UserList/index";
 import YuvaList from "./Component/YuvaList/index";
 import Request from "./Component/Request/index";
 import UserDashboard from "./Component/UserDashboard/index";
+import ThankYou from "./Pages/ThankYou";
 // import { auth } from "./firebase";
 
 function App() {
@@ -27,12 +28,13 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
-      <Route path="/signin" element={<Login />} />
-      <Route path="/signup" element={<Registration />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Registration />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/userlist" element={<UserList />} />
       <Route path="/yuvalist" element={<YuvaList />} />
       <Route path="/request" element={<Request />} />
+      <Route path="/thankyou" element={<ThankYou />} />
       <Route path="/userDashboard" element={<UserDashboard />} />
     </Routes>
   );
