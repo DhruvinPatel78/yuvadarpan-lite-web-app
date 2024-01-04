@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "../../util/useAxios";
 
 const useDashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -17,6 +18,13 @@ const useDashboard = () => {
   const pendingListModalClose = () => {
     setPendingListOpen(false);
   };
+
+  useEffect(() => {
+    axios.get(`${process.env.REACT_APP_BASE_URL}/yuva/list`).then((res) => {
+      console.log("res =>", res);
+    });
+  }, []);
+
   return {
     anchorEl,
     pendingListOpen,
