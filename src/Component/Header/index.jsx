@@ -1,29 +1,30 @@
 import * as React from "react";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Menu from "@mui/material/Menu";
-import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
-import Tooltip from "@mui/material/Tooltip";
-import MenuItem from "@mui/material/MenuItem";
-import { useEffect, useState } from "react";
-import useHeader from "../Common/useHeader";
-import { auth } from "../../firebase";
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  Container,
+  Avatar,
+  Tooltip,
+  MenuItem,
+} from "@mui/material";
+import { useState } from "react";
+import useHeader from "./useHeader";
 
 const settings = ["Logout"];
 
 const Header = () => {
   const {
+    user,
     navigate,
     action: { handleLogOut },
   } = useHeader();
   // eslint-disable-next-line no-unused-vars
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [user, setUser] = useState(null);
 
   // eslint-disable-next-line no-unused-vars
   const handleOpenNavMenu = (event) => {
@@ -42,11 +43,6 @@ const Header = () => {
     setAnchorElUser(null);
   };
 
-  useEffect(
-    () => auth.onAuthStateChanged((user) => setUser(user)), // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
   return (
     <AppBar position="static" className={"bg-primary mb-0 sm:mb-4"}>
       <Container maxWidth="xl">
@@ -60,11 +56,13 @@ const Header = () => {
             YUVADARPAN
           </p>
 
-          {user && (
+          {user.user ? (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                  <Avatar>
+                    {user.user.firstName[0] + user.user.lastName[0]}
+                  </Avatar>
                 </IconButton>
               </Tooltip>
               <Menu
@@ -96,10 +94,10 @@ const Header = () => {
                 ))}
               </Menu>
             </Box>
-          )}
+          ) : null}
         </Toolbar>
       </Container>
     </AppBar>
   );
-}
+};
 export default Header;

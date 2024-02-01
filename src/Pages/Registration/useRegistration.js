@@ -37,7 +37,7 @@ const useRegistration = () => {
             password: values?.password,
             active: true,
             allowed: false,
-            role: "ADMIN",
+            role: "USER",
           })
           .then((res) => {
             setValues(defaultValue);
