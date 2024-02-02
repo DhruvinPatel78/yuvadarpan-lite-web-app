@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Button, Tooltip } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { NotificationData } from "../Common/notification";
-import { collection, getDocs, query } from "firebase/firestore";
-import { db } from "../../firebase";
+import axios from "../../util/useAxios";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
 
 const useUserList = () => {
   const usersTableHeader = [
@@ -54,11 +55,11 @@ const useUserList = () => {
     },
     {
       field: "action",
-      headerName: "Action",
+      headerName: "Active",
       width: 150,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white place-content-center",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white",
+      cellClassName: "items-center justify-center flex px-8",
       filterable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
@@ -69,6 +70,24 @@ const useUserList = () => {
               onClick={() => userInfoModalOpen(record.row)}
             >
               <VisibilityIcon />
+            </Button>
+          </Tooltip>
+          <Tooltip title={"Accept"}>
+            <Button
+              variant="text"
+              className={"!text-[#34c375]"}
+              onClick={() => userAcceptRejectHandler(record.row, true)}
+            >
+              <CheckIcon />
+            </Button>
+          </Tooltip>
+          <Tooltip title={"Reject"}>
+            <Button
+              variant="text"
+              className={"!text-[#ff0000]"}
+              onClick={() => userAcceptRejectHandler(record.row, false)}
+            >
+              <CloseIcon />
             </Button>
           </Tooltip>
         </div>
@@ -89,13 +108,24 @@ const useUserList = () => {
     setRequestInfoModel(true);
     setRequestData(userInfo);
   };
+
+  const userAcceptRejectHandler = (userInfo, action) => {
+    axios
+      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo._id}`, {
+        ...userInfo,
+        allowed: action,
+      })
+      .then((res) =>
+        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id }))),
+      );
+  };
+
   const userInfoModalClose = () => {
     setRequestInfoModel(false);
   };
   const handleUserList = () => {
-    const ref = query(collection(db, "users"));
-    getDocs(ref).then((res) => {
-      setUserList(res.docs?.map((doc) => ({ ...doc?.data(), id: doc.id })));
+    axios.get(`${process.env.REACT_APP_BASE_URL}/user/list`).then((res) => {
+      setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
     });
   };
   return {

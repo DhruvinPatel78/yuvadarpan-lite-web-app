@@ -8,10 +8,10 @@ const CustomInput = ({
   onChange,
   placeholder,
   name,
-  grid,
+  ...rest
 }) => {
   return (
-    <Grid item xs={grid}>
+    <Grid item {...rest}>
       <TextField
         type={type}
         label={label}

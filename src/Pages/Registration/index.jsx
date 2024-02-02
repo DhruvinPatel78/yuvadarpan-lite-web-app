@@ -12,11 +12,14 @@ export default function Index() {
   } = useRegistration();
   return (
     <Grid className="h-screen flex justify-center items-center">
-      <Paper elevation={20} className="w-2/5 p-8 !rounded-xl">
+      <Paper
+        elevation={20}
+        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
+      >
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography
-              className="text-center text-[#542b2b] !font-bold"
+              className="text-center text-[#542b2b] font-bold text-2xl sm:text-4xl"
               variant="h3"
             >
               Registration
@@ -24,7 +27,8 @@ export default function Index() {
           </Grid>
           <CustomInput
             type={"text"}
-            grid={4}
+            xs={12}
+            md={4}
             label={"First Name"}
             placeholder={"Enter Your First Name"}
             name="firstName"
@@ -33,7 +37,8 @@ export default function Index() {
           />
           <CustomInput
             type={"text"}
-            grid={4}
+            xs={12}
+            md={4}
             label={"Middle Name"}
             placeholder={"Enter Your Middle Name"}
             name="middleName"
@@ -42,7 +47,8 @@ export default function Index() {
           />
           <CustomInput
             type={"text"}
-            grid={4}
+            xs={12}
+            md={4}
             label={"Last Name"}
             placeholder={"Enter Your Last Name"}
             name="lastName"
@@ -51,7 +57,8 @@ export default function Index() {
           />
           <CustomInput
             type={"text"}
-            grid={6}
+            xs={12}
+            md={6}
             label={"Email"}
             placeholder={"Enter Your Email"}
             name="email"
@@ -60,7 +67,8 @@ export default function Index() {
           />
           <CustomInput
             type={"number"}
-            grid={6}
+            xs={12}
+            md={6}
             label={"Mobile"}
             placeholder={"Enter Your Mobile"}
             name="mobile"
@@ -69,7 +77,8 @@ export default function Index() {
           />
           <CustomInput
             type={"password"}
-            grid={6}
+            xs={12}
+            md={6}
             label={"Password"}
             placeholder={"Create Your Password"}
             name="password"
@@ -78,7 +87,8 @@ export default function Index() {
           />
           <CustomInput
             type={"password"}
-            grid={6}
+            xs={12}
+            md={6}
             label={"Confirm Password"}
             placeholder={"Confirm your Password"}
             name="confirmpassword"
@@ -87,7 +97,7 @@ export default function Index() {
           />
           <CustomInput
             type={"number"}
-            grid={12}
+            xs={12}
             label={"Family Id"}
             placeholder={"Enter Your Family Id"}
             name="familyId"
@@ -108,7 +118,7 @@ export default function Index() {
             <Typography className="flex justify-center">
               Do you have an account ?
               <Link
-                href={"/"}
+                href={"/login"}
                 className="px-1 !text-[#572a2a] !font-black !no-underline"
               >
                 Sign In

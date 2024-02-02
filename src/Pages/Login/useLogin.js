@@ -1,17 +1,25 @@
 import { useEffect, useState } from "react";
-// import { signInWithEmailAndPassword } from "firebase/auth";
-// import { useNavigate } from "react-router-dom";
-// import { auth } from "../../firebase";
+import { useNavigate } from "react-router-dom";
+import axios from "../../util/useAxios";
 import { NotificationData } from "../../Component/Common/notification";
-import axios from "axios";
+import { useSelector, useDispatch } from "react-redux";
+import { login, startLoading } from "../../store/authSlice";
 
 const useLogin = () => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [values, setValues] = useState({ email: "", password: "" });
   const { notification, setNotification } = NotificationData();
+  const { loggedIn } = useSelector((state) => state.auth);
 
   useEffect(() => {
     setNotification({ type: "", message: "" }); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (loggedIn) {
+      navigate("/");
+    } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getUserData = (e) => {
@@ -22,24 +30,36 @@ const useLogin = () => {
   };
 
   const handleSubmit = () => {
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/user/list`)
-      .then((res) => console.log("res", res));
-    // const { email, password } = values;
-    // signInWithEmailAndPassword(auth, email, password)
-    //   .then((userCredential) => {
-    //     email === "admin@yuvadarpan.com" ? navigate("/dashboard") : navigate("/userDashboard");
-    //     // const data={
-    //     //   ...userCredential.user
-    //     // }
-    //     // localStorage.setItem("userDetails", JSON.stringify(data))
-    //   })
-    //   .catch((error) => {
-    //     setNotification({
-    //       type: "error",
-    //       message: error.message,
-    //     });
-    //   });
+    if (values.email && values.password) {
+      dispatch(startLoading());
+      axios
+        .post(`${process.env.REACT_APP_BASE_URL}/user/signIn`, {
+          ...values,
+        })
+        .then((res) => {
+          localStorage.setItem("user", JSON.stringify(res.data.data));
+          localStorage.setItem("token", res.data.token);
+          dispatch(login({ ...res.data.data, token: res.data.token }));
+          setNotification({ message: "Login Success", type: "success" });
+          navigate("/");
+        })
+        .catch((err) => {
+          setNotification({
+            message: err.response.data.message,
+            type: err.response.status === "403" ? "warning" : "error",
+          });
+        });
+    } else {
+      setNotification({
+        message:
+          !values.email && !values.password
+            ? "Email and Password are required."
+            : !values.email
+              ? "Email is required."
+              : "Password is required.",
+        type: "error",
+      });
+    }
   };
   return {
     notification,

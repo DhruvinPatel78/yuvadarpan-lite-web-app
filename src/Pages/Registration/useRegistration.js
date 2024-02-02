@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { NotificationData } from "../../Component/Common/notification";
 import useAxios from "../../util/useAxios";
+import { useNavigate } from "react-router-dom";
 
 const useRegistration = () => {
+  const navigate = useNavigate();
   const defaultValue = {
     familyId: "",
     firstName: "",
@@ -35,11 +37,13 @@ const useRegistration = () => {
             password: values?.password,
             active: true,
             allowed: false,
+            role: "USER",
           })
-          .then((res) => console.log("res =>", res));
-
-        // setValues(defaultValue);
-        setNotification({ type: "success", message: "Success !" });
+          .then((res) => {
+            setValues(defaultValue);
+            setNotification({ type: "success", message: "Success !" });
+            navigate("/thankyou");
+          });
       } catch (e) {
         setNotification({
           type: "error",
