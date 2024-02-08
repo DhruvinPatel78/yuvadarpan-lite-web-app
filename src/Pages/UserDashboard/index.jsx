@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "../Header";
+import Header from "../../Component/Header";
 // import useUserDashboard from "./useUserDashboard";
 
 const UserDashboard = () => {

@@ -4,10 +4,10 @@ import "./App.css";
 import Login from "./Pages/Login/index";
 import Registration from "./Pages/Registration/index";
 import Dashboard from "./Pages/Dashboard/index";
-import UserList from "./Component/UserList/index";
-import YuvaList from "./Component/YuvaList/index";
-import Request from "./Component/Request/index";
-import UserDashboard from "./Component/UserDashboard/index";
+import UserList from "./Pages/UserList/index";
+import YuvaList from "./Pages/YuvaList/index";
+import Request from "./Pages/Request/index";
+import UserDashboard from "./Pages/UserDashboard/index";
 import ThankYou from "./Pages/ThankYou";
 // import { auth } from "./firebase";
 
