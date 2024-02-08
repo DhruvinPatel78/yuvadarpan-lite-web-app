@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 
-function CustomTable({ columns, data = [], pageSize, type, onRowSelectionModelChange }) {
+function CustomTable({ columns, data = [], pageSize, type, onRowSelectionModelChange, className= '' }) {
   const [pagination, setPagination] = useState({
     page: 0,
-    pageSize: 5,
+    pageSize: 10,
   });
 
   useEffect(() => {
@@ -18,11 +18,11 @@ function CustomTable({ columns, data = [], pageSize, type, onRowSelectionModelCh
 
   return (
     <DataGrid
-      className="bg-white m-4"
+      className={`${className} bg-white m-4`}
       rows={data}
       columns={columns}
       paginationModel={pagination}
-      pageSizeOptions={[5, 10, 25, 50, 100]}
+      pageSizeOptions={[10, 50, 100]}
       onPaginationModelChange={setPagination}
       disableColumnFilter
       disableColumnMenu
