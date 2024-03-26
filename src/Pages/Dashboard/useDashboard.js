@@ -28,9 +28,9 @@ const useDashboard = () => {
   };
 
   useEffect(() => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/yuva/list`).then((res) => {
-      console.log("res =>", res);
-    });
+    // axios.get(`${process.env.REACT_APP_BASE_URL}/yuva/list`).then((res) => {
+    //   console.log("res =>", res);
+    // });
   }, []);
 
   return {

@@ -37,13 +37,15 @@ const useLogin = () => {
           ...values,
         })
         .then((res) => {
-          localStorage.setItem("user", JSON.stringify(res.data.data));
-          localStorage.setItem("token", res.data.token);
-          dispatch(login({ ...res.data.data, token: res.data.token }));
+          console.log("Res =>", res)
+          localStorage.setItem("user", JSON.stringify(res?.data?.data));
+          localStorage.setItem("token", res?.data?.token);
+          dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
           setNotification({ message: "Login Success", type: "success" });
           navigate("/");
         })
         .catch((err) => {
+          console.log("Err =>", err)
           setNotification({
             message: err.response.data.message,
             type: err.response.status === "403" ? "warning" : "error",

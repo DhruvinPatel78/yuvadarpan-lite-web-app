@@ -1,7 +1,7 @@
 import React from "react";
 import CustomTable from "../../Component/Common/customTable";
 import {
-  Box,
+  Box, Button,
   CircularProgress,
   FormControl,
   Grid,
@@ -17,6 +17,7 @@ import { NotificationSnackbar } from "../../Component/Common/notification";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider } from "formik";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 function Index() {
   const {
@@ -40,7 +41,7 @@ function Index() {
       field: "familyId",
       headerName: "Family Id",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -48,7 +49,7 @@ function Index() {
       field: "firstName",
       headerName: "First name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -56,7 +57,7 @@ function Index() {
       field: "middleName",
       headerName: "Middle name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -64,7 +65,7 @@ function Index() {
       field: "lastName",
       headerName: "Last name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -72,7 +73,7 @@ function Index() {
       field: "email",
       headerName: "Email",
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -80,7 +81,7 @@ function Index() {
       field: "allowed",
       headerName: "Allowed",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -98,9 +99,10 @@ function Index() {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
+      sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
           <Switch
@@ -116,7 +118,7 @@ function Index() {
       field: "action",
       headerName: "Action",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName:
         "items-center justify-center flex px-8 outline-none cursor-pointer",
       filterable: false,

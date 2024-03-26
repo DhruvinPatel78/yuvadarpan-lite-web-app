@@ -32,8 +32,8 @@ export default function Index() {
       headerName: "Family Id",
       width: 100,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
     {
@@ -41,8 +41,8 @@ export default function Index() {
       headerName: "First name",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
     {
@@ -50,8 +50,8 @@ export default function Index() {
       headerName: "Middle name",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
     {
@@ -59,8 +59,8 @@ export default function Index() {
       headerName: "Last name",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
     {
@@ -68,8 +68,8 @@ export default function Index() {
       headerName: "Email",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
     {
@@ -77,9 +77,10 @@ export default function Index() {
       headerName: "Action",
       width: 150,
       flex: 3,
-      headerClassName: "bg-[#572a2a] text-white",
-      cellClassName: "items-center flex px-8",
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
           <Tooltip title={"Details"}>
