@@ -1,11 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Grid } from "@mui/material";
 import CustomCard from "../../Component/Card";
-import useDashboard from "./useDashboard";
 import Header from "../../Component/Header";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 export default function Index() {
-  const { navigate } = useDashboard();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [pendingListOpen, setPendingListOpen] = useState(false);
+  const navigate = useNavigate();
+  const { loggedIn } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!loggedIn) {
+      navigate("/login");
+    } // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const pendingListModalOpen = () => {
+    setPendingListOpen(true);
+  };
+
+  const pendingListModalClose = () => {
+    setPendingListOpen(false);
+  };
+
+  useEffect(() => {
+    // axios.get(`${process.env.REACT_APP_BASE_URL}/yuva/list`).then((res) => {
+    //   console.log("res =>", res);
+    // });
+  }, []);
 
   return (
     <div>

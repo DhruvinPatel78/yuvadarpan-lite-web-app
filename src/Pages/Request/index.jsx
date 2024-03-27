@@ -1,30 +1,81 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Button, Grid, Modal, Paper, Tooltip } from "@mui/material";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../../Component/Common/customTable";
 import Header from "../../Component/Header";
 import CustomTextFieldInfo from "../../Component/Common/customTextFieldInfo";
-import useRequest from "./useRequest";
-import { NotificationSnackbar } from "../../Component/Common/notification";
+import {
+  NotificationData,
+  NotificationSnackbar,
+} from "../../Component/Common/notification";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import axios from "../../util/useAxios";
 
 export default function Index() {
-  const {
-    requestInfoModel,
-    userList,
-    selectedUser,
-    notification,
-    action: {
-      requestInfoModalClose,
-      handleSelectedUser,
-      handleRequestAll,
-      requestInfoModalOpen,
-      userActionHandler,
-    },
-  } = useRequest();
+  const { notification, setNotification } = NotificationData();
+  const [requestInfoModel, setRequestInfoModel] = useState(false);
+  const [userList, setUserList] = useState([]);
+  // const [loading, setLoading] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  useEffect(() => {
+    handleRequestList();
+  }, []);
+
+  const requestInfoModalOpen = (userInfo) => {
+    setRequestInfoModel(true);
+    setSelectedUser(userInfo);
+  };
+  const requestInfoModalClose = () => {
+    setRequestInfoModel(false);
+  };
+  const userActionHandler = (userInfo, action) => {
+    axios
+      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo._id}`, {
+        ...userInfo,
+        allowed: action,
+      })
+      .then((res) => {
+        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
+        setNotification({ type: "success", message: "Success !" });
+      })
+      .catch((e) => {
+        setNotification({
+          type: "error",
+          message: e.message,
+        });
+      });
+  };
+  const handleRequestList = () => {
+    axios.get(`${process.env.REACT_APP_BASE_URL}/user/requests`).then((res) => {
+      setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
+    });
+  };
+  const handleSelectedUser = (ids) => {
+    console.log(ids);
+    setSelectedUsers([...ids]);
+  };
+  const handleRequestAll = async (action) => {
+    axios
+      .patch(`${process.env.REACT_APP_BASE_URL}/user/approveRejectMany`, {
+        ids: selectedUsers,
+        action,
+      })
+      .then((res) => {
+        setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
+        setNotification({ type: "success", message: "Success !" });
+      })
+      .catch((e) => {
+        setNotification({
+          type: "error",
+          message: e.message,
+        });
+      });
+  };
 
   const pendingUsersTableHeader = [
     {

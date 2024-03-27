@@ -304,16 +304,21 @@ const YuvaList = () => {
               <Grid item xs={3} className={"flex justify-center items-center"}>
                 <Avatar
                   alt="Remy Sharp"
-                  className={"h-[120px] w-[120px]"}
+                  className={"h-[120px] w-[120px] cursor-pointer"}
                   src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+                  onClick={() =>
+                    window.open(
+                      "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
+                      "_blank"
+                    )
+                  }
                 />
               </Grid>
               <Grid item xs={8} className={"px-2"}>
                 <div className={"text-base font-bold"}>
                   Name:{" "}
                   <span className={"font-normal"}>
-                    {userData?.firstName} {userData?.middleName}{" "}
-                    {userData?.lastName}{" "}
+                    {userData?.firstName} {userData?.lastName}{" "}
                   </span>
                 </div>
                 <div className={"text-base font-bold"}>
@@ -321,6 +326,9 @@ const YuvaList = () => {
                   <span className={"font-normal"}>
                     {moment(userData?.dob).format("DD/MM/YYYY hh:mm A")}
                   </span>
+                </div>
+                <div className={"text-base font-bold"}>
+                  Family ID: <span className={"font-normal"}>425050</span>
                 </div>
                 <div className={"text-base font-bold"}>
                   Firm:{" "}
@@ -344,6 +352,8 @@ const YuvaList = () => {
                       <TabList
                         onChange={handleChange}
                         className={"text-primary"}
+                        textColor="text-primary"
+                        indicatorColor="primary"
                       >
                         <Tab
                           label="Personal Info"
