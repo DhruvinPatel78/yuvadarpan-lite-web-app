@@ -56,7 +56,6 @@ export default function Index() {
     });
   };
   const handleSelectedUser = (ids) => {
-    console.log(ids);
     setSelectedUsers([...ids]);
   };
   const handleRequestAll = async (action) => {

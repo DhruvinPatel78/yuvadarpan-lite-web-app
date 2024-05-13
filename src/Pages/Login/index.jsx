@@ -1,10 +1,13 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { Grid, Paper } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
-import {NotificationData, NotificationSnackbar} from "../../Component/Common/notification";
-import {useDispatch, useSelector} from "react-redux";
-import {login, startLoading} from "../../store/authSlice";
+import {
+  NotificationData,
+  NotificationSnackbar,
+} from "../../Component/Common/notification";
+import { useDispatch, useSelector } from "react-redux";
+import { login, startLoading } from "../../store/authSlice";
 import axios from "../../util/useAxios";
 
 export default function Index() {
@@ -35,32 +38,31 @@ export default function Index() {
     if (values.email && values.password) {
       dispatch(startLoading());
       axios
-          .post(`${process.env.REACT_APP_BASE_URL}/user/signIn`, {
-            ...values,
-          })
-          .then((res) => {
-            console.log("Res =>", res)
-            localStorage.setItem("user", JSON.stringify(res?.data?.data));
-            localStorage.setItem("token", res?.data?.token);
-            dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
-            setNotification({ message: "Login Success", type: "success" });
-            navigate("/");
-          })
-          .catch((err) => {
-            console.log("Err =>", err)
-            setNotification({
-              message: err.response.data.message,
-              type: err.response.status === "403" ? "warning" : "error",
-            });
+        .post(`${process.env.REACT_APP_BASE_URL}/user/signIn`, {
+          ...values,
+        })
+        .then((res) => {
+          localStorage.setItem("user", JSON.stringify(res?.data?.data));
+          localStorage.setItem("token", res?.data?.token);
+          dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
+          setNotification({ message: "Login Success", type: "success" });
+          navigate("/");
+        })
+        .catch((err) => {
+          console.log("Err =>", err);
+          setNotification({
+            message: err.response.data.message,
+            type: err.response.status === "403" ? "warning" : "error",
           });
+        });
     } else {
       setNotification({
         message:
-            !values.email && !values.password
-                ? "Email and Password are required."
-                : !values.email
-                    ? "Email is required."
-                    : "Password is required.",
+          !values.email && !values.password
+            ? "Email and Password are required."
+            : !values.email
+            ? "Email is required."
+            : "Password is required.",
         type: "error",
       });
     }
@@ -71,7 +73,10 @@ export default function Index() {
       <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold font-WorkBold">
         YUVADARPAN
       </p>
-      <Paper elevation={10} className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]">
+      <Paper
+        elevation={10}
+        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
+      >
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <p className="text-center text-primary font-bold text-2xl">

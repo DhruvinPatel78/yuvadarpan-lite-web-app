@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import CustomTable from "../../Component/Common/customTable";
 import {
+  alpha,
   Box,
   CircularProgress,
   FormControl,
   Grid,
   Modal,
   Paper,
+  styled,
   Switch,
   TextField,
   Typography,
@@ -22,7 +24,17 @@ import { Form, FormikProvider, useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
 import axios from "../../util/useAxios";
 import * as Yup from "yup";
-
+const PrimarySwitch = styled(Switch)(({ theme }) => ({
+  "& .MuiSwitch-switchBase.Mui-checked": {
+    color: "#542b2b",
+    "&:hover": {
+      backgroundColor: alpha("#542b2b", theme.palette.action.hoverOpacity),
+    },
+  },
+  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+    backgroundColor: "#542b2b",
+  },
+}));
 function Index() {
   const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
@@ -46,7 +58,6 @@ function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        console.log("Here");
         setLoading(true);
         const { confirmPassword, ...rest } = values;
         axios
@@ -220,7 +231,7 @@ function Index() {
       filterable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <Switch
+          <PrimarySwitch
             checked={record.row.allowed}
             onClick={(e) =>
               userActionHandler(record.row, !record.row.allowed, "allowed")
@@ -239,7 +250,7 @@ function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <Switch
+          <PrimarySwitch
             checked={record.row.active}
             onClick={(e) =>
               userActionHandler(record.row, !record.row.active, "active")

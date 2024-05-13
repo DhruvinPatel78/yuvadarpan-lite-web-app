@@ -102,9 +102,12 @@ import {
   Avatar,
   Box,
   Button,
+  ButtonBase,
+  Divider,
   Grid,
   Modal,
   Paper,
+  styled,
   Tab,
   Tooltip,
 } from "@mui/material";
@@ -117,6 +120,8 @@ import AddIcon from "@mui/icons-material/Add";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
+import axios from "../../util/useAxios";
+import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 
 const YuvaList = () => {
   const navigate = useNavigate();
@@ -127,23 +132,27 @@ const YuvaList = () => {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
+  const getYuvaList = async () => {
+    axios.get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list`).then((res) => {
+      const data = res.data?.map((item) => ({ ...item, id: item?._id }));
+      setYuvaList(data);
+    });
+  };
   useEffect(() => {
-    setYuvaList([
-      {
-        id: 1,
-        familyId: 425050,
-        firstName: "ABC",
-        middleName: "XYZ",
-        lastName: "ZZZZZ",
-        dob: moment(),
-        gender: "M",
-        firm: "Mahesh Wood",
-        city: "Bardoli",
-        native: "Rampar Sarva",
-      },
-    ]);
+    getYuvaList();
   }, []);
+  const deleteAPI = async (id) => {
+    // axios
+    //     .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list/${id}`)
+    //     .then((res) => {
+    //     });
+    axios
+      .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
+      .then((res) => {
+        const data = res.data?.map((item) => ({ ...item, id: item?._id }));
+        setYuvaList(data);
+      });
+  };
 
   const yuvaListColumn = [
     {
@@ -239,19 +248,41 @@ const YuvaList = () => {
           <Tooltip title={"Edit"}>
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
-              // onClick={() => userInfoModalOpen(record.row)}
+              onClick={() =>
+                navigate("/yuvalist/add", { state: { data: record?.row } })
+              }
             />
           </Tooltip>
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              // onClick={() => userInfoModalOpen(record.row)}
+              onClick={() => deleteAPI(record?.id)}
             />
           </Tooltip>
         </div>
       ),
     },
   ];
+  // const toBase64 = file => new Promise((resolve, reject) => {
+  //   if(!file) return reject(new Error("No file found."));
+  //   const reader = new FileReader();
+  //   const newFile=URL.createObjectURL(file)
+  //   reader.readAsDataURL(newFile);
+  //   reader.onload = () => resolve(reader.result);
+  //   reader.onerror = reject;
+  // });
+  const getProfileUrl = (file) => {
+    if (file) {
+      // return URL.createObjectURL(file)
+      // await toBase64(file)
+      // return URL.revokeObjectURL(file);
+      const reader = new FileReader();
+      reader.onloadend = (result) => {
+        console.log("result", result);
+      };
+      reader.readAsDataURL({ File: { ...file } });
+    }
+  };
 
   return (
     <Box>
@@ -281,7 +312,6 @@ const YuvaList = () => {
           type={"pendingList"}
         />
       </div>
-      {console.log(userData)}
       {userData ? (
         <Modal
           open={Boolean(userData)}
@@ -302,19 +332,34 @@ const YuvaList = () => {
           >
             <Grid container>
               <Grid item xs={3} className={"flex justify-center items-center"}>
-                <Avatar
-                  alt="Remy Sharp"
-                  className={"h-[120px] w-[120px] cursor-pointer"}
-                  src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+                <ImageButton
+                  focusRipple
+                  style={{
+                    width: "110px",
+                    borderRadius: "150px",
+                    border: "1px dashed #542b2b",
+                  }}
                   onClick={() =>
                     window.open(
-                      "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
+                      userData?.profile?.url ||
+                        "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
                       "_blank"
                     )
                   }
-                />
+                >
+                  <ImageSrc
+                    style={{
+                      backgroundImage:
+                        // `url(${userData?.profile?.url})` ||
+                        `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
+                    }}
+                    className={"m-2"}
+                  />
+                  <ImageBackdrop className="MuiImageBackdrop-root" />
+                </ImageButton>
               </Grid>
-              <Grid item xs={8} className={"px-2"}>
+              {/*<input type="radio" id="age1" name="age" value="30" onChange={(e)=>console.log(e.target.value)} />*/}
+              <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
                 <div className={"text-base font-bold"}>
                   Name:{" "}
                   <span className={"font-normal"}>
@@ -328,21 +373,14 @@ const YuvaList = () => {
                   </span>
                 </div>
                 <div className={"text-base font-bold"}>
-                  Family ID: <span className={"font-normal"}>425050</span>
-                </div>
-                <div className={"text-base font-bold"}>
-                  Firm:{" "}
-                  <span className={"font-normal"}>Mahesh Wood Industries</span>
-                </div>
-                <div className={"text-base font-bold"}>
-                  City:{" "}
-                  <span className={"font-normal"}>Bardoli, Surat, Gujarat</span>
+                  Family ID:{" "}
+                  <span className={"font-normal"}>{userData?.familyId}</span>
                 </div>
               </Grid>
               <Grid item xs={1} className={"flex justify-center"}>
                 <CloseIcon
                   className={"text-primary cursor-pointer"}
-                  // onClick={() => userInfoModalOpen(record.row)}
+                  onClick={() => setUserData(null)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -353,7 +391,15 @@ const YuvaList = () => {
                         onChange={handleChange}
                         className={"text-primary"}
                         textColor="text-primary"
-                        indicatorColor="primary"
+                        indicatorColor="inherit"
+                        TabIndicatorProps={{
+                          style: {
+                            backgroundColor: "#542b2b",
+                          },
+                        }}
+                        variant="scrollable"
+                        scrollButtons
+                        allowScrollButtonsMobile
                       >
                         <Tab
                           label="Personal Info"
@@ -370,27 +416,194 @@ const YuvaList = () => {
                           }`}
                         />
                         <Tab
-                          label="Other Info"
-                          value="3"
-                          className={`font-bold ${
-                            value === "3" ? "text-primary" : "text-gray"
-                          }`}
-                        />
-                        <Tab
                           label="Contact Info"
                           value="4"
                           className={`font-bold ${
                             value === "4" ? "text-primary" : "text-gray"
                           }`}
                         />
+                        <Tab
+                          label="Other Info"
+                          value="3"
+                          className={`font-bold ${
+                            value === "3" ? "text-primary" : "text-gray"
+                          }`}
+                        />
                       </TabList>
                     </Box>
                     <TabPanel value="1">
-                      <div>Hello</div>
+                      <Grid spacing={2} container>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Father Name:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.middleName}
+                            </span>
+                          </div>
+                          <div className={"text-base font-bold"}>
+                            Height:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.height}
+                            </span>
+                          </div>
+                          {/*<div className={"text-base font-bold"}>*/}
+                          {/*  Firm:{" "}*/}
+                          {/*  <span className={"font-normal"}>*/}
+                          {/*    Mahesh Wood Industries*/}
+                          {/*  </span>*/}
+                          {/*</div>*/}
+                          <div className={"text-base font-bold"}>
+                            City:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.city}
+                            </span>
+                          </div>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Mother Name:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.motherName}
+                            </span>
+                          </div>
+                          <div className={"text-base font-bold"}>
+                            Weight:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.weight}
+                            </span>
+                          </div>
+                          <div className={"text-base font-bold"}>
+                            State:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.state}
+                            </span>
+                          </div>
+                          {/*<div className={"text-base font-bold"}>*/}
+                          {/*  City:{" "}*/}
+                          {/*  <span className={"font-normal"}>*/}
+                          {/*    Bardoli*/}
+                          {/*  </span>*/}
+                          {/*</div>*/}
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Divider />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Firm:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.firm}
+                            </span>
+                          </div>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold ellipsis"}>
+                            Firm Address:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.firmAddress}
+                            </span>
+                          </div>
+                        </Grid>
+                      </Grid>
                     </TabPanel>
-                    <TabPanel value="2">Item Two</TabPanel>
-                    <TabPanel value="3">Item Three</TabPanel>
-                    <TabPanel value="4">Dhruvin</TabPanel>
+                    <TabPanel value="2">
+                      <Grid container spacing={1}>
+                        <Grid item xs={12}>
+                          <div className={"text-base font-bold"}>
+                            Name:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.mamaInfo?.name}
+                            </span>
+                          </div>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Divider />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Grid spacing={1} container>
+                            <Grid item xs={12}>
+                              <div className={"text-base font-bold"}>
+                                Address:-
+                              </div>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <div className={"text-base font-bold"}>
+                                Native:
+                                <span className={"font-normal"}>
+                                  {userData?.mamaInfo?.native}
+                                </span>
+                              </div>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <div className={"text-base font-bold"}>
+                                City:{" "}
+                                <span className={"font-normal"}>
+                                  {userData?.mamaInfo?.city}
+                                </span>
+                              </div>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </TabPanel>
+                    <TabPanel value="3">
+                      <Grid spacing={2} container>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Education:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.education}
+                            </span>
+                          </div>
+                          {/*<div className={"text-base font-bold"}>*/}
+                          {/*  Height:{" "}*/}
+                          {/*  <span className={"font-normal"}>*/}
+                          {/*    {userData?.height}*/}
+                          {/*  </span>*/}
+                          {/*</div>*/}
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Blood Group:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.bloodGroup}
+                            </span>
+                          </div>
+                          {/*<div className={"text-base font-bold"}>*/}
+                          {/*  Weight:{" "}*/}
+                          {/*  <span className={"font-normal"}>*/}
+                          {/*    {userData?.weight}*/}
+                          {/*  </span>*/}
+                          {/*</div>*/}
+                        </Grid>
+                      </Grid>
+                    </TabPanel>
+                    <TabPanel value="4">
+                      <Grid spacing={2} container>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Name:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.contactInfo?.name}
+                            </span>
+                          </div>
+                          <div className={"text-base font-bold"}>
+                            Relation:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.contactInfo?.relation}
+                            </span>
+                          </div>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={"text-base font-bold"}>
+                            Number:{" "}
+                            <span className={"font-normal"}>
+                              {userData?.contactInfo?.phone}
+                            </span>
+                          </div>
+                        </Grid>
+                      </Grid>
+                    </TabPanel>
                   </TabContext>
                 </Box>
               </Grid>

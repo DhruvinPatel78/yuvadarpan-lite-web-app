@@ -7,9 +7,10 @@ import Dashboard from "./Pages/Dashboard/index";
 import UserList from "./Pages/UserList/index";
 import YuvaList from "./Pages/YuvaList/index";
 import Request from "./Pages/Request/index";
-import UserDashboard from "./Pages/UserDashboard/index";
+// import UserDashboard from "./Pages/UserDashboard/index";
 import ThankYou from "./Pages/ThankYou";
 import AddYuva from "./Pages/AddYuva";
+import Profile from "./Pages/Profile";
 // import { auth } from "./firebase";
 
 function App() {
@@ -37,6 +38,7 @@ function App() {
       <Route path="/yuvalist/add" exact element={<AddYuva />} />
       <Route path="/request" exact element={<Request />} />
       <Route path="/thankyou" exact element={<ThankYou />} />
+      <Route path="/yuvalist/:id" exact element={<Profile />} />
       {/*<Route path="/userDashboard" element={<UserDashboard />} />*/}
     </Routes>
   );
