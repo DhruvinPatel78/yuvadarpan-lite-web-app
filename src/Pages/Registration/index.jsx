@@ -7,6 +7,7 @@ import {
 } from "../../Component/Common/notification";
 import { useNavigate } from "react-router-dom";
 import useAxios from "../../util/useAxios";
+import moment from "moment";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Index() {
     email: "",
     password: "",
     confirmpassword: "",
+    dob: "",
   };
   const [values, setValues] = useState(defaultValue);
   const { notification, setNotification } = NotificationData();
@@ -28,6 +30,7 @@ export default function Index() {
     value = e.target.value;
     setValues({ ...values, [name]: value });
   };
+  console.log("values", values);
   const handleSubmit = () => {
     if (values.password === values.confirmpassword) {
       try {
@@ -40,6 +43,7 @@ export default function Index() {
             email: values?.email,
             mobile: values?.mobile,
             password: values?.password,
+            dob: moment(values?.dob).format(),
             active: true,
             allowed: false,
             role: "USER",
@@ -149,17 +153,27 @@ export default function Index() {
           />
           <CustomInput
             type={"number"}
-            xs={12}
+            xs={6}
             label={"Family Id"}
             placeholder={"Enter Your Family Id"}
             name="familyId"
             onChange={getUserData}
             value={values.familyId}
           />
+          <CustomInput
+            type={"date"}
+            xs={6}
+            label={"DOB"}
+            placeholder={"Select Your DOB"}
+            name="dob"
+            onChange={getUserData}
+            value={values.dob}
+            focused
+          />
           <Grid item xs={12}>
             <button
               className={
-                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
+                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-semibold"
               }
               onClick={handleSubmit}
             >
@@ -171,7 +185,7 @@ export default function Index() {
               Do you have an account ?
               <Link
                 href={"/login"}
-                className="px-1 !text-[#572a2a] !font-black !no-underline"
+                className="px-1 !text-[#572a2a] !no-underline font-semibold"
               >
                 Sign In
               </Link>

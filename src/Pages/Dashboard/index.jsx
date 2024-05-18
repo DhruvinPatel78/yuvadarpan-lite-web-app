@@ -4,7 +4,7 @@ import CustomCard from "../../Component/Card";
 import Header from "../../Component/Header";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-
+import axios from "../../util/useAxios";
 export default function Index() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [pendingListOpen, setPendingListOpen] = useState(false);
@@ -34,16 +34,26 @@ export default function Index() {
     //   console.log("res =>", res);
     // });
   }, []);
-
+  const sendOtpHandler = () => {
+    axios
+      .post(`${process.env.REACT_APP_BASE_URL}/user/sendOtp`, {
+        email: "patel.dhruvinpatel@gmail.com",
+      })
+      .then((res) => {
+        console.log("REs - - - - - - >");
+      })
+      .catch((e) => console.log("e - - - - "));
+  };
   return (
     <div>
       <Header />
       <Grid container spacing={2} className="p-4">
         <Grid item xs={12} sm={6} md={4}>
-          <CustomCard
-            title={"New Requests"}
-            action={() => navigate("/request")}
-          />
+          {/*<CustomCard*/}
+          {/*  title={"New Requests"}*/}
+          {/*  action={() => navigate("/request")}*/}
+          {/*/>*/}
+          <button onClick={sendOtpHandler}>SendOtp</button>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <CustomCard

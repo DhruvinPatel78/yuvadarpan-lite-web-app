@@ -1,13 +1,85 @@
-import { Box, Grid, IconButton } from "@mui/material";
+import {
+  Box,
+  Grid,
+  IconButton,
+  Tabs,
+  Tab,
+  Typography,
+  styled,
+} from "@mui/material";
 import Header from "../../Component/Header";
 import React from "react";
-import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
-import moment from "moment/moment";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
+import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
+import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
+import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+function CustomTabPanel(props) {
+  const { children, value, index, ...other } = props;
 
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    "aria-controls": `simple-tabpanel-${index}`,
+  };
+}
+const StyledTabs = styled((props) => (
+  <Tabs
+    {...props}
+    TabIndicatorProps={{ children: <span className="MuiTabs-indicatorSpan" /> }}
+  />
+))({
+  "& .MuiTabs-indicator": {
+    display: "flex",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+  "& .MuiTabs-indicatorSpan": {
+    // maxWidth: 40,
+    width: "100%",
+    backgroundColor: "#542b2b",
+  },
+});
+const StyledTab = styled((props) => <Tab disableRipple {...props} />)(
+  ({ theme }) => ({
+    textTransform: "none",
+    // fontWeight: theme.typography.fontWeightBold,
+    fontWeight: 600,
+    fontSize: 16,
+    // fontSize: theme.typography.pxToRem(15),
+    // marginRight: theme.spacing(1),
+    // color: "black",
+    "&.Mui-selected": {
+      color: "#542b2b",
+    },
+    "&.Mui-focusVisible": {
+      backgroundColor: "#542b2b",
+    },
+  })
+);
 const ProfilePage = () => {
+  const [tabValue, setTabValue] = React.useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -24,7 +96,6 @@ const ProfilePage = () => {
               className={"w-full mt-[-20%]"}
             />
           </div>
-          {/*<div className={"absolute"}> heloo</div>*/}
           <div
             className={
               "absolute left-[30px] bottom-0 right-0 z-[2] h-[180px] flex flex-row gap-4 items-center"
@@ -38,7 +109,7 @@ const ProfilePage = () => {
               <img
                 src={"https://imagizer.imageshack.com/img921/9628/VIaL8H.jpg"}
                 alt={""}
-                className={"w-full h-full"}
+                className={"w-full h-full object-cover"}
               />
             </div>
             <div className={"w-full flex flex-row justify-between"}>
@@ -53,7 +124,7 @@ const ProfilePage = () => {
         </div>
         <div className={"w-full h-full"}>
           <Grid container spacing={4}>
-            <Grid item xs={4} sm={12} md={4} className={"mt-8"}>
+            <Grid item xs={12} sm={12} md={4} className={"mt-8"}>
               <div
                 className={"w-full bg-white p-4 shadow-md flex flex-col gap-4"}
               >
@@ -70,14 +141,45 @@ const ProfilePage = () => {
                     <ModeEditOutlineOutlinedIcon />
                   </IconButton>
                 </div>
-                <div className={"flex flex-col gap-2"}>
-                  <span>Name</span>
-                  <span>Name</span>
+                <div className={"flex flex-col gap-2 px-2"}>
+                  <span className={"flex flex-row gap-2"}>
+                    <PersonOutlineOutlinedIcon />
+                    NAME
+                  </span>
+                  <span className={"flex flex-row gap-2"}>
+                    <PhoneOutlinedIcon />
+                    123456789
+                  </span>
+                  <span className={"flex flex-row gap-2"}>
+                    <LocationOnOutlinedIcon />
+                    India
+                  </span>
                 </div>
               </div>
             </Grid>
-            <Grid item xs={8} sm={12} md={8}>
-              <div className={"w-full bg-white p-4 shadow-md"}>hii</div>
+            <Grid item xs={12} sm={12} md={8} className={"flex flex-col gap-4"}>
+              <div className={"w-full bg-white px-4 pt-4 shadow-md"}>
+                <StyledTabs
+                  value={tabValue}
+                  onChange={handleTabChange}
+                  aria-label="basic tabs example"
+                >
+                  <StyledTab label="Item One" {...a11yProps(0)} />
+                  <StyledTab label="Item Two" {...a11yProps(1)} />
+                  <StyledTab label="Item Three" {...a11yProps(2)} />
+                </StyledTabs>
+              </div>
+              <div className={"w-full bg-white shadow-md"}>
+                <CustomTabPanel value={tabValue} index={0}>
+                  Item One
+                </CustomTabPanel>
+                <CustomTabPanel value={tabValue} index={1}>
+                  Item Two
+                </CustomTabPanel>
+                <CustomTabPanel value={tabValue} index={2}>
+                  Item Three
+                </CustomTabPanel>
+              </div>
             </Grid>
           </Grid>
         </div>
