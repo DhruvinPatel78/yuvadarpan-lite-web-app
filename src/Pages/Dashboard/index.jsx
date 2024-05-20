@@ -49,11 +49,11 @@ export default function Index() {
       <Header />
       <Grid container spacing={2} className="p-4">
         <Grid item xs={12} sm={6} md={4}>
-          {/*<CustomCard*/}
-          {/*  title={"New Requests"}*/}
-          {/*  action={() => navigate("/request")}*/}
-          {/*/>*/}
-          <button onClick={sendOtpHandler}>SendOtp</button>
+          <CustomCard
+            title={"New Requests"}
+            action={() => navigate("/request")}
+          />
+          {/*<button onClick={sendOtpHandler}>SendOtp</button>*/}
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <CustomCard
