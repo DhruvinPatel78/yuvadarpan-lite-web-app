@@ -5,6 +5,8 @@ import Header from "../../Component/Header";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "../../util/useAxios";
+import { default as demoAxios } from "axios";
+
 import FormData from "form-data"
 export default function Index() {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -49,7 +51,7 @@ export default function Index() {
       data : data
     };
 
-    axios.request(config)
+    demoAxios.request(config)
         .then((response) => {
           console.log(JSON.stringify(response.data));
         })
