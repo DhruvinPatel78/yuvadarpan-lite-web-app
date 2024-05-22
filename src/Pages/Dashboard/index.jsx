@@ -5,6 +5,7 @@ import Header from "../../Component/Header";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "../../util/useAxios";
+import FormData from "form-data"
 export default function Index() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [pendingListOpen, setPendingListOpen] = useState(false);
@@ -33,6 +34,28 @@ export default function Index() {
     // axios.get(`${process.env.REACT_APP_BASE_URL}/yuva/list`).then((res) => {
     //   console.log("res =>", res);
     // });
+  }, []);
+  useEffect(() => {
+    let data = new FormData();
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://gisem91frd.execute-api.us-east-2.amazonaws.com/test',
+      headers: {
+        'X-Amz-Date': `${process.env.REACT_APP_SECRET_KEY}`,
+        'Authorization': `${process.env.REACT_APP_ACCESS_KEY}`,
+        'Access-Control-Allow-Origin': '*'
+      },
+      data : data
+    };
+
+    axios.request(config)
+        .then((response) => {
+          console.log(JSON.stringify(response.data));
+        })
+        .catch((error) => {
+          console.log(error);
+        });
   }, []);
   const sendOtpHandler = () => {
     axios
