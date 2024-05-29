@@ -12,12 +12,15 @@ export default function Index() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [pendingListOpen, setPendingListOpen] = useState(false);
   const navigate = useNavigate();
-  const { loggedIn } = useSelector((state) => state.auth);
+  const { loggedIn,user, } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!loggedIn) {
       navigate("/login");
-    } // eslint-disable-next-line react-hooks/exhaustive-deps
+    }else{
+      navigate(user.role === "ADMIN" ? "/" : "/newuser")
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {

@@ -54,10 +54,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f6f7ff;
-  min-height: 100vh;
+  height: 100vh;
 }
 .ellipsis {
   text-overflow: ellipsis; /* enables ellipsis */
   white-space: nowrap; /* keeps the text in a single line */
   overflow: hidden; /* keeps the element from overflowing its parent */
+}
+.react-pdf__Page__canvas{
+  width: 100% !important;
+  height: 100% !important;
 }

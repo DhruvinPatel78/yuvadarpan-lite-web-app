@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Grid, Paper } from "@mui/material";
+import {CircularProgress, Grid, Paper} from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,7 +15,8 @@ export default function Index() {
   const dispatch = useDispatch();
   const [values, setValues] = useState({ email: "", password: "" });
   const { notification, setNotification } = NotificationData();
-  const { loggedIn } = useSelector((state) => state.auth);
+  const { loggedIn, user } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setNotification({ type: "", message: "" }); // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -23,7 +24,8 @@ export default function Index() {
 
   useEffect(() => {
     if (loggedIn) {
-      navigate("/");
+      console.log("loggedIn if")
+      navigate(user?.role === "ADMIN" ? "/" : "/newuser");
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -35,6 +37,7 @@ export default function Index() {
   };
 
   const handleSubmit = () => {
+    setLoading(true);
     if (values.email && values.password) {
       dispatch(startLoading());
       axios
@@ -46,14 +49,20 @@ export default function Index() {
           localStorage.setItem("token", res?.data?.token);
           dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
           setNotification({ message: "Login Success", type: "success" });
-          navigate("/");
+          setTimeout(() => {
+            setLoading(false);
+            navigate(res?.data?.data?.role === "ADMIN" ? "/" : "/newuser");
+          }, 1000);
         })
         .catch((err) => {
           console.log("Err =>", err);
-          setNotification({
-            message: err.response.data.message,
-            type: err.response.status === "403" ? "warning" : "error",
-          });
+          setTimeout(() => {
+            setLoading(false);
+            setNotification({
+              message: err.response.data.message,
+              type: err.response.status === "403" ? "warning" : "error",
+            });
+          }, 1000);
         });
     } else {
       setNotification({
@@ -69,6 +78,7 @@ export default function Index() {
   };
 
   return (
+
     <div className="h-screen flex flex-col justify-center items-center">
       <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold font-WorkBold">
         YUVADARPAN
@@ -102,6 +112,11 @@ export default function Index() {
             value={values.password}
           />
           <Grid item xs={12}>
+            {loading ? (
+                <div className={"text-center text-primary"}>
+                  <CircularProgress color="inherit" />
+                </div>
+            ) : (
             <button
               className={
                 "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
@@ -109,7 +124,7 @@ export default function Index() {
               onClick={handleSubmit}
             >
               Sign In
-            </button>
+            </button>)}
           </Grid>
           <Grid item xs={12}>
             <p className="flex justify-center text-sm sm:text-lg cursor-default">
