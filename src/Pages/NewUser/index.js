@@ -29,20 +29,33 @@ const PdfPaginationBtn = ({ children, disabled, onClick }) => {
 export default function NewUser() {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [cityList, setCityList] = useState([])
-  const [cityListEn, setCityListEn] = useState([])
-  const [cityListGuj, setCityListGuj] = useState([])
+  const [city, setCity] = useState("");
+  const [cityList, setCityList] = useState([]);
+  const [cityListEn, setCityListEn] = useState([]);
+  const [cityListGuj, setCityListGuj] = useState([]);
+  const [pdf, setPdf] = useState();
 
   useEffect(() => {
-    // GET all city list API call
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/yuvaPDF`)
+      .then((res) => {
+        setPdf(res.data);
+      })
+      .catch((e) => {
+        console.log(e);
+      });
+
     axios
       .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/citylist`)
       .then((res) => {
-        setCityList(res?.data)
+        setCityList(res?.data);
         res.data.map((city) => {
           setCityListEn((prevCityListEn) => [...prevCityListEn, city.label.en]);
-          setCityListGuj((prevCityListGuj) => [...prevCityListGuj, city.label.gu]);
-        })
+          setCityListGuj((prevCityListGuj) => [
+            ...prevCityListGuj,
+            city.label.gu,
+          ]);
+        });
       })
       .catch((e) => {
         console.log(e);
@@ -58,29 +71,40 @@ export default function NewUser() {
   const goToNextTwisePage = () => setPageNumber((prevPage) => prevPage + 2);
   const goToNextPage = () => setPageNumber((prevPage) => prevPage + 1);
 
-  const [city, setCity] = useState('');
-
   const handleCityChange = (event) => {
     setCity(event.target.value);
     cityList.map((city) => {
-      if(city?.label.en === event.target.value || city?.label.gu === event.target.value){
-        setPageNumber((prevPage) => city?.pageStart)
+      if (
+        city?.label.en === event.target.value ||
+        city?.label.gu === event.target.value
+      ) {
+        setPageNumber((prevPage) => city?.pageStart);
       }
-    })
+    });
   };
 
   return (
     <div className="h-full w-full overflow-hidden">
       <Header />
       <div>
-        <div className={"flex justify-center p-4"}>
-          <CustomSelect label={"City"} list={cityListEn} value={city} onChange={handleCityChange} className={"w-full"} />
+        <div className={"flex justify-center p-4 relative z-[1]"}>
+          <CustomSelect
+            label={"City"}
+            list={cityListEn}
+            value={city}
+            onChange={handleCityChange}
+            className={"sm:w-84 w-96"}
+          />
         </div>
         <div className={"flex flex-col items-center"}>
-          <Document  file={yuvaPDF} onLoadSuccess={onDocumentLoadSuccess} >
-            <Page pageNumber={pageNumber} className={"h-[630px]"}/>
+          <Document file={yuvaPDF} onLoadSuccess={onDocumentLoadSuccess}>
+            <Page pageNumber={pageNumber} className={"h-[630px]"} />
           </Document>
-          <div className={"flex w-full max-w-[600px] justify-between p-4 items-center"}>
+          <div
+            className={
+              "flex w-full max-w-[600px] justify-between p-4 items-center"
+            }
+          >
             <PdfPaginationBtn
               disabled={pageNumber <= 2}
               onClick={goToPrevTwisePage}

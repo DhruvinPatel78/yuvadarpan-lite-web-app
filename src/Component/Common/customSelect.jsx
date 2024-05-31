@@ -1,9 +1,6 @@
 import * as React from "react";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
-import { Grid, styled, Select, Typography, TextField } from "@mui/material";
-import { Autocomplete } from "@mui/lab";
+import { Grid, styled, TextField, Autocomplete } from "@mui/material";
+
 const PrimaryAutocomplete = styled(Autocomplete)`
   & .MuiAutocomplete-root {
     color: #572a2a;
@@ -16,7 +13,7 @@ const PrimaryAutocomplete = styled(Autocomplete)`
     }
   & .Mui-focused,
   .MuiFormLabel-root {
-    color: #572a2a;
+    color: #572a2a !important;
   }
   & .MuiOutlinedInput-root {
     &.Mui-focused fieldset {
@@ -27,14 +24,14 @@ const PrimaryAutocomplete = styled(Autocomplete)`
     border-color: #572a2a;
   }
 `;
-export default function CustomSelect({ label, list, value, onChange }) {
+export default function CustomSelect({ label, list, value, onChange, className }) {
   return (
     <Grid item>
       <PrimaryAutocomplete
         disablePortal
         id="combo-box-demo"
         options={list}
-        sx={{ width: 300 }}
+        className={className}
         renderInput={(params) => <TextField {...params} label={label} />}
         onSelect={onChange}
       />
