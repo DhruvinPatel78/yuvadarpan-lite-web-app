@@ -18,7 +18,7 @@ export default function Index() {
     if (!loggedIn) {
       navigate("/login");
     }else{
-      navigate(user.role === "ADMIN" ? "/" : "/newuser")
+      navigate(user.role === "ADMIN" ? "/" : "/pdf")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

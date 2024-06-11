@@ -25,7 +25,7 @@ export default function Index() {
   useEffect(() => {
     if (loggedIn) {
       console.log("loggedIn if")
-      navigate(user?.role === "ADMIN" ? "/" : "/newuser");
+      navigate(user?.role === "ADMIN" ? "/" : "/pdf");
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -51,7 +51,7 @@ export default function Index() {
           setNotification({ message: "Login Success", type: "success" });
           setTimeout(() => {
             setLoading(false);
-            navigate(res?.data?.data?.role === "ADMIN" ? "/" : "/newuser");
+            navigate(res?.data?.data?.role === "ADMIN" ? "/" : "/pdf");
           }, 1000);
         })
         .catch((err) => {

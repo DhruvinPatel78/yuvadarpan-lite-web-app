@@ -40,7 +40,7 @@ function App() {
       <Route path="/request" exact element={<Request />} />
       <Route path="/thankyou" exact element={<ThankYou />} />
       <Route path="/yuvalist/:id" exact element={<Profile />} />
-      <Route path="/newuser" exact element={<NewUser />} />
+      <Route path="/pdf" exact element={<NewUser />} />
       {/*<Route path="/userDashboard" element={<UserDashboard />} />*/}
     </Routes>
   );
