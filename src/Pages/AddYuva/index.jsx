@@ -10,6 +10,8 @@ import {
 // import AddIcon from "@mui/icons-material/Add";
 import React, { useEffect, useState } from "react";
 import CustomInput from "../../Component/Common/customInput";
+import CustomAutoComplete from "../../Component/Common/customAutoComplete";
+import CustomRadio from "../../Component/Common/customRadio";
 import { Form, FormikProvider, useFormik } from "formik";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
@@ -18,6 +20,8 @@ import * as Yup from "yup";
 import axios from "../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
 import moment from "moment";
+import CustomSelect from "../../Component/Common/customSelect";
+import DatePicker from "../../Component/Common/DatePicker";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -25,10 +29,85 @@ const AddYuva = () => {
   const [loading, setLoading] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [newFieldList, setNewFieldList] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [countryList, setCountryList] = useState([]);
+  const [states, setStates] = useState([]);
+  const [stateList, setStateList] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [cityList, setCityList] = useState([]);
   const [newField, setNewField] = useState({
     title: "",
     description: "",
   });
+
+  const getCountries = () => {
+    var config = {
+      method: "get",
+      url: "https://api.countrystatecity.in/v1/countries",
+      headers: {
+        "X-CSCAPI-KEY":
+          "NEJDZktrYURpTmZmZEZPVmRVRzNmOXlvcE9vSFBDZDZPamdCRUpUUQ==",
+      },
+    };
+
+    axios(config)
+      .then(function (response) {
+        setCountries(response.data);
+        response.data.map((countryData) => {
+          setCountryList((prevCountryList) => [
+            ...prevCountryList,
+            countryData.name,
+          ]);
+        });
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
+  const getStateByContry = () => {
+    var config = {
+      method: "get",
+      url: "https://api.countrystatecity.in/v1/countries/IN/states",
+      headers: {
+        "X-CSCAPI-KEY":
+          "NEJDZktrYURpTmZmZEZPVmRVRzNmOXlvcE9vSFBDZDZPamdCRUpUUQ==",
+      },
+    };
+
+    axios(config)
+      .then(function (response) {
+        setStates(response.data);
+        response.data.map((stateData) => {
+          setStateList((prevStateList) => [...prevStateList, stateData.name]);
+        });
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
+  const getCityByState = (state) => {
+    var config = {
+      method: "get",
+      url: `https://api.countrystatecity.in/v1/countries/IN/states/${state}/cities`,
+      headers: {
+        "X-CSCAPI-KEY":
+          "NEJDZktrYURpTmZmZEZPVmRVRzNmOXlvcE9vSFBDZDZPamdCRUpUUQ==",
+      },
+    };
+
+    axios(config)
+      .then(function (response) {
+        setCities(response.data);
+        response.data.map((cityData) => {
+          setCityList((prevCityList) => [...prevCityList, cityData.name]);
+        });
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
 
   const addYuvaListHandler = (data) => {
     setLoading(true);
@@ -59,15 +138,18 @@ const AddYuva = () => {
   };
   const formik = useFormik({
     initialValues: {
-      familyId: "",
       firstName: "",
-      middleName: "",
+      fatherName: "",
+      grandFatherName: "",
       lastName: "",
-      dob: "",
       motherName: "",
+      familyId: "",
+      dob: "",
+      pob: "",
+      email: "",
       firm: "",
-      firmAddress: "",
       country: "",
+      firmAddress: "",
       state: "",
       city: "",
       native: "",
@@ -90,6 +172,9 @@ const AddYuva = () => {
       //   name: "",
       //   url: "",
       // },
+      activity: "",
+      abroadStudy: "no",
+      martialStatus: "",
     },
     onSubmit: async (values, { resetForm }) => {
       let newValue = { ...values };
@@ -144,11 +229,33 @@ const AddYuva = () => {
       // contactPersonPhone: Yup.number()
       //   .typeError("Must be a number")
       //   .required("Required"),
+      activity: Yup.string().required("Required"),
+      abroadStudy: Yup.string().required("Required"),
+      email: Yup.string().required("Required"),
+      martialStatus: Yup.string().required("Required"),
     }),
   });
   const { errors, values, setValues, setFieldValue, resetForm } = formik;
 
   const fieldValueChangeHandler = (e) => {
+    console.log("name : ", e, e.target.name, "value : ", e.target.value);
+    // if (e.target.name === "country") {
+    //   console.log("co");
+    //   countries.map((countryData) => {
+    //     console.log(countryData);
+    //   });
+    //   // setStateSelected(e.target.value)
+    // } else
+    if (e.target.name === "state") {
+      states.map((stateData) => {
+        if (stateData.name === e.target.value) {
+          getCityByState(stateData.iso2);
+        }
+      });
+    } else if (e.target.name === "City") {
+      console.log("c");
+      // setCitySelected(e.target.value)
+    }
     setFieldValue(e.target.name, e.target.value);
   };
 
@@ -170,24 +277,35 @@ const AddYuva = () => {
     }
     setNewFieldList(clone);
   };
+
   useEffect(() => {
     if (location?.state) {
       setValues({ ...values, ...location?.state?.data });
     }
   }, [location]);
+
+  useEffect(() => {
+    // getCountries();
+    getStateByContry();
+    // getCityByState();
+  }, []);
+
   const hasError = Object.keys(errors).length;
+
+  console.log("value : >>", values);
+  console.log("state : >>", stateList);
 
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
       <div
         className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto bg-white"
+          "px-4 sm:px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto bg-white"
         }
       >
         <FormikProvider value={formik}>
           <Form>
-            <Grid container spacing={2} className={"p-4"}>
+            <Grid container spacing={2} className={"px-0 py-2 sm:p-4"}>
               <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>
                   PERSONAL INFO
@@ -195,7 +313,7 @@ const AddYuva = () => {
                 <Grid container spacing={2}>
                   <CustomInput
                     type={"text"}
-                    label={"First Name"}
+                    label={"Name"}
                     placeholder={"Enter Your Name"}
                     name={"firstName"}
                     xs={12}
@@ -207,8 +325,20 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"Middle Name"}
-                    placeholder={"Enter Your Middle Name"}
+                    label={"Father Name"}
+                    placeholder={"Enter Your Father Name"}
+                    name={"middleName"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.middleName}
+                    errors={errors?.middleName}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"Grand Father Name"}
+                    placeholder={"Enter Your Grand Father Name"}
                     name={"middleName"}
                     xs={12}
                     sm={6}
@@ -231,6 +361,18 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
+                    label={"Mother Name"}
+                    placeholder={"Enter Your Mother Name"}
+                    name={"motherName"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.motherName}
+                    errors={errors?.motherName}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomInput
+                    type={"text"}
                     label={"FamilyId"}
                     placeholder={"Enter Your Family ID"}
                     name={"familyId"}
@@ -241,30 +383,38 @@ const AddYuva = () => {
                     errors={errors?.familyId}
                     onChange={fieldValueChangeHandler}
                   />
-                  <CustomInput
-                    type={"date"}
-                    label={"DOB"}
-                    placeholder={"Enter Your Family ID"}
+                  <DatePicker
                     name={"dob"}
                     xs={12}
                     sm={6}
                     md={4}
-                    focused
+                    label={"Date and Time of Birth"}
                     value={moment(values?.dob).format("YYYY-MM-DD")}
                     errors={errors?.dob}
                     onChange={fieldValueChangeHandler}
-                    // onChange={(e)=>setFieldValue("dob",new Date(e.target.value))}
                   />
                   <CustomInput
                     type={"text"}
-                    label={"Mother Name"}
-                    placeholder={"Enter Your Mother Name"}
-                    name={"motherName"}
+                    label={"Birth Place"}
+                    placeholder={"Enter Your Birth Place"}
+                    name={"pob"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.motherName}
-                    errors={errors?.motherName}
+                    value={values?.email}
+                    errors={errors?.email}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"E-mail"}
+                    placeholder={"Enter Your E-mail"}
+                    name={"email"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.email}
+                    errors={errors?.email}
                     onChange={fieldValueChangeHandler}
                   />
                   <CustomInput
@@ -279,16 +429,42 @@ const AddYuva = () => {
                     errors={errors?.firm}
                     onChange={fieldValueChangeHandler}
                   />
-                  <CustomInput
-                    type={"text"}
-                    label={"Firm Address"}
-                    placeholder={"Enter Your Firm Address"}
-                    name={"firmAddress"}
+                  <CustomAutoComplete
+                    list={countryList}
+                    label={"Country"}
+                    placeholder={"Select Your Country"}
+                    name={"country"}
+                    defaultValue={"India"}
+                    disabled={true}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.firmAddress}
-                    errors={errors?.firmAddress}
+                    value={values?.country}
+                    errors={errors?.country}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomAutoComplete
+                    list={stateList}
+                    label={"State"}
+                    placeholder={"Select Your State"}
+                    name={"state"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.state}
+                    errors={errors?.state}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomAutoComplete
+                    list={cityList}
+                    label={"City"}
+                    placeholder={"Select Your Country"}
+                    name={"city"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.city}
+                    errors={errors?.city}
                     onChange={fieldValueChangeHandler}
                   />
                   <CustomInput
@@ -301,42 +477,6 @@ const AddYuva = () => {
                     md={4}
                     value={values?.native}
                     errors={errors?.native}
-                    onChange={fieldValueChangeHandler}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"City"}
-                    placeholder={"Enter Your City"}
-                    name={"city"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.city}
-                    errors={errors?.city}
-                    onChange={fieldValueChangeHandler}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"State"}
-                    placeholder={"Enter Your State"}
-                    name={"state"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.state}
-                    errors={errors?.state}
-                    onChange={fieldValueChangeHandler}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"Country"}
-                    placeholder={"Enter Your Country"}
-                    name={"country"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.country}
-                    errors={errors?.country}
                     onChange={fieldValueChangeHandler}
                   />
                   {values?.profile?.name ? (
@@ -388,7 +528,7 @@ const AddYuva = () => {
                           //   name: file?.name,
                           //   url: url,
                           // });
-                          setFieldValue("profile",JSON.stringify(file))
+                          setFieldValue("profile", JSON.stringify(file));
                           // setFieldValue("profile", {
                           //   name: file.name,
                           //   lastModified: file.lastModified,
@@ -405,7 +545,33 @@ const AddYuva = () => {
                   )}
                   <CustomInput
                     type={"text"}
-                    label={"Height"}
+                    label={"Firm Address"}
+                    placeholder={"Enter Your Firm Address"}
+                    name={"firmAddress"}
+                    multiline={true}
+                    xs={12}
+                    sm={6}
+                    md={6}
+                    value={values?.firmAddress}
+                    errors={errors?.firmAddress}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"Address"}
+                    placeholder={"Enter Your Address"}
+                    name={"address"}
+                    multiline={true}
+                    xs={12}
+                    sm={6}
+                    md={6}
+                    value={values?.firmAddress}
+                    errors={errors?.firmAddress}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"Height (ft)"}
                     placeholder={"Enter Your Height"}
                     name={"height"}
                     xs={12}
@@ -417,7 +583,7 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"Weight"}
+                    label={"Weight (kg)"}
                     placeholder={"Enter Your Weight"}
                     name={"weight"}
                     xs={12}
@@ -425,6 +591,51 @@ const AddYuva = () => {
                     md={4}
                     value={values?.weight}
                     errors={errors?.weight}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomSelect
+                    list={[
+                      "Job Seeker",
+                      "Job/Service",
+                      "Business",
+                      "Study",
+                      "Farming",
+                    ]}
+                    label={"Activity"}
+                    placeholder={"Enter Your Activity"}
+                    name={"activity"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.activity}
+                    errors={errors?.activity}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomSelect
+                    list={["Single", "Engaged", "Divorce", "Married"]}
+                    label={"Martial Status"}
+                    placeholder={"Select Your Country"}
+                    name={"martialStatus"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.martialStatus}
+                    errors={errors?.martialStatus}
+                    onChange={fieldValueChangeHandler}
+                  />
+                  <CustomRadio
+                    list={[
+                      { label: "Yes", value: "yes" },
+                      { label: "NO", value: "no" },
+                    ]}
+                    label={"Abroad Study"}
+                    name={"abroadStudy"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.abroadStudy}
+                    errors={errors?.abroadStudy}
+                    className={"flex flex-row"}
                     onChange={fieldValueChangeHandler}
                   />
                 </Grid>
@@ -536,8 +747,16 @@ const AddYuva = () => {
                       })
                     }
                   />
-                  <CustomInput
-                    type={"text"}
+                  <CustomSelect
+                    list={[
+                      "Father",
+                      "Mother",
+                      "Uncle",
+                      "Aunty",
+                      "Mama",
+                      "Mami",
+                      "Brother",
+                    ]}
                     label={"Relation"}
                     placeholder={"Enter Your Relation"}
                     name={"relation"}
@@ -580,8 +799,8 @@ const AddYuva = () => {
                     // errors={errors?.education}
                     onChange={fieldValueChangeHandler}
                   />
-                  <CustomInput
-                    type={"text"}
+                  <CustomSelect
+                    list={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]}
                     label={"Blood Group"}
                     placeholder={"Enter Your Blood Group"}
                     name={"bloodGroup"}
@@ -642,7 +861,7 @@ const AddYuva = () => {
                     label={"Title"}
                     placeholder={"Enter Your Title"}
                     name={"title"}
-                    xs={4}
+                    xs={5}
                     value={newField?.title}
                     onChange={(e) =>
                       setNewField((pre) => ({
@@ -657,7 +876,7 @@ const AddYuva = () => {
                     label={"Description"}
                     placeholder={"Enter Your Description"}
                     name={"description"}
-                    xs={4}
+                    xs={6}
                     value={newField?.description}
                     onChange={(e) =>
                       setNewField((pre) => ({
@@ -667,7 +886,11 @@ const AddYuva = () => {
                     }
                     required={false}
                   />
-                  <Grid item xs={4} className={"flex justify-start"}>
+                  <Grid
+                    item
+                    xs={1}
+                    className={"flex justify-center items-center"}
+                  >
                     <button type={"button"} onClick={addFieldHandler}>
                       <AddOutlinedIcon />
                     </button>

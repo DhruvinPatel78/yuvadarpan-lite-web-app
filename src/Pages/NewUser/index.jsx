@@ -5,7 +5,7 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import yuvaPDF from "../YuvaList/yuva.pdf";
 import Header from "../../Component/Header";
-import CustomSelect from "../../Component/Common/customSelect";
+import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -88,12 +88,17 @@ export default function NewUser() {
       <Header />
       <div>
         <div className={"flex justify-center p-4 relative z-[1]"}>
-          <CustomSelect
+          <CustomAutoComplete
             label={"City"}
             list={cityListEn}
             value={city}
             onChange={handleCityChange}
             className={"sm:w-84 w-96"}
+            placeholder={"Select City"}
+            name={"city"}
+            xs={12}
+            sm={6}
+            md={4}
           />
         </div>
         <div className={"flex flex-col items-center"}>

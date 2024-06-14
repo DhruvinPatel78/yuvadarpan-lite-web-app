@@ -22,6 +22,7 @@ const CustomInput = ({
   name,
   focused,
   errors,
+  multiline,
   required = true,
   ...rest
 }) => {
@@ -35,6 +36,10 @@ const CustomInput = ({
         onChange={onChange}
         value={value}
         fullWidth
+        multiline={multiline}
+        InputProps={{
+          rows: 5
+        }}
         required={required}
         focused={focused}
       />

@@ -40,28 +40,7 @@ export default function Index() {
     //   console.log("res =>", res);
     // });
   }, []);
-  useEffect(() => {
-    let data = new FormData();
-    let config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: 'https://gisem91frd.execute-api.us-east-2.amazonaws.com/test',
-      headers: {
-        'X-Amz-Date': `${process.env.REACT_APP_SECRET_KEY}`,
-        'Authorization': `${process.env.REACT_APP_ACCESS_KEY}`,
-        'Access-Control-Allow-Origin': '*'
-      },
-      data : data
-    };
 
-    demoAxios.request(config)
-        .then((response) => {
-          console.log(JSON.stringify(response.data));
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-  }, []);
   const sendOtpHandler = () => {
     axios
       .post(`${process.env.REACT_APP_BASE_URL}/user/sendOtp`, {

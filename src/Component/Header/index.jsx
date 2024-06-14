@@ -49,7 +49,7 @@ const Header = () => {
         <Toolbar disableGutters className={"justify-between"}>
           <p
             className={
-              "text-lg font-bold sm:text-2xl sm:font-extrabold cursor-pointer"
+              "text-xl font-bold sm:text-2xl sm:font-extrabold cursor-pointer"
             }
             onClick={() => navigate("/")}
           >
