@@ -175,12 +175,16 @@ const AddYuva = () => {
       activity: "",
       abroadStudy: "no",
       martialStatus: "",
+      other: null,
     },
     onSubmit: async (values, { resetForm }) => {
       let newValue = { ...values };
       newFieldList?.map((item) => {
         if (item?.title && item?.description) {
-          newValue[item?.title] = item?.description;
+          newValue.other = {
+            ...newValue?.other,
+            [item?.title?.toString().replace(/\s+/g, "_")]: item?.description,
+          };
         }
       });
       if (location?.state) {
@@ -258,7 +262,18 @@ const AddYuva = () => {
     }
     setFieldValue(e.target.name, e.target.value);
   };
-
+  const imageUploadHandler = (file) => {
+    const formData = new FormData();
+    formData.append("image", { ...file, familyId: 1234 });
+    axios
+      .post(`${process.env.REACT_APP_BASE_URL}/image/upload`, formData, {
+        contentType: "multipart/form-data",
+      })
+      .then((res) => {
+        console.log("res  = = = = = = >", res);
+      })
+      .catch((e) => console.log("error  = = = = >", e));
+  };
   const addFieldHandler = () => {
     // setFieldValue(`${newField.title}`,newField.description)
     setNewFieldList((prevState) => [...prevState, newField]);
@@ -529,6 +544,7 @@ const AddYuva = () => {
                           //   url: url,
                           // });
                           setFieldValue("profile", JSON.stringify(file));
+                          // imageUploadHandler(file);
                           // setFieldValue("profile", {
                           //   name: file.name,
                           //   lastModified: file.lastModified,

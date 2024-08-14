@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {CircularProgress, Grid, Paper} from "@mui/material";
+import { CircularProgress, Grid, Paper } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
 import {
@@ -24,7 +24,7 @@ export default function Index() {
 
   useEffect(() => {
     if (loggedIn) {
-      console.log("loggedIn if")
+      console.log("loggedIn if");
       navigate(user?.role === "ADMIN" ? "/" : "/pdf");
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -78,7 +78,6 @@ export default function Index() {
   };
 
   return (
-
     <div className="h-screen flex flex-col justify-center items-center">
       <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold font-WorkBold">
         YUVADARPAN
@@ -113,18 +112,19 @@ export default function Index() {
           />
           <Grid item xs={12}>
             {loading ? (
-                <div className={"text-center text-primary"}>
-                  <CircularProgress color="inherit" />
-                </div>
+              <div className={"text-center text-primary"}>
+                <CircularProgress color="inherit" />
+              </div>
             ) : (
-            <button
-              className={
-                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
-              }
-              onClick={handleSubmit}
-            >
-              Sign In
-            </button>)}
+              <button
+                className={
+                  "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
+                }
+                onClick={handleSubmit}
+              >
+                Sign In
+              </button>
+            )}
           </Grid>
           <Grid item xs={12}>
             <p className="flex justify-center text-sm sm:text-lg cursor-default">

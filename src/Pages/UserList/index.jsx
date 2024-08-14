@@ -21,7 +21,6 @@ import {
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider, useFormik } from "formik";
-import { useNavigate } from "react-router-dom";
 import axios from "../../util/useAxios";
 import * as Yup from "yup";
 const PrimarySwitch = styled(Switch)(({ theme }) => ({
@@ -36,7 +35,6 @@ const PrimarySwitch = styled(Switch)(({ theme }) => ({
   },
 }));
 function Index() {
-  const navigate = useNavigate();
   // eslint-disable-next-line no-unused-vars
   const { notification, setNotification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);

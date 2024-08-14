@@ -56,12 +56,16 @@ const Header = () => {
             YUVADARPAN
           </p>
 
-          {user.user ? (
+          {user?.user ? (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar className={"sm:w-10 w-8 sm:h-10 h-8 bg-white text-primary font-bold uppercase"}>
-                    {user.user.firstName[0] + user.user.lastName[0]}
+                  <Avatar>
+                    {user?.user?.firstName &&
+                      user?.user?.lastName &&
+                      (
+                        user?.user?.firstName[0] + user?.user?.lastName[0]
+                      )?.toUpperCase()}
                   </Avatar>
                 </IconButton>
               </Tooltip>

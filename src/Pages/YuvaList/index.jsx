@@ -99,15 +99,12 @@
 import Header from "../../Component/Header";
 import React, { useEffect, useState } from "react";
 import {
-  Avatar,
   Box,
   Button,
-  ButtonBase,
   Divider,
   Grid,
   Modal,
   Paper,
-  styled,
   Tab,
   Tooltip,
 } from "@mui/material";
@@ -263,26 +260,6 @@ const YuvaList = () => {
       ),
     },
   ];
-  // const toBase64 = file => new Promise((resolve, reject) => {
-  //   if(!file) return reject(new Error("No file found."));
-  //   const reader = new FileReader();
-  //   const newFile=URL.createObjectURL(file)
-  //   reader.readAsDataURL(newFile);
-  //   reader.onload = () => resolve(reader.result);
-  //   reader.onerror = reject;
-  // });
-  const getProfileUrl = (file) => {
-    if (file) {
-      // return URL.createObjectURL(file)
-      // await toBase64(file)
-      // return URL.revokeObjectURL(file);
-      const reader = new FileReader();
-      reader.onloadend = (result) => {
-        console.log("result", result);
-      };
-      reader.readAsDataURL({ File: { ...file } });
-    }
-  };
 
   return (
     <Box>
@@ -376,6 +353,14 @@ const YuvaList = () => {
                   Family ID:{" "}
                   <span className={"font-normal"}>{userData?.familyId}</span>
                 </div>
+                <button
+                  className={"bg-primary text-white p-2 rounded-md mt-2"}
+                  onClick={() =>
+                    navigate("/yuvalist/profile", { state: { ...userData } })
+                  }
+                >
+                  View Details
+                </button>
               </Grid>
               <Grid item xs={1} className={"flex justify-center"}>
                 <CloseIcon
