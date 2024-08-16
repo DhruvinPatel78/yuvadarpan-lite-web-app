@@ -7,8 +7,11 @@ import Dashboard from "./Pages/Dashboard/index";
 import UserList from "./Pages/UserList/index";
 import YuvaList from "./Pages/YuvaList/index";
 import Request from "./Pages/Request/index";
-import UserDashboard from "./Pages/UserDashboard/index";
+// import UserDashboard from "./Pages/UserDashboard/index";
 import ThankYou from "./Pages/ThankYou";
+import AddYuva from "./Pages/AddYuva";
+import Profile from "./Pages/Profile";
+import NewUser from "./Pages/NewUser";
 // import { auth } from "./firebase";
 
 function App() {
@@ -27,15 +30,18 @@ function App() {
   // }, [navigate, pathName]);
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Registration />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/userlist" element={<UserList />} />
-      <Route path="/yuvalist" element={<YuvaList />} />
-      <Route path="/request" element={<Request />} />
-      <Route path="/thankyou" element={<ThankYou />} />
-      <Route path="/userDashboard" element={<UserDashboard />} />
+      <Route path="/" exact element={<Dashboard />} />
+      <Route path="/login" exact element={<Login />} />
+      <Route path="/register" exact element={<Registration />} />
+      <Route path="/dashboard" exact element={<Dashboard />} />
+      <Route path="/userlist" exact element={<UserList />} />
+      <Route path="/yuvalist" exact element={<YuvaList />} />
+      <Route path="/yuvalist/add" exact element={<AddYuva />} />
+      <Route path="/request" exact element={<Request />} />
+      <Route path="/thankyou" exact element={<ThankYou />} />
+      <Route path="/yuvalist/:id" exact element={<Profile />} />
+      <Route path="/pdf" exact element={<NewUser />} />
+      {/*<Route path="/userDashboard" element={<UserDashboard />} />*/}
     </Routes>
   );
 }

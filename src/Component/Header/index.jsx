@@ -49,19 +49,23 @@ const Header = () => {
         <Toolbar disableGutters className={"justify-between"}>
           <p
             className={
-              "text-lg font-bold sm:text-2xl sm:font-extrabold cursor-pointer"
+              "text-xl font-bold sm:text-2xl sm:font-extrabold cursor-pointer"
             }
             onClick={() => navigate("/")}
           >
             YUVADARPAN
           </p>
 
-          {user.user ? (
+          {user?.user ? (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                   <Avatar>
-                    {user.user.firstName[0] + user.user.lastName[0]}
+                    {user?.user?.firstName &&
+                      user?.user?.lastName &&
+                      (
+                        user?.user?.firstName[0] + user?.user?.lastName[0]
+                      )?.toUpperCase()}
                   </Avatar>
                 </IconButton>
               </Tooltip>

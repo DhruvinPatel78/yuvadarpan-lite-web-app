@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 
-function CustomTable({ columns, data = [], pageSize, type, onRowSelectionModelChange, className= '' }) {
+function CustomTable({
+  columns,
+  data = [],
+  pageSize,
+  type,
+  onRowSelectionModelChange,
+  className = "",
+}) {
   const [pagination, setPagination] = useState({
     page: 0,
     pageSize: 10,
@@ -33,10 +40,13 @@ function CustomTable({ columns, data = [], pageSize, type, onRowSelectionModelCh
       sx={{
         "& .MuiDataGrid-menuIconButton .MuiSvgIcon-root, & .MuiDataGrid-sortIcon, & .MuiDataGrid-columnHeaderTitleContainerContent .css-12wnr2w-MuiButtonBase-root-MuiCheckbox-root":
           {
-            color: "white",
+            color: "white !important",
           },
         "& .MuiDataGrid-columnHeader": {
           backgroundColor: "#572a2a",
+        },
+        "& .Mui-checked": {
+          color: "#572a2a !important",
         },
       }}
     />

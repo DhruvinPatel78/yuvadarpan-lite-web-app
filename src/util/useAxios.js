@@ -17,7 +17,7 @@ instance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  },
+  }
 );
 
 instance.interceptors.response.use(
@@ -28,9 +28,11 @@ instance.interceptors.response.use(
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         window.location.href = "/login";
+        throw err;
       }
     }
-  },
+    throw err;
+  }
 );
 
 export default instance;

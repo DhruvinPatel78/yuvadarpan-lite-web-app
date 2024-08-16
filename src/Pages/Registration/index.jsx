@@ -1,15 +1,71 @@
-import React from "react";
+import React, { useState } from "react";
 import { Grid, Link, Paper, Typography } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
-import useRegistration from "./useRegistration";
-import { NotificationSnackbar } from "../../Component/Common/notification";
+import {
+  NotificationData,
+  NotificationSnackbar,
+} from "../../Component/Common/notification";
+import { useNavigate } from "react-router-dom";
+import useAxios from "../../util/useAxios";
+import moment from "moment";
 
 export default function Index() {
-  const {
-    notification,
-    values,
-    action: { getUserData, handleSubmit },
-  } = useRegistration();
+  const navigate = useNavigate();
+  const defaultValue = {
+    familyId: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    mobile: "",
+    email: "",
+    password: "",
+    confirmpassword: "",
+    dob: "",
+  };
+  const [values, setValues] = useState(defaultValue);
+  const { notification, setNotification } = NotificationData();
+  const getUserData = (e) => {
+    let name, value;
+    name = e.target.name;
+    value = e.target.value;
+    setValues({ ...values, [name]: value });
+  };
+  console.log("values", values);
+  const handleSubmit = () => {
+    if (values.password === values.confirmpassword) {
+      try {
+        useAxios
+          .post("/user/signUp", {
+            familyId: values?.familyId,
+            firstName: values?.firstName,
+            middleName: values?.middleName,
+            lastName: values?.lastName,
+            email: values?.email,
+            mobile: values?.mobile,
+            password: values?.password,
+            dob: moment(values?.dob).format(),
+            active: true,
+            allowed: false,
+            role: "USER",
+          })
+          .then((res) => {
+            setValues(defaultValue);
+            setNotification({ type: "success", message: "Success !" });
+            navigate("/thankyou");
+          });
+      } catch (e) {
+        setNotification({
+          type: "error",
+          message: e.response.data.message,
+        });
+      }
+    } else {
+      setNotification({
+        type: "error",
+        message: "confirm password not matched !",
+      });
+    }
+  };
   return (
     <Grid className="h-screen flex justify-center items-center">
       <Paper
@@ -97,17 +153,27 @@ export default function Index() {
           />
           <CustomInput
             type={"number"}
-            xs={12}
+            xs={6}
             label={"Family Id"}
             placeholder={"Enter Your Family Id"}
             name="familyId"
             onChange={getUserData}
             value={values.familyId}
           />
+          <CustomInput
+            type={"date"}
+            xs={6}
+            label={"DOB"}
+            placeholder={"Select Your DOB"}
+            name="dob"
+            onChange={getUserData}
+            value={values.dob}
+            focused
+          />
           <Grid item xs={12}>
             <button
               className={
-                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
+                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-semibold"
               }
               onClick={handleSubmit}
             >
@@ -119,7 +185,7 @@ export default function Index() {
               Do you have an account ?
               <Link
                 href={"/login"}
-                className="px-1 !text-[#572a2a] !font-black !no-underline"
+                className="px-1 !text-[#572a2a] !no-underline font-semibold"
               >
                 Sign In
               </Link>
