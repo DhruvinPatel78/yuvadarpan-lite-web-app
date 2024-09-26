@@ -12,6 +12,7 @@ import ThankYou from "./Pages/ThankYou";
 import AddYuva from "./Pages/AddYuva";
 import Profile from "./Pages/Profile";
 import NewUser from "./Pages/NewUser";
+import Status from "./Pages/Status";
 // import { auth } from "./firebase";
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
       <Route path="/thankyou" exact element={<ThankYou />} />
       <Route path="/yuvalist/:id" exact element={<Profile />} />
       <Route path="/pdf" exact element={<NewUser />} />
+      <Route path="/status" exact element={<Status />} />
       {/*<Route path="/userDashboard" element={<UserDashboard />} />*/}
     </Routes>
   );
