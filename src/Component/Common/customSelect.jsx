@@ -14,8 +14,9 @@ const PrimarySelect = styled(Select)`
   & .MuiSelect-root {
     color: #572a2a;
   }
-  & .MuiSelect-root, .MuiFormLabel-root-MuiInputLabel-root .Mui-focused {
-      color: #572a2a !important;
+  & .MuiSelect-root,
+  .MuiFormLabel-root-MuiInputLabel-root .Mui-focused {
+    color: #572a2a !important;
   }
 
   & .MuiSvgIcon-root {
@@ -46,7 +47,8 @@ export default function CustomSelect({
   value,
   errors,
   onChange,
-  required = true,
+  onBlur,
+  required = false,
   ...rest
 }) {
   return (
@@ -63,6 +65,7 @@ export default function CustomSelect({
           onChange={onChange}
           fullWidth
           required={required}
+          onBlur={onBlur}
         >
           <MenuItem value="">
             <em>None</em>

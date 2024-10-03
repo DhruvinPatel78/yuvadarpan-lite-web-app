@@ -21,14 +21,18 @@ export default function CustomRadio({
   value,
   errors,
   onChange,
-    className,
+  className,
+  onBlur,
   required = true,
   ...rest
 }) {
   return (
     <Grid item {...rest}>
       <FormControl>
-        <FormLabel id={`demo-controlled-radio-buttons-group-${name}`} className={"text-primary"}>
+        <FormLabel
+          id={`demo-controlled-radio-buttons-group-${name}`}
+          className={"text-primary"}
+        >
           {label}
         </FormLabel>
         <PrimaryRadioGroup
@@ -38,6 +42,7 @@ export default function CustomRadio({
           onChange={onChange}
           required
           className={className}
+          onBlur={onBlur}
         >
           {list.map((data, index) => {
             return (
