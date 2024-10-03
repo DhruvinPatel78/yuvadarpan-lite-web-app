@@ -70,7 +70,7 @@ export default function Index() {
     <Grid className="h-screen flex justify-center items-center">
       <Paper
         elevation={20}
-        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
+        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[600px]"
       >
         <Grid container spacing={2}>
           <Grid item xs={12}>

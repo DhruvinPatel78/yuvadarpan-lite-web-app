@@ -23,7 +23,7 @@ const CustomInput = ({
   focused,
   errors,
   multiline,
-  required = true,
+  required = false,
   onBlur,
   ...rest
 }) => {

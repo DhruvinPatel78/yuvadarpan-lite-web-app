@@ -35,6 +35,7 @@ export default function CustomAutoComplete({
   defaultValue,
   disabled,
   onChange,
+  onBlur,
   required = true,
   ...rest
 }) {
@@ -48,8 +49,11 @@ export default function CustomAutoComplete({
         name={name}
         options={list}
         className={className}
-        renderInput={(params) => <TextField {...params} name={name} label={label} />}
+        renderInput={(params) => (
+          <TextField {...params} name={name} label={label} />
+        )}
         onSelect={onChange}
+        onBlur={onBlur}
         required
       />
       {errors && (

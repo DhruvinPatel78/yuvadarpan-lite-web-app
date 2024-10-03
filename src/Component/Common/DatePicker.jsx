@@ -2,7 +2,7 @@ import * as React from "react";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import {Grid, styled, TextField} from "@mui/material";
+import { Grid, styled } from "@mui/material";
 
 const PrimaryDateTimePicker = styled(DateTimePicker)`
   & label.Mui-focused {
@@ -26,14 +26,27 @@ const DatePicker = ({
   name,
   focused,
   errors,
+  onBlur,
   required = true,
   ...rest
 }) => {
   return (
     <Grid item {...rest}>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <PrimaryDateTimePicker fullWidth label={label} {...rest} className={'w-full'} />
+        <PrimaryDateTimePicker
+          fullWidth
+          value={value}
+          label={label}
+          name={name}
+          onChange={onChange}
+          onBlur={onBlur}
+          {...rest}
+          className={"w-full"}
+        />
       </LocalizationProvider>
+      {errors && (
+        <div className={"text-error text-sm transition-all"}>{errors}</div>
+      )}
     </Grid>
   );
 };

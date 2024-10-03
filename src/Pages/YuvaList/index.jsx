@@ -260,7 +260,7 @@ const YuvaList = () => {
       ),
     },
   ];
-
+  console.log("userData = = = =>", userData);
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -327,7 +327,7 @@ const YuvaList = () => {
                   <ImageSrc
                     style={{
                       backgroundImage:
-                        // `url(${userData?.profile?.url})` ||
+                        `url(${userData?.profile?.url})` ||
                         `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
                     }}
                     className={"m-2"}

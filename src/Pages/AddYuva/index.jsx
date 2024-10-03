@@ -19,7 +19,6 @@ import RemoveOutlinedIcon from "@mui/icons-material/RemoveOutlined";
 import * as Yup from "yup";
 import axios from "../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
-import moment from "moment";
 import CustomSelect from "../../Component/Common/customSelect";
 import DatePicker from "../../Component/Common/DatePicker";
 
@@ -144,12 +143,13 @@ const AddYuva = () => {
       lastName: "",
       motherName: "",
       familyId: "",
-      dob: "",
+      dob: null,
       pob: "",
       email: "",
       firm: "",
       country: "",
       firmAddress: "",
+      address: "",
       state: "",
       city: "",
       native: "",
@@ -167,11 +167,12 @@ const AddYuva = () => {
         city: "",
         native: "",
       },
-      profile: null,
-      // profile: {
-      //   name: "",
-      //   url: "",
-      // },
+      profile: {
+        name: "",
+        url: "",
+        awsId: "",
+      },
+      profileName: "",
       activity: "",
       abroadStudy: "no",
       martialStatus: "",
@@ -196,60 +197,57 @@ const AddYuva = () => {
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
-      // fatherName: Yup.string().required("Required"),
       motherName: Yup.string().required("Required"),
-      middleName: Yup.string().required("Required"),
-      // mamasName: Yup.string().required("Required"),
-      // profile: Yup.string().required("Required"),
-      // contactPersonName: Yup.string().required("Required"),
-      // education: Yup.string().required("Required"),
-      // relation: Yup.string().required("Required"),
-      // bloodGroup: Yup.string().required("Required"),
+      fatherName: Yup.string().required("Required"),
+      grandFatherName: Yup.string().required("Required"),
+      pob: Yup.string().required("Required"),
+      profileName: Yup.string().required("Required"),
+      dob: Yup.date().required("Required"),
       height: Yup.string().required("Required"),
       weight: Yup.string().required("Required"),
       firm: Yup.string().required("Required"),
       firmAddress: Yup.string().required("Required"),
+      address: Yup.string().required("Required"),
       state: Yup.string().required("Required"),
       city: Yup.string().required("Required"),
       native: Yup.string().required("Required"),
+      education: Yup.string().required("Required"),
       contactInfo: Yup.object({
         name: Yup.string().required("Required"),
         relation: Yup.string().required("Required"),
-        phone: Yup.number().typeError("Must be a number").required("Required"),
+        phone: Yup.number().typeError("Must be a Number").required("Required"),
       }),
-      // profile: Yup.object({
-      //   name: Yup.string().required("Required"),
-      // }),
-      // mamasCity: Yup.string().required("Required"),
-      // mamasNative: Yup.string().required("Required"),
+      mamaInfo: Yup.object({
+        name: Yup.string().required("Required"),
+        native: Yup.string().required("Required"),
+        city: Yup.string().required("Required"),
+      }),
       lastName: Yup.string().required("Required"),
+      bloodGroup: Yup.string().required("Required"),
       country: Yup.string().required("Required"),
-      dob: Yup.date().required("Required"),
       familyId: Yup.number()
-        .typeError("Must be a number")
+        .typeError("Must be a Number")
         .positive()
         .required("Required"),
-
-      // contactPersonPhone: Yup.number()
-      //   .typeError("Must be a number")
-      //   .required("Required"),
       activity: Yup.string().required("Required"),
       abroadStudy: Yup.string().required("Required"),
       email: Yup.string().required("Required"),
       martialStatus: Yup.string().required("Required"),
     }),
   });
-  const { errors, values, setValues, setFieldValue, resetForm } = formik;
+  const {
+    isSubmitting,
+    errors,
+    values,
+    setValues,
+    setFieldValue,
+    resetForm,
+    touched,
+    handleChange,
+    handleBlur,
+  } = formik;
 
   const fieldValueChangeHandler = (e) => {
-    console.log("name : ", e, e.target.name, "value : ", e.target.value);
-    // if (e.target.name === "country") {
-    //   console.log("co");
-    //   countries.map((countryData) => {
-    //     console.log(countryData);
-    //   });
-    //   // setStateSelected(e.target.value)
-    // } else
     if (e.target.name === "state") {
       states.map((stateData) => {
         if (stateData.name === e.target.value) {
@@ -257,22 +255,22 @@ const AddYuva = () => {
         }
       });
     } else if (e.target.name === "City") {
-      console.log("c");
       // setCitySelected(e.target.value)
     }
     setFieldValue(e.target.name, e.target.value);
   };
   const imageUploadHandler = (file) => {
     const formData = new FormData();
-    formData.append("image", { ...file, familyId: 1234 });
+    formData.append("image", file);
     axios
       .post(`${process.env.REACT_APP_BASE_URL}/image/upload`, formData, {
         contentType: "multipart/form-data",
       })
       .then((res) => {
-        console.log("res  = = = = = = >", res);
+        setFieldValue("profile", res?.data?.data);
+        setFieldValue("profileName", res?.data?.data?.name);
       })
-      .catch((e) => console.log("error  = = = = >", e));
+      .catch((e) => console.log("error API  = = = = >", e));
   };
   const addFieldHandler = () => {
     // setFieldValue(`${newField.title}`,newField.description)
@@ -305,11 +303,6 @@ const AddYuva = () => {
     // getCityByState();
   }, []);
 
-  const hasError = Object.keys(errors).length;
-
-  console.log("value : >>", values);
-  console.log("state : >>", stateList);
-
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -335,32 +328,47 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.firstName}
-                    onChange={fieldValueChangeHandler}
-                    errors={errors?.firstName}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    errors={
+                      touched?.firstName &&
+                      errors?.firstName &&
+                      errors?.firstName
+                    }
                   />
                   <CustomInput
                     type={"text"}
                     label={"Father Name"}
                     placeholder={"Enter Your Father Name"}
-                    name={"middleName"}
+                    name={"fatherName"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.middleName}
-                    errors={errors?.middleName}
-                    onChange={fieldValueChangeHandler}
+                    value={values?.fatherName}
+                    errors={
+                      touched?.fatherName &&
+                      errors?.fatherName &&
+                      errors?.fatherName
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
                     label={"Grand Father Name"}
                     placeholder={"Enter Your Grand Father Name"}
-                    name={"middleName"}
+                    name={"grandFatherName"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.middleName}
-                    errors={errors?.middleName}
-                    onChange={fieldValueChangeHandler}
+                    value={values?.grandFatherName}
+                    errors={
+                      touched?.grandFatherName &&
+                      errors?.grandFatherName &&
+                      errors?.grandFatherName
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -371,8 +379,11 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.lastName}
-                    errors={errors?.lastName}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.lastName && errors?.lastName && errors?.lastName
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -383,8 +394,13 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.motherName}
-                    errors={errors?.motherName}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.motherName &&
+                      errors?.motherName &&
+                      errors?.motherName
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -395,18 +411,23 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.familyId}
-                    errors={errors?.familyId}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.familyId && errors?.familyId && errors?.familyId
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <DatePicker
                     name={"dob"}
                     xs={12}
                     sm={6}
                     md={4}
-                    label={"Date and Time of Birth"}
-                    value={moment(values?.dob).format("YYYY-MM-DD")}
-                    errors={errors?.dob}
-                    onChange={fieldValueChangeHandler}
+                    placeholder="Date and Time of Birth"
+                    label={"dob"}
+                    value={values?.dob}
+                    errors={touched?.dob && errors?.dob && errors?.dob}
+                    onBlur={handleBlur}
+                    onChange={(e) => setFieldValue("dob", e)}
                   />
                   <CustomInput
                     type={"text"}
@@ -416,9 +437,10 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.email}
-                    errors={errors?.email}
-                    onChange={fieldValueChangeHandler}
+                    value={values?.pob}
+                    errors={touched?.pob && errors?.pob && errors?.pob}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -429,8 +451,9 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.email}
-                    errors={errors?.email}
-                    onChange={fieldValueChangeHandler}
+                    errors={touched?.email && errors?.email && errors?.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -441,22 +464,24 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.firm}
-                    errors={errors?.firm}
-                    onChange={fieldValueChangeHandler}
+                    errors={touched?.firm && errors?.firm && errors?.firm}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={countryList}
                     label={"Country"}
                     placeholder={"Select Your Country"}
                     name={"country"}
-                    defaultValue={"India"}
-                    disabled={true}
                     xs={12}
                     sm={6}
                     md={4}
                     value={values?.country}
-                    errors={errors?.country}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.country && errors?.country && errors?.country
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={stateList}
@@ -467,8 +492,9 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.state}
-                    errors={errors?.state}
+                    errors={touched?.state && errors?.state && errors?.state}
                     onChange={fieldValueChangeHandler}
+                    onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={cityList}
@@ -479,8 +505,9 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.city}
-                    errors={errors?.city}
-                    onChange={fieldValueChangeHandler}
+                    errors={touched?.city && errors?.city && errors?.city}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -491,10 +518,11 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.native}
-                    errors={errors?.native}
-                    onChange={fieldValueChangeHandler}
+                    errors={touched.native && errors?.native && errors?.native}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
-                  {values?.profile?.name ? (
+                  {values?.profileName ? (
                     <Grid item xs={4} className={"flex items-center"}>
                       <span
                         className={
@@ -505,12 +533,12 @@ const AddYuva = () => {
                           className={"ellipsis"}
                           onClick={() => setShowProfileModal(!showProfileModal)}
                         >
-                          {values?.profile?.name}
+                          {values?.profileName}
                         </span>
                         <CloseOutlinedIcon
                           onClick={() => {
+                            setFieldValue("profileName", null);
                             setFieldValue("profile", null);
-                            // setFieldValue("profileUrl", "");
                           }}
                         />
                       </span>
@@ -520,43 +548,24 @@ const AddYuva = () => {
                       type={"file"}
                       label={"Profile"}
                       placeholder={"Enter Your City"}
-                      name={"profile"}
+                      name={"profileName"}
                       xs={12}
                       sm={6}
                       md={4}
                       focused
-                      value={values?.profile?.name}
-                      // errors={errors?.profile?.name}
+                      value={values?.profileName}
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          // const url = URL.createObjectURL(file);
-                          // const reader = new FileReader();
-                          const reader = new FileReader();
-                          reader.onloadend = (result) => {
-                            console.log("result", result);
-                          };
-                          reader.readAsDataURL(file);
-                          // reader.onloadend = () => {
-                          // setFieldValue("profileUrl", url);
-                          // setFieldValue("profile", {
-                          //   name: file?.name,
-                          //   url: url,
-                          // });
-                          setFieldValue("profile", JSON.stringify(file));
-                          // imageUploadHandler(file);
-                          // setFieldValue("profile", {
-                          //   name: file.name,
-                          //   lastModified: file.lastModified,
-                          //   lastModifiedDate: new Date(file.lastModified),
-                          //   size: file.size,
-                          //   type: file.type,
-                          //   webkitRelativePath: file.webkitRelativePath,
-                          // });
-                          // };
-                          // reader.readAsDataURL(file);
+                          imageUploadHandler(file);
                         }
                       }}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.profileName &&
+                        errors?.profileName &&
+                        errors?.profileName
+                      }
                     />
                   )}
                   <CustomInput
@@ -569,8 +578,13 @@ const AddYuva = () => {
                     sm={6}
                     md={6}
                     value={values?.firmAddress}
-                    errors={errors?.firmAddress}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.firmAddress &&
+                      errors?.firmAddress &&
+                      errors?.firmAddress
+                    }
+                    onBlur={handleBlur}
+                    onChange={handleChange}
                   />
                   <CustomInput
                     type={"text"}
@@ -581,9 +595,12 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={6}
-                    value={values?.firmAddress}
-                    errors={errors?.firmAddress}
-                    onChange={fieldValueChangeHandler}
+                    value={values?.address}
+                    errors={
+                      touched?.address && errors?.address && errors?.address
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -594,8 +611,9 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.height}
-                    errors={errors?.height}
-                    onChange={fieldValueChangeHandler}
+                    errors={touched?.height && errors?.height && errors?.height}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -606,8 +624,9 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.weight}
-                    errors={errors?.weight}
-                    onChange={fieldValueChangeHandler}
+                    errors={touched?.weight && errors?.weight && errors?.weight}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomSelect
                     list={[
@@ -624,8 +643,11 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.activity}
-                    errors={errors?.activity}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.activity && errors?.activity && errors?.activity
+                    }
+                    onBlur={handleBlur}
+                    onChange={handleChange}
                   />
                   <CustomSelect
                     list={["Single", "Engaged", "Divorce", "Married"]}
@@ -636,8 +658,13 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.martialStatus}
-                    errors={errors?.martialStatus}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.martialStatus &&
+                      errors?.martialStatus &&
+                      errors?.martialStatus
+                    }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                   <CustomRadio
                     list={[
@@ -650,9 +677,14 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.abroadStudy}
-                    errors={errors?.abroadStudy}
+                    errors={
+                      touched?.abroadStudy &&
+                      errors?.abroadStudy &&
+                      errors?.abroadStudy
+                    }
                     className={"flex flex-row"}
-                    onChange={fieldValueChangeHandler}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                   />
                 </Grid>
               </Grid>
@@ -680,8 +712,12 @@ const AddYuva = () => {
                         name: e.target.value,
                       })
                     }
-                    // errors={errors?.mamasName}
-                    // onChange={fieldValueChangeHandler}
+                    onBlur={handleBlur}
+                    errors={
+                      touched?.mamaInfo?.name &&
+                      errors?.mamaInfo?.name &&
+                      errors?.mamaInfo?.name
+                    }
                   />
                   <CustomInput
                     type={"text"}
@@ -693,12 +729,17 @@ const AddYuva = () => {
                     md={4}
                     value={values?.mamaInfo?.native}
                     required={false}
-                    // errors={errors?.mamasCity}
                     onChange={(e) =>
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
                         native: e.target.value,
                       })
+                    }
+                    onBlur={handleBlur}
+                    errors={
+                      touched?.mamaInfo?.native &&
+                      errors?.mamaInfo?.native &&
+                      errors?.mamaInfo?.native
                     }
                   />
                   <CustomInput
@@ -711,12 +752,17 @@ const AddYuva = () => {
                     md={4}
                     value={values?.mamaInfo.city}
                     required={false}
-                    // errors={errors?.mamasCity}
                     onChange={(e) =>
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
                         city: e.target.value,
                       })
+                    }
+                    onBlur={handleBlur}
+                    errors={
+                      errors?.mamaInfo?.city &&
+                      errors?.mamaInfo?.city &&
+                      errors?.mamaInfo?.city
                     }
                   />
                 </Grid>
@@ -738,7 +784,12 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.contactInfo?.name}
-                    errors={errors?.contactInfo?.name}
+                    errors={
+                      touched?.contactInfo?.name &&
+                      errors?.contactInfo?.name &&
+                      errors?.contactInfo?.name
+                    }
+                    onBlur={handleBlur}
                     onChange={(e) =>
                       setFieldValue("contactInfo", {
                         ...values?.contactInfo,
@@ -755,7 +806,12 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.contactInfo?.phone}
-                    errors={errors?.contactInfo?.phone}
+                    errors={
+                      touched?.contactInfo?.phone &&
+                      errors?.contactInfo?.phone &&
+                      errors?.contactInfo?.phone
+                    }
+                    onBlur={handleBlur}
                     onChange={(e) =>
                       setFieldValue("contactInfo", {
                         ...values?.contactInfo,
@@ -780,7 +836,12 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.contactInfo?.relation}
-                    errors={errors?.contactInfo?.relation}
+                    errors={
+                      touched?.contactInfo?.relation &&
+                      errors?.contactInfo?.relation &&
+                      errors?.contactInfo?.relation
+                    }
+                    onBlur={handleBlur}
                     onChange={(e) =>
                       setFieldValue("contactInfo", {
                         ...values?.contactInfo,
@@ -812,8 +873,12 @@ const AddYuva = () => {
                     md={4}
                     value={values?.education}
                     required={false}
-                    // errors={errors?.education}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.education &&
+                      errors?.education &&
+                      errors?.education
+                    }
+                    onChange={handleChange}
                   />
                   <CustomSelect
                     list={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]}
@@ -825,8 +890,13 @@ const AddYuva = () => {
                     md={4}
                     value={values?.bloodGroup}
                     required={false}
-                    // errors={errors?.bloodGroup}
-                    onChange={fieldValueChangeHandler}
+                    errors={
+                      touched?.bloodGroup &&
+                      errors?.bloodGroup &&
+                      errors?.bloodGroup
+                    }
+                    onBlur={handleBlur}
+                    onChange={handleChange}
                   />
                 </Grid>
               </Grid>
@@ -918,11 +988,11 @@ const AddYuva = () => {
                   <CircularProgress color="secondary" />
                 ) : (
                   <button
-                    className={`bg-[#572a2a] text-white sm:w-[200px] w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold transition-all ${
-                      hasError ? "opacity-50" : "opacity-100"
+                    className={`bg-[#572a2a] text-white sm:w-[200px] w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold transition-all  ${
+                      isSubmitting ? "cursor-not-allowed" : "cursor-pointer"
                     }}`}
                     type={"submit"}
-                    disabled={hasError}
+                    disabled={isSubmitting}
                   >
                     Add New Yuva
                   </button>
@@ -956,7 +1026,7 @@ const AddYuva = () => {
               onClick={() => setShowProfileModal(!showProfileModal)}
             />
           </div>
-          {/*<img alt={values?.profile?.name} src={values?.profile?.url} />*/}
+          <img alt={values?.profile?.name} src={values?.profile?.url} />
         </Paper>
       </Modal>
     </Box>
