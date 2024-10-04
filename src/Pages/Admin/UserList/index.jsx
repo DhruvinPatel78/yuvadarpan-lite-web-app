@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import CustomTable from "../../Component/Common/customTable";
+import CustomTable from "../../../Component/Common/customTable";
 import {
   alpha,
   Box,
@@ -13,16 +13,18 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Header from "../../Component/Header";
+import Header from "../../../Component/Header";
 import {
   NotificationData,
   NotificationSnackbar,
-} from "../../Component/Common/notification";
+} from "../../../Component/Common/notification";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider, useFormik } from "formik";
-import axios from "../../util/useAxios";
+import axios from "../../../util/useAxios";
 import * as Yup from "yup";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 const PrimarySwitch = styled(Switch)(({ theme }) => ({
   "& .MuiSwitch-switchBase.Mui-checked": {
     color: "#542b2b",
@@ -36,10 +38,18 @@ const PrimarySwitch = styled(Switch)(({ theme }) => ({
 }));
 function Index() {
   // eslint-disable-next-line no-unused-vars
+  const navigate = useNavigate();
   const { notification, setNotification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { loggedIn, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!loggedIn) {
+      navigate("/login");
+    }
+  }, []);
 
   const formik = useFormik({
     initialValues: {
@@ -161,7 +171,7 @@ function Index() {
         [field]: action,
       })
       .then((res) =>
-        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })))
+        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id }))),
       );
   };
 

@@ -2,25 +2,35 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, Grid, Modal, Paper, Tooltip } from "@mui/material";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
-import CustomTable from "../../Component/Common/customTable";
-import Header from "../../Component/Header";
-import CustomTextFieldInfo from "../../Component/Common/customTextFieldInfo";
+import CustomTable from "../../../Component/Common/customTable";
+import Header from "../../../Component/Header";
+import CustomTextFieldInfo from "../../../Component/Common/customTextFieldInfo";
 import {
   NotificationData,
   NotificationSnackbar,
-} from "../../Component/Common/notification";
+} from "../../../Component/Common/notification";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import axios from "../../util/useAxios";
+import axios from "../../../util/useAxios";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 export default function Index() {
+  const navigate = useNavigate();
   const { notification, setNotification } = NotificationData();
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   // const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const { loggedIn, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!loggedIn) {
+      navigate("/login");
+    }
+  }, []);
 
   useEffect(() => {
     handleRequestList();

@@ -51,7 +51,11 @@ export default function Index() {
           setNotification({ message: "Login Success", type: "success" });
           setTimeout(() => {
             setLoading(false);
-            navigate(res?.data?.data?.role === "ADMIN" ? "/" : "/pdf");
+            navigate(
+              res?.data?.data?.role === "ADMIN"
+                ? "/admin/dashboard"
+                : "/dashboard",
+            );
           }, 1000);
         })
         .catch((err) => {
@@ -70,8 +74,8 @@ export default function Index() {
           !values.email && !values.password
             ? "Email and Password are required."
             : !values.email
-            ? "Email is required."
-            : "Password is required.",
+              ? "Email is required."
+              : "Password is required.",
         type: "error",
       });
     }
@@ -100,6 +104,7 @@ export default function Index() {
             xs={12}
             onChange={getUserData}
             value={values.email}
+            disabled={loading}
           />
           <CustomInput
             type={"password"}
@@ -109,29 +114,24 @@ export default function Index() {
             xs={12}
             onChange={getUserData}
             value={values.password}
+            disabled={loading}
           />
           <Grid item xs={12}>
-            {loading ? (
-              <div className={"text-center text-primary"}>
-                <CircularProgress color="inherit" />
-              </div>
-            ) : (
-              <button
-                className={
-                  "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
-                }
-                onClick={handleSubmit}
-              >
-                Sign In
-              </button>
-            )}
+            <button
+              className={
+                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
+              }
+              onClick={loading ? () => {} : handleSubmit}
+            >
+              {loading ? <CircularProgress color="inherit" /> : "Sign In"}
+            </button>
           </Grid>
           <Grid item xs={12}>
             <p className="flex justify-center text-sm sm:text-lg cursor-default">
               Create a new account?
               <span
-                className="px-1 text-[#572a2a] font-black no-underline text-sm sm:text-lg cursor-pointer"
-                onClick={() => navigate("/register")}
+                className={`px-1 font-black text-[#572a2a] no-underline text-sm sm:text-lg cursor-pointer`}
+                onClick={loading ? () => {} : () => navigate("/register")}
               >
                 Registration
               </span>

@@ -96,7 +96,7 @@
 //
 // export default Index;
 
-import Header from "../../Component/Header";
+import Header from "../../../Component/Header";
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -108,7 +108,7 @@ import {
   Tab,
   Tooltip,
 } from "@mui/material";
-import CustomTable from "../../Component/Common/customTable";
+import CustomTable from "../../../Component/Common/customTable";
 import moment from "moment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
@@ -117,14 +117,26 @@ import AddIcon from "@mui/icons-material/Add";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
-import axios from "../../util/useAxios";
-import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
+import axios from "../../../util/useAxios";
+import {
+  ImageBackdrop,
+  ImageButton,
+  ImageSrc,
+} from "../../../Component/constant";
+import { useSelector } from "react-redux";
 
 const YuvaList = () => {
   const navigate = useNavigate();
   const [yuvaList, setYuvaList] = useState([]);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
+  const { loggedIn, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!loggedIn) {
+      navigate("/login");
+    }
+  }, []);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -320,7 +332,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank"
+                      "_blank",
                     )
                   }
                 >

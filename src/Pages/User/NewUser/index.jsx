@@ -3,13 +3,13 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardDoubleArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardDoubleArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
-import yuvaPDF from "../YuvaList/yuva.pdf";
-import Header from "../../Component/Header";
-import CustomAutoComplete from "../../Component/Common/customAutoComplete";
+import yuvaPDF from "../../../Component/Common/yuva.pdf";
+import Header from "../../../Component/Header";
+import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import { Document, Page, pdfjs } from "react-pdf";
-import axios from "../../util/useAxios";
+import axios from "../../../util/useAxios";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const PdfPaginationBtn = ({ children, disabled, onClick }) => {

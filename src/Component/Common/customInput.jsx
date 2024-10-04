@@ -24,6 +24,7 @@ const CustomInput = ({
   errors,
   multiline,
   required = false,
+                       disabled = false,
   onBlur,
   ...rest
 }) => {
@@ -44,6 +45,7 @@ const CustomInput = ({
         required={required}
         focused={focused}
         onBlur={onBlur}
+        disabled={disabled}
       />
       {errors && (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
