@@ -215,7 +215,12 @@ const AddYuva = () => {
       contactInfo: Yup.object({
         name: Yup.string().required("Required"),
         relation: Yup.string().required("Required"),
-        phone: Yup.number().typeError("Must be a Number").required("Required"),
+        phone: Yup.string()
+          .matches(
+            "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
+            "Phone Number must be correct"
+          )
+          .required("Required"),
       }),
       mamaInfo: Yup.object({
         name: Yup.string().required("Required"),
@@ -231,7 +236,12 @@ const AddYuva = () => {
         .required("Required"),
       activity: Yup.string().required("Required"),
       abroadStudy: Yup.string().required("Required"),
-      email: Yup.string().required("Required"),
+      email: Yup.string()
+        .matches(
+          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+          "Invalid email address format"
+        )
+        .required("Required"),
       martialStatus: Yup.string().required("Required"),
     }),
   });
@@ -241,7 +251,6 @@ const AddYuva = () => {
     values,
     setValues,
     setFieldValue,
-    resetForm,
     touched,
     handleChange,
     handleBlur,
