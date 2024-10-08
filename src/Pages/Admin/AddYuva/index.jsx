@@ -489,7 +489,7 @@ const AddYuva = () => {
                     errors={
                       touched?.country && errors?.country && errors?.country
                     }
-                    onChange={handleChange}
+                    onSelect={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
@@ -502,7 +502,7 @@ const AddYuva = () => {
                     md={4}
                     value={values?.state}
                     errors={touched?.state && errors?.state && errors?.state}
-                    onChange={fieldValueChangeHandler}
+                    onSelect={fieldValueChangeHandler}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
@@ -515,7 +515,7 @@ const AddYuva = () => {
                     md={4}
                     value={values?.city}
                     errors={touched?.city && errors?.city && errors?.city}
-                    onChange={handleChange}
+                    onSelect={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomInput

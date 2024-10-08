@@ -95,7 +95,7 @@ export default function NewUser() {
             label={"City"}
             list={cityListEn}
             value={city}
-            onChange={handleCityChange}
+            onSelect={handleCityChange}
             className={"sm:w-84 w-96"}
             placeholder={"Select City"}
             name={"city"}

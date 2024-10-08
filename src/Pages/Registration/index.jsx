@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Grid, Link, Paper, Typography } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import {
@@ -10,10 +10,39 @@ import useAxios from "../../util/useAxios";
 import moment from "moment";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
+import CustomAutoComplete from "../../Component/Common/customAutoComplete";
+import axios from "../../util/useAxios";
 
 export default function Index() {
   const navigate = useNavigate();
   const { notification, setNotification } = NotificationData();
+  const [regionList, setRegionList] = useState([]);
+  const [samajList, setSamajList] = useState([]);
+  const [lastNameList, setLastNameList] = useState([]);
+
+  const getRegionList = () => {
+    axios.get(`${process.env.REACT_APP_BASE_URL}/region/list`).then((res) => {
+      const newList = res.data.map((data) => ({
+        ...data,
+        label: data.name,
+        value: data.id,
+      }));
+      setRegionList(newList);
+    });
+  };
+
+  const getSamajList = (regionId) => {
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
+      .then((res) => {
+        setSamajList(res.data);
+      });
+  };
+
+  useEffect(() => {
+    getRegionList();
+  }, []);
+
   const handleSubmit = (value) => {
     if (value.password === value.confirmPassword) {
       try {
@@ -59,7 +88,7 @@ export default function Index() {
       password: "",
       confirmPassword: "",
       dob: "",
-      regin: "",
+      region: "",
       localSamaj: "",
     },
     validationSchema: Yup.object({
@@ -68,11 +97,11 @@ export default function Index() {
       familyId: Yup.string().required("Required"),
       lastName: Yup.string().required("Required"),
       localSamaj: Yup.string().required("Required"),
-      regin: Yup.string().required("Required"),
+      region: Yup.string().required("Required"),
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
+          "Invalid email address format",
         )
         .required("Required"),
       mobile: Yup.string()
@@ -87,8 +116,16 @@ export default function Index() {
       resetForm();
     },
   });
-  const { isSubmitting, errors, values, touched, handleChange, handleBlur } =
-    formik;
+  const {
+    isSubmitting,
+    setFieldValue,
+    errors,
+    values,
+    touched,
+    handleChange,
+    handleBlur,
+  } = formik;
+
   return (
     <Grid className="h-screen flex justify-center items-center">
       <Paper
@@ -134,14 +171,16 @@ export default function Index() {
                   touched.middleName && errors.middleName && errors.middleName
                 }
               />
-              <CustomInput
-                type={"text"}
+              <CustomAutoComplete
+                list={lastNameList}
+                label={"Last Name"}
+                placeholder={"Select Your Last Name"}
                 xs={12}
                 md={4}
-                label={"Last Name"}
-                placeholder={"Enter Your Last Name"}
                 name="lastName"
-                onChange={handleChange}
+                onChange={(e, lastName) => {
+                  setFieldValue("lastName", lastName.id);
+                }}
                 onBlur={handleBlur}
                 errors={touched.lastName && errors.lastName && errors.lastName}
                 value={values.lastName}
@@ -198,31 +237,38 @@ export default function Index() {
                   errors.confirmPassword
                 }
               />
-              <CustomInput
-                type={"text"}
+              <CustomAutoComplete
+                list={regionList}
+                label={"Region"}
+                placeholder={"Select Your Region"}
+                name={"region"}
                 xs={12}
                 md={6}
-                label={"Regin"}
-                placeholder={"Enter Your Regin"}
-                name="regin"
-                onChange={handleChange}
+                value={values?.region}
+                errors={touched?.region && errors?.region && errors?.region}
+                onChange={(e, region) => {
+                  setFieldValue("region", region.id);
+                  getSamajList(region.id);
+                }}
                 onBlur={handleBlur}
-                errors={touched.regin && errors.regin && errors.regin}
-                value={values.regin}
-              />{" "}
-              <CustomInput
-                type={"text"}
-                xs={12}
-                md={6}
+              />
+              <CustomAutoComplete
+                list={samajList}
                 label={"Local Samaj"}
-                placeholder={"Enter Your Samaj"}
-                name="localSamaj"
-                onChange={handleChange}
-                onBlur={handleBlur}
+                placeholder={"Select Your Samaj"}
+                name={"localSamaj"}
+                xs={12}
+                md={6}
+                value={values?.localSamaj}
                 errors={
-                  touched.localSamaj && errors.localSamaj && errors.localSamaj
+                  touched?.localSamaj &&
+                  errors?.localSamaj &&
+                  errors?.localSamaj
                 }
-                value={values.localSamaj}
+                onChange={(e, localSamaj) => {
+                  setFieldValue("localSamaj", localSamaj.id);
+                }}
+                onBlur={handleBlur}
               />
               <CustomInput
                 type={"number"}
@@ -256,6 +302,14 @@ export default function Index() {
                 >
                   Sign Up
                 </button>
+              </Grid>
+              <Grid item xs={12}>
+                <Link
+                  href={"/register"}
+                  className="px-1 !text-[#572a2a] !no-underline font-semibold"
+                >
+                  Need Help ?
+                </Link>
               </Grid>
               <Grid item xs={12}>
                 <Typography className="flex justify-center flex-wrap">
