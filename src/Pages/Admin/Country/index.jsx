@@ -1,19 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import Header from "../../../Component/Header";
 import { Box, Grid } from "@mui/material";
 import CustomCard from "../../../Component/Card";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 
 export default function Index() {
-  const navigate = useNavigate();
-  const { loggedIn, user } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (!loggedIn) {
-      navigate("/login");
-    }
-  }, []);
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />

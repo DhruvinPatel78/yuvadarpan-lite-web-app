@@ -3,20 +3,12 @@ import { Grid, Container } from "@mui/material";
 import CustomCard from "../../../Component/Card";
 import Header from "../../../Component/Header";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import axios from "../../../util/useAxios";
 
 export default function Index() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [pendingListOpen, setPendingListOpen] = useState(false);
   const navigate = useNavigate();
-  const { loggedIn, user } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (!loggedIn) {
-      navigate("/login");
-    }
-  }, []);
 
   const handleClose = () => {
     setAnchorEl(null);

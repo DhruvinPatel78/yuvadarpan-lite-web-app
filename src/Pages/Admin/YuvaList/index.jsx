@@ -123,20 +123,12 @@ import {
   ImageButton,
   ImageSrc,
 } from "../../../Component/constant";
-import { useSelector } from "react-redux";
 
 const YuvaList = () => {
   const navigate = useNavigate();
   const [yuvaList, setYuvaList] = useState([]);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
-  const { loggedIn, user } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (!loggedIn) {
-      navigate("/login");
-    }
-  }, []);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -332,7 +324,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank",
+                      "_blank"
                     )
                   }
                 >

@@ -6,7 +6,7 @@ import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { login, startLoading } from "../../store/authSlice";
 import axios from "../../util/useAxios";
 
@@ -15,18 +15,10 @@ export default function Index() {
   const dispatch = useDispatch();
   const [values, setValues] = useState({ email: "", password: "" });
   const { notification, setNotification } = NotificationData();
-  const { loggedIn, user } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setNotification({ type: "", message: "" }); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (loggedIn) {
-      console.log("loggedIn if");
-      navigate(user?.role === "ADMIN" ? "/" : "/pdf");
-    } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getUserData = (e) => {
@@ -54,7 +46,7 @@ export default function Index() {
             navigate(
               res?.data?.data?.role === "ADMIN"
                 ? "/admin/dashboard"
-                : "/dashboard",
+                : "/dashboard"
             );
           }, 1000);
         })
@@ -74,8 +66,8 @@ export default function Index() {
           !values.email && !values.password
             ? "Email and Password are required."
             : !values.email
-              ? "Email is required."
-              : "Password is required.",
+            ? "Email is required."
+            : "Password is required.",
         type: "error",
       });
     }

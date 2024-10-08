@@ -19,25 +19,15 @@ import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider, useFormik } from "formik";
 import axios from "../../../util/useAxios";
 import * as Yup from "yup";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
 
 function Index() {
   // eslint-disable-next-line no-unused-vars
-  const navigate = useNavigate();
   const { notification, setNotification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { loggedIn, user } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (!loggedIn) {
-      navigate("/login");
-    }
-  }, []);
 
   const formik = useFormik({
     initialValues: {
