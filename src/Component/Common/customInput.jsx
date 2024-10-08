@@ -24,7 +24,7 @@ const CustomInput = ({
   errors,
   multiline,
   required = false,
-                       disabled = false,
+  disabled = false,
   onBlur,
   ...rest
 }) => {

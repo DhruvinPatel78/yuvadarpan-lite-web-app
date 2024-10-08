@@ -178,39 +178,46 @@ export default function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div className={"p-4 pb-0 justify-between flex items-center"}>
-        <p className={"text-3xl font-bold"}>Pending Requests</p>
-        <div className="">
-          <Tooltip title={"Accept all selected"}>
-            <button
-              className={
-                "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
-              }
-              onClick={() => handleRequestAll("accept")}
-            >
-              <PlaylistAddCheckIcon />
-            </button>
-          </Tooltip>
-          <Tooltip title={"Reject all selected"} className="ml-3">
-            <button
-              className={
-                "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105"
-              }
-              onClick={() => handleRequestAll("reject")}
-            >
-              <PlaylistRemoveIcon />
-            </button>
-          </Tooltip>
+      <div
+        className={
+          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
+        }
+      >
+        <div className={"p-4 pb-0 justify-between flex items-center w-full"}>
+          <p className={"text-3xl font-bold"}>Pending Requests</p>
+          <div className="">
+            <Tooltip title={"Accept all selected"}>
+              <button
+                className={
+                  "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
+                }
+                onClick={() => handleRequestAll("accept")}
+              >
+                <PlaylistAddCheckIcon />
+              </button>
+            </Tooltip>
+            <Tooltip title={"Reject all selected"} className="ml-3">
+              <button
+                className={
+                  "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105"
+                }
+                onClick={() => handleRequestAll("reject")}
+              >
+                <PlaylistRemoveIcon />
+              </button>
+            </Tooltip>
+          </div>
         </div>
+        <CustomTable
+          columns={pendingUsersTableHeader}
+          data={userList}
+          name={"pendingUser"}
+          pageSize={10}
+          type={"pendingList"}
+          className={"mx-0 w-full"}
+          onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
+        />
       </div>
-      <CustomTable
-        columns={pendingUsersTableHeader}
-        data={userList}
-        name={"pendingUser"}
-        pageSize={10}
-        type={"pendingList"}
-        onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
-      />
       <Modal
         open={requestInfoModel}
         onClose={requestInfoModalClose}

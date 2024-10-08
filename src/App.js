@@ -22,6 +22,7 @@ import Samaj from "./Pages/Admin/Samaj";
 
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/User/Dashboard";
+import NotFound from "./Pages/NotFound";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
       {/*User Routes*/}
       <Route path="/pdf" exact element={<NewUser />} />
       <Route path="/dashboard" exact element={<Dashboard />} />
+      <Route path="*" exact={true} element={<NotFound />} />
     </Routes>
   );
 }

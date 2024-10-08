@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
 import CustomTable from "../../../Component/Common/customTable";
 import {
-  alpha,
   Box,
   CircularProgress,
   FormControl,
   Grid,
   Modal,
   Paper,
-  styled,
-  Switch,
-  TextField,
   Typography,
 } from "@mui/material";
 import Header from "../../../Component/Header";
@@ -25,17 +21,9 @@ import axios from "../../../util/useAxios";
 import * as Yup from "yup";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-const PrimarySwitch = styled(Switch)(({ theme }) => ({
-  "& .MuiSwitch-switchBase.Mui-checked": {
-    color: "#542b2b",
-    "&:hover": {
-      backgroundColor: alpha("#542b2b", theme.palette.action.hoverOpacity),
-    },
-  },
-  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-    backgroundColor: "#542b2b",
-  },
-}));
+import CustomSwitch from "../../../Component/Common/CustomSwitch";
+import CustomInput from "../../../Component/Common/customInput";
+
 function Index() {
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
@@ -81,6 +69,7 @@ function Index() {
       } finally {
         setLoading(false);
       }
+      resetForm();
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -102,14 +91,6 @@ function Index() {
             return value === values.password;
           },
         }),
-      // team1: Yup.number()
-      //   .min(1, "Team 1 is required")
-      //   .required("Team 1 is required"),
-      // team2: Yup.number()
-      //   .min(1, "Team 2 is required")
-      //   .required("Team 2 is required"),
-      // startTime: Yup.string().required("Match start time is required"),
-      // winner: Yup.number().max(32, `Invalid Team`),
     }),
   });
 
@@ -117,61 +98,29 @@ function Index() {
     handleUserList();
   }, []);
 
-  const { errors, values, setValues, setFieldValue, resetForm } = formik;
+  const {
+    errors,
+    values,
+    setValues,
+    resetForm,
+    handleChange,
+    handleBlur,
+    touched,
+  } = formik;
 
   const userInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
     setValues({ ...userInfo, password: "" });
   };
-  // const setUserData = (e) => {
-  //   let name, value;
-  //   name = e.target.name;
-  //   value = e.target.value;
-  //   setValues({ ...values, [name]: value });
-  // };
-  // const handleSubmit = () => {
-  //   if (values.password === values.confirmpassword) {
-  //     try {
-  //       useAxios
-  //         .post("/user/signUp", {
-  //           familyId: values?.familyId,
-  //           firstName: values?.firstName,
-  //           middleName: values?.middleName,
-  //           lastName: values?.lastName,
-  //           email: values?.email,
-  //           mobile: values?.mobile,
-  //           password: values?.password,
-  //           active: true,
-  //           allowed: false,
-  //           role: "USER",
-  //         })
-  //         .then((res) => {
-  //           setValues(defaultValue);
-  //           setNotification({ type: "success", message: "Success !" });
-  //           navigate("/thankyou");
-  //         });
-  //     } catch (e) {
-  //       setNotification({
-  //         type: "error",
-  //         message: e.response.data.message,
-  //       });
-  //     }
-  //   } else {
-  //     setNotification({
-  //       type: "error",
-  //       message: "confirm password not matched !",
-  //     });
-  //   }
-  // };
 
   const userActionHandler = (userInfo, action, field) => {
     axios
-      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo._id}`, {
+      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo?._id}`, {
         ...userInfo,
         [field]: action,
       })
       .then((res) =>
-        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id }))),
+        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })))
       );
   };
 
@@ -183,10 +132,6 @@ function Index() {
     axios.get(`${process.env.REACT_APP_BASE_URL}/user/list`).then((res) => {
       setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
     });
-  };
-
-  const fieldValueChangeHandler = (e) => {
-    setFieldValue(e.target.name, e.target.value);
   };
 
   const usersTableHeader = [
@@ -239,10 +184,10 @@ function Index() {
       filterable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <PrimarySwitch
-            checked={record.row.allowed}
+          <CustomSwitch
+            checked={record?.row?.allowed}
             onClick={(e) =>
-              userActionHandler(record.row, !record.row.allowed, "allowed")
+              userActionHandler(record?.row, !record?.row?.allowed, "allowed")
             }
           />
         </div>
@@ -258,10 +203,10 @@ function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <PrimarySwitch
-            checked={record.row.active}
+          <CustomSwitch
+            checked={record?.row?.active}
             onClick={(e) =>
-              userActionHandler(record.row, !record.row.active, "active")
+              userActionHandler(record?.row, !record?.row?.active, "active")
             }
           />
         </div>
@@ -279,28 +224,35 @@ function Index() {
         <div className={"flex gap-2"}>
           <ModeEditIcon
             className={"text-primary"}
-            onClick={() => userInfoModalOpen(record.row)}
+            onClick={() => userInfoModalOpen(record?.row)}
           />
         </div>
       ),
     },
   ];
 
-  const hasError = Object.keys(errors).length;
+  const hasError = Object.keys(errors)?.length || 0;
 
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div className={"p-4 pb-0 justify-between flex items-center"}>
-        <p className={"text-3xl font-bold"}>Users</p>
+      <div
+        className={
+          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
+        }
+      >
+        <div className={"p-4 pb-0 justify-between flex items-center"}>
+          <p className={"text-3xl font-bold"}>Users</p>
+        </div>
+        <CustomTable
+          columns={usersTableHeader}
+          data={userList}
+          name={"users"}
+          pageSize={10}
+          type={"userList"}
+          className={"mx-0 w-full"}
+        />
       </div>
-      <CustomTable
-        columns={usersTableHeader}
-        data={userList}
-        name={"users"}
-        pageSize={10}
-        type={"userList"}
-      />
       {userInfoModel ? (
         <Modal
           open={userInfoModel}
@@ -313,9 +265,12 @@ function Index() {
               background: "#878b9499 !important",
             },
           }}
-          className="flex justify-center items-center"
+          className="flex justify-center items-center m-4"
         >
-          <Paper elevation={10} className="!rounded-2xl p-4 w-1/2">
+          <Paper
+            elevation={10}
+            className="!rounded-2xl p-4 w-full max-w-[600px]"
+          >
             <div className={"flex justify-between items-center"}>
               <Typography className={"font-bold text-2xl"}>
                 Update User
@@ -326,142 +281,150 @@ function Index() {
               />
             </div>
             <FormikProvider value={formik}>
-              <Form className={"gap-4 flex flex-col w-full"}>
-                <Grid container className={"w-full pt-4 gap-y-4"}>
+              <Form
+                className={
+                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                }
+              >
+                <Grid container className={"w-full pt-4"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"familyId"}
                         id="familyId"
                         label="Family ID"
-                        value={values.familyId}
+                        value={values?.familyId}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.familyId &&
+                          errors?.familyId &&
+                          errors?.familyId
+                        }
                       />
-                      {errors.familyId && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.familyId}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid item xs={12} sm={4} md={4}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"firstName"}
                         id="firstName"
                         label="First Name"
-                        value={values.firstName}
+                        value={values?.firstName}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.firstName &&
+                          errors?.firstName &&
+                          errors?.firstName
+                        }
                       />
-                      {errors.firstName && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.firstName}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={4} className={"px-4"}>
+                  <Grid item xs={12} sm={4} md={4}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"middleName"}
                         id="middleName"
                         label="Middle Name"
-                        value={values.middleName}
+                        value={values?.middleName}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.middleName &&
+                          errors?.middleName &&
+                          errors?.middleName
+                        }
                       />
-                      {errors.middleName && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.middleName}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid item xs={12} sm={4} md={4}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"lastName"}
                         id="lastName"
                         label="Last Name"
-                        value={values.lastName}
+                        value={values?.lastName}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.lastName &&
+                          errors?.lastName &&
+                          errors?.lastName
+                        }
                       />
-                      {errors.lastName && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.lastName}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={6} className={"pr-2"}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"email"}
                         id="email"
                         label="Email"
-                        value={values.email}
+                        value={values?.email}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.email && errors?.email && errors?.email
+                        }
                       />
-                      {errors.email && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.email}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={6} className={"pl-2"}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"mobile"}
                         id="mobile"
                         label="Mobile"
-                        value={values.mobile}
+                        value={values?.mobile}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.mobile && errors?.mobile && errors?.mobile
+                        }
                       />
-                      {errors.mobile && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.mobile}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={6} className={"pr-2"}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"password"}
                         id="password"
                         label="Password"
-                        value={values.password}
+                        value={values?.password}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.password &&
+                          errors?.password &&
+                          errors?.password
+                        }
                       />
-                      {errors.password && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.password}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
-                  <Grid item xs={6} className={"pl-2"}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <FormControl className={"w-full"}>
-                      <TextField
+                      <CustomInput
                         name={"confirmPassword"}
                         id="confirmPassword"
                         label="Confirm Password"
-                        value={values.confirmPassword}
+                        value={values?.confirmPassword}
                         variant="outlined"
-                        onChange={fieldValueChangeHandler}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={
+                          touched?.confirmPassword &&
+                          errors?.confirmPassword &&
+                          errors?.confirmPassword
+                        }
                       />
-                      {errors.confirmPassword && (
-                        <p className={"text-error text-sm transition-all"}>
-                          {errors.confirmPassword}
-                        </p>
-                      )}
                     </FormControl>
                   </Grid>
                   <Grid
