@@ -8,7 +8,7 @@ import UserList from "./Pages/Admin/UserList/index";
 import YuvaList from "./Pages/Admin/YuvaList/index";
 import Request from "./Pages/Admin/Request/index";
 import ThankYou from "./Pages/ThankYou";
-import AddYuva from "./Pages/AddYuva";
+import AddYuva from "./Pages/Admin/AddYuva";
 import Profile from "./Pages/Profile";
 import Status from "./Pages/Status";
 import Country from "./Pages/Admin/Country";

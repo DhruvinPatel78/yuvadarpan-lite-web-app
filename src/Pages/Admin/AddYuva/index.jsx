@@ -1,4 +1,4 @@
-import Header from "../../Component/Header";
+import Header from "../../../Component/Header";
 import {
   Box,
   CircularProgress,
@@ -9,18 +9,18 @@ import {
 } from "@mui/material";
 // import AddIcon from "@mui/icons-material/Add";
 import React, { useEffect, useState } from "react";
-import CustomInput from "../../Component/Common/customInput";
-import CustomAutoComplete from "../../Component/Common/customAutoComplete";
-import CustomRadio from "../../Component/Common/customRadio";
+import CustomInput from "../../../Component/Common/customInput";
+import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
+import CustomRadio from "../../../Component/Common/customRadio";
 import { Form, FormikProvider, useFormik } from "formik";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import RemoveOutlinedIcon from "@mui/icons-material/RemoveOutlined";
 import * as Yup from "yup";
-import axios from "../../util/useAxios";
+import axios from "../../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
-import CustomSelect from "../../Component/Common/customSelect";
-import DatePicker from "../../Component/Common/DatePicker";
+import CustomSelect from "../../../Component/Common/customSelect";
+import DatePicker from "../../../Component/Common/DatePicker";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -218,7 +218,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct"
+            "Phone Number must be correct",
           )
           .required("Required"),
       }),
@@ -239,7 +239,7 @@ const AddYuva = () => {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
+          "Invalid email address format",
         )
         .required("Required"),
       martialStatus: Yup.string().required("Required"),
