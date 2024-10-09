@@ -21,6 +21,7 @@ import axios from "../../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../../Component/Common/customSelect";
 import DatePicker from "../../../Component/Common/DatePicker";
+import moment from "moment";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -113,7 +114,7 @@ const AddYuva = () => {
     axios
       .post(`${process.env.REACT_APP_BASE_URL}/yuvaList/addYuvaList`, data)
       .then((res) => {
-        navigate("/yuvalist");
+        navigate("/admin/yuvalist");
       })
       .finally(() => {
         setLoading(false);
@@ -218,7 +219,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct",
+            "Phone Number must be correct"
           )
           .required("Required"),
       }),
@@ -239,7 +240,7 @@ const AddYuva = () => {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format",
+          "Invalid email address format"
         )
         .required("Required"),
       martialStatus: Yup.string().required("Required"),
@@ -302,7 +303,11 @@ const AddYuva = () => {
 
   useEffect(() => {
     if (location?.state) {
-      setValues({ ...values, ...location?.state?.data });
+      setValues({
+        ...values,
+        ...location?.state?.data,
+        profileName: location?.state?.data?.profile?.name,
+      });
     }
   }, [location]);
 
@@ -436,7 +441,9 @@ const AddYuva = () => {
                     value={values?.dob}
                     errors={touched?.dob && errors?.dob && errors?.dob}
                     onBlur={handleBlur}
-                    onChange={(e) => setFieldValue("dob", e)}
+                    onChange={(e) => {
+                      setFieldValue("dob", moment(e).utc().format());
+                    }}
                   />
                   <CustomInput
                     type={"text"}

@@ -3,6 +3,9 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Grid, styled } from "@mui/material";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 
 const PrimaryDateTimePicker = styled(DateTimePicker)`
   & label.Mui-focused {
@@ -35,7 +38,7 @@ const DatePicker = ({
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <PrimaryDateTimePicker
           fullWidth
-          value={value}
+          value={dayjs.utc(value)}
           label={label}
           name={name}
           onChange={onChange}
