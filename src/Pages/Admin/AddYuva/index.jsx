@@ -111,7 +111,7 @@ const AddYuva = () => {
         updatedAt: new Date(),
       })
       .then((res) => {
-        navigate("/yuvalist");
+        navigate("/admin/yuvalist");
       })
       .finally(() => {
         setLoading(false);
@@ -419,7 +419,7 @@ const AddYuva = () => {
                     errors={touched?.dob && errors?.dob && errors?.dob}
                     onBlur={handleBlur}
                     onChange={(e) => {
-                      setFieldValue("dob", moment(e).utc().format());
+                      setFieldValue("dob", e);
                     }}
                   />
                   <CustomRadio
