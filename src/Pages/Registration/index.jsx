@@ -20,14 +20,14 @@ export default function Index() {
   const [samajList, setSamajList] = useState([]);
   const [lastNameList, setLastNameList] = useState([]);
 
-  const getRegionList = () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/region/list`).then((res) => {
-      const newList = res.data.map((data) => ({
+  const getList = (feild) => {
+    axios.get(`${process.env.REACT_APP_BASE_URL}/${feild}/list`).then((res) => {
+      const list = res.data.map((data) => ({
         ...data,
         label: data.name,
         value: data.id,
       }));
-      setRegionList(newList);
+      feild === "surname" ? setLastNameList(list) : setRegionList(list);
     });
   };
 
@@ -40,7 +40,8 @@ export default function Index() {
   };
 
   useEffect(() => {
-    getRegionList();
+    getList("surname");
+    getList("region");
   }, []);
 
   const handleSubmit = (value) => {
