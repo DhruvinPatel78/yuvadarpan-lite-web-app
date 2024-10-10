@@ -38,6 +38,7 @@ const AddYuva = () => {
   const [districtList, setDistrictList] = useState([]);
   const [cities, setCities] = useState([]);
   const [cityList, setCityList] = useState([]);
+  const [nativeList, setNativeList] = useState([]);
   const [newField, setNewField] = useState({
     title: "",
     description: "",
@@ -63,6 +64,8 @@ const AddYuva = () => {
         setDistrictList(list);
       case "city":
         setCityList(list);
+      case "native":
+        setNativeList(list);
       default:
         return null;
     }
@@ -290,6 +293,7 @@ const AddYuva = () => {
   useEffect(() => {
     getList("surname");
     getList("country");
+    getList("native");
   }, []);
 
   return (
@@ -625,7 +629,7 @@ const AddYuva = () => {
                     onChange={handleChange}
                   />
                   <CustomAutoComplete
-                    list={lastNameList}
+                    list={nativeList}
                     label={"Native"}
                     placeholder={"Select Your Native"}
                     name="native"
