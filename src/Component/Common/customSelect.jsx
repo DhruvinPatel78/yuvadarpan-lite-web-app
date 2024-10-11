@@ -2,13 +2,7 @@ import * as React from "react";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
-import {
-  Grid,
-  styled,
-  Select,
-  Typography,
-  FormHelperText,
-} from "@mui/material";
+import { Grid, styled, Select, Typography } from "@mui/material";
 
 const PrimarySelect = styled(Select)`
   & .MuiSelect-root {
@@ -22,21 +16,6 @@ const PrimarySelect = styled(Select)`
   & .MuiSvgIcon-root {
     color: #572a2a;
   }
-  //& .MuiInputBase-input {
-  //  color: #572a2a;
-  //}
-  //& .MuiFormLabel-root {
-  //  color: #572a2a !important;
-  //}
-  //
-  //& .MuiOutlinedInput-root {
-  //  &.Mui-focused fieldset {
-  //    border-color: #572a2a;
-  //  }
-  //}
-  //& .MuiFilledInput-root:after {
-  //  border-color: #572a2a;
-  //}
 `;
 
 export default function CustomSelect({
@@ -67,12 +46,10 @@ export default function CustomSelect({
           required={required}
           onBlur={onBlur}
         >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
+          <MenuItem>SELECT</MenuItem>
           {list.map((data) => (
             <MenuItem value={data}>
-              <Typography>{data}</Typography>
+              <Typography className={"uppercase"}>{data}</Typography>
             </MenuItem>
           ))}
         </PrimarySelect>

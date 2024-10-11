@@ -7,7 +7,6 @@ import {
   Modal,
   Paper,
 } from "@mui/material";
-// import AddIcon from "@mui/icons-material/Add";
 import React, { useEffect, useState } from "react";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
@@ -21,7 +20,7 @@ import axios from "../../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../../Component/Common/customSelect";
 import DatePicker from "../../../Component/Common/DatePicker";
-import moment from "moment";
+import CustomCheckbox from "../../../Component/Common/customCheckbox";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -30,19 +29,17 @@ const AddYuva = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [newFieldList, setNewFieldList] = useState([]);
   const [lastNameList, setLastNameList] = useState([]);
-  const [countries, setCountries] = useState([]);
   const [countryList, setCountryList] = useState([]);
-  const [states, setStates] = useState([]);
   const [stateList, setStateList] = useState([]);
   const [regionList, setRegionList] = useState([]);
   const [districtList, setDistrictList] = useState([]);
-  const [cities, setCities] = useState([]);
   const [cityList, setCityList] = useState([]);
   const [nativeList, setNativeList] = useState([]);
   const [newField, setNewField] = useState({
     title: "",
     description: "",
   });
+  // const [activityIsStudy, setActivityIsStudy] = useState(false);
 
   const addLabelValueInAPIResult = (res, feild) => {
     const list = res.data.map((data) => ({
@@ -54,18 +51,25 @@ const AddYuva = () => {
     switch (feild) {
       case "surname":
         setLastNameList(list);
+        break;
       case "country":
         setCountryList(list);
+        break;
       case "state":
         setStateList(list);
+        break;
       case "region":
         setRegionList(list);
+        break;
       case "district":
         setDistrictList(list);
+        break;
       case "city":
         setCityList(list);
+        break;
       case "native":
         setNativeList(list);
+        break;
       default:
         return null;
     }
@@ -166,6 +170,9 @@ const AddYuva = () => {
       abroadStudy: "no",
       martialStatus: "",
       other: null,
+      handicap: false,
+      handicapDetails: "",
+      YSKno: "",
     },
     onSubmit: async (values, { resetForm }) => {
       let newValue = { ...values };
@@ -235,6 +242,9 @@ const AddYuva = () => {
         )
         .required("Required"),
       martialStatus: Yup.string().required("Required"),
+      // handicap: Yup.string().required("Required"),
+      // handicapDetails: Yup.string().required("Required"),
+      YSKno: Yup.string().required("Required"),
     }),
   });
   const {
@@ -296,6 +306,7 @@ const AddYuva = () => {
     getList("native");
   }, []);
 
+  console.log("values : ", values);
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -412,20 +423,6 @@ const AddYuva = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
-                  <DatePicker
-                    name={"dob"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    placeholder="Date and Time of Birth"
-                    label={"dob"}
-                    value={values?.dob}
-                    errors={touched?.dob && errors?.dob && errors?.dob}
-                    onBlur={handleBlur}
-                    onChange={(e) => {
-                      setFieldValue("dob", e);
-                    }}
-                  />
                   <CustomRadio
                     list={[
                       { label: "Male", value: "male" },
@@ -441,6 +438,20 @@ const AddYuva = () => {
                     className={"flex flex-row"}
                     onChange={handleChange}
                     onBlur={handleBlur}
+                  />
+                  <DatePicker
+                    name={"dob"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    placeholder="Date and Time of Birth"
+                    label={"dob"}
+                    value={values?.dob}
+                    errors={touched?.dob && errors?.dob && errors?.dob}
+                    onBlur={handleBlur}
+                    onChange={(e) => {
+                      setFieldValue("dob", e);
+                    }}
                   />
                   <CustomInput
                     type={"text"}
@@ -644,7 +655,15 @@ const AddYuva = () => {
                     onBlur={handleBlur}
                   />
                   <CustomSelect
-                    list={["Single", "Engaged", "Divorce", "Married"]}
+                    list={[
+                      "divorce",
+                      "engaged",
+                      "married",
+                      "seprated",
+                      "single",
+                      "widow",
+                      "widower",
+                    ]}
                     label={"Martial Status"}
                     placeholder={"Select Your Country"}
                     name={"martialStatus"}
@@ -662,11 +681,17 @@ const AddYuva = () => {
                   />
                   <CustomSelect
                     list={[
-                      "Job Seeker",
-                      "Job/Service",
-                      "Business",
-                      "Study",
-                      "Farming",
+                      "abroad",
+                      "business",
+                      "child",
+                      "farming",
+                      "house hold",
+                      "house wife",
+                      "job seeker",
+                      "job/service",
+                      "retired",
+                      "self employed",
+                      "study",
                     ]}
                     label={"Activity"}
                     placeholder={"Enter Your Activity"}
@@ -677,6 +702,75 @@ const AddYuva = () => {
                     value={values?.activity}
                     errors={
                       touched?.activity && errors?.activity && errors?.activity
+                    }
+                    onBlur={handleBlur}
+                    onChange={(e) => {
+                      setFieldValue("activity", e.target.value);
+                      // setActivityIsStudy(e.target.value === "study");
+                    }}
+                  />
+                  {/*{activityIsStudy ? (*/}
+                  {/*  <CustomRadio*/}
+                  {/*    list={[*/}
+                  {/*      { label: "Yes", value: "yes" },*/}
+                  {/*      { label: "NO", value: "no" },*/}
+                  {/*    ]}*/}
+                  {/*    label={"Abroad Study"}*/}
+                  {/*    name={"abroadStudy"}*/}
+                  {/*    xs={12}*/}
+                  {/*    sm={6}*/}
+                  {/*    md={4}*/}
+                  {/*    value={values?.abroadStudy}*/}
+                  {/*    errors={*/}
+                  {/*      touched?.abroadStudy &&*/}
+                  {/*      errors?.abroadStudy &&*/}
+                  {/*      errors?.abroadStudy*/}
+                  {/*    }*/}
+                  {/*    className={"flex flex-row"}*/}
+                  {/*    onChange={handleChange}*/}
+                  {/*    onBlur={handleBlur}*/}
+                  {/*  />*/}
+                  {/*) : null}*/}
+                  <CustomInput
+                    type={"text"}
+                    label={"YSK No."}
+                    placeholder={"Enter Your YSK No."}
+                    name={"YSKno"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.YSKno}
+                    required={false}
+                    onChange={(e) => {
+                      setFieldValue("YSKno", e.target.value);
+                    }}
+                    onBlur={handleBlur}
+                    errors={touched?.YSKno && errors?.YSKno && errors?.YSKno}
+                  />
+                  <CustomSelect
+                    list={[
+                      "NOT KNOWN",
+                      "A+",
+                      "A-",
+                      "B+",
+                      "B-",
+                      "AB+",
+                      "AB-",
+                      "O+",
+                      "O-",
+                    ]}
+                    label={"Blood Group"}
+                    placeholder={"Enter Your Blood Group"}
+                    name={"bloodGroup"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.bloodGroup}
+                    required={false}
+                    errors={
+                      touched?.bloodGroup &&
+                      errors?.bloodGroup &&
+                      errors?.bloodGroup
                     }
                     onBlur={handleBlur}
                     onChange={handleChange}
@@ -727,26 +821,6 @@ const AddYuva = () => {
                       }
                     />
                   )}
-                  <CustomRadio
-                    list={[
-                      { label: "Yes", value: "yes" },
-                      { label: "NO", value: "no" },
-                    ]}
-                    label={"Abroad Study"}
-                    name={"abroadStudy"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.abroadStudy}
-                    errors={
-                      touched?.abroadStudy &&
-                      errors?.abroadStudy &&
-                      errors?.abroadStudy
-                    }
-                    className={"flex flex-row"}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
                 </Grid>
               </Grid>
               <Grid item xs={12}>
@@ -921,43 +995,42 @@ const AddYuva = () => {
                     "text-xl font-bold text-gray pb-2 flex flex-row justify-between items-center"
                   }
                 >
-                  OTHER INFO
+                  EDUCATION INFO
                 </div>
                 <Grid container spacing={2}>
-                  <CustomInput
-                    type={"text"}
-                    label={"Education"}
-                    placeholder={"Enter Your Enducation"}
+                  <CustomSelect
+                    list={[
+                      "1st std",
+                      "2nd std",
+                      "3rd std",
+                      "4th std",
+                      "5th std",
+                      "6th std",
+                      "7th std",
+                      "8th std",
+                      "9th std",
+                      "10th std (SSC)",
+                      "11th std",
+                      "12th std (HSC)",
+                      "Diploma",
+                      "Graduate",
+                      "Post Graduate",
+                      "PHD",
+                    ]}
+                    label={"Highest Education"}
+                    placeholder={"Select Your Primary Education"}
                     name={"education"}
                     xs={12}
                     sm={6}
                     md={4}
                     value={values?.education}
-                    required={false}
                     errors={
                       touched?.education &&
                       errors?.education &&
                       errors?.education
                     }
-                    onChange={handleChange}
-                  />
-                  <CustomSelect
-                    list={["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]}
-                    label={"Blood Group"}
-                    placeholder={"Enter Your Blood Group"}
-                    name={"bloodGroup"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.bloodGroup}
-                    required={false}
-                    errors={
-                      touched?.bloodGroup &&
-                      errors?.bloodGroup &&
-                      errors?.bloodGroup
-                    }
                     onBlur={handleBlur}
-                    onChange={handleChange}
+                    onChange={(e) => setFieldValue("education", e.target.value)}
                   />
                 </Grid>
               </Grid>
@@ -967,6 +1040,43 @@ const AddYuva = () => {
               <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>OTHERS</div>
                 <Grid container spacing={2}>
+                  <CustomCheckbox
+                    label={"Handicap"}
+                    name={"handicap"}
+                    xs={12}
+                    sm={12}
+                    md={12}
+                    value={values?.handicap}
+                    errors={
+                      touched?.handicap && errors?.handicap && errors?.handicap
+                    }
+                    className={"flex flex-row"}
+                    onChange={(e) => {
+                      setFieldValue("handicap", e.target.checked);
+                    }}
+                    onBlur={handleBlur}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"Handicap Details"}
+                    placeholder={"Enter Handicap Details"}
+                    name={"handicapDetails"}
+                    multiline={true}
+                    xs={12}
+                    sm={12}
+                    md={12}
+                    value={values?.handicapDetails}
+                    errors={
+                      touched?.handicapDetails &&
+                      errors?.handicapDetails &&
+                      errors?.handicapDetails
+                    }
+                    onChange={(e) => {
+                      setFieldValue("handicapDetails", e.target.value);
+                    }}
+                    onBlur={handleBlur}
+                    disabled={!values.handicap}
+                  />
                   {newFieldList?.map((item, index) => {
                     return (
                       <>
@@ -975,7 +1085,7 @@ const AddYuva = () => {
                           label={"Title"}
                           placeholder={"Enter Your Title"}
                           name={item?.title}
-                          xs={4}
+                          xs={5}
                           value={item?.title}
                           onChange={(e) =>
                             newFieldValueHandler(e, index, "title")
@@ -986,13 +1096,13 @@ const AddYuva = () => {
                           label={"Description"}
                           placeholder={"Enter Your Description"}
                           name={item?.description}
-                          xs={4}
+                          xs={6}
                           value={item?.description}
                           onChange={(e) =>
                             newFieldValueHandler(e, index, "description")
                           }
                         />
-                        <Grid item xs={4} className={"flex justify-start"}>
+                        <Grid item xs={1} className={"flex justify-start"}>
                           <button
                             type={"button"}
                             onClick={() => removeFieldHandler(index)}
@@ -1025,12 +1135,13 @@ const AddYuva = () => {
                     name={"description"}
                     xs={6}
                     value={newField?.description}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setNewField((pre) => ({
                         ...pre,
                         description: e.target.value,
-                      }))
-                    }
+                      }));
+                      console.log("values : ", values);
+                    }}
                     required={false}
                   />
                   <Grid
