@@ -1102,7 +1102,11 @@ const AddYuva = () => {
                             newFieldValueHandler(e, index, "description")
                           }
                         />
-                        <Grid item xs={1} className={"flex justify-start"}>
+                        <Grid
+                          item
+                          xs={1}
+                          className={"flex justify-center items-center"}
+                        >
                           <button
                             type={"button"}
                             onClick={() => removeFieldHandler(index)}
