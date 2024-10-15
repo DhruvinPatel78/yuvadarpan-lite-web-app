@@ -23,6 +23,15 @@ const PrimaryAutocomplete = styled(Autocomplete)`
   & .MuiFilledInput-root:after {
     border-color: #572a2a;
   }
+  & .MuiOutlinedInput-notchedOutline {
+    border-color: #572a2a !important;
+  }
+  //& .Mui-focused {
+  //  border-color: #572a2a !important;
+  //}
+  & .Mui-disabled {
+    opacity: 0.5;
+  }
 `;
 export default function CustomAutoComplete({
   label,

@@ -135,6 +135,7 @@ const YuvaList = () => {
   };
   const getYuvaList = async () => {
     axios.get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list`).then((res) => {
+      console.log("list  ::: ", res);
       const data = res.data?.map((item) => ({ ...item, id: item?._id }));
       setYuvaList(data);
     });
@@ -264,7 +265,7 @@ const YuvaList = () => {
       ),
     },
   ];
-  console.log("userData = = = =>", userData);
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -324,7 +325,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank"
+                      "_blank",
                     )
                   }
                 >

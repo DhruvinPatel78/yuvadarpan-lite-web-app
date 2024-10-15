@@ -25,6 +25,9 @@ const InfoTextField = styled((props) => (
   "& .MuiInputBase-input-MuiFilledInput-input.Mui-disabled": {
     color: "#657380",
   },
+  "& .Mui-disabled": {
+    opacity: 0.5,
+  },
 }));
 const CustomTextFieldInfo = ({ grid, label, value }) => {
   return (

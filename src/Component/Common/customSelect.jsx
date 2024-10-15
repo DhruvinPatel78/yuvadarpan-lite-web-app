@@ -5,16 +5,23 @@ import FormControl from "@mui/material/FormControl";
 import { Grid, styled, Select, Typography } from "@mui/material";
 
 const PrimarySelect = styled(Select)`
-  & .MuiSelect-root {
-    color: #572a2a;
+  & .MuiSelect-root,
+  .MuiFormControl-root {
+    color: #572a2a !important;
   }
   & .MuiSelect-root,
   .MuiFormLabel-root-MuiInputLabel-root .Mui-focused {
     color: #572a2a !important;
   }
-
   & .MuiSvgIcon-root {
-    color: #572a2a;
+    color: #572a2a !important;
+  }
+  & .MuiOutlinedInput-notchedOutline {
+    border-color: #572a2a !important;
+  }
+  & .Mui-focused,
+  .MuiSelect-outlined {
+    border-color: #572a2a !important;
   }
 `;
 
@@ -33,7 +40,13 @@ export default function CustomSelect({
   return (
     <Grid item {...rest}>
       <FormControl className={"w-full"}>
-        <InputLabel id={`select-helper-${name}`}>{label}</InputLabel>
+        <InputLabel
+          className={"text-primary"}
+          color="primary"
+          id={`select-helper-${name}`}
+        >
+          {label}
+        </InputLabel>
         <PrimarySelect
           labelId={`select-helper-${name}`}
           id={`select-${name}`}

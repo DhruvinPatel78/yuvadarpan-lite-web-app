@@ -39,6 +39,13 @@ const AddYuva = () => {
     title: "",
     description: "",
   });
+  const [isLocation, setIsLocation] = useState({
+    country: false,
+    state: false,
+    region: false,
+    district: false,
+    city: false,
+  });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
 
   const addLabelValueInAPIResult = (res, feild) => {
@@ -306,7 +313,7 @@ const AddYuva = () => {
     getList("native");
   }, []);
 
-  console.log("values : ", values);
+  console.log("isLocation : ", isLocation, isLocation.country);
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -533,7 +540,7 @@ const AddYuva = () => {
                     onSelect={handleChange}
                     onChange={(e, country) => {
                       setFieldValue("country", country.id);
-                      // getStateByContry(country.id);
+                      setIsLocation((pre) => ({ ...pre, country: true }));
                       getListById("state", country.id);
                     }}
                     onBlur={handleBlur}
@@ -550,10 +557,11 @@ const AddYuva = () => {
                     errors={touched?.state && errors?.state && errors?.state}
                     onChange={(e, state) => {
                       setFieldValue("state", state.id);
-                      // getRegionByState(state.id);
+                      setIsLocation((pre) => ({ ...pre, state: true }));
                       getListById("region", state.id);
                     }}
                     onBlur={handleBlur}
+                    disabled={!isLocation.country}
                   />
                   <CustomAutoComplete
                     list={regionList}
@@ -567,10 +575,11 @@ const AddYuva = () => {
                     errors={touched?.region && errors?.region && errors?.region}
                     onChange={(e, region) => {
                       setFieldValue("region", region.id);
-                      // getDistrictByRegion(region.id);
+                      setIsLocation((pre) => ({ ...pre, region: true }));
                       getListById("district", region.id);
                     }}
                     onBlur={handleBlur}
+                    disabled={!isLocation.state}
                   />
                   <CustomAutoComplete
                     list={districtList}
@@ -586,9 +595,11 @@ const AddYuva = () => {
                     }
                     onChange={(e, district) => {
                       setFieldValue("district", district.id);
+                      setIsLocation((pre) => ({ ...pre, district: true }));
                       getListById("city", district.id);
                     }}
                     onBlur={handleBlur}
+                    disabled={!isLocation.region}
                   />
                   <CustomAutoComplete
                     list={cityList}
@@ -602,8 +613,10 @@ const AddYuva = () => {
                     errors={touched?.city && errors?.city && errors?.city}
                     onChange={(e, city) => {
                       setFieldValue("city", city.id);
+                      setIsLocation((pre) => ({ ...pre, city: true }));
                     }}
                     onBlur={handleBlur}
+                    disabled={!isLocation.district}
                   />
                   <CustomInput
                     type={"text"}

@@ -8,6 +8,9 @@ const PrimaryDateTimePicker = styled(DateTimePicker)`
   & label.Mui-focused {
     color: #572a2a;
   }
+  & .MuiFormLabel-root {
+    color: #572a2a !important;
+  }
   & .MuiOutlinedInput-root {
     &.Mui-focused fieldset {
       border-color: #572a2a;
@@ -16,6 +19,12 @@ const PrimaryDateTimePicker = styled(DateTimePicker)`
   & .MuiFilledInput-root:after {
     border-color: #572a2a;
   }
+  & .MuiOutlinedInput-notchedOutline {
+    border-color: #572a2a !important;
+  }
+  //& .Mui-focused {
+  //  border-color: #572a2a !important;
+  //}
 `;
 
 const DatePicker = ({
