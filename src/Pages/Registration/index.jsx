@@ -57,6 +57,8 @@ export default function Index() {
             mobile: value?.mobile,
             password: value?.password,
             dob: moment(value?.dob).format(),
+            region: value?.region,
+            localSamaj: value?.localSamaj,
             active: true,
             allowed: false,
             role: "USER",
