@@ -40,7 +40,7 @@ export default function Index() {
         allowed: action,
       })
       .then((res) => {
-        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
+        handleRequestList();
         setNotification({ type: "success", message: "Success !" });
       })
       .catch((e) => {
@@ -52,7 +52,7 @@ export default function Index() {
   };
   const handleRequestList = () => {
     axios.get(`${process.env.REACT_APP_BASE_URL}/user/requests`).then((res) => {
-      setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
+      setUserList(res?.data?.data?.map((data) => ({ ...data, id: data?._id })));
     });
   };
   const handleSelectedUser = (ids) => {
@@ -65,7 +65,7 @@ export default function Index() {
         action,
       })
       .then((res) => {
-        setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
+        handleRequestList();
         setNotification({ type: "success", message: "Success !" });
       })
       .catch((e) => {

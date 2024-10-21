@@ -6,7 +6,15 @@ const PublicRoute = ({ Component }) => {
   return !loggedIn ? (
     <Component />
   ) : (
-    <Navigate to={user?.role !== "ADMIN" ? "/pdf" : "/"} />
+    <Navigate
+      to={
+        user?.role === "ADMIN" ||
+        user?.role === "REGION_MANAGER" ||
+        user?.role === "SAMAJ_MANAGER"
+          ? "/"
+          : "/pdf"
+      }
+    />
   );
 };
 export default PublicRoute;

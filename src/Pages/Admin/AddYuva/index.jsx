@@ -33,6 +33,7 @@ const AddYuva = () => {
   const [stateList, setStateList] = useState([]);
   const [regionList, setRegionList] = useState([]);
   const [districtList, setDistrictList] = useState([]);
+  const [samajList, setSamajList] = useState([]);
   const [cityList, setCityList] = useState([]);
   const [nativeList, setNativeList] = useState([]);
   const [newField, setNewField] = useState({
@@ -47,7 +48,13 @@ const AddYuva = () => {
     city: false,
   });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
-
+  const getSamajList = (regionId) => {
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
+      .then((res) => {
+        setSamajList(res.data);
+      });
+  };
   const addLabelValueInAPIResult = (res, feild) => {
     const list = res.data.map((data) => ({
       ...data,
@@ -180,6 +187,7 @@ const AddYuva = () => {
       handicap: false,
       handicapDetails: "",
       YSKno: "",
+      localSamaj: "",
     },
     onSubmit: async (values, { resetForm }) => {
       let newValue = { ...values };
@@ -224,7 +232,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct",
+            "Phone Number must be correct"
           )
           .required("Required"),
       }),
@@ -245,13 +253,14 @@ const AddYuva = () => {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format",
+          "Invalid email address format"
         )
         .required("Required"),
       martialStatus: Yup.string().required("Required"),
       // handicap: Yup.string().required("Required"),
       // handicapDetails: Yup.string().required("Required"),
       YSKno: Yup.string().required("Required"),
+      localSamaj: Yup.string().required("Required"),
     }),
   });
   const {
@@ -313,7 +322,6 @@ const AddYuva = () => {
     getList("native");
   }, []);
 
-  console.log("isLocation : ", isLocation, isLocation.country);
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -577,6 +585,7 @@ const AddYuva = () => {
                       setFieldValue("region", region.id);
                       setIsLocation((pre) => ({ ...pre, region: true }));
                       getListById("district", region.id);
+                      getSamajList(region.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.state}
@@ -618,6 +627,26 @@ const AddYuva = () => {
                     onBlur={handleBlur}
                     disabled={!isLocation.district}
                   />
+                  <CustomAutoComplete
+                    list={samajList}
+                    label={"Local Samaj"}
+                    placeholder={"Select Your Samaj"}
+                    name={"localSamaj"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.localSamaj}
+                    errors={
+                      touched?.localSamaj &&
+                      errors?.localSamaj &&
+                      errors?.localSamaj
+                    }
+                    disabled={!isLocation.region}
+                    onChange={(e, localSamaj) => {
+                      setFieldValue("localSamaj", localSamaj.id);
+                    }}
+                    onBlur={handleBlur}
+                  />
                   <CustomInput
                     type={"text"}
                     label={"Address"}
@@ -626,7 +655,7 @@ const AddYuva = () => {
                     multiline={true}
                     xs={12}
                     sm={6}
-                    md={6}
+                    md={4}
                     value={values?.address}
                     errors={
                       touched?.address && errors?.address && errors?.address
@@ -642,7 +671,7 @@ const AddYuva = () => {
                     multiline={true}
                     xs={12}
                     sm={6}
-                    md={6}
+                    md={4}
                     value={values?.firmAddress}
                     errors={
                       touched?.firmAddress &&

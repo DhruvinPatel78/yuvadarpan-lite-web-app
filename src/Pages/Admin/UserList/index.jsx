@@ -51,8 +51,9 @@ function Index() {
             ...rest,
           })
           .then((res) => {
-            setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
+            // setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
             userInfoModalClose();
+            handleUserList();
           });
       } catch (e) {
         console.log("Error =>", e);
@@ -109,9 +110,10 @@ function Index() {
         ...userInfo,
         [field]: action,
       })
-      .then((res) =>
-        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })))
-      );
+      .then((res) => {
+        handleUserList();
+        // setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
+      });
   };
 
   const userInfoModalClose = () => {
@@ -119,9 +121,13 @@ function Index() {
     resetForm();
   };
   const handleUserList = () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/user/list`).then((res) => {
-      setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
-    });
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/user/list?page=1&limit=10`)
+      .then((res) => {
+        setUserList(
+          res.data?.data?.map((data) => ({ ...data, id: data?._id }))
+        );
+      });
   };
 
   const usersTableHeader = [

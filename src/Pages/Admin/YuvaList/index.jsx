@@ -134,25 +134,26 @@ const YuvaList = () => {
     setValue(newValue);
   };
   const getYuvaList = async () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list`).then((res) => {
-      console.log("list  ::: ", res);
-      const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-      setYuvaList(data);
-    });
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=1&limit=10`)
+      .then((res) => {
+        const data = res?.data?.data?.map((item) => ({
+          ...item,
+          id: item?._id,
+        }));
+        setYuvaList(data);
+      });
   };
   useEffect(() => {
     getYuvaList();
   }, []);
   const deleteAPI = async (id) => {
-    // axios
-    //     .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list/${id}`)
-    //     .then((res) => {
-    //     });
     axios
       .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
       .then((res) => {
-        const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-        setYuvaList(data);
+        getYuvaList();
+        // const data = res.data?.map((item) => ({ ...item, id: item?._id }));
+        // setYuvaList(data);
       });
   };
 
@@ -325,7 +326,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank",
+                      "_blank"
                     )
                   }
                 >

@@ -59,8 +59,6 @@ export default function Index() {
             dob: moment(value?.dob).format(),
             region: value?.region,
             localSamaj: value?.localSamaj,
-            active: true,
-            allowed: false,
             role: "USER",
           })
           .then((res) => {
@@ -104,7 +102,7 @@ export default function Index() {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format",
+          "Invalid email address format"
         )
         .required("Required"),
       mobile: Yup.string()

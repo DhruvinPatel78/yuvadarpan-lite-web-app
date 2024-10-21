@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
-import { Box, Button, Tooltip } from "@mui/material";
+import { Box, Button, Modal, Paper, Tooltip } from "@mui/material";
 import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
@@ -9,10 +9,12 @@ import { useNavigate } from "react-router-dom";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
 
 export default function Index() {
   const navigate = useNavigate();
   const [countryList, setCountryList] = useState([]);
+  const [countryModalData, setCountryModalData] = useState(null);
 
   useEffect(() => {
     handleCountryList();
@@ -22,6 +24,13 @@ export default function Index() {
     axios.get(`${process.env.REACT_APP_BASE_URL}/country/list`).then((res) => {
       setCountryList(res.data);
     });
+    // axios
+    //   .post(`${process.env.REACT_APP_BASE_URL}/country/add`, {
+    //     name: "India 1",
+    //   })
+    //   .then((res) => {
+    //     // setCountryList(res.data);
+    //   });
   };
 
   const userActionHandler = (countryInfo, action, field) => {
@@ -36,6 +45,35 @@ export default function Index() {
       .then((res) =>
         setCountryList(res?.data?.map((data) => ({ ...data, id: data?._id })))
       );
+  };
+  const deleteAPI = async (id) => {
+    axios
+      .delete(`${process.env.REACT_APP_BASE_URL}/country/delete`, {
+        data: {
+          countries: [id],
+        },
+      })
+      .then((res) => {
+        const data = res?.data?.map((item) => ({ ...item, id: item?._id }));
+        setCountryList(data);
+      });
+    // axios
+    //   .delete(`${process.env.REACT_APP_BASE_URL}/native/delete`, {
+    //     data: {
+    //       natives: ["70ddbaa15a024f8a95288dd033886a70"],
+    //     },
+    //   })
+    //   .then((res) => {
+    //     console.log("native", res);
+    //   });
+    // axios
+    //   .patch(`${process.env.REACT_APP_BASE_URL}/country/update/${id}`, {
+    //     name: "India 3",
+    //     active: true,
+    //   })
+    //   .then((res) => {
+    //     console.log("native", res);
+    //   });
   };
 
   const countryListColumn = [
@@ -76,14 +114,20 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-3 justify-between items-center"}>
-          <Tooltip title={"View"}>
-            <VisibilityIcon className={"text-primary cursor-pointer"} />
-          </Tooltip>
+          {/*<Tooltip title={"View"}>*/}
+          {/*  <VisibilityIcon className={"text-primary cursor-pointer"} />*/}
+          {/*</Tooltip>*/}
           <Tooltip title={"Edit"}>
-            <ModeEditIcon className={"text-primary cursor-pointer"} />
+            <ModeEditIcon
+              className={"text-primary cursor-pointer"}
+              onClick={() => setCountryModalData(record?.row)}
+            />
           </Tooltip>
           <Tooltip title={"Delete"}>
-            <DeleteIcon className={"text-primary cursor-pointer"} />
+            <DeleteIcon
+              className={"text-primary cursor-pointer"}
+              onClick={() => deleteAPI(record?.id)}
+            />
           </Tooltip>
         </div>
       ),
@@ -118,6 +162,34 @@ export default function Index() {
           className={"mx-0 w-full"}
         />
       </div>
+      {countryModalData ? (
+        <Modal
+          open={Boolean(countryModalData)}
+          onClose={() => setCountryModalData(null)}
+          sx={{
+            "& .MuiModal-backdrop": {
+              backdropFilter: "blur(2px) !important",
+              background: "#878b9499 !important",
+            },
+          }}
+          className="flex justify-center items-center"
+        >
+          <Paper
+            elevation={10}
+            className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none"
+          >
+            <div className={"flex flex-row justify-between"}>
+              <span className={"text-2xl font-bold"}>Country</span>
+              <Tooltip title={"Edit"}>
+                <CloseIcon
+                  className={"cursor-pointer"}
+                  onClick={() => setCountryModalData(null)}
+                />
+              </Tooltip>
+            </div>
+          </Paper>
+        </Modal>
+      ) : null}
     </Box>
   );
 }
