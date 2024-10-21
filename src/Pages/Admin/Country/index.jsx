@@ -9,28 +9,14 @@ import { useNavigate } from "react-router-dom";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import { useDispatch, useSelector } from "react-redux";
+import { getCountryData } from "../../../util/getAPICall";
 
 export default function Index() {
   const navigate = useNavigate();
-  const [countryList, setCountryList] = useState([]);
+  const dispatch = useDispatch();
+  const { country } = useSelector((state) => state.auth);
   const [countryModalData, setCountryModalData] = useState(null);
-
-  useEffect(() => {
-    handleCountryList();
-  }, []);
-
-  const handleCountryList = () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/country/list`).then((res) => {
-      setCountryList(res.data);
-    });
-    // axios
-    //   .post(`${process.env.REACT_APP_BASE_URL}/country/add`, {
-    //     name: "India 1",
-    //   })
-    //   .then((res) => {
-    //     // setCountryList(res.data);
-    //   });
-  };
 
   const userActionHandler = (countryInfo, action, field) => {
     axios
@@ -39,11 +25,11 @@ export default function Index() {
         {
           ...countryInfo,
           [field]: action,
-        },
+        }
       )
-      .then((res) =>
-        setCountryList(res?.data?.map((data) => ({ ...data, id: data?._id }))),
-      );
+      .then((res) => {
+        dispatch(getCountryData);
+      });
   };
   const deleteAPI = async (id) => {
     axios
@@ -53,26 +39,8 @@ export default function Index() {
         },
       })
       .then((res) => {
-        const data = res?.data?.map((item) => ({ ...item, id: item?._id }));
-        setCountryList(data);
+        dispatch(getCountryData);
       });
-    // axios
-    //   .delete(`${process.env.REACT_APP_BASE_URL}/native/delete`, {
-    //     data: {
-    //       natives: ["70ddbaa15a024f8a95288dd033886a70"],
-    //     },
-    //   })
-    //   .then((res) => {
-    //     console.log("native", res);
-    //   });
-    // axios
-    //   .patch(`${process.env.REACT_APP_BASE_URL}/country/update/${id}`, {
-    //     name: "India 3",
-    //     active: true,
-    //   })
-    //   .then((res) => {
-    //     console.log("native", res);
-    //   });
   };
 
   const countryListColumn = [
@@ -154,7 +122,7 @@ export default function Index() {
         </div>
         <CustomTable
           columns={countryListColumn}
-          data={countryList}
+          data={country}
           name={"users"}
           pageSize={10}
           type={"userList"}

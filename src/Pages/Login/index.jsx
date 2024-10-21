@@ -6,16 +6,25 @@ import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
-import { useDispatch } from "react-redux";
-import { login, startLoading } from "../../store/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { login, startLoading, endLoading } from "../../store/authSlice";
+import {
+  getRegionData,
+  getCityData,
+  getDistrictData,
+  getSamajData,
+  getStateData,
+  getSurnameData,
+  getCountryData,
+} from "../../util/getAPICall";
 import axios from "../../util/useAxios";
 
 export default function Index() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
   const [values, setValues] = useState({ email: "", password: "" });
   const { notification, setNotification } = NotificationData();
-  const [loading, setLoading] = useState(false);
 
   const getUserData = (e) => {
     let name, value;
@@ -26,7 +35,6 @@ export default function Index() {
 
   const handleSubmit = () => {
     if (values.email && values.password) {
-      setLoading(true);
       dispatch(startLoading());
       axios
         .post(`${process.env.REACT_APP_BASE_URL}/user/signIn`, {
@@ -37,13 +45,24 @@ export default function Index() {
           localStorage.setItem("token", res?.data?.token);
           setNotification({ message: "Login Success", type: "success" });
           setTimeout(() => {
-            setLoading(false);
+            dispatch(endLoading());
+            if (res.data?.data?.role === "USER") {
+              dispatch(getCityData);
+            } else {
+              dispatch(getRegionData);
+              dispatch(getCityData);
+              dispatch(getDistrictData);
+              dispatch(getSamajData);
+              dispatch(getStateData);
+              dispatch(getSurnameData);
+              dispatch(getCountryData);
+            }
             dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
           }, 1000);
         })
         .catch((err) => {
           setTimeout(() => {
-            setLoading(false);
+            dispatch(endLoading());
             setNotification({
               message: err.response.data.message,
               type: err.response.status === "403" ? "warning" : "error",
@@ -56,8 +75,8 @@ export default function Index() {
           !values.email && !values.password
             ? "Email and Password are required."
             : !values.email
-              ? "Email is required."
-              : "Password is required.",
+            ? "Email is required."
+            : "Password is required.",
         type: "error",
       });
     }

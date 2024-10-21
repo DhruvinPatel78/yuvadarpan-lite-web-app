@@ -5,6 +5,13 @@ const initialState = {
   loggedIn: false,
   loading: false,
   error: null,
+  region: [],
+  state: [],
+  distric: [],
+  city: [],
+  samaj: [],
+  surname: [],
+  country: [],
 };
 
 const authSlice = createSlice({
@@ -13,11 +20,8 @@ const authSlice = createSlice({
   reducers: {
     startLoading: (state, action) => {
       state.loading = true;
-      state.user = null;
-      state.loggedIn = false;
-      state.error = null;
     },
-    stopLoading: (state, action) => {
+    endLoading: (state, action) => {
       state.loading = false;
     },
     login: (state, action) => {
@@ -31,10 +35,49 @@ const authSlice = createSlice({
       state.loggedIn = false;
       state.loading = false;
       state.error = null;
+      state.region = [];
+      state.state = [];
+      state.distric = [];
+      state.city = [];
+      state.samaj = [];
+      state.surname = [];
+    },
+    region: (state, action) => {
+      state.region = action.payload;
+    },
+    state: (state, action) => {
+      state.state = action.payload;
+    },
+    district: (state, action) => {
+      state.distric = action.payload;
+    },
+    city: (state, action) => {
+      state.city = action.payload;
+    },
+    surname: (state, action) => {
+      state.surname = action.payload;
+    },
+    samaj: (state, action) => {
+      state.samaj = action.payload;
+    },
+    country: (state, action) => {
+      state.country = action.payload;
     },
   },
 });
 
-export const { login, logout, startLoading } = authSlice.actions;
+export const {
+  login,
+  logout,
+  startLoading,
+  endLoading,
+  region,
+  state,
+  district,
+  surname,
+  samaj,
+  country,
+  city,
+} = authSlice.actions;
 
 export default authSlice.reducer;

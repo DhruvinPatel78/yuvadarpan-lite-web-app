@@ -21,11 +21,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../../Component/Common/customSelect";
 import DatePicker from "../../../Component/Common/DatePicker";
 import CustomCheckbox from "../../../Component/Common/customCheckbox";
+import { useDispatch, useSelector } from "react-redux";
+import { endLoading, startLoading } from "../../../store/authSlice";
 
 const AddYuva = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [newFieldList, setNewFieldList] = useState([]);
   const [lastNameList, setLastNameList] = useState([]);
@@ -101,11 +104,9 @@ const AddYuva = () => {
   };
 
   const getListById = (feild, id) => {
-    console.log("getListById :: ", feild, id);
     axios
       .get(`${process.env.REACT_APP_BASE_URL}/${feild}/list/${id}`)
       .then((res) => {
-        console.log("state:: ", res);
         addLabelValueInAPIResult(res, feild);
       })
       .catch(function (error) {
@@ -113,19 +114,19 @@ const AddYuva = () => {
       });
   };
   const addYuvaListHandler = (data) => {
-    setLoading(true);
+    dispatch(startLoading());
     axios
       .post(`${process.env.REACT_APP_BASE_URL}/yuvaList/addYuvaList`, data)
       .then((res) => {
         navigate("/admin/yuvalist");
       })
       .finally(() => {
-        setLoading(false);
+        dispatch(endLoading());
         setNewFieldList([]);
       });
   };
   const updateAPIHandler = (data) => {
-    setLoading(true);
+    dispatch(startLoading());
     axios
       .patch(`${process.env.REACT_APP_BASE_URL}/yuvaList/update/${data?.id}`, {
         ...data,
@@ -135,7 +136,7 @@ const AddYuva = () => {
         navigate("/admin/yuvalist");
       })
       .finally(() => {
-        setLoading(false);
+        dispatch(endLoading());
         setNewFieldList([]);
       });
   };
@@ -1186,7 +1187,6 @@ const AddYuva = () => {
                         ...pre,
                         description: e.target.value,
                       }));
-                      console.log("values : ", values);
                     }}
                     required={false}
                   />

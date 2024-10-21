@@ -21,13 +21,15 @@ import axios from "../../../util/useAxios";
 import * as Yup from "yup";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
+import { useDispatch, useSelector } from "react-redux";
+import { endLoading, startLoading } from "../../../store/authSlice";
 
 function Index() {
-  // eslint-disable-next-line no-unused-vars
   const { notification, setNotification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
 
   const formik = useFormik({
     initialValues: {
@@ -44,21 +46,20 @@ function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        setLoading(true);
+        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         axios
           .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${rest._id}`, {
             ...rest,
           })
           .then((res) => {
-            // setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
             userInfoModalClose();
             handleUserList();
           });
       } catch (e) {
         console.log("Error =>", e);
       } finally {
-        setLoading(false);
+        dispatch(endLoading());
       }
       resetForm();
     },
@@ -78,7 +79,6 @@ function Index() {
         .test({
           message: "Password not match",
           test: function (value) {
-            // You can access the price field with `this.parent`.
             return value === values.password;
           },
         }),
@@ -112,7 +112,6 @@ function Index() {
       })
       .then((res) => {
         handleUserList();
-        // setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
       });
   };
 
