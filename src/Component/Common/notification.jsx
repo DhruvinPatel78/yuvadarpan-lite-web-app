@@ -11,6 +11,7 @@ const NotificationData = () => {
 };
 
 const NotificationSnackbar = ({ notification }) => {
+  console.log("notification : ", notification);
   const [notificationOpen, setNotificationOpen] = useState(false);
 
   useEffect(() => {

@@ -6,7 +6,6 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
@@ -40,10 +39,10 @@ export default function Index() {
         {
           ...countryInfo,
           [field]: action,
-        }
+        },
       )
       .then((res) =>
-        setCountryList(res?.data?.map((data) => ({ ...data, id: data?._id })))
+        setCountryList(res?.data?.map((data) => ({ ...data, id: data?._id }))),
       );
   };
   const deleteAPI = async (id) => {

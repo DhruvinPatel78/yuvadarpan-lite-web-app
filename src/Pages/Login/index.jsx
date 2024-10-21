@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { CircularProgress, Grid, Paper } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
@@ -17,10 +17,6 @@ export default function Index() {
   const { notification, setNotification } = NotificationData();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setNotification({ type: "", message: "" }); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const getUserData = (e) => {
     let name, value;
     name = e.target.name;
@@ -29,8 +25,8 @@ export default function Index() {
   };
 
   const handleSubmit = () => {
-    setLoading(true);
     if (values.email && values.password) {
+      setLoading(true);
       dispatch(startLoading());
       axios
         .post(`${process.env.REACT_APP_BASE_URL}/user/signIn`, {
@@ -39,19 +35,13 @@ export default function Index() {
         .then((res) => {
           localStorage.setItem("user", JSON.stringify(res?.data?.data));
           localStorage.setItem("token", res?.data?.token);
-          dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
           setNotification({ message: "Login Success", type: "success" });
           setTimeout(() => {
             setLoading(false);
-            navigate(
-              res?.data?.data?.role === "ADMIN"
-                ? "/admin/dashboard"
-                : "/dashboard"
-            );
+            dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
           }, 1000);
         })
         .catch((err) => {
-          console.log("Err =>", err);
           setTimeout(() => {
             setLoading(false);
             setNotification({
@@ -66,8 +56,8 @@ export default function Index() {
           !values.email && !values.password
             ? "Email and Password are required."
             : !values.email
-            ? "Email is required."
-            : "Password is required.",
+              ? "Email is required."
+              : "Password is required.",
         type: "error",
       });
     }
@@ -113,6 +103,11 @@ export default function Index() {
               className={
                 "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
               }
+              style={
+                values.password && values.email
+                  ? { cursor: "pointer", opacity: "unset" }
+                  : { disabled: true, cursor: "not-allowed", opacity: 0.5 }
+              }
               onClick={loading ? () => {} : handleSubmit}
             >
               {loading ? <CircularProgress color="inherit" /> : "Sign In"}
@@ -124,6 +119,7 @@ export default function Index() {
               <span
                 className={`px-1 font-black text-[#572a2a] no-underline text-sm sm:text-lg cursor-pointer`}
                 onClick={loading ? () => {} : () => navigate("/register")}
+                style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
               >
                 Registration
               </span>

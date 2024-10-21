@@ -1,45 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Grid, Container } from "@mui/material";
 import CustomCard from "../../../Component/Card";
 import Header from "../../../Component/Header";
 import { useNavigate } from "react-router-dom";
-import axios from "../../../util/useAxios";
 import { useSelector } from "react-redux";
 
 export default function Index() {
   const { user } = useSelector((state) => state.auth);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [pendingListOpen, setPendingListOpen] = useState(false);
   const navigate = useNavigate();
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const pendingListModalOpen = () => {
-    setPendingListOpen(true);
-  };
-
-  const pendingListModalClose = () => {
-    setPendingListOpen(false);
-  };
-
-  useEffect(() => {
-    // axios.get(`${process.env.REACT_APP_BASE_URL}/yuva/list`).then((res) => {
-    //   console.log("res =>", res);
-    // });
-  }, []);
-
-  const sendOtpHandler = () => {
-    axios
-      .post(`${process.env.REACT_APP_BASE_URL}/user/sendOtp`, {
-        email: "patel.dhruvinpatel@gmail.com",
-      })
-      .then((res) => {
-        console.log("REs - - - - - - >");
-      })
-      .catch((e) => console.log("e - - - - "));
-  };
   const dashBoardList =
     user.role === "ADMIN"
       ? [
