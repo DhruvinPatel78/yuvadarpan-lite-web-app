@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { clearLocation } from "../../store/locationSlice";
 
 const useHeader = () => {
   const dispatch = useDispatch();
@@ -16,6 +17,7 @@ const useHeader = () => {
   };
   const handleLogOut = () => {
     dispatch(logout());
+    dispatch(clearLocation());
     navigate("/login");
   };
   return {

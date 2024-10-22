@@ -9,13 +9,13 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { login, startLoading, endLoading } from "../../store/authSlice";
 import {
-  getRegionData,
-  getCityData,
-  getDistrictData,
-  getSamajData,
-  getStateData,
-  getSurnameData,
-  getCountryData,
+  getAllRegionData,
+  getAllCityData,
+  getAllDistrictData,
+  getAllSamajData,
+  getAllStateData,
+  getAllSurnameData,
+  getAllCountryData,
 } from "../../util/getAPICall";
 import axios from "../../util/useAxios";
 
@@ -47,15 +47,15 @@ export default function Index() {
           setTimeout(() => {
             dispatch(endLoading());
             if (res.data?.data?.role === "USER") {
-              dispatch(getCityData);
+              dispatch(getAllCityData);
             } else {
-              dispatch(getRegionData);
-              dispatch(getCityData);
-              dispatch(getDistrictData);
-              dispatch(getSamajData);
-              dispatch(getStateData);
-              dispatch(getSurnameData);
-              dispatch(getCountryData);
+              dispatch(getAllRegionData);
+              dispatch(getAllCityData);
+              dispatch(getAllDistrictData);
+              dispatch(getAllSamajData);
+              dispatch(getAllStateData);
+              dispatch(getAllSurnameData);
+              dispatch(getAllCountryData);
             }
             dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
           }, 1000);

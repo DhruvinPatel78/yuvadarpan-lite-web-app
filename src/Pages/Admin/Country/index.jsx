@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Header from "../../../Component/Header";
 import { Box, Button, Modal, Paper, Tooltip } from "@mui/material";
 import axios from "../../../util/useAxios";
@@ -10,12 +10,12 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import { useDispatch, useSelector } from "react-redux";
-import { getCountryData } from "../../../util/getAPICall";
+import { getAllCountryData } from "../../../util/getAPICall";
 
 export default function Index() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { country } = useSelector((state) => state.auth);
+  const { country } = useSelector((state) => state.location);
   const [countryModalData, setCountryModalData] = useState(null);
 
   const userActionHandler = (countryInfo, action, field) => {
@@ -28,7 +28,7 @@ export default function Index() {
         }
       )
       .then((res) => {
-        dispatch(getCountryData);
+        dispatch(getAllCountryData);
       });
   };
   const deleteAPI = async (id) => {
@@ -39,7 +39,7 @@ export default function Index() {
         },
       })
       .then((res) => {
-        dispatch(getCountryData);
+        dispatch(getAllCountryData);
       });
   };
 

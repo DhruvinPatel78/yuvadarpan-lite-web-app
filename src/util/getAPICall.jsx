@@ -7,11 +7,11 @@ import {
   samaj,
   surname,
   country,
-} from "../store/authSlice";
+} from "../store/locationSlice";
 
-export const getRegionData = (dispatch) => {
+export const getAllRegionData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/region/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/region/get-all-list`)
     .then((res) => {
       return dispatch(region(res.data));
     })
@@ -19,9 +19,9 @@ export const getRegionData = (dispatch) => {
       console.log(error);
     });
 };
-export const getCityData = (dispatch) => {
+export const getAllCityData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/city/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/city/get-all-list`)
     .then((res) => {
       dispatch(city(res.data));
     })
@@ -29,9 +29,9 @@ export const getCityData = (dispatch) => {
       console.log(error);
     });
 };
-export const getDistrictData = (dispatch) => {
+export const getAllDistrictData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/district/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/district/get-all-list`)
     .then((res) => {
       return dispatch(district(res.data));
     })
@@ -39,9 +39,9 @@ export const getDistrictData = (dispatch) => {
       console.log(error);
     });
 };
-export const getSamajData = (dispatch) => {
+export const getAllSamajData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/samaj/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/samaj/get-all-list`)
     .then((res) => {
       return dispatch(samaj(res.data));
     })
@@ -49,9 +49,9 @@ export const getSamajData = (dispatch) => {
       console.log(error);
     });
 };
-export const getStateData = (dispatch) => {
+export const getAllStateData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/state/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/state/get-all-list`)
     .then((res) => {
       return dispatch(state(res.data));
     })
@@ -59,9 +59,9 @@ export const getStateData = (dispatch) => {
       console.log(error);
     });
 };
-export const getSurnameData = (dispatch) => {
+export const getAllSurnameData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/surname/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/surname/get-all-list`)
     .then((res) => {
       return dispatch(surname(res.data));
     })
@@ -69,9 +69,9 @@ export const getSurnameData = (dispatch) => {
       console.log(error);
     });
 };
-export const getCountryData = (dispatch) => {
+export const getAllCountryData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/country/list/`)
+    .get(`${process.env.REACT_APP_BASE_URL}/country/get-all-list`)
     .then((res) => {
       return dispatch(country(res.data));
     })
@@ -79,3 +79,15 @@ export const getCountryData = (dispatch) => {
       console.log(error);
     });
 };
+// export const getCountryData = ({ page, limit }) => {
+//   axios
+//     .get(
+//       `${process.env.REACT_APP_BASE_URL}/country/list?page=${page}&limit=${limit}`
+//     )
+//     .then((res) => {
+//       return res.data;
+//     })
+//     .catch(function (error) {
+//       console.log(error);
+//     });
+// };
