@@ -54,13 +54,23 @@ export default function CustomAutoComplete({
       <PrimaryAutocomplete
         disabled={disabled}
         defaultValue={defaultValue}
-        id={`combo-box-${label}`}
+        options={list}
+        value={value}
+        isOptionEqualToValue={(option, value) =>
+          option.label === value || option.id === value
+        }
+        // getOptionLabel={(option) => {
+        //   console.log("option : ","" ,option);
+        //   return Object.keys(option).includes("name")
+        //     ? list.find((data) => data.id === option.id)?.name
+        //     : list.find((data) => data.id === option)?.name;
+        // }}
+        id={`autoComplete-${name}`}
         label={label}
         name={name}
-        options={list}
         className={className}
         renderInput={(params) => (
-          <TextField {...params} name={name} label={label} />
+          <TextField {...params} name={name} label={label} value={value} />
         )}
         onSelect={onSelect}
         onChange={onChange}
