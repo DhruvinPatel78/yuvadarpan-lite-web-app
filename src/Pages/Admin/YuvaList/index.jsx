@@ -126,34 +126,34 @@ import {
 
 const YuvaList = () => {
   const navigate = useNavigate();
-  const [yuvaList, setYuvaList] = useState([]);
+  const [yuvaList, setYuvaList] = useState(null);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
   const getYuvaList = async () => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=1&limit=10`)
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=${
+          page + 1
+        }&limit=${rowsPerPage}`
+      )
       .then((res) => {
-        const data = res?.data?.data?.map((item) => ({
-          ...item,
-          id: item?._id,
-        }));
-        setYuvaList(data);
+        setYuvaList(res.data);
       });
   };
   useEffect(() => {
     getYuvaList();
-  }, []);
+  }, [page, rowsPerPage]);
   const deleteAPI = async (id) => {
     axios
       .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
-      .then((res) => {
+      .then(() => {
         getYuvaList();
-        // const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-        // setYuvaList(data);
       });
   };
 
@@ -291,8 +291,11 @@ const YuvaList = () => {
           className={"mx-0 w-full"}
           data={yuvaList}
           name={"YuvaList"}
-          pageSize={10}
+          pageSize={rowsPerPage}
           type={"pendingList"}
+          setPage={setPage}
+          pages={page}
+          setPageSize={setRowsPerPage}
         />
       </div>
       {userData ? (
@@ -341,7 +344,6 @@ const YuvaList = () => {
                   <ImageBackdrop className="MuiImageBackdrop-root" />
                 </ImageButton>
               </Grid>
-              {/*<input type="radio" id="age1" name="age" value="30" onChange={(e)=>console.log(e.target.value)} />*/}
               <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
                 <div className={"text-base font-bold"}>
                   Name:{" "}

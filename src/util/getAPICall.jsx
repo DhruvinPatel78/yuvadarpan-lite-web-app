@@ -79,10 +79,10 @@ export const getAllCountryData = (dispatch) => {
       console.log(error);
     });
 };
-// export const getCountryData = ({ page, limit }) => {
+// export const getDataByPagination = ({ field, page, limit }) => {
 //   axios
 //     .get(
-//       `${process.env.REACT_APP_BASE_URL}/country/list?page=${page}&limit=${limit}`
+//       `${process.env.REACT_APP_BASE_URL}/${field}/list?page=${page}&limit=${limit}`
 //     )
 //     .then((res) => {
 //       return res.data;

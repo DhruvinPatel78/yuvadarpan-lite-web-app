@@ -20,10 +20,12 @@ export default function Index() {
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   useEffect(() => {
     handleRequestList();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const requestInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
@@ -50,9 +52,15 @@ export default function Index() {
       });
   };
   const handleRequestList = () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/user/requests`).then((res) => {
-      setUserList(res?.data?.data?.map((data) => ({ ...data, id: data?._id })));
-    });
+    axios
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/user/requests?page=${
+          page + 1
+        }&limit=${rowsPerPage}`
+      )
+      .then((res) => {
+        setUserList(res?.data);
+      });
   };
   const handleSelectedUser = (ids) => {
     setSelectedUsers([...ids]);
@@ -201,9 +209,12 @@ export default function Index() {
           columns={pendingUsersTableHeader}
           data={userList}
           name={"pendingUser"}
-          pageSize={10}
+          pageSize={rowsPerPage}
           type={"pendingList"}
           className={"mx-0 w-full"}
+          setPageSize={setRowsPerPage}
+          page={page}
+          setPage={setPage}
           onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
         />
       </div>

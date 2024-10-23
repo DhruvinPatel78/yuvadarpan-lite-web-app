@@ -1,14 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import { Box, Tooltip } from "@mui/material";
-import { useSelector } from "react-redux";
 import CustomTable from "../../../Component/Common/customTable";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import axios from "../../../util/useAxios";
 
 export default function Index() {
-  const { state } = useSelector((state) => state.location);
+  const [stateData, setStateData] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  const getStateList = async () => {
+    axios
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/state/list?page=${
+          page + 1
+        }&limit=${rowsPerPage}`
+      )
+      .then((res) => {
+        setStateData(res.data);
+      });
+  };
+
+  useEffect(() => {
+    getStateList();
+  }, [page, rowsPerPage]);
+
   const stateListColumn = [
     {
       field: "name",
@@ -65,9 +84,12 @@ export default function Index() {
         </div>
         <CustomTable
           columns={stateListColumn}
-          data={state}
+          data={stateData}
           name={"users"}
-          pageSize={10}
+          pageSize={rowsPerPage}
+          setPageSize={setRowsPerPage}
+          page={page}
+          setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
         />

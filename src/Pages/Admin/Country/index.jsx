@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import { Box, Button, Modal, Paper, Tooltip } from "@mui/material";
 import axios from "../../../util/useAxios";
@@ -9,14 +9,13 @@ import { useNavigate } from "react-router-dom";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllCountryData } from "../../../util/getAPICall";
 
 export default function Index() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { country } = useSelector((state) => state.location);
   const [countryModalData, setCountryModalData] = useState(null);
+  const [countryData, setCountryData] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const userActionHandler = (countryInfo, action, field) => {
     axios
@@ -27,10 +26,26 @@ export default function Index() {
           [field]: action,
         }
       )
-      .then((res) => {
-        dispatch(getAllCountryData);
+      .then(() => {
+        getCountryList();
       });
   };
+  const getCountryList = async () => {
+    axios
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/country/list?page=${
+          page + 1
+        }&limit=${rowsPerPage}`
+      )
+      .then((res) => {
+        setCountryData(res.data);
+      });
+  };
+
+  useEffect(() => {
+    getCountryList();
+  }, [page, rowsPerPage]);
+
   const deleteAPI = async (id) => {
     axios
       .delete(`${process.env.REACT_APP_BASE_URL}/country/delete`, {
@@ -38,8 +53,8 @@ export default function Index() {
           countries: [id],
         },
       })
-      .then((res) => {
-        dispatch(getAllCountryData);
+      .then(() => {
+        getCountryList();
       });
   };
 
@@ -122,11 +137,14 @@ export default function Index() {
         </div>
         <CustomTable
           columns={countryListColumn}
-          data={country}
+          data={countryData}
           name={"users"}
-          pageSize={10}
+          pageSize={rowsPerPage}
+          setPageSize={setRowsPerPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          page={page}
+          setPage={setPage}
         />
       </div>
       {countryModalData ? (

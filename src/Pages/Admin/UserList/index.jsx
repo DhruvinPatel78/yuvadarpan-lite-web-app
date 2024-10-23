@@ -25,11 +25,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 
 function Index() {
-  const { notification, setNotification } = NotificationData();
+  const { notification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);
-  const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState(null);
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const formik = useFormik({
     initialValues: {
@@ -87,7 +89,7 @@ function Index() {
 
   useEffect(() => {
     handleUserList();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const {
     errors,
@@ -121,11 +123,13 @@ function Index() {
   };
   const handleUserList = () => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/user/list?page=1&limit=10`)
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/user/list?page=${
+          page + 1
+        }&limit=${rowsPerPage}`
+      )
       .then((res) => {
-        setUserList(
-          res.data?.data?.map((data) => ({ ...data, id: data?._id }))
-        );
+        setUserList(res.data);
       });
   };
 
@@ -243,9 +247,12 @@ function Index() {
           columns={usersTableHeader}
           data={userList}
           name={"users"}
-          pageSize={10}
+          pageSize={rowsPerPage}
+          setPageSize={setRowsPerPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          page={page}
+          setPage={setPage}
         />
       </div>
       {userInfoModel ? (
