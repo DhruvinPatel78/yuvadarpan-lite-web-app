@@ -41,6 +41,11 @@ function CustomTable({
           "& .MuiDataGrid-columnHeader": {
             backgroundColor: "#572a2a",
           },
+          "& .MuiDataGrid-columnHeaderTitleContainer, .MuiDataGrid-cell": {
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          },
           "& .Mui-checked": {
             color: "#572a2a !important",
           },

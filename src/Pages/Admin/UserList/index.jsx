@@ -23,6 +23,7 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch, useSelector } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 
 function Index() {
   const { notification } = NotificationData();
@@ -32,6 +33,9 @@ function Index() {
   const { loading } = useSelector((state) => state.auth);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname } = useSelector((state) => state.location);
+  const [selectedLastName, setSelectedLastName] = useState(null);
+  const [lastNameList, setLastNameList] = useState(surname);
 
   const formik = useFormik({
     initialValues: {
@@ -86,11 +90,6 @@ function Index() {
         }),
     }),
   });
-
-  useEffect(() => {
-    handleUserList();
-  }, [page, rowsPerPage]);
-
   const {
     errors,
     values,
@@ -99,11 +98,26 @@ function Index() {
     handleChange,
     handleBlur,
     touched,
+    setFieldValue,
   } = formik;
+
+  useEffect(() => {
+    handleUserList();
+  }, [page, rowsPerPage]);
 
   const userInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
     setValues({ ...userInfo, password: "" });
+    setLastNameList(
+      lastNameList.map((data) => ({
+        ...data,
+        label: data.name,
+        value: data.id,
+      })),
+    );
+    setSelectedLastName(
+      lastNameList.find((item) => item?.id === userInfo.lastName)?.name,
+    );
   };
 
   const userActionHandler = (userInfo, action, field) => {
@@ -126,7 +140,7 @@ function Index() {
       .get(
         `${process.env.REACT_APP_BASE_URL}/user/list?page=${
           page + 1
-        }&limit=${rowsPerPage}`
+        }&limit=${rowsPerPage}`,
       )
       .then((res) => {
         setUserList(res.data);
@@ -151,16 +165,19 @@ function Index() {
       filterable: false,
     },
     {
-      field: "middleName",
-      headerName: "Middle name",
+      field: "lastName",
+      headerName: "Last name",
       flex: 1,
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{surname.find((item) => item?.id === record?.row?.lastName)?.name}</>
+      ),
     },
     {
-      field: "lastName",
-      headerName: "Last name",
+      field: "role",
+      headerName: "Role",
       flex: 1,
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
@@ -345,19 +362,20 @@ function Index() {
                   </Grid>
                   <Grid item xs={12} sm={4} md={4}>
                     <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"lastName"}
-                        id="lastName"
-                        label="Last Name"
-                        value={values?.lastName}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
+                      <CustomAutoComplete
+                        list={lastNameList}
+                        label={"Last Name"}
+                        placeholder={"Select Your Last Name"}
+                        name="lastName"
+                        value={selectedLastName}
                         errors={
-                          touched?.lastName &&
-                          errors?.lastName &&
-                          errors?.lastName
+                          touched.lastName && errors.lastName && errors.lastName
                         }
+                        onChange={(e, lastName) => {
+                          setFieldValue("lastName", lastName.id);
+                          setSelectedLastName(lastName.name);
+                        }}
+                        onBlur={handleBlur}
                       />
                     </FormControl>
                   </Grid>

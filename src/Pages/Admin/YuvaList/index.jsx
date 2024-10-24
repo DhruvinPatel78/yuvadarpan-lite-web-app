@@ -123,6 +123,7 @@ import {
   ImageButton,
   ImageSrc,
 } from "../../../Component/constant";
+import { useSelector } from "react-redux";
 
 const YuvaList = () => {
   const navigate = useNavigate();
@@ -131,6 +132,8 @@ const YuvaList = () => {
   const [value, setValue] = React.useState("1");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname, city } = useSelector((state) => state.location);
+  const [nativeList, setNativeList] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -140,7 +143,7 @@ const YuvaList = () => {
       .get(
         `${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=${
           page + 1
-        }&limit=${rowsPerPage}`
+        }&limit=${rowsPerPage}`,
       )
       .then((res) => {
         setYuvaList(res.data);
@@ -148,12 +151,30 @@ const YuvaList = () => {
   };
   useEffect(() => {
     getYuvaList();
+    getNativeList();
   }, [page, rowsPerPage]);
   const deleteAPI = async (id) => {
     axios
       .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
       .then(() => {
         getYuvaList();
+      });
+  };
+
+  const getNativeList = () => {
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/native/list`)
+      .then((res) => {
+        setNativeList(
+          res.data.map((data) => ({
+            ...data,
+            label: data.name,
+            value: data.id,
+          })),
+        );
+      })
+      .catch(function (error) {
+        console.log(error);
       });
   };
 
@@ -178,7 +199,8 @@ const YuvaList = () => {
       renderCell: (record) => (
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
-            {record.row.firstName} {record.row.middleName} {record.row.lastName}{" "}
+            {record.row.firstName} {record.row.middleName}{" "}
+            {surname.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
           </p>
         </div>
       ),
@@ -222,6 +244,9 @@ const YuvaList = () => {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{city.find((item) => item?.id === record?.row?.city)?.name}</>
+      ),
     },
     {
       field: "native",
@@ -231,6 +256,12 @@ const YuvaList = () => {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>
+          {nativeList.find((item) => item?.id === record?.row?.native)?.name}
+          {/*{nativeList.find((item) => item?.id === record?.row?.lastName)}*/}
+        </>
+      ),
     },
     {
       field: "action",
@@ -329,7 +360,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank"
+                      "_blank",
                     )
                   }
                 >

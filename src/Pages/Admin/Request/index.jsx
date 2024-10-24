@@ -13,6 +13,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "../../../util/useAxios";
+import { useSelector } from "react-redux";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
@@ -22,6 +23,7 @@ export default function Index() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname } = useSelector((state) => state.location);
 
   useEffect(() => {
     handleRequestList();
@@ -56,7 +58,7 @@ export default function Index() {
       .get(
         `${process.env.REACT_APP_BASE_URL}/user/requests?page=${
           page + 1
-        }&limit=${rowsPerPage}`
+        }&limit=${rowsPerPage}`,
       )
       .then((res) => {
         setUserList(res?.data);
@@ -119,6 +121,9 @@ export default function Index() {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{surname.find((item) => item?.id === record?.row?.lastName)?.name}</>
+      ),
     },
     {
       field: "email",
