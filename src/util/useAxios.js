@@ -17,14 +17,17 @@ instance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 instance.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response) {
-      if (err.response.status === 401) {
+      if (
+        err.response.status === 401 &&
+        window.location.pathname !== "/login"
+      ) {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         window.location.href = "/login";
@@ -32,7 +35,7 @@ instance.interceptors.response.use(
       }
     }
     throw err;
-  }
+  },
 );
 
 export default instance;

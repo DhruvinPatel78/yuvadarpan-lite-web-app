@@ -123,36 +123,58 @@ import {
   ImageButton,
   ImageSrc,
 } from "../../../Component/constant";
+import { useSelector } from "react-redux";
 
 const YuvaList = () => {
   const navigate = useNavigate();
-  const [yuvaList, setYuvaList] = useState([]);
+  const [yuvaList, setYuvaList] = useState(null);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname, city } = useSelector((state) => state.location);
+  const [nativeList, setNativeList] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
   const getYuvaList = async () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list`).then((res) => {
-      console.log("list  ::: ", res);
-      const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-      setYuvaList(data);
-    });
+    axios
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=${
+          page + 1
+        }&limit=${rowsPerPage}`,
+      )
+      .then((res) => {
+        setYuvaList(res.data);
+      });
   };
   useEffect(() => {
     getYuvaList();
-  }, []);
+    getNativeList();
+  }, [page, rowsPerPage]);
   const deleteAPI = async (id) => {
-    // axios
-    //     .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list/${id}`)
-    //     .then((res) => {
-    //     });
     axios
       .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
+      .then(() => {
+        getYuvaList();
+      });
+  };
+
+  const getNativeList = () => {
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/native/list`)
       .then((res) => {
-        const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-        setYuvaList(data);
+        setNativeList(
+          res.data.map((data) => ({
+            ...data,
+            label: data.name,
+            value: data.id,
+          })),
+        );
+      })
+      .catch(function (error) {
+        console.log(error);
       });
   };
 
@@ -177,7 +199,8 @@ const YuvaList = () => {
       renderCell: (record) => (
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
-            {record.row.firstName} {record.row.middleName} {record.row.lastName}{" "}
+            {record.row.firstName} {record.row.middleName}{" "}
+            {surname.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
           </p>
         </div>
       ),
@@ -221,6 +244,9 @@ const YuvaList = () => {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{city.find((item) => item?.id === record?.row?.city)?.name}</>
+      ),
     },
     {
       field: "native",
@@ -230,6 +256,12 @@ const YuvaList = () => {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>
+          {nativeList.find((item) => item?.id === record?.row?.native)?.name}
+          {/*{nativeList.find((item) => item?.id === record?.row?.lastName)}*/}
+        </>
+      ),
     },
     {
       field: "action",
@@ -290,8 +322,11 @@ const YuvaList = () => {
           className={"mx-0 w-full"}
           data={yuvaList}
           name={"YuvaList"}
-          pageSize={10}
+          pageSize={rowsPerPage}
           type={"pendingList"}
+          setPage={setPage}
+          pages={page}
+          setPageSize={setRowsPerPage}
         />
       </div>
       {userData ? (
@@ -340,7 +375,6 @@ const YuvaList = () => {
                   <ImageBackdrop className="MuiImageBackdrop-root" />
                 </ImageButton>
               </Grid>
-              {/*<input type="radio" id="age1" name="age" value="30" onChange={(e)=>console.log(e.target.value)} />*/}
               <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
                 <div className={"text-base font-bold"}>
                   Name:{" "}

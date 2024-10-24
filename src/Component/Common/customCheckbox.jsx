@@ -45,6 +45,7 @@ export default function CustomCheckbox({
           // required
           className={className}
           onBlur={onBlur}
+          checked={value}
         >
           <FormControlLabel
             key={`checkbox`}

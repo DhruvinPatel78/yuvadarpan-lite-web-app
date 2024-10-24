@@ -21,20 +21,44 @@ import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../../Component/Common/customSelect";
 import DatePicker from "../../../Component/Common/DatePicker";
 import CustomCheckbox from "../../../Component/Common/customCheckbox";
+import { useDispatch, useSelector } from "react-redux";
+import { endLoading, startLoading } from "../../../store/authSlice";
 
 const AddYuva = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+  const { country, state, region, district, city, samaj, surname } =
+    useSelector((state) => state.location);
+  const selectArr = [
+    "surname",
+    "native",
+    "country",
+    "state",
+    "region",
+    "district",
+    "city",
+    "samaj",
+  ];
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [newFieldList, setNewFieldList] = useState([]);
-  const [lastNameList, setLastNameList] = useState([]);
+  const [lastNameList, setLastNameList] = useState(surname);
+  const [selectedLastName, setSelectedLastName] = useState(null);
   const [countryList, setCountryList] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
   const [stateList, setStateList] = useState([]);
+  const [selectedState, setSelectedState] = useState(null);
   const [regionList, setRegionList] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState(null);
   const [districtList, setDistrictList] = useState([]);
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+  const [samajList, setSamajList] = useState([]);
+  const [selectedSamaj, setSelectedSamaj] = useState(null);
   const [cityList, setCityList] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
   const [nativeList, setNativeList] = useState([]);
+  const [selectedNative, setSelectedNative] = useState(null);
   const [newField, setNewField] = useState({
     title: "",
     description: "",
@@ -47,15 +71,38 @@ const AddYuva = () => {
     city: false,
   });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
+  const getSamajList = (regionId) => {
+    axios
+      .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
+      .then((res) => {
+        setSamajList(res.data);
+      });
+  };
 
-  const addLabelValueInAPIResult = (res, feild) => {
-    const list = res.data.map((data) => ({
+  const addLabelValueInList = (field) => {
+    switch (field) {
+      case "surname":
+        setLastNameList(setLableValueInList(surname));
+        break;
+      case "country":
+        setCountryList(setLableValueInList(country));
+        break;
+      default:
+        return null;
+    }
+  };
+
+  const setLableValueInList = (data) => {
+    const list = data.map((data) => ({
       ...data,
       label: data.name,
       value: data.id,
     }));
-
-    switch (feild) {
+    return list;
+  };
+  const formatLabelValue = (res, field) => {
+    const list = setLableValueInList(res.data);
+    switch (field) {
       case "surname":
         setLastNameList(list);
         break;
@@ -82,43 +129,128 @@ const AddYuva = () => {
     }
   };
 
-  const getList = (feild) => {
+  const getList = (field) => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/${feild}/list`)
+      .get(`${process.env.REACT_APP_BASE_URL}/${field}/list`)
       .then((res) => {
-        addLabelValueInAPIResult(res, feild);
+        formatLabelValue(res, field);
       })
       .catch(function (error) {
         console.log(error);
       });
   };
 
-  const getListById = (feild, id) => {
-    console.log("getListById :: ", feild, id);
+  const getListById = (field, id) => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/${feild}/list/${id}`)
+      .get(`${process.env.REACT_APP_BASE_URL}/${field}/list/${id}`)
       .then((res) => {
-        console.log("state:: ", res);
-        addLabelValueInAPIResult(res, feild);
+        formatLabelValue(res, field);
       })
       .catch(function (error) {
         console.log(error);
       });
   };
+  const selectedValueSetName = (field) => {
+    switch (field) {
+      case "surname":
+        surname.map((data) => {
+          if (location?.state?.data?.lastName === data.id) {
+            setFieldValue("lastName", data.name);
+            setSelectedLastName(data.name);
+          }
+        });
+        break;
+      case "native":
+        axios
+          .get(
+            `${process.env.REACT_APP_BASE_URL}/${field}/getInfo/${location?.state?.data?.native}`,
+          )
+          .then((res) => {
+            setFieldValue("native", res.data[0].name);
+            setSelectedNative(res.data[0].name);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+        break;
+
+      case "country":
+        country.map((data) => {
+          if (location?.state?.data?.country === data.id) {
+            setFieldValue("country", data.name);
+            setSelectedCountry(data.name);
+            setIsLocation((pre) => ({ ...pre, country: true }));
+          }
+        });
+        break;
+      case "state":
+        state.map((data) => {
+          if (location?.state?.data?.state === data.id) {
+            setFieldValue("state", data.name);
+            setSelectedState(data.name);
+            setIsLocation((pre) => ({ ...pre, state: true }));
+            getListById("state", location?.state?.data?.country);
+          }
+        });
+        break;
+      case "region":
+        region.map((data) => {
+          if (location?.state?.data?.region === data.id) {
+            setFieldValue("region", data.name);
+            setSelectedRegion(data.name);
+            setIsLocation((pre) => ({ ...pre, region: true }));
+            getListById("region", location?.state?.data?.state);
+          }
+        });
+        break;
+      case "district":
+        district.map((data) => {
+          if (location?.state?.data?.district === data.id) {
+            setFieldValue("district", data.name);
+            setSelectedDistrict(data.name);
+            setIsLocation((pre) => ({ ...pre, district: true }));
+            getListById("district", location?.state?.data?.region);
+          }
+        });
+        break;
+      case "city":
+        city.map((data) => {
+          if (location?.state?.data?.city === data.id) {
+            setFieldValue("city", data.name);
+            setSelectedCity(data.name);
+            setIsLocation((pre) => ({ ...pre, city: true }));
+            getListById("city", location?.state?.data?.district);
+          }
+        });
+        break;
+      case "samaj":
+        samaj.map((data) => {
+          if (location?.state?.data?.localSamaj === data.id) {
+            setFieldValue("localSamaj", data.name);
+            setSelectedSamaj(data.name);
+            getSamajList(location?.state?.data?.region);
+          }
+        });
+        break;
+      default:
+        return null;
+    }
+  };
+
   const addYuvaListHandler = (data) => {
-    setLoading(true);
+    dispatch(startLoading());
     axios
       .post(`${process.env.REACT_APP_BASE_URL}/yuvaList/addYuvaList`, data)
       .then((res) => {
         navigate("/admin/yuvalist");
       })
       .finally(() => {
-        setLoading(false);
+        dispatch(endLoading());
         setNewFieldList([]);
       });
   };
   const updateAPIHandler = (data) => {
-    setLoading(true);
+    dispatch(startLoading());
     axios
       .patch(`${process.env.REACT_APP_BASE_URL}/yuvaList/update/${data?.id}`, {
         ...data,
@@ -128,7 +260,7 @@ const AddYuva = () => {
         navigate("/admin/yuvalist");
       })
       .finally(() => {
-        setLoading(false);
+        dispatch(endLoading());
         setNewFieldList([]);
       });
   };
@@ -180,6 +312,7 @@ const AddYuva = () => {
       handicap: false,
       handicapDetails: "",
       YSKno: "",
+      localSamaj: "",
     },
     onSubmit: async (values, { resetForm }) => {
       let newValue = { ...values };
@@ -252,6 +385,7 @@ const AddYuva = () => {
       // handicap: Yup.string().required("Required"),
       // handicapDetails: Yup.string().required("Required"),
       YSKno: Yup.string().required("Required"),
+      localSamaj: Yup.string().required("Required"),
     }),
   });
   const {
@@ -304,16 +438,25 @@ const AddYuva = () => {
         ...location?.state?.data,
         profileName: location?.state?.data?.profile?.name,
       });
+      // console.log("location : ", location);
+      if (location?.state?.data?.lastName) {
+        selectArr.map((data) => {
+          selectedValueSetName(data);
+        });
+      }
     }
   }, [location]);
 
   useEffect(() => {
-    getList("surname");
-    getList("country");
+    // getList("surname");
+    // getList("country");
     getList("native");
+
+    selectArr.map((data) => {
+      addLabelValueInList(data);
+    });
   }, []);
 
-  console.log("isLocation : ", isLocation, isLocation.country);
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -389,12 +532,13 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.lastName}
+                    value={selectedLastName}
                     errors={
                       touched.lastName && errors.lastName && errors.lastName
                     }
                     onChange={(e, lastName) => {
                       setFieldValue("lastName", lastName.id);
+                      setSelectedLastName(lastName.name);
                     }}
                     onBlur={handleBlur}
                   />
@@ -473,6 +617,22 @@ const AddYuva = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
+                  <CustomAutoComplete
+                    list={nativeList}
+                    label={"Native"}
+                    placeholder={"Select Your Native"}
+                    name="native"
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={selectedNative}
+                    errors={touched.native && errors.native && errors.native}
+                    onChange={(e, native) => {
+                      setFieldValue("native", native.id);
+                      setSelectedNative(native.name);
+                    }}
+                    onBlur={handleBlur}
+                  />
                   <CustomInput
                     type={"text"}
                     label={"E-mail"}
@@ -483,32 +643,6 @@ const AddYuva = () => {
                     md={4}
                     value={values?.email}
                     errors={touched?.email && errors?.email && errors?.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"Height (ft)"}
-                    placeholder={"Enter Your Height"}
-                    name={"height"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.height}
-                    errors={touched?.height && errors?.height && errors?.height}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"Weight (kg)"}
-                    placeholder={"Enter Your Weight"}
-                    name={"weight"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.weight}
-                    errors={touched?.weight && errors?.weight && errors?.weight}
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
@@ -533,13 +667,14 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.country}
+                    value={selectedCountry}
                     errors={
                       touched?.country && errors?.country && errors?.country
                     }
                     onSelect={handleChange}
                     onChange={(e, country) => {
                       setFieldValue("country", country.id);
+                      setSelectedCountry(country.name);
                       setIsLocation((pre) => ({ ...pre, country: true }));
                       getListById("state", country.id);
                     }}
@@ -553,10 +688,11 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.state}
+                    value={selectedState}
                     errors={touched?.state && errors?.state && errors?.state}
                     onChange={(e, state) => {
                       setFieldValue("state", state.id);
+                      setSelectedState(state.name);
                       setIsLocation((pre) => ({ ...pre, state: true }));
                       getListById("region", state.id);
                     }}
@@ -571,12 +707,14 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.region}
+                    value={selectedRegion}
                     errors={touched?.region && errors?.region && errors?.region}
                     onChange={(e, region) => {
                       setFieldValue("region", region.id);
+                      setSelectedRegion(region.name);
                       setIsLocation((pre) => ({ ...pre, region: true }));
                       getListById("district", region.id);
+                      getSamajList(region.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.state}
@@ -589,12 +727,13 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.district}
+                    value={selectedDistrict}
                     errors={
                       touched?.district && errors?.district && errors?.district
                     }
                     onChange={(e, district) => {
                       setFieldValue("district", district.id);
+                      setSelectedDistrict(district.name);
                       setIsLocation((pre) => ({ ...pre, district: true }));
                       getListById("city", district.id);
                     }}
@@ -609,14 +748,36 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.city}
+                    value={selectedCity}
                     errors={touched?.city && errors?.city && errors?.city}
                     onChange={(e, city) => {
                       setFieldValue("city", city.id);
+                      setSelectedCity(city.name);
                       setIsLocation((pre) => ({ ...pre, city: true }));
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.district}
+                  />
+                  <CustomAutoComplete
+                    list={samajList}
+                    label={"Local Samaj"}
+                    placeholder={"Select Your Samaj"}
+                    name={"localSamaj"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={selectedSamaj}
+                    errors={
+                      touched?.localSamaj &&
+                      errors?.localSamaj &&
+                      errors?.localSamaj
+                    }
+                    disabled={!isLocation.region}
+                    onChange={(e, localSamaj) => {
+                      setFieldValue("localSamaj", localSamaj.id);
+                      setSelectedSamaj(localSamaj.name);
+                    }}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -652,21 +813,6 @@ const AddYuva = () => {
                     onBlur={handleBlur}
                     onChange={handleChange}
                   />
-                  <CustomAutoComplete
-                    list={nativeList}
-                    label={"Native"}
-                    placeholder={"Select Your Native"}
-                    name="native"
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values.native}
-                    errors={touched.native && errors.native && errors.native}
-                    onChange={(e, native) => {
-                      setFieldValue("native", native.id);
-                    }}
-                    onBlur={handleBlur}
-                  />
                   <CustomSelect
                     list={[
                       "divorce",
@@ -689,6 +835,32 @@ const AddYuva = () => {
                       errors?.martialStatus &&
                       errors?.martialStatus
                     }
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"Height (ft)"}
+                    placeholder={"Enter Your Height"}
+                    name={"height"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.height}
+                    errors={touched?.height && errors?.height && errors?.height}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                  />
+                  <CustomInput
+                    type={"text"}
+                    label={"Weight (kg)"}
+                    placeholder={"Enter Your Weight"}
+                    name={"weight"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.weight}
+                    errors={touched?.weight && errors?.weight && errors?.weight}
                     onChange={handleChange}
                     onBlur={handleBlur}
                   />
@@ -744,22 +916,6 @@ const AddYuva = () => {
                   {/*    onBlur={handleBlur}*/}
                   {/*  />*/}
                   {/*) : null}*/}
-                  <CustomInput
-                    type={"text"}
-                    label={"YSK No."}
-                    placeholder={"Enter Your YSK No."}
-                    name={"YSKno"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.YSKno}
-                    required={false}
-                    onChange={(e) => {
-                      setFieldValue("YSKno", e.target.value);
-                    }}
-                    onBlur={handleBlur}
-                    errors={touched?.YSKno && errors?.YSKno && errors?.YSKno}
-                  />
                   <CustomSelect
                     list={[
                       "NOT KNOWN",
@@ -834,6 +990,22 @@ const AddYuva = () => {
                       }
                     />
                   )}
+                  <CustomInput
+                    type={"text"}
+                    label={"YSK No."}
+                    placeholder={"Enter Your YSK No."}
+                    name={"YSKno"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values?.YSKno}
+                    required={false}
+                    onChange={(e) => {
+                      setFieldValue("YSKno", e.target.value);
+                    }}
+                    onBlur={handleBlur}
+                    errors={touched?.YSKno && errors?.YSKno && errors?.YSKno}
+                  />
                 </Grid>
               </Grid>
               <Grid item xs={12}>
@@ -1157,7 +1329,6 @@ const AddYuva = () => {
                         ...pre,
                         description: e.target.value,
                       }));
-                      console.log("values : ", values);
                     }}
                     required={false}
                   />

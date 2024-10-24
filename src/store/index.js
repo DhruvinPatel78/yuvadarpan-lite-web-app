@@ -3,9 +3,11 @@ import authReducer from "./authSlice";
 import storage from "redux-persist/lib/storage";
 import { persistReducer, persistStore } from "redux-persist";
 import { combineReducers } from "redux";
+import locationReducer from "./locationSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  location: locationReducer,
 });
 
 const persistConfig = {

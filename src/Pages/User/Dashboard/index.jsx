@@ -1,12 +1,9 @@
 import React from "react";
 import Header from "../../../Component/Header";
-import { Card, Container, Divider, Grid } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { Card, Container, Grid } from "@mui/material";
 
 const row = ["1", "1", "1", "1", "1", "1", "1", "1", "1", "1"];
 export default function Index() {
-  const navigate = useNavigate();
-
   return (
     <div>
       <Header />

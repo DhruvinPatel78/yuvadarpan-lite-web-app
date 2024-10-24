@@ -21,8 +21,8 @@ import Samaj from "./Pages/Admin/Samaj";
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/User/Dashboard";
 import NotFound from "./Pages/NotFound";
-import PrivateRoute from "./Component/PrivateRoute";
-import PublicRoute from "./Component/PublicRoute";
+import PrivateRoute from "./util/PrivateRoute";
+import PublicRoute from "./util/PublicRoute";
 
 function App() {
   return (

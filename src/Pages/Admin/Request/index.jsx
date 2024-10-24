@@ -13,18 +13,21 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "../../../util/useAxios";
+import { useSelector } from "react-redux";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
-  // const [loading, setLoading] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname } = useSelector((state) => state.location);
 
   useEffect(() => {
     handleRequestList();
-  }, []);
+  }, [page, rowsPerPage]);
 
   const requestInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
@@ -40,7 +43,7 @@ export default function Index() {
         allowed: action,
       })
       .then((res) => {
-        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
+        handleRequestList();
         setNotification({ type: "success", message: "Success !" });
       })
       .catch((e) => {
@@ -51,9 +54,15 @@ export default function Index() {
       });
   };
   const handleRequestList = () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/user/requests`).then((res) => {
-      setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
-    });
+    axios
+      .get(
+        `${process.env.REACT_APP_BASE_URL}/user/requests?page=${
+          page + 1
+        }&limit=${rowsPerPage}`,
+      )
+      .then((res) => {
+        setUserList(res?.data);
+      });
   };
   const handleSelectedUser = (ids) => {
     setSelectedUsers([...ids]);
@@ -65,7 +74,7 @@ export default function Index() {
         action,
       })
       .then((res) => {
-        setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
+        handleRequestList();
         setNotification({ type: "success", message: "Success !" });
       })
       .catch((e) => {
@@ -112,6 +121,9 @@ export default function Index() {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{surname.find((item) => item?.id === record?.row?.lastName)?.name}</>
+      ),
     },
     {
       field: "email",
@@ -202,9 +214,12 @@ export default function Index() {
           columns={pendingUsersTableHeader}
           data={userList}
           name={"pendingUser"}
-          pageSize={10}
+          pageSize={rowsPerPage}
           type={"pendingList"}
           className={"mx-0 w-full"}
+          setPageSize={setRowsPerPage}
+          page={page}
+          setPage={setPage}
           onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
         />
       </div>
