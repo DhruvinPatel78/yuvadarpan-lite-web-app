@@ -179,7 +179,7 @@ const AddYuva = () => {
           if (location?.state?.data?.country === data.id) {
             setFieldValue("country", data.name);
             setSelectedCountry(data.name);
-            // setIsLocation((pre) => ({ ...pre, country: true }));
+            setIsLocation((pre) => ({ ...pre, country: true }));
           }
         });
         break;
@@ -188,7 +188,8 @@ const AddYuva = () => {
           if (location?.state?.data?.state === data.id) {
             setFieldValue("state", data.name);
             setSelectedState(data.name);
-            // setIsLocation((pre) => ({ ...pre, state: true }));
+            setIsLocation((pre) => ({ ...pre, state: true }));
+            getListById("state", location?.state?.data?.country);
           }
         });
         break;
@@ -197,7 +198,8 @@ const AddYuva = () => {
           if (location?.state?.data?.region === data.id) {
             setFieldValue("region", data.name);
             setSelectedRegion(data.name);
-            // setIsLocation((pre) => ({ ...pre, region: true }));
+            setIsLocation((pre) => ({ ...pre, region: true }));
+            getListById("region", location?.state?.data?.state);
           }
         });
         break;
@@ -206,7 +208,8 @@ const AddYuva = () => {
           if (location?.state?.data?.district === data.id) {
             setFieldValue("district", data.name);
             setSelectedDistrict(data.name);
-            // setIsLocation((pre) => ({ ...pre, district: true }));
+            setIsLocation((pre) => ({ ...pre, district: true }));
+            getListById("district", location?.state?.data?.region);
           }
         });
         break;
@@ -215,7 +218,8 @@ const AddYuva = () => {
           if (location?.state?.data?.city === data.id) {
             setFieldValue("city", data.name);
             setSelectedCity(data.name);
-            // setIsLocation((pre) => ({ ...pre, city: true }));
+            setIsLocation((pre) => ({ ...pre, city: true }));
+            getListById("city", location?.state?.data?.district);
           }
         });
         break;
@@ -224,6 +228,7 @@ const AddYuva = () => {
           if (location?.state?.data?.localSamaj === data.id) {
             setFieldValue("localSamaj", data.name);
             setSelectedSamaj(data.name);
+            getSamajList(location?.state?.data?.region);
           }
         });
         break;
