@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Grid, Modal, Paper, Tooltip } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Grid,
+  Modal,
+  Paper,
+  Tooltip,
+} from "@mui/material";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../../../Component/Common/customTable";
@@ -13,21 +23,41 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "../../../util/useAxios";
+import ContainerPage from "../../../Component/Container";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import { useSelector } from "react-redux";
+import CustomInput from "../../../Component/Common/customInput";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
+  const { surname, state, region, samaj } = useSelector(
+    (state) => state.location
+  );
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { surname } = useSelector((state) => state.location);
+  const [expanded, setExpanded] = React.useState(false);
+  const [selectedSurname, setSelectedSurname] = useState([]);
+  const [selectedState, setSelectedState] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState([]);
+  const [selectedSamaj, setSelectedSamaj] = useState([]);
+  const [selectedSearchBy, setSelectedSearchBy] = useState({
+    name: "",
+    id: "",
+  });
+  const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
   useEffect(() => {
     handleRequestList();
   }, [page, rowsPerPage]);
+
+  const handleExpansion = () => {
+    setExpanded((prevExpanded) => !prevExpanded);
+  };
 
   const requestInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
@@ -35,6 +65,13 @@ export default function Index() {
   };
   const requestInfoModalClose = () => {
     setRequestInfoModel(false);
+  };
+  const setLabelValueInList = (data) => {
+    return data.map((data) => ({
+      ...data,
+      label: data.name,
+      value: data.id,
+    }));
   };
   const userActionHandler = (userInfo, action) => {
     axios
@@ -59,6 +96,22 @@ export default function Index() {
         `${process.env.REACT_APP_BASE_URL}/user/requests?page=${
           page + 1
         }&limit=${rowsPerPage}`,
+        {
+          params: {
+            lastName: selectedSurname
+              ?.filter((data) => data.name !== "All")
+              ?.map((item) => item?.id),
+            state: selectedState
+              ?.filter((data) => data.name !== "All")
+              ?.map((item) => item?.id),
+            region: selectedRegion
+              ?.filter((data) => data.name !== "All")
+              ?.map((item) => item?.id),
+            samaj: selectedSamaj
+              ?.filter((data) => data.name !== "All")
+              ?.map((item) => item?.id),
+          },
+        }
       )
       .then((res) => {
         setUserList(res?.data);
@@ -105,15 +158,6 @@ export default function Index() {
       filterable: false,
     },
     {
-      field: "middleName",
-      headerName: "Middle name",
-      width: 150,
-      flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
-      cellClassName: "items-center flex px-8 outline-none",
-      filterable: false,
-    },
-    {
       field: "lastName",
       headerName: "Last name",
       width: 150,
@@ -133,6 +177,39 @@ export default function Index() {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+    },
+    {
+      field: "gender",
+      headerName: "Gender",
+      width: 150,
+      flex: 2,
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
+      filterable: false,
+    },
+    {
+      field: "region",
+      headerName: "Region",
+      width: 150,
+      flex: 2,
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
+      filterable: false,
+      renderCell: (record) => (
+        <>{region.find((item) => item?.id === record?.row?.region)?.name}</>
+      ),
+    },
+    {
+      field: "localSamaj",
+      headerName: "Local Samaj",
+      width: 150,
+      flex: 2,
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center flex px-8 outline-none",
+      filterable: false,
+      renderCell: (record) => (
+        <>{samaj.find((item) => item?.id === record?.row?.localSamaj)?.name}</>
+      ),
     },
     {
       field: "action",
@@ -180,12 +257,10 @@ export default function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
+      <ContainerPage
+        className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div className={"p-4 pb-0 justify-between flex items-center w-full"}>
+        <div className={"justify-between flex items-center w-full"}>
           <p className={"text-3xl font-bold"}>Pending Requests</p>
           <div className="">
             <Tooltip title={"Accept all selected"}>
@@ -195,7 +270,7 @@ export default function Index() {
                 }
                 onClick={() => handleRequestAll("accept")}
               >
-                <PlaylistAddCheckIcon />
+                <PlaylistAddCheckIcon /> Accept
               </button>
             </Tooltip>
             <Tooltip title={"Reject all selected"} className="ml-3">
@@ -205,11 +280,229 @@ export default function Index() {
                 }
                 onClick={() => handleRequestAll("reject")}
               >
-                <PlaylistRemoveIcon />
+                <PlaylistRemoveIcon /> Reject
               </button>
             </Tooltip>
           </div>
         </div>
+        <Accordion
+          className={"w-full rounded"}
+          expanded={expanded}
+          onChange={handleExpansion}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon className={"text-primary"} />}
+            aria-controls="panel1-content"
+            id="panel1-header"
+            className={"text-primary font-extrabold text-[18px]"}
+          >
+            Filter & Search
+          </AccordionSummary>
+          <AccordionDetails className={"p-4"}>
+            <Grid spacing={2} container>
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(surname),
+                ]}
+                multiple={true}
+                label={"Surname"}
+                placeholder={"Select Your Last Name"}
+                xs={3}
+                value={selectedSurname}
+                name="surname"
+                onChange={(e, lastName) => {
+                  if (lastName) {
+                    setSelectedSurname((pre) =>
+                      (lastName.map((item) => item.name).includes("All") &&
+                        lastName?.length === 1) ||
+                      (lastName.map((item) => item.name).includes("All") &&
+                        lastName
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : [...lastName].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(state),
+                ]}
+                multiple={true}
+                label={"State"}
+                placeholder={"Select Your State"}
+                xs={3}
+                name="state"
+                value={selectedState}
+                onChange={(e, state) => {
+                  if (state) {
+                    setSelectedState((pre) =>
+                      (state.map((item) => item.name).includes("All") &&
+                        state?.length === 1) ||
+                      (state.map((item) => item.name).includes("All") &&
+                        state
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : [...state].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(region),
+                ]}
+                multiple={true}
+                label={"Region"}
+                placeholder={"Select Your Region"}
+                xs={3}
+                name="region"
+                value={selectedRegion}
+                onChange={(e, region) => {
+                  if (region) {
+                    setSelectedRegion((pre) =>
+                      (region.map((item) => item.name).includes("All") &&
+                        region?.length === 1) ||
+                      (region.map((item) => item.name).includes("All") &&
+                        region
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : [...region].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(samaj),
+                ]}
+                multiple={true}
+                label={"Samaj"}
+                placeholder={"Select Your Samaj"}
+                xs={3}
+                name="samaj"
+                value={selectedSamaj}
+                onChange={(e, samaj) => {
+                  if (samaj) {
+                    setSelectedSamaj((pre) =>
+                      (samaj.map((item) => item.name).includes("All") &&
+                        samaj?.length === 1) ||
+                      (samaj.map((item) => item.name).includes("All") &&
+                        samaj
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : [...samaj].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    value: "familyId",
+                    label: "Family Id",
+                  },
+                  {
+                    value: "firstName",
+                    label: "First Name",
+                  },
+                  {
+                    value: "mobile",
+                    label: "Mobile",
+                  },
+                  {
+                    value: "email",
+                    label: "email",
+                  },
+                  {
+                    value: "gender",
+                    label: "Gender",
+                  },
+                ]}
+                label={"Search By"}
+                placeholder={"Select Your Search By"}
+                xs={3}
+                name="search"
+                onChange={(e, search) => {
+                  console.log("search", search);
+                }}
+              />
+              <CustomInput
+                type={"text"}
+                // label={"Name"}
+                placeholder={"Enter Search Text"}
+                name={"firstName"}
+                xs={3}
+                value={selectedSearchByText}
+                onChange={(e) => setSelectedSearchByText(e.target.value)}
+              />
+              <Grid item xs={12} className={"flex justify-center"}>
+                <button
+                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                  onClick={() => handleRequestList()}
+                >
+                  Submit
+                </button>
+              </Grid>
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
         <CustomTable
           columns={pendingUsersTableHeader}
           data={userList}
@@ -222,7 +515,7 @@ export default function Index() {
           setPage={setPage}
           onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
         />
-      </div>
+      </ContainerPage>
       <Modal
         open={requestInfoModel}
         onClose={requestInfoModalClose}

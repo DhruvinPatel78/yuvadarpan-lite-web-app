@@ -47,6 +47,7 @@ export default function CustomAutoComplete({
   onSelect,
   onBlur,
   required = true,
+  multiple = false,
   ...rest
 }) {
   return (
@@ -59,12 +60,7 @@ export default function CustomAutoComplete({
         isOptionEqualToValue={(option, value) =>
           option.label === value || option.id === value
         }
-        // getOptionLabel={(option) => {
-        //   console.log("option : ","" ,option);
-        //   return Object.keys(option).includes("name")
-        //     ? list.find((data) => data.id === option.id)?.name
-        //     : list.find((data) => data.id === option)?.name;
-        // }}
+        multiple={multiple}
         id={`autoComplete-${name}`}
         label={label}
         name={name}

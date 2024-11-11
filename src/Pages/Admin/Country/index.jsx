@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
+import ContainerPage from "../../../Component/Container";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -108,7 +109,7 @@ export default function Index() {
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.id)}
+              onClick={() => deleteAPI(record.row?.id)}
             />
           </Tooltip>
         </div>
@@ -119,12 +120,8 @@ export default function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
-      >
-        <div className={"p-4 pb-0 flex w-full items-center justify-between"}>
+      <ContainerPage className={"flex-col justify-center flex items-start"}>
+        <div className={"flex w-full items-center justify-between"}>
           <p className={"text-3xl font-bold"}>Country</p>
           <Button
             variant="contained"
@@ -146,7 +143,7 @@ export default function Index() {
           page={page}
           setPage={setPage}
         />
-      </div>
+      </ContainerPage>
       {countryModalData ? (
         <Modal
           open={Boolean(countryModalData)}

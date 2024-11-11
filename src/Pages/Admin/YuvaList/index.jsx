@@ -124,6 +124,7 @@ import {
   ImageSrc,
 } from "../../../Component/constant";
 import { useSelector } from "react-redux";
+import ContainerPage from "../../../Component/Container";
 
 const YuvaList = () => {
   const navigate = useNavigate();
@@ -301,12 +302,8 @@ const YuvaList = () => {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
-      >
-        <div className={"p-4 pb-0 flex w-full items-center justify-between"}>
+      <ContainerPage className={"flex-col justify-center flex items-start"}>
+        <div className={"flex w-full items-center justify-between"}>
           <p className={"text-3xl font-bold"}>Yuvalist</p>
           <Button
             variant="contained"
@@ -328,7 +325,7 @@ const YuvaList = () => {
           pages={page}
           setPageSize={setRowsPerPage}
         />
-      </div>
+      </ContainerPage>
       {userData ? (
         <Modal
           open={Boolean(userData)}

@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import useHeader from "./useHeader";
+import ContainerPage from "../Container";
 
 const settings = ["Logout"];
 
@@ -45,7 +46,7 @@ const Header = () => {
 
   return (
     <AppBar position="static" className={"bg-primary mb-0 sm:mb-4"}>
-      <Container maxWidth="xl">
+      <ContainerPage>
         <Toolbar disableGutters className={"justify-between"}>
           <p
             className={
@@ -100,7 +101,7 @@ const Header = () => {
             </Box>
           ) : null}
         </Toolbar>
-      </Container>
+      </ContainerPage>
     </AppBar>
   );
 };

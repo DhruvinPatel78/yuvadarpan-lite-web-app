@@ -24,6 +24,7 @@ import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch, useSelector } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
+import ContainerPage from "../../../Component/Container";
 
 function Index() {
   const { notification } = NotificationData();
@@ -252,12 +253,8 @@ function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
-      >
-        <div className={"p-4 pb-0 justify-between flex items-center"}>
+      <ContainerPage className={" flex-col justify-center flex items-start"}>
+        <div className={"justify-between flex items-center"}>
           <p className={"text-3xl font-bold"}>Users</p>
         </div>
         <CustomTable
@@ -271,7 +268,7 @@ function Index() {
           page={page}
           setPage={setPage}
         />
-      </div>
+      </ContainerPage>
       {userInfoModel ? (
         <Modal
           open={userInfoModel}

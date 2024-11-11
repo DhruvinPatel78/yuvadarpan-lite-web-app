@@ -23,6 +23,7 @@ import DatePicker from "../../../Component/Common/DatePicker";
 import CustomCheckbox from "../../../Component/Common/customCheckbox";
 import { useDispatch, useSelector } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import ContainerPage from "../../../Component/Container";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -131,7 +132,7 @@ const AddYuva = () => {
 
   const getList = (field) => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/${field}/list`)
+      .get(`${process.env.REACT_APP_BASE_URL}/${field}/get-all-list`)
       .then((res) => {
         formatLabelValue(res, field);
       })
@@ -163,7 +164,7 @@ const AddYuva = () => {
       case "native":
         axios
           .get(
-            `${process.env.REACT_APP_BASE_URL}/${field}/getInfo/${location?.state?.data?.native}`,
+            `${process.env.REACT_APP_BASE_URL}/${field}/getInfo/${location?.state?.data?.native}`
           )
           .then((res) => {
             setFieldValue("native", res.data[0].name);
@@ -357,7 +358,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct",
+            "Phone Number must be correct"
           )
           .required("Required"),
       }),
@@ -378,7 +379,7 @@ const AddYuva = () => {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format",
+          "Invalid email address format"
         )
         .required("Required"),
       martialStatus: Yup.string().required("Required"),
@@ -460,10 +461,8 @@ const AddYuva = () => {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-4 sm:px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto bg-white"
-        }
+      <ContainerPage
+        className={"flex-col justify-center flex items-start bg-white"}
       >
         <FormikProvider value={formik}>
           <Form>
@@ -1361,7 +1360,7 @@ const AddYuva = () => {
             </Grid>
           </Form>
         </FormikProvider>
-      </div>
+      </ContainerPage>
       <Modal
         open={showProfileModal}
         aria-labelledby="modal-modal-title"

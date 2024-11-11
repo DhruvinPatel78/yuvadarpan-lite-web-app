@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { TablePagination } from "@mui/material";
 
@@ -13,6 +13,7 @@ function CustomTable({
   setPage,
   setPageSize,
 }) {
+  const [isLoading, setIsLoading] = useState(false);
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -20,9 +21,12 @@ function CustomTable({
   const handleChangeRowsPerPage = (event) => {
     setPageSize(parseInt(event.target.value, 10));
   };
-
+  useEffect(() => {
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 1000);
+  }, [data?.data, page, pageSize]);
   return (
-    <div className={"mx-4 w-full"}>
+    <div className={"w-full"}>
       <DataGrid
         className={`${className} bg-white`}
         rows={data?.data?.map((item) => ({ ...item, id: item?._id })) || []}
@@ -33,6 +37,7 @@ function CustomTable({
         disableRowSelectionOnClick
         checkboxSelection={type === "pendingList"}
         onRowSelectionModelChange={onRowSelectionModelChange}
+        loading={isLoading}
         sx={{
           "& .MuiDataGrid-menuIconButton .MuiSvgIcon-root, & .MuiDataGrid-sortIcon, & .MuiDataGrid-columnHeaderTitleContainerContent .css-12wnr2w-MuiButtonBase-root-MuiCheckbox-root":
             {
@@ -48,6 +53,9 @@ function CustomTable({
           },
           "& .Mui-checked": {
             color: "#572a2a !important",
+          },
+          "& .MuiDataGrid-overlay": {
+            backdropFilter: "blur(4px)",
           },
         }}
       />

@@ -17,6 +17,7 @@ import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined
 import { useLocation } from "react-router-dom";
 import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 import moment from "moment/moment";
+import ContainerPage from "../../Component/Container";
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -91,10 +92,8 @@ const ProfilePage = () => {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto h-full"
-        }
+      <ContainerPage
+        className={"flex-col justify-center flex items-start h-full"}
       >
         <Grid container spacing={2}>
           <Grid item xs={12} sm={12} md={4} lg={4}>
@@ -260,7 +259,7 @@ const ProfilePage = () => {
             </div>
           </Grid>
         </Grid>
-      </div>
+      </ContainerPage>
     </Box>
   );
 };

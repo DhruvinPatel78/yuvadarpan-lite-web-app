@@ -6,6 +6,7 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
 import axios from "../../../util/useAxios";
+import ContainerPage from "../../../Component/Container";
 
 export default function Index() {
   const [samajData, setSamajData] = useState(null);
@@ -73,12 +74,8 @@ export default function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
-      >
-        <div className={"p-4 pb-0 flex w-full items-center justify-between"}>
+      <ContainerPage className={"flex-col justify-center flex items-start"}>
+        <div className={"flex w-full items-center justify-between"}>
           <p className={"text-3xl font-bold"}>City</p>
         </div>
         <CustomTable
@@ -92,7 +89,7 @@ export default function Index() {
           type={"userList"}
           className={"mx-0 w-full"}
         />
-      </div>
+      </ContainerPage>
     </Box>
   );
 }

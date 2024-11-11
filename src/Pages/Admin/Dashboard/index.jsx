@@ -1,9 +1,10 @@
 import React from "react";
-import { Grid, Container } from "@mui/material";
+import { Grid } from "@mui/material";
 import CustomCard from "../../../Component/Card";
 import Header from "../../../Component/Header";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import ContainerPage from "../../../Component/Container";
 
 export default function Index() {
   const { user } = useSelector((state) => state.auth);
@@ -77,8 +78,8 @@ export default function Index() {
   return (
     <div>
       <Header />
-      <Container maxWidth="xl">
-        <Grid container spacing={2} className="p-4">
+      <ContainerPage>
+        <Grid container spacing={2}>
           {dashBoardList?.map((item, index) => {
             return (
               <Grid item xs={12} sm={6} md={4} key={`list-${index + item?.id}`}>
@@ -90,7 +91,7 @@ export default function Index() {
             );
           })}
         </Grid>
-      </Container>
+      </ContainerPage>
     </div>
   );
 }
