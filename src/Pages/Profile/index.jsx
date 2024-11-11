@@ -18,6 +18,7 @@ import { useLocation } from "react-router-dom";
 import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
+import { useSelector } from "react-redux";
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -85,7 +86,7 @@ const profileTabs = [
 const ProfilePage = () => {
   const { state: data } = useLocation();
   const [tabValue, setTabValue] = React.useState(0);
-
+  const { city, state } = useSelector((state) => state.location);
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -121,7 +122,7 @@ const ProfilePage = () => {
                 <ImageSrc
                   style={{
                     backgroundImage:
-                      // `url(${userData?.profile?.url})` ||
+                      `url(${data?.profile?.url})` ||
                       `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
                   }}
                   className={"m-2"}
@@ -147,7 +148,7 @@ const ProfilePage = () => {
                     <IconButton size={"small"}>
                       <PersonOutlineOutlinedIcon />
                     </IconButton>
-                    {data?.firstName + data?.middleName}
+                    {data?.firstName + data?.fatherName}
                   </span>
                   <span className={"flex flex-row gap-2 items-center"}>
                     <IconButton size={"small"}>
@@ -200,7 +201,7 @@ const ProfilePage = () => {
                   <Grid item xs={8} className={"w-full"}>
                     <div className={"flex flex-col gap-2"}>
                       <span>{data.firstName}</span>
-                      <span>{data.middleName}</span>
+                      <span>{data.fatherName}</span>
                       <span>{data.motherName}</span>
                       <span>{data.height}</span>
                       <span>{data.weight}</span>
@@ -208,8 +209,12 @@ const ProfilePage = () => {
                         {moment(data?.dob).format("DD/MM/YYYY hh:mm A")}
                       </span>
                       <span>{data.familyId}</span>
-                      <span>{data.city}</span>
-                      <span>{data.state}</span>
+                      <span>
+                        {city.find((item) => item?.id === data.city)?.name}
+                      </span>
+                      <span>
+                        {state.find((item) => item?.id === data.state)?.name}
+                      </span>
                       <span>{data.firm}</span>
                       <span>{data.firmAddress}</span>
                     </div>

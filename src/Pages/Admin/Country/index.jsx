@@ -1,36 +1,38 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
-import { Box, Button, Modal, Paper, Tooltip } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  Grid,
+  Modal,
+  Paper,
+  Tooltip,
+} from "@mui/material";
 import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import ContainerPage from "../../../Component/Container";
+import { Form, FormikProvider, useFormik } from "formik";
+import CustomInput from "../../../Component/Common/customInput";
+import { endLoading, startLoading } from "../../../store/authSlice";
+import * as Yup from "yup";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Index() {
-  const navigate = useNavigate();
-  const [countryModalData, setCountryModalData] = useState(null);
-  const [countryData, setCountryData] = useState(null);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [countryData, setCountryData] = useState(null);
+  const [countryModalData, setCountryModalData] = useState(null);
+  const [countryAddEditModel, setCountryAddEditModel] = useState(false);
 
-  const userActionHandler = (countryInfo, action, field) => {
-    axios
-      .patch(
-        `${process.env.REACT_APP_BASE_URL}/country/update/${countryInfo?.id}`,
-        {
-          ...countryInfo,
-          [field]: action,
-        }
-      )
-      .then(() => {
-        getCountryList();
-      });
-  };
   const getCountryList = async () => {
     axios
       .get(
@@ -46,18 +48,6 @@ export default function Index() {
   useEffect(() => {
     getCountryList();
   }, [page, rowsPerPage]);
-
-  const deleteAPI = async (id) => {
-    axios
-      .delete(`${process.env.REACT_APP_BASE_URL}/country/delete`, {
-        data: {
-          countries: [id],
-        },
-      })
-      .then(() => {
-        getCountryList();
-      });
-  };
 
   const countryListColumn = [
     {
@@ -103,19 +93,109 @@ export default function Index() {
           <Tooltip title={"Edit"}>
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => setCountryModalData(record?.row)}
+              onClick={() => {
+                setCountryModalData(record?.row);
+                setCountryAddEditModel(!countryAddEditModel);
+                setFieldValue("name", record?.row.name);
+              }}
             />
           </Tooltip>
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record.row?.id)}
+              onClick={() => deleteAPI(record?.row?.id)}
             />
           </Tooltip>
         </div>
       ),
     },
   ];
+
+  const userActionHandler = (countryInfo, action, field) => {
+    axios
+      .patch(
+        `${process.env.REACT_APP_BASE_URL}/country/update/${countryInfo?.id}`,
+        {
+          ...countryInfo,
+          [field]: action,
+        }
+      )
+      .then(() => {
+        getCountryList();
+      });
+  };
+
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+    },
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        dispatch(startLoading());
+        const { confirmPassword, ...rest } = values;
+        countryModalData
+          ? axios
+              .patch(
+                `${process.env.REACT_APP_BASE_URL}/country/update/${countryModalData.id}`,
+                {
+                  ...rest,
+                  updatedAt: new Date(),
+                }
+              )
+              .then((res) => {
+                countryAddEditModalClose();
+                getCountryList();
+              })
+          : axios
+              .post(`${process.env.REACT_APP_BASE_URL}/country/add`, {
+                ...rest,
+              })
+              .then((res) => {
+                countryAddEditModalClose();
+                getCountryList();
+              });
+      } catch (e) {
+        console.log("Error =>", e);
+      } finally {
+        dispatch(endLoading());
+      }
+      resetForm();
+    },
+    validationSchema: Yup.object({
+      name: Yup.string().required("Required"),
+    }),
+  });
+  const {
+    errors,
+    values,
+    setValues,
+    resetForm,
+    handleChange,
+    handleBlur,
+    touched,
+    setFieldValue,
+  } = formik;
+
+  const countryAddEditModalClose = () => {
+    setCountryAddEditModel(!countryAddEditModel);
+    setCountryModalData(null);
+    setFieldValue("name", null);
+    resetForm();
+  };
+
+  const deleteAPI = async (id) => {
+    axios
+      .delete(`${process.env.REACT_APP_BASE_URL}/country/delete`, {
+        data: {
+          countries: [id],
+        },
+      })
+      .then(() => {
+        getCountryList();
+      });
+  };
+
+  const hasError = Object.keys(errors)?.length || 0;
 
   return (
     <Box>
@@ -127,7 +207,9 @@ export default function Index() {
             variant="contained"
             startIcon={<AddIcon />}
             className={"bg-primary"}
-            onClick={() => navigate("/admin/country")}
+            onClick={() => {
+              setCountryAddEditModel(!countryAddEditModel);
+            }}
           >
             Add Country
           </Button>
@@ -144,10 +226,10 @@ export default function Index() {
           setPage={setPage}
         />
       </ContainerPage>
-      {countryModalData ? (
+      {countryAddEditModel ? (
         <Modal
-          open={Boolean(countryModalData)}
-          onClose={() => setCountryModalData(null)}
+          open={countryAddEditModel}
+          onClose={() => countryAddEditModalClose()}
           sx={{
             "& .MuiModal-backdrop": {
               backdropFilter: "blur(2px) !important",
@@ -165,10 +247,53 @@ export default function Index() {
               <Tooltip title={"Edit"}>
                 <CloseIcon
                   className={"cursor-pointer"}
-                  onClick={() => setCountryModalData(null)}
+                  onClick={() => countryAddEditModalClose()}
                 />
               </Tooltip>
             </div>
+            <FormikProvider value={formik}>
+              <Form
+                className={
+                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                }
+              >
+                <Grid container className={"w-full pt-4"} spacing={2}>
+                  <Grid item xs={12}>
+                    <FormControl className={"w-full"}>
+                      <CustomInput
+                        name={"name"}
+                        id="country"
+                        label="Country"
+                        value={values.name}
+                        variant="outlined"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        errors={touched?.name && errors?.name && errors?.name}
+                      />
+                    </FormControl>
+                  </Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    className={"flex justify-center items-center"}
+                  >
+                    {loading ? (
+                      <CircularProgress color="secondary" />
+                    ) : (
+                      <button
+                        className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
+                          hasError ? "opacity-50" : "opacity-100"
+                        }`}
+                        type={"submit"}
+                        disabled={hasError}
+                      >
+                        {countryModalData ? "UPDATE" : "ADD"}
+                      </button>
+                    )}
+                  </Grid>
+                </Grid>
+              </Form>
+            </FormikProvider>
           </Paper>
         </Modal>
       ) : null}

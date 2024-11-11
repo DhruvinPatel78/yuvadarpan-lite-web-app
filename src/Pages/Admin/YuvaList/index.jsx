@@ -133,7 +133,7 @@ const YuvaList = () => {
   const [value, setValue] = React.useState("1");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { surname, city } = useSelector((state) => state.location);
+  const { surname, city, state } = useSelector((state) => state.location);
   const [nativeList, setNativeList] = useState([]);
 
   const handleChange = (event, newValue) => {
@@ -144,7 +144,7 @@ const YuvaList = () => {
       .get(
         `${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=${
           page + 1
-        }&limit=${rowsPerPage}`,
+        }&limit=${rowsPerPage}`
       )
       .then((res) => {
         setYuvaList(res.data);
@@ -171,7 +171,7 @@ const YuvaList = () => {
             ...data,
             label: data.name,
             value: data.id,
-          })),
+          }))
         );
       })
       .catch(function (error) {
@@ -357,7 +357,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank",
+                      "_blank"
                     )
                   }
                 >
@@ -376,7 +376,11 @@ const YuvaList = () => {
                 <div className={"text-base font-bold"}>
                   Name:{" "}
                   <span className={"font-normal"}>
-                    {userData?.firstName} {userData?.lastName}{" "}
+                    {userData?.firstName}{" "}
+                    {
+                      surname.find((item) => item?.id === userData?.lastName)
+                        ?.name
+                    }{" "}
                   </span>
                 </div>
                 <div className={"text-base font-bold"}>
@@ -458,7 +462,7 @@ const YuvaList = () => {
                           <div className={"text-base font-bold"}>
                             Father Name:{" "}
                             <span className={"font-normal"}>
-                              {userData?.middleName}
+                              {userData?.fatherName}
                             </span>
                           </div>
                           <div className={"text-base font-bold"}>
@@ -476,7 +480,10 @@ const YuvaList = () => {
                           <div className={"text-base font-bold"}>
                             City:{" "}
                             <span className={"font-normal"}>
-                              {userData?.city}
+                              {
+                                city.find((item) => item?.id === userData?.city)
+                                  ?.name
+                              }
                             </span>
                           </div>
                         </Grid>
@@ -496,7 +503,11 @@ const YuvaList = () => {
                           <div className={"text-base font-bold"}>
                             State:{" "}
                             <span className={"font-normal"}>
-                              {userData?.state}
+                              {
+                                state.find(
+                                  (item) => item?.id === userData?.state
+                                )?.name
+                              }
                             </span>
                           </div>
                           {/*<div className={"text-base font-bold"}>*/}

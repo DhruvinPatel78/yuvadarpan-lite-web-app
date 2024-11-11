@@ -1,4 +1,4 @@
-import Header from "../../../Component/Header";
+import Header from "../../../../Component/Header";
 import {
   Box,
   CircularProgress,
@@ -8,22 +8,22 @@ import {
   Paper,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import CustomInput from "../../../Component/Common/customInput";
-import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-import CustomRadio from "../../../Component/Common/customRadio";
+import CustomInput from "../../../../Component/Common/customInput";
+import CustomAutoComplete from "../../../../Component/Common/customAutoComplete";
+import CustomRadio from "../../../../Component/Common/customRadio";
 import { Form, FormikProvider, useFormik } from "formik";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import RemoveOutlinedIcon from "@mui/icons-material/RemoveOutlined";
 import * as Yup from "yup";
-import axios from "../../../util/useAxios";
+import axios from "../../../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
-import CustomSelect from "../../../Component/Common/customSelect";
-import DatePicker from "../../../Component/Common/DatePicker";
-import CustomCheckbox from "../../../Component/Common/customCheckbox";
+import CustomSelect from "../../../../Component/Common/customSelect";
+import DatePicker from "../../../../Component/Common/DatePicker";
+import CustomCheckbox from "../../../../Component/Common/customCheckbox";
 import { useDispatch, useSelector } from "react-redux";
-import { endLoading, startLoading } from "../../../store/authSlice";
-import ContainerPage from "../../../Component/Container";
+import ContainerPage from "../../../../Component/Container";
+import { endLoading, startLoading } from "../../../../store/authSlice";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -72,6 +72,8 @@ const AddYuva = () => {
     city: false,
   });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+
   const getSamajList = (regionId) => {
     axios
       .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
@@ -156,7 +158,7 @@ const AddYuva = () => {
       case "surname":
         surname.map((data) => {
           if (location?.state?.data?.lastName === data.id) {
-            setFieldValue("lastName", data.name);
+            // setFieldValue("lastName", data.name);
             setSelectedLastName(data.name);
           }
         });
@@ -167,7 +169,7 @@ const AddYuva = () => {
             `${process.env.REACT_APP_BASE_URL}/${field}/getInfo/${location?.state?.data?.native}`
           )
           .then((res) => {
-            setFieldValue("native", res.data[0].name);
+            // setFieldValue("native", res.data[0].name);
             setSelectedNative(res.data[0].name);
           })
           .catch(function (error) {
@@ -178,7 +180,7 @@ const AddYuva = () => {
       case "country":
         country.map((data) => {
           if (location?.state?.data?.country === data.id) {
-            setFieldValue("country", data.name);
+            // setFieldValue("country", data.name);
             setSelectedCountry(data.name);
             setIsLocation((pre) => ({ ...pre, country: true }));
           }
@@ -187,7 +189,7 @@ const AddYuva = () => {
       case "state":
         state.map((data) => {
           if (location?.state?.data?.state === data.id) {
-            setFieldValue("state", data.name);
+            // setFieldValue("state", data.name);
             setSelectedState(data.name);
             setIsLocation((pre) => ({ ...pre, state: true }));
             getListById("state", location?.state?.data?.country);
@@ -197,7 +199,7 @@ const AddYuva = () => {
       case "region":
         region.map((data) => {
           if (location?.state?.data?.region === data.id) {
-            setFieldValue("region", data.name);
+            // setFieldValue("region", data.name);
             setSelectedRegion(data.name);
             setIsLocation((pre) => ({ ...pre, region: true }));
             getListById("region", location?.state?.data?.state);
@@ -207,7 +209,7 @@ const AddYuva = () => {
       case "district":
         district.map((data) => {
           if (location?.state?.data?.district === data.id) {
-            setFieldValue("district", data.name);
+            // setFieldValue("district", data.name);
             setSelectedDistrict(data.name);
             setIsLocation((pre) => ({ ...pre, district: true }));
             getListById("district", location?.state?.data?.region);
@@ -217,7 +219,7 @@ const AddYuva = () => {
       case "city":
         city.map((data) => {
           if (location?.state?.data?.city === data.id) {
-            setFieldValue("city", data.name);
+            // setFieldValue("city", data.name);
             setSelectedCity(data.name);
             setIsLocation((pre) => ({ ...pre, city: true }));
             getListById("city", location?.state?.data?.district);
@@ -227,7 +229,7 @@ const AddYuva = () => {
       case "samaj":
         samaj.map((data) => {
           if (location?.state?.data?.localSamaj === data.id) {
-            setFieldValue("localSamaj", data.name);
+            // setFieldValue("localSamaj", data.name);
             setSelectedSamaj(data.name);
             getSamajList(location?.state?.data?.region);
           }
@@ -434,25 +436,20 @@ const AddYuva = () => {
 
   useEffect(() => {
     if (location?.state) {
+      setIsEdit(true);
       setValues({
         ...values,
         ...location?.state?.data,
         profileName: location?.state?.data?.profile?.name,
       });
-      // console.log("location : ", location);
-      if (location?.state?.data?.lastName) {
-        selectArr.map((data) => {
-          selectedValueSetName(data);
-        });
-      }
+      selectArr.map((data) => {
+        selectedValueSetName(data);
+      });
     }
   }, [location]);
 
   useEffect(() => {
-    // getList("surname");
-    // getList("country");
     getList("native");
-
     selectArr.map((data) => {
       addLabelValueInList(data);
     });
@@ -771,7 +768,7 @@ const AddYuva = () => {
                       errors?.localSamaj &&
                       errors?.localSamaj
                     }
-                    disabled={!isLocation.region}
+                    disabled={!isLocation.city}
                     onChange={(e, localSamaj) => {
                       setFieldValue("localSamaj", localSamaj.id);
                       setSelectedSamaj(localSamaj.name);
@@ -1353,7 +1350,7 @@ const AddYuva = () => {
                     type={"submit"}
                     disabled={isSubmitting}
                   >
-                    Add New Yuva
+                    {isEdit ? "Update Yuva" : "Add New Yuva"}
                   </button>
                 )}
               </Grid>

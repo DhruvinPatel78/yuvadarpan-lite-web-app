@@ -29,7 +29,7 @@ function CustomTable({
     <div className={"w-full"}>
       <DataGrid
         className={`${className} bg-white`}
-        rows={data?.data?.map((item) => ({ ...item, id: item?._id })) || []}
+        rows={data?.data || []}
         columns={columns}
         hideFooter
         disableColumnFilter
