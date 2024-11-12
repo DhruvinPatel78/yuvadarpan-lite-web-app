@@ -39,11 +39,7 @@ export default function Index() {
 
   const getStateList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/state/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/state/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setStateData(res.data);
       });
@@ -92,7 +88,19 @@ export default function Index() {
               onClick={() => {
                 setStateModalData(record?.row);
                 setStateAddEditModel(!stateAddEditModel);
+                setCountryList(
+                  country.map((data) => ({
+                    ...data,
+                    label: data.name,
+                    value: data.id,
+                  }))
+                );
                 setFieldValue("name", record?.row.name);
+                setFieldValue("country_id", record?.row.country_id);
+                setSelectedCountry(
+                  country.find((item) => item?.id === record?.row?.country_id)
+                    ?.name
+                );
               }}
             />
           </Tooltip>
