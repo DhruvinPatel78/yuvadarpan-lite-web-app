@@ -42,11 +42,7 @@ export default function Index() {
 
   const getRegionList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/region/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/region/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setRegionData(res.data);
       });
@@ -133,7 +129,7 @@ export default function Index() {
 
   const getListById = (id) => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/state/list/${id}`)
+      .get(`/state/list/${id}`)
       .then((res) => {
         const list = res.data.map((data) => ({
           ...data,
@@ -163,19 +159,16 @@ export default function Index() {
         const { confirmPassword, ...rest } = values;
         regionModalData
           ? axios
-              .patch(
-                `${process.env.REACT_APP_BASE_URL}/region/update/${regionModalData.id}`,
-                {
-                  ...rest,
-                  updatedAt: new Date(),
-                }
-              )
+              .patch(`/region/update/${regionModalData.id}`, {
+                ...rest,
+                updatedAt: new Date(),
+              })
               .then((res) => {
                 regionAddEditModalClose();
                 getRegionList();
               })
           : axios
-              .post(`${process.env.REACT_APP_BASE_URL}/region/add`, {
+              .post(`/region/add`, {
                 ...rest,
               })
               .then((res) => {
@@ -219,7 +212,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     axios
-      .delete(`${process.env.REACT_APP_BASE_URL}/region/delete`, {
+      .delete(`/region/delete`, {
         data: {
           regions: [id],
         },

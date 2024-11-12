@@ -126,19 +126,16 @@ export default function Index() {
         const { confirmPassword, ...rest } = values;
         stateModalData
           ? axios
-              .patch(
-                `${process.env.REACT_APP_BASE_URL}/state/update/${stateModalData.id}`,
-                {
-                  ...rest,
-                  updatedAt: new Date(),
-                }
-              )
+              .patch(`/state/update/${stateModalData.id}`, {
+                ...rest,
+                updatedAt: new Date(),
+              })
               .then((res) => {
                 stateAddEditModalClose();
                 getStateList();
               })
           : axios
-              .post(`${process.env.REACT_APP_BASE_URL}/state/add`, {
+              .post(`/state/add`, {
                 ...rest,
               })
               .then((res) => {
@@ -176,7 +173,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     axios
-      .delete(`${process.env.REACT_APP_BASE_URL}/state/delete`, {
+      .delete(`/state/delete`, {
         data: {
           states: [id],
         },

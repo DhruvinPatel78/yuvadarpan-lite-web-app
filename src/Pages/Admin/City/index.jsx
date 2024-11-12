@@ -15,11 +15,7 @@ export default function Index() {
 
   const getCityList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/city/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/city/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setCityData(res.data);
       });

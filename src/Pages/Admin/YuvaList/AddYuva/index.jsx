@@ -75,11 +75,9 @@ const AddYuva = () => {
   const [isEdit, setIsEdit] = useState(false);
 
   const getSamajList = (regionId) => {
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
-      .then((res) => {
-        setSamajList(res.data);
-      });
+    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+      setSamajList(res.data);
+    });
   };
 
   const addLabelValueInList = (field) => {
@@ -134,7 +132,7 @@ const AddYuva = () => {
 
   const getList = (field) => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/${field}/get-all-list`)
+      .get(`/${field}/get-all-list`)
       .then((res) => {
         formatLabelValue(res, field);
       })
@@ -145,7 +143,7 @@ const AddYuva = () => {
 
   const getListById = (field, id) => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/${field}/list/${id}`)
+      .get(`/${field}/list/${id}`)
       .then((res) => {
         formatLabelValue(res, field);
       })
@@ -165,9 +163,7 @@ const AddYuva = () => {
         break;
       case "native":
         axios
-          .get(
-            `${process.env.REACT_APP_BASE_URL}/${field}/getInfo/${location?.state?.data?.native}`
-          )
+          .get(`/${field}/getInfo/${location?.state?.data?.native}`)
           .then((res) => {
             // setFieldValue("native", res.data[0].name);
             setSelectedNative(res.data[0].name);
@@ -243,7 +239,7 @@ const AddYuva = () => {
   const addYuvaListHandler = (data) => {
     dispatch(startLoading());
     axios
-      .post(`${process.env.REACT_APP_BASE_URL}/yuvaList/addYuvaList`, data)
+      .post(`/yuvaList/addYuvaList`, data)
       .then((res) => {
         navigate("/admin/yuvalist");
       })
@@ -255,7 +251,7 @@ const AddYuva = () => {
   const updateAPIHandler = (data) => {
     dispatch(startLoading());
     axios
-      .patch(`${process.env.REACT_APP_BASE_URL}/yuvaList/update/${data?.id}`, {
+      .patch(`/yuvaList/update/${data?.id}`, {
         ...data,
         updatedAt: new Date(),
       })
@@ -406,7 +402,7 @@ const AddYuva = () => {
     const formData = new FormData();
     formData.append("image", file);
     axios
-      .post(`${process.env.REACT_APP_BASE_URL}/image/upload`, formData, {
+      .post(`/image/upload`, formData, {
         contentType: "multipart/form-data",
       })
       .then((res) => {

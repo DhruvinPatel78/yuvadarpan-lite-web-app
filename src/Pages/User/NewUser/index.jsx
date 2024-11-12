@@ -37,7 +37,7 @@ export default function NewUser() {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/yuvaPDF`)
+      .get(`/yuvaList/yuvaPDF`)
       .then((res) => {
         setPdf(res.data);
       })
@@ -46,7 +46,7 @@ export default function NewUser() {
       });
 
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/citylist`)
+      .get(`/yuvaList/citylist`)
       .then((res) => {
         setCityList(res?.data);
         res.data.map((city) => {

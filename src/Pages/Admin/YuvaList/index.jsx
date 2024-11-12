@@ -141,11 +141,7 @@ const YuvaList = () => {
   };
   const getYuvaList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/yuvaList/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setYuvaList(res.data);
       });
@@ -155,16 +151,14 @@ const YuvaList = () => {
     getNativeList();
   }, [page, rowsPerPage]);
   const deleteAPI = async (id) => {
-    axios
-      .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
-      .then(() => {
-        getYuvaList();
-      });
+    axios.delete(`/yuvaList/${id}`).then(() => {
+      getYuvaList();
+    });
   };
 
   const getNativeList = () => {
     axios
-      .get(`${process.env.REACT_APP_BASE_URL}/native/list`)
+      .get(`/native/list`)
       .then((res) => {
         setNativeList(
           res.data.map((data) => ({

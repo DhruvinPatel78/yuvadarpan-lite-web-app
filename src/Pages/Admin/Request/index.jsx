@@ -75,7 +75,7 @@ export default function Index() {
   };
   const userActionHandler = (userInfo, action) => {
     axios
-      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo._id}`, {
+      .patch(`/user/update/${userInfo._id}`, {
         ...userInfo,
         allowed: action,
       })
@@ -92,27 +92,22 @@ export default function Index() {
   };
   const handleRequestList = () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/user/requests?page=${
-          page + 1
-        }&limit=${rowsPerPage}`,
-        {
-          params: {
-            lastName: selectedSurname
-              ?.filter((data) => data.name !== "All")
-              ?.map((item) => item?.id),
-            state: selectedState
-              ?.filter((data) => data.name !== "All")
-              ?.map((item) => item?.id),
-            region: selectedRegion
-              ?.filter((data) => data.name !== "All")
-              ?.map((item) => item?.id),
-            samaj: selectedSamaj
-              ?.filter((data) => data.name !== "All")
-              ?.map((item) => item?.id),
-          },
-        }
-      )
+      .get(`/user/requests?page=${page + 1}&limit=${rowsPerPage}`, {
+        params: {
+          lastName: selectedSurname
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          state: selectedState
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          region: selectedRegion
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          samaj: selectedSamaj
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+        },
+      })
       .then((res) => {
         setUserList(res?.data);
       });
@@ -122,7 +117,7 @@ export default function Index() {
   };
   const handleRequestAll = async (action) => {
     axios
-      .patch(`${process.env.REACT_APP_BASE_URL}/user/approveRejectMany`, {
+      .patch(`/user/approveRejectMany`, {
         ids: selectedUsers,
         action,
       })

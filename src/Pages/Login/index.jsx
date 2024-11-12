@@ -37,7 +37,7 @@ export default function Index() {
     if (values.email && values.password) {
       dispatch(startLoading());
       axios
-        .post(`${process.env.REACT_APP_BASE_URL}/user/signIn`, {
+        .post(`/user/signIn`, {
           ...values,
         })
         .then((res) => {

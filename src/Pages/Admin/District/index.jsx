@@ -14,11 +14,7 @@ export default function Index() {
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const getDistrictList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/district/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/district/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setDistrictData(res.data);
       });

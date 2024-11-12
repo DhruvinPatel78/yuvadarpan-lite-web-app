@@ -35,11 +35,7 @@ export default function Index() {
 
   const getCountryList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/country/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setCountryData(res.data);
       });
@@ -113,13 +109,10 @@ export default function Index() {
 
   const userActionHandler = (countryInfo, action, field) => {
     axios
-      .patch(
-        `${process.env.REACT_APP_BASE_URL}/country/update/${countryInfo?.id}`,
-        {
-          ...countryInfo,
-          [field]: action,
-        }
-      )
+      .patch(`/country/update/${countryInfo?.id}`, {
+        ...countryInfo,
+        [field]: action,
+      })
       .then(() => {
         getCountryList();
       });
@@ -135,19 +128,16 @@ export default function Index() {
         const { confirmPassword, ...rest } = values;
         countryModalData
           ? axios
-              .patch(
-                `${process.env.REACT_APP_BASE_URL}/country/update/${countryModalData.id}`,
-                {
-                  ...rest,
-                  updatedAt: new Date(),
-                }
-              )
+              .patch(`/country/update/${countryModalData.id}`, {
+                ...rest,
+                updatedAt: new Date(),
+              })
               .then((res) => {
                 countryAddEditModalClose();
                 getCountryList();
               })
           : axios
-              .post(`${process.env.REACT_APP_BASE_URL}/country/add`, {
+              .post(`/country/add`, {
                 ...rest,
               })
               .then((res) => {
@@ -185,7 +175,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     axios
-      .delete(`${process.env.REACT_APP_BASE_URL}/country/delete`, {
+      .delete(`/country/delete`, {
         data: {
           countries: [id],
         },

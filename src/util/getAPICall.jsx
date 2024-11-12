@@ -11,7 +11,7 @@ import {
 
 export const getAllRegionData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/region/get-all-list`)
+    .get(`/region/get-all-list`)
     .then((res) => {
       return dispatch(region(res.data));
     })
@@ -21,7 +21,7 @@ export const getAllRegionData = (dispatch) => {
 };
 export const getAllCityData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/city/get-all-list`)
+    .get(`/city/get-all-list`)
     .then((res) => {
       dispatch(city(res.data));
     })
@@ -31,7 +31,7 @@ export const getAllCityData = (dispatch) => {
 };
 export const getAllDistrictData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/district/get-all-list`)
+    .get(`/district/get-all-list`)
     .then((res) => {
       return dispatch(district(res.data));
     })
@@ -41,7 +41,7 @@ export const getAllDistrictData = (dispatch) => {
 };
 export const getAllSamajData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/samaj/get-all-list`)
+    .get(`/samaj/get-all-list`)
     .then((res) => {
       return dispatch(samaj(res.data));
     })
@@ -51,7 +51,7 @@ export const getAllSamajData = (dispatch) => {
 };
 export const getAllStateData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/state/get-all-list`)
+    .get(`/state/get-all-list`)
     .then((res) => {
       return dispatch(state(res.data));
     })
@@ -61,7 +61,7 @@ export const getAllStateData = (dispatch) => {
 };
 export const getAllSurnameData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/surname/get-all-list`)
+    .get(`/surname/get-all-list`)
     .then((res) => {
       return dispatch(surname(res.data));
     })
@@ -71,7 +71,7 @@ export const getAllSurnameData = (dispatch) => {
 };
 export const getAllCountryData = (dispatch) => {
   axios
-    .get(`${process.env.REACT_APP_BASE_URL}/country/get-all-list`)
+    .get(`/country/get-all-list`)
     .then((res) => {
       return dispatch(country(res.data));
     })

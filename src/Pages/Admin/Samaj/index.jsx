@@ -14,11 +14,7 @@ export default function Index() {
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const getSamajList = async () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/samaj/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`
-      )
+      .get(`/samaj/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setSamajData(res.data);
       });

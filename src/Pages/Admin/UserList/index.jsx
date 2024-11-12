@@ -56,7 +56,7 @@ function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         axios
-          .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${rest._id}`, {
+          .patch(`/user/update/${rest._id}`, {
             ...rest,
           })
           .then((res) => {
@@ -114,16 +114,16 @@ function Index() {
         ...data,
         label: data.name,
         value: data.id,
-      })),
+      }))
     );
     setSelectedLastName(
-      lastNameList.find((item) => item?.id === userInfo.lastName)?.name,
+      lastNameList.find((item) => item?.id === userInfo.lastName)?.name
     );
   };
 
   const userActionHandler = (userInfo, action, field) => {
     axios
-      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo?._id}`, {
+      .patch(`/user/update/${userInfo?._id}`, {
         ...userInfo,
         [field]: action,
       })
@@ -138,11 +138,7 @@ function Index() {
   };
   const handleUserList = () => {
     axios
-      .get(
-        `${process.env.REACT_APP_BASE_URL}/user/list?page=${
-          page + 1
-        }&limit=${rowsPerPage}`,
-      )
+      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setUserList(res.data);
       });

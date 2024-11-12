@@ -22,26 +22,22 @@ export default function Index() {
   const [lastNameList, setLastNameList] = useState([]);
 
   const getList = (feild) => {
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/${feild}/get-all-list`)
-      .then((res) => {
-        const list = res?.data?.map((data) => ({
-          ...data,
-          label: data?.name,
-          value: data?.id,
-        }));
-        if (list) {
-          feild === "surname" ? setLastNameList(list) : setRegionList(list);
-        }
-      });
+    axios.get(`/${feild}/get-all-list`).then((res) => {
+      const list = res?.data?.map((data) => ({
+        ...data,
+        label: data?.name,
+        value: data?.id,
+      }));
+      if (list) {
+        feild === "surname" ? setLastNameList(list) : setRegionList(list);
+      }
+    });
   };
 
   const getSamajList = (regionId) => {
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
-      .then((res) => {
-        setSamajList(res.data);
-      });
+    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+      setSamajList(res.data);
+    });
   };
 
   useEffect(() => {
