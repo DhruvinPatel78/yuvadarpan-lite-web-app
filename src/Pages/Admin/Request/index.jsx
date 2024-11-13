@@ -91,6 +91,11 @@ export default function Index() {
       });
   };
   const handleRequestList = () => {
+    const text = selectedSearchByText
+      ? {
+          [selectedSearchBy.id]: selectedSearchByText,
+        }
+      : {};
     axios
       .get(`/user/requests?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
@@ -106,6 +111,7 @@ export default function Index() {
           samaj: selectedSamaj
             ?.filter((data) => data.name !== "All")
             ?.map((item) => item?.id),
+            ...text,
         },
       })
       .then((res) => {
@@ -132,7 +138,6 @@ export default function Index() {
         });
       });
   };
-
   const pendingUsersTableHeader = [
     {
       field: "familyId",
@@ -265,7 +270,8 @@ export default function Index() {
                 }
                 onClick={() => handleRequestAll("accept")}
               >
-                <PlaylistAddCheckIcon /> Accept
+                <PlaylistAddCheckIcon /> Accept{" "}
+                {selectedUsers?.length > 0 ? `(${selectedUsers?.length})` : ""}
               </button>
             </Tooltip>
             <Tooltip title={"Reject all selected"} className="ml-3">
@@ -275,7 +281,8 @@ export default function Index() {
                 }
                 onClick={() => handleRequestAll("reject")}
               >
-                <PlaylistRemoveIcon /> Reject
+                <PlaylistRemoveIcon /> Reject{" "}
+                {selectedUsers?.length > 0 ? `(${selectedUsers?.length})` : ""}
               </button>
             </Tooltip>
           </div>
@@ -463,7 +470,7 @@ export default function Index() {
                   },
                   {
                     value: "email",
-                    label: "email",
+                    label: "Email",
                   },
                   {
                     value: "gender",
@@ -474,13 +481,16 @@ export default function Index() {
                 placeholder={"Select Your Search By"}
                 xs={3}
                 name="search"
+                value={selectedSearchBy.name}
                 onChange={(e, search) => {
-                  console.log("search", search);
+                  setSelectedSearchBy({
+                    name: search.label,
+                    id: search.value,
+                  });
                 }}
               />
               <CustomInput
                 type={"text"}
-                // label={"Name"}
                 placeholder={"Enter Search Text"}
                 name={"firstName"}
                 xs={3}
@@ -526,6 +536,13 @@ export default function Index() {
       >
         <Paper elevation={10} className="!rounded-2xl p-4 w-1/2">
           <Grid container spacing={2} className="p-4">
+            <Grid xs={12} className={"flex justify-between w-full"}>
+              <span className={"text-xl font-bold"}>View Detail</span>
+              <CloseIcon
+                onClick={requestInfoModalClose}
+                className={"cursor-pointer"}
+              />
+            </Grid>
             <CustomTextFieldInfo
               grid={12}
               label={"Family Id"}
@@ -544,7 +561,10 @@ export default function Index() {
             <CustomTextFieldInfo
               grid={4}
               label={"Last Name"}
-              value={selectedUser?.lastName}
+              value={
+                surname.find((item) => item?.id === selectedUser?.lastName)
+                  ?.name
+              }
             />
             <CustomTextFieldInfo
               grid={6}
@@ -555,6 +575,21 @@ export default function Index() {
               grid={6}
               label={"Mobile"}
               value={selectedUser?.mobile}
+            />
+            <CustomTextFieldInfo
+              grid={6}
+              label={"Region"}
+              value={
+                region.find((item) => item?.id === selectedUser?.region)?.name
+              }
+            />
+            <CustomTextFieldInfo
+              grid={6}
+              label={"Local Samaj"}
+              value={
+                samaj.find((item) => item?.id === selectedUser?.localSamaj)
+                  ?.name
+              }
             />
           </Grid>
         </Paper>
