@@ -99,9 +99,6 @@ export default function Index() {
                     value: data.id,
                   })),
                 }));
-                setFieldValue("country_id", record?.row.country_id);
-                setFieldValue("state_id", record?.row.state_id);
-                setFieldValue("name", record?.row.name);
                 setSelectedValue((pre) => ({
                   ...pre,
                   country: country.find(
@@ -111,6 +108,9 @@ export default function Index() {
                     (item) => item?.id === record?.row?.state_id
                   )?.name,
                 }));
+                setFieldValue("country_id", record?.row.country_id);
+                setFieldValue("state_id", record?.row.state_id);
+                setFieldValue("name", record?.row.name);
               }}
             />
           </Tooltip>
@@ -124,8 +124,6 @@ export default function Index() {
       ),
     },
   ];
-
-  console.log("set : ", selectedValue);
 
   const getListById = (id) => {
     axios
@@ -153,7 +151,6 @@ export default function Index() {
       name: "",
     },
     onSubmit: async (values, { resetForm }) => {
-      console.log("set 111: ", values);
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
