@@ -53,9 +53,19 @@ export default function Index() {
             href: "/admin/city",
           },
           {
-            id: 1,
+            id: 9,
             title: "Samaj",
             href: "/admin/samaj",
+          },
+          {
+            id: 10,
+            title: "Surname",
+            href: "/admin/surname",
+          },
+          {
+            id: 11,
+            title: "Native",
+            href: "/admin/native",
           },
         ]
       : [

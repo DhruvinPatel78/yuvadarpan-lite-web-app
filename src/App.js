@@ -17,6 +17,8 @@ import Region from "./Pages/Admin/Region";
 import District from "./Pages/Admin/District";
 import City from "./Pages/Admin/City";
 import Samaj from "./Pages/Admin/Samaj";
+import Surname from "./Pages/Admin/Surname";
+import Native from "./Pages/Admin/Native";
 
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/User/Dashboard";
@@ -89,6 +91,16 @@ function App() {
         path="/admin/samaj"
         exact
         element={<PrivateRoute Component={Samaj} />}
+      />
+      <Route
+        path="/admin/surname"
+        exact
+        element={<PrivateRoute Component={Surname} />}
+      />
+      <Route
+        path="/admin/native"
+        exact
+        element={<PrivateRoute Component={Native} />}
       />
 
       <Route

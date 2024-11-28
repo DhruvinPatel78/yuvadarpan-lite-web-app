@@ -221,7 +221,7 @@ export default function Index() {
     setFieldValue("name", null);
     setFieldValue("country_id", null);
     setFieldValue("state_id", null);
-    setFieldValue("district_id", null);
+    setFieldValue("region_id", null);
     setSelectedValue({
       country: null,
       state: null,
