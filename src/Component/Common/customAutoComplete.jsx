@@ -72,6 +72,7 @@ export default function CustomAutoComplete({
         onChange={onChange}
         onBlur={onBlur}
         required
+        disableClearable={true}
       />
       {errors && (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
