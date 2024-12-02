@@ -47,6 +47,7 @@ export default function CustomAutoComplete({
   onSelect,
   onBlur,
   required = true,
+  multiple = false,
   ...rest
 }) {
   return (
@@ -54,13 +55,18 @@ export default function CustomAutoComplete({
       <PrimaryAutocomplete
         disabled={disabled}
         defaultValue={defaultValue}
-        id={`combo-box-${label}`}
+        options={list}
+        value={value}
+        isOptionEqualToValue={(option, value) =>
+          option.label === value || option.id === value
+        }
+        multiple={multiple}
+        id={`autoComplete-${name}`}
         label={label}
         name={name}
-        options={list}
         className={className}
         renderInput={(params) => (
-          <TextField {...params} name={name} label={label} />
+          <TextField {...params} name={name} label={label} value={value} />
         )}
         onSelect={onSelect}
         onChange={onChange}

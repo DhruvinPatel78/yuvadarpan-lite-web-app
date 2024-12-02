@@ -8,7 +8,7 @@ import UserList from "./Pages/Admin/UserList/index";
 import YuvaList from "./Pages/Admin/YuvaList/index";
 import Request from "./Pages/Admin/Request/index";
 import ThankYou from "./Pages/ThankYou";
-import AddYuva from "./Pages/Admin/AddYuva";
+import AddYuva from "./Pages/Admin/YuvaList/AddYuva";
 import Profile from "./Pages/Profile";
 import Status from "./Pages/Status";
 import Country from "./Pages/Admin/Country";
@@ -17,12 +17,14 @@ import Region from "./Pages/Admin/Region";
 import District from "./Pages/Admin/District";
 import City from "./Pages/Admin/City";
 import Samaj from "./Pages/Admin/Samaj";
+import Surname from "./Pages/Admin/Surname";
+import Native from "./Pages/Admin/Native";
 
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/User/Dashboard";
 import NotFound from "./Pages/NotFound";
-import PrivateRoute from "./Component/PrivateRoute";
-import PublicRoute from "./Component/PublicRoute";
+import PrivateRoute from "./util/PrivateRoute";
+import PublicRoute from "./util/PublicRoute";
 
 function App() {
   return (
@@ -89,6 +91,16 @@ function App() {
         path="/admin/samaj"
         exact
         element={<PrivateRoute Component={Samaj} />}
+      />
+      <Route
+        path="/admin/surname"
+        exact
+        element={<PrivateRoute Component={Surname} />}
+      />
+      <Route
+        path="/admin/native"
+        exact
+        element={<PrivateRoute Component={Native} />}
       />
 
       <Route

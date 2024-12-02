@@ -10,49 +10,42 @@ import {
   Paper,
   Tooltip,
 } from "@mui/material";
+import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
+import CustomTable from "../../../Component/Common/customTable";
+import AddIcon from "@mui/icons-material/Add";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CustomTable from "../../../Component/Common/customTable";
-import axios from "../../../util/useAxios";
-import ContainerPage from "../../../Component/Container";
-import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
-import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
-import { useDispatch, useSelector } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function Index() {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
-  const { country, state } = useSelector((state) => state.location);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [list, setList] = useState({ country: [], state: [] });
-  const [selectedValue, setSelectedValue] = useState({
-    country: null,
-    state: null,
-  });
-  const [regionData, setRegionData] = useState(null);
-  const [regionModalData, setRegionModalData] = useState(null);
-  const [regionAddEditModel, setRegionAddEditModel] = useState(false);
+  const [nativeData, setNativeData] = useState(null);
+  const [nativeModalData, setNativeModalData] = useState(null);
+  const [nativeAddEditModel, setNativeAddEditModel] = useState(false);
 
-  const getRegionList = async () => {
+  const getNativeList = async () => {
     axios
-      .get(`/region/list?page=${page + 1}&limit=${rowsPerPage}`)
+      .get(`/native/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
-        setRegionData(res.data);
+        setNativeData(res.data);
       });
   };
 
   useEffect(() => {
-    getRegionList();
+    getNativeList();
   }, [page, rowsPerPage]);
 
-  const regionListColumn = [
+  const nativeListColumn = [
     {
       field: "name",
       headerName: "Name",
@@ -71,7 +64,12 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <CustomSwitch checked={record?.row?.active} />
+          <CustomSwitch
+            checked={record?.row?.active}
+            onClick={(e) =>
+              userActionHandler(record?.row, !record?.row?.active, "active")
+            }
+          />
         </div>
       ),
     },
@@ -89,27 +87,8 @@ export default function Index() {
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
               onClick={() => {
-                setRegionModalData(record?.row);
-                setRegionAddEditModel(!regionAddEditModel);
-                setList((pre) => ({
-                  ...pre,
-                  country: country.map((data) => ({
-                    ...data,
-                    label: data.name,
-                    value: data.id,
-                  })),
-                }));
-                setSelectedValue((pre) => ({
-                  ...pre,
-                  country: country.find(
-                    (item) => item?.id === record?.row?.country_id
-                  )?.name,
-                  state: state.find(
-                    (item) => item?.id === record?.row?.state_id
-                  )?.name,
-                }));
-                setFieldValue("country_id", record?.row.country_id);
-                setFieldValue("state_id", record?.row.state_id);
+                setNativeModalData(record?.row);
+                setNativeAddEditModel(!nativeAddEditModel);
                 setFieldValue("name", record?.row.name);
               }}
             />
@@ -125,52 +104,42 @@ export default function Index() {
     },
   ];
 
-  const getListById = (id) => {
+  const userActionHandler = (nativeInfo, action, field) => {
     axios
-      .get(`/state/list/${id}`)
-      .then((res) => {
-        const list = res.data.map((data) => ({
-          ...data,
-          label: data.name,
-          value: data.id,
-        }));
-        setList((pre) => ({
-          ...pre,
-          state: list,
-        }));
+      .patch(`/native/update/${nativeInfo?.id}`, {
+        ...nativeInfo,
+        [field]: action,
       })
-      .catch(function (error) {
-        console.log(error);
+      .then(() => {
+        getNativeList();
       });
   };
 
   const formik = useFormik({
     initialValues: {
-      country_id: "",
-      state_id: "",
       name: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        regionModalData
+        nativeModalData
           ? axios
-              .patch(`/region/update/${regionModalData.id}`, {
+              .patch(`/native/update/${nativeModalData.id}`, {
                 ...rest,
                 updatedAt: new Date(),
               })
               .then((res) => {
-                regionAddEditModalClose();
-                getRegionList();
+                nativeAddEditModalClose();
+                getNativeList();
               })
           : axios
-              .post(`/region/add`, {
+              .post(`/native/add`, {
                 ...rest,
               })
               .then((res) => {
-                regionAddEditModalClose();
-                getRegionList();
+                nativeAddEditModalClose();
+                getNativeList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -194,28 +163,22 @@ export default function Index() {
     setFieldValue,
   } = formik;
 
-  const regionAddEditModalClose = () => {
-    setRegionAddEditModel(!regionAddEditModel);
-    setRegionModalData(null);
+  const nativeAddEditModalClose = () => {
+    setNativeAddEditModel(!nativeAddEditModel);
+    setNativeModalData(null);
     setFieldValue("name", null);
-    setFieldValue("country_id", null);
-    setFieldValue("state_id", null);
-    setSelectedValue({
-      country: null,
-      state: null,
-    });
     resetForm();
   };
 
   const deleteAPI = async (id) => {
     axios
-      .delete(`/region/delete`, {
+      .delete(`/native/delete`, {
         data: {
-          regions: [id],
+          natives: [id],
         },
       })
       .then(() => {
-        getRegionList();
+        getNativeList();
       });
   };
 
@@ -226,42 +189,34 @@ export default function Index() {
       <Header backBtn={true} btnAction="/dashboard" />
       <ContainerPage className={"flex-col justify-center flex items-start"}>
         <div className={"flex w-full items-center justify-between"}>
-          <p className={"text-3xl font-bold"}>Region</p>
+          <p className={"text-3xl font-bold"}>Native</p>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             className={"bg-primary"}
             onClick={() => {
-              setRegionAddEditModel(!regionAddEditModel);
-              setList((pre) => ({
-                ...pre,
-                country: country.map((data) => ({
-                  ...data,
-                  label: data.name,
-                  value: data.id,
-                })),
-              }));
+              setNativeAddEditModel(!nativeAddEditModel);
             }}
           >
-            Add Region
+            Add Native
           </Button>
         </div>
         <CustomTable
-          columns={regionListColumn}
-          data={regionData}
-          name={"users"}
+          columns={nativeListColumn}
+          data={nativeData}
+          name={"native"}
           pageSize={rowsPerPage}
           setPageSize={setRowsPerPage}
+          type={"nativeList"}
+          className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
-          type={"userList"}
-          className={"mx-0 w-full"}
         />
       </ContainerPage>
-      {regionAddEditModel ? (
+      {nativeAddEditModel ? (
         <Modal
-          open={regionAddEditModel}
-          onClose={() => regionAddEditModalClose()}
+          open={nativeAddEditModel}
+          onClose={() => nativeAddEditModalClose()}
           sx={{
             "& .MuiModal-backdrop": {
               backdropFilter: "blur(2px) !important",
@@ -275,11 +230,11 @@ export default function Index() {
             className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none"
           >
             <div className={"flex flex-row justify-between"}>
-              <span className={"text-2xl font-bold"}>Region</span>
+              <span className={"text-2xl font-bold"}>Native</span>
               <Tooltip title={"Edit"}>
                 <CloseIcon
                   className={"cursor-pointer"}
-                  onClick={() => regionAddEditModalClose()}
+                  onClick={() => nativeAddEditModalClose()}
                 />
               </Tooltip>
             </div>
@@ -291,55 +246,14 @@ export default function Index() {
               >
                 <Grid container className={"w-full pt-4"} spacing={2}>
                   <Grid item xs={12}>
-                    <FormControl className={"w-full flex  gap-4"}>
-                      <CustomAutoComplete
-                        list={list.country}
-                        label={"Country"}
-                        placeholder={"Select Your Country"}
-                        name={"country_id"}
-                        value={selectedValue.country}
-                        errors={
-                          touched?.country && errors?.country && errors?.country
-                        }
-                        onSelect={handleChange}
-                        onChange={(e, country) => {
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            country: country.name,
-                            state: null,
-                          }));
-                          setFieldValue("country_id", country.id);
-                          getListById(country.id);
-                        }}
-                        onBlur={handleBlur}
-                      />
-                      <CustomAutoComplete
-                        list={list.state}
-                        label={"State"}
-                        placeholder={"Select Your State"}
-                        name={"state_id"}
-                        value={selectedValue.state}
-                        errors={
-                          touched?.state && errors?.state && errors?.state
-                        }
-                        onChange={(e, state) => {
-                          setFieldValue("state_id", state.id);
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            state: state.name,
-                          }));
-                        }}
-                        onBlur={handleBlur}
-                        disabled={!selectedValue.country}
-                      />
+                    <FormControl className={"w-full"}>
                       <CustomInput
                         name={"name"}
-                        id="region"
-                        label="Region"
+                        id="native"
+                        label="Native"
                         value={values.name}
                         variant="outlined"
                         onChange={handleChange}
-                        disabled={!selectedValue.state}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
                       />
@@ -360,7 +274,7 @@ export default function Index() {
                         type={"submit"}
                         disabled={hasError}
                       >
-                        {regionModalData ? "UPDATE" : "ADD"}
+                        {nativeModalData ? "UPDATE" : "ADD"}
                       </button>
                     )}
                   </Grid>

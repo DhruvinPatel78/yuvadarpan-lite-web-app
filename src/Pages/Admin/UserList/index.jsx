@@ -21,13 +21,22 @@ import axios from "../../../util/useAxios";
 import * as Yup from "yup";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
+import { useDispatch, useSelector } from "react-redux";
+import { endLoading, startLoading } from "../../../store/authSlice";
+import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
+import ContainerPage from "../../../Component/Container";
 
 function Index() {
-  // eslint-disable-next-line no-unused-vars
-  const { notification, setNotification } = NotificationData();
+  const { notification } = NotificationData();
   const [userInfoModel, setRequestInfoModel] = useState(false);
-  const [userList, setUserList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [userList, setUserList] = useState(null);
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname } = useSelector((state) => state.location);
+  const [selectedLastName, setSelectedLastName] = useState(null);
+  const [lastNameList, setLastNameList] = useState(surname);
 
   const formik = useFormik({
     initialValues: {
@@ -44,20 +53,20 @@ function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        setLoading(true);
+        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         axios
-          .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${rest._id}`, {
+          .patch(`/user/update/${rest._id}`, {
             ...rest,
           })
           .then((res) => {
-            setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })));
             userInfoModalClose();
+            handleUserList();
           });
       } catch (e) {
         console.log("Error =>", e);
       } finally {
-        setLoading(false);
+        dispatch(endLoading());
       }
       resetForm();
     },
@@ -77,17 +86,11 @@ function Index() {
         .test({
           message: "Password not match",
           test: function (value) {
-            // You can access the price field with `this.parent`.
             return value === values.password;
           },
         }),
     }),
   });
-
-  useEffect(() => {
-    handleUserList();
-  }, []);
-
   const {
     errors,
     values,
@@ -96,22 +99,37 @@ function Index() {
     handleChange,
     handleBlur,
     touched,
+    setFieldValue,
   } = formik;
+
+  useEffect(() => {
+    handleUserList();
+  }, [page, rowsPerPage]);
 
   const userInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
     setValues({ ...userInfo, password: "" });
+    setLastNameList(
+      lastNameList.map((data) => ({
+        ...data,
+        label: data.name,
+        value: data.id,
+      }))
+    );
+    setSelectedLastName(
+      lastNameList.find((item) => item?.id === userInfo.lastName)?.name
+    );
   };
 
   const userActionHandler = (userInfo, action, field) => {
     axios
-      .patch(`${process.env.REACT_APP_BASE_URL}/user/update/${userInfo?._id}`, {
+      .patch(`/user/update/${userInfo?._id}`, {
         ...userInfo,
         [field]: action,
       })
-      .then((res) =>
-        setUserList(res?.data?.map((data) => ({ ...data, id: data?._id })))
-      );
+      .then((res) => {
+        handleUserList();
+      });
   };
 
   const userInfoModalClose = () => {
@@ -119,9 +137,11 @@ function Index() {
     resetForm();
   };
   const handleUserList = () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/user/list`).then((res) => {
-      setUserList(res.data.map((data) => ({ ...data, id: data?._id })));
-    });
+    axios
+      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`)
+      .then((res) => {
+        setUserList(res.data);
+      });
   };
 
   const usersTableHeader = [
@@ -142,16 +162,19 @@ function Index() {
       filterable: false,
     },
     {
-      field: "middleName",
-      headerName: "Middle name",
+      field: "lastName",
+      headerName: "Last name",
       flex: 1,
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{surname.find((item) => item?.id === record?.row?.lastName)?.name}</>
+      ),
     },
     {
-      field: "lastName",
-      headerName: "Last name",
+      field: "role",
+      headerName: "Role",
       flex: 1,
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
@@ -226,23 +249,22 @@ function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
-      >
-        <div className={"p-4 pb-0 justify-between flex items-center"}>
+      <ContainerPage className={" flex-col justify-center flex items-start"}>
+        <div className={"justify-between flex items-center"}>
           <p className={"text-3xl font-bold"}>Users</p>
         </div>
         <CustomTable
           columns={usersTableHeader}
           data={userList}
           name={"users"}
-          pageSize={10}
+          pageSize={rowsPerPage}
+          setPageSize={setRowsPerPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          page={page}
+          setPage={setPage}
         />
-      </div>
+      </ContainerPage>
       {userInfoModel ? (
         <Modal
           open={userInfoModel}
@@ -333,19 +355,20 @@ function Index() {
                   </Grid>
                   <Grid item xs={12} sm={4} md={4}>
                     <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"lastName"}
-                        id="lastName"
-                        label="Last Name"
-                        value={values?.lastName}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
+                      <CustomAutoComplete
+                        list={lastNameList}
+                        label={"Last Name"}
+                        placeholder={"Select Your Last Name"}
+                        name="lastName"
+                        value={selectedLastName}
                         errors={
-                          touched?.lastName &&
-                          errors?.lastName &&
-                          errors?.lastName
+                          touched.lastName && errors.lastName && errors.lastName
                         }
+                        onChange={(e, lastName) => {
+                          setFieldValue("lastName", lastName.id);
+                          setSelectedLastName(lastName.name);
+                        }}
+                        onBlur={handleBlur}
                       />
                     </FormControl>
                   </Grid>

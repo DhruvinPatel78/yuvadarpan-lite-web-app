@@ -12,6 +12,7 @@ import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import axios from "../../util/useAxios";
+import CustomRadio from "../../Component/Common/customRadio";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -21,22 +22,22 @@ export default function Index() {
   const [lastNameList, setLastNameList] = useState([]);
 
   const getList = (feild) => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/${feild}/list`).then((res) => {
-      const list = res.data.map((data) => ({
+    axios.get(`/${feild}/get-all-list`).then((res) => {
+      const list = res?.data?.map((data) => ({
         ...data,
-        label: data.name,
-        value: data.id,
+        label: data?.name,
+        value: data?.id,
       }));
-      feild === "surname" ? setLastNameList(list) : setRegionList(list);
+      if (list) {
+        feild === "surname" ? setLastNameList(list) : setRegionList(list);
+      }
     });
   };
 
   const getSamajList = (regionId) => {
-    axios
-      .get(`${process.env.REACT_APP_BASE_URL}/samaj/listByRegion/${regionId}`)
-      .then((res) => {
-        setSamajList(res.data);
-      });
+    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+      setSamajList(res.data);
+    });
   };
 
   useEffect(() => {
@@ -59,9 +60,8 @@ export default function Index() {
             dob: moment(value?.dob).format(),
             region: value?.region,
             localSamaj: value?.localSamaj,
-            active: true,
-            allowed: false,
             role: "USER",
+            gender: value?.gender,
           })
           .then((res) => {
             setNotification({ type: "success", message: "Success !" });
@@ -93,6 +93,7 @@ export default function Index() {
       dob: "",
       region: "",
       localSamaj: "",
+      gender: "male",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -101,10 +102,11 @@ export default function Index() {
       lastName: Yup.string().required("Required"),
       localSamaj: Yup.string().required("Required"),
       region: Yup.string().required("Required"),
+      gender: Yup.string().required("Required"),
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format",
+          "Invalid email address format"
         )
         .required("Required"),
       mobile: Yup.string()
@@ -295,6 +297,20 @@ export default function Index() {
                 errors={touched.dob && errors.dob && errors.dob}
                 value={values.dob}
                 focused
+              />
+              <CustomRadio
+                list={[
+                  { label: "Male", value: "male" },
+                  { label: "Female", value: "female" },
+                ]}
+                label={"Gender"}
+                name={"gender"}
+                xs={12}
+                value={values?.gender}
+                errors={touched?.gender && errors?.gender && errors?.gender}
+                className={"flex flex-row"}
+                onChange={handleChange}
+                onBlur={handleBlur}
               />
               <Grid item xs={12}>
                 <button

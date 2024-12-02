@@ -123,36 +123,53 @@ import {
   ImageButton,
   ImageSrc,
 } from "../../../Component/constant";
+import { useSelector } from "react-redux";
+import ContainerPage from "../../../Component/Container";
 
 const YuvaList = () => {
   const navigate = useNavigate();
-  const [yuvaList, setYuvaList] = useState([]);
+  const [yuvaList, setYuvaList] = useState(null);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const { surname, city, state } = useSelector((state) => state.location);
+  const [nativeList, setNativeList] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
   const getYuvaList = async () => {
-    axios.get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list`).then((res) => {
-      console.log("list  ::: ", res);
-      const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-      setYuvaList(data);
-    });
+    axios
+      .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`)
+      .then((res) => {
+        setYuvaList(res.data);
+      });
   };
   useEffect(() => {
     getYuvaList();
-  }, []);
+    getNativeList();
+  }, [page, rowsPerPage]);
   const deleteAPI = async (id) => {
-    // axios
-    //     .get(`${process.env.REACT_APP_BASE_URL}/yuvaList/list/${id}`)
-    //     .then((res) => {
-    //     });
+    axios.delete(`/yuvaList/${id}`).then(() => {
+      getYuvaList();
+    });
+  };
+
+  const getNativeList = () => {
     axios
-      .delete(`${process.env.REACT_APP_BASE_URL}/yuvaList/${id}`)
+      .get(`/native/list`)
       .then((res) => {
-        const data = res.data?.map((item) => ({ ...item, id: item?._id }));
-        setYuvaList(data);
+        setNativeList(
+          res.data.map((data) => ({
+            ...data,
+            label: data.name,
+            value: data.id,
+          }))
+        );
+      })
+      .catch(function (error) {
+        console.log(error);
       });
   };
 
@@ -177,7 +194,8 @@ const YuvaList = () => {
       renderCell: (record) => (
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
-            {record.row.firstName} {record.row.middleName} {record.row.lastName}{" "}
+            {record.row.firstName} {record.row.middleName}{" "}
+            {surname.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
           </p>
         </div>
       ),
@@ -221,6 +239,9 @@ const YuvaList = () => {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>{city.find((item) => item?.id === record?.row?.city)?.name}</>
+      ),
     },
     {
       field: "native",
@@ -230,6 +251,12 @@ const YuvaList = () => {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <>
+          {nativeList.find((item) => item?.id === record?.row?.native)?.name}
+          {/*{nativeList.find((item) => item?.id === record?.row?.lastName)}*/}
+        </>
+      ),
     },
     {
       field: "action",
@@ -269,12 +296,8 @@ const YuvaList = () => {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <div
-        className={
-          "px-6 pb-0 flex-col justify-center flex items-start max-w-[1536px] m-auto"
-        }
-      >
-        <div className={"p-4 pb-0 flex w-full items-center justify-between"}>
+      <ContainerPage className={"flex-col justify-center flex items-start"}>
+        <div className={"flex w-full items-center justify-between"}>
           <p className={"text-3xl font-bold"}>Yuvalist</p>
           <Button
             variant="contained"
@@ -290,10 +313,13 @@ const YuvaList = () => {
           className={"mx-0 w-full"}
           data={yuvaList}
           name={"YuvaList"}
-          pageSize={10}
+          pageSize={rowsPerPage}
           type={"pendingList"}
+          setPage={setPage}
+          pages={page}
+          setPageSize={setRowsPerPage}
         />
-      </div>
+      </ContainerPage>
       {userData ? (
         <Modal
           open={Boolean(userData)}
@@ -325,7 +351,7 @@ const YuvaList = () => {
                     window.open(
                       userData?.profile?.url ||
                         "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                      "_blank",
+                      "_blank"
                     )
                   }
                 >
@@ -340,12 +366,15 @@ const YuvaList = () => {
                   <ImageBackdrop className="MuiImageBackdrop-root" />
                 </ImageButton>
               </Grid>
-              {/*<input type="radio" id="age1" name="age" value="30" onChange={(e)=>console.log(e.target.value)} />*/}
               <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
                 <div className={"text-base font-bold"}>
                   Name:{" "}
                   <span className={"font-normal"}>
-                    {userData?.firstName} {userData?.lastName}{" "}
+                    {userData?.firstName}{" "}
+                    {
+                      surname.find((item) => item?.id === userData?.lastName)
+                        ?.name
+                    }{" "}
                   </span>
                 </div>
                 <div className={"text-base font-bold"}>
@@ -427,7 +456,7 @@ const YuvaList = () => {
                           <div className={"text-base font-bold"}>
                             Father Name:{" "}
                             <span className={"font-normal"}>
-                              {userData?.middleName}
+                              {userData?.fatherName}
                             </span>
                           </div>
                           <div className={"text-base font-bold"}>
@@ -445,7 +474,10 @@ const YuvaList = () => {
                           <div className={"text-base font-bold"}>
                             City:{" "}
                             <span className={"font-normal"}>
-                              {userData?.city}
+                              {
+                                city.find((item) => item?.id === userData?.city)
+                                  ?.name
+                              }
                             </span>
                           </div>
                         </Grid>
@@ -465,7 +497,11 @@ const YuvaList = () => {
                           <div className={"text-base font-bold"}>
                             State:{" "}
                             <span className={"font-normal"}>
-                              {userData?.state}
+                              {
+                                state.find(
+                                  (item) => item?.id === userData?.state
+                                )?.name
+                              }
                             </span>
                           </div>
                           {/*<div className={"text-base font-bold"}>*/}
