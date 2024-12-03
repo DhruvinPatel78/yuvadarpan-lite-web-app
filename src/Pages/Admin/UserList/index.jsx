@@ -103,7 +103,7 @@ function Index() {
   } = formik;
 
   useEffect(() => {
-    handleUserList();
+    handleUserList(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const userInfoModalOpen = (userInfo) => {

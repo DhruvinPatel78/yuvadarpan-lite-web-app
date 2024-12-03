@@ -148,8 +148,9 @@ const YuvaList = () => {
   };
   useEffect(() => {
     getYuvaList();
-    getNativeList();
+    getNativeList(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
+
   const deleteAPI = async (id) => {
     axios.delete(`/yuvaList/${id}`).then(() => {
       getYuvaList();
@@ -278,7 +279,9 @@ const YuvaList = () => {
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
               onClick={() =>
-                navigate("/yuvalist/add", { state: { data: record?.row } })
+                navigate(`/admin/yuvalist/${record?.row.id}/edit`, {
+                  state: { data: record?.row },
+                })
               }
             />
           </Tooltip>
@@ -297,16 +300,24 @@ const YuvaList = () => {
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
       <ContainerPage className={"flex-col justify-center flex items-start"}>
-        <div className={"flex w-full items-center justify-between"}>
+        <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Yuvalist</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => navigate("/yuvalist/add")}
-          >
-            Yuva
-          </Button>
+          <div className={"flex w-full justify-end items-center gap-2"}>
+            <Button
+              className={"text-primary"}
+              onClick={() => navigate("/admin/userDashboard")}
+            >
+              View User Dashboard
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => navigate("/admin/yuvalist/add")}
+            >
+              Yuva
+            </Button>
+          </div>
         </div>
         <CustomTable
           columns={yuvaListColumn}
@@ -387,14 +398,30 @@ const YuvaList = () => {
                   Family ID:{" "}
                   <span className={"font-normal"}>{userData?.familyId}</span>
                 </div>
-                <button
-                  className={"bg-primary text-white p-2 rounded-md mt-2"}
-                  onClick={() =>
-                    navigate("/yuvalist/profile", { state: { ...userData } })
-                  }
-                >
-                  View Details
-                </button>
+                <div className={"flex mt-2 gap-3 w-full"}>
+                  <button
+                    className={"bg-primary text-white p-2 rounded-md w-full"}
+                    onClick={() =>
+                      navigate("/admin/yuvalist/profile", {
+                        state: { ...userData },
+                      })
+                    }
+                  >
+                    View Details
+                  </button>
+                  <button
+                    className={
+                      "border-primary border text-primary p-2 rounded-md"
+                    }
+                    onClick={() =>
+                      navigate(`/admin/yuvalist/${userData?.id}/edit`, {
+                        state: { ...userData },
+                      })
+                    }
+                  >
+                    <ModeEditIcon />
+                  </button>
+                </div>
               </Grid>
               <Grid item xs={1} className={"flex justify-center"}>
                 <CloseIcon
