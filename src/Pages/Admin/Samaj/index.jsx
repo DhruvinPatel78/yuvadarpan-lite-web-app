@@ -60,7 +60,7 @@ export default function Index() {
   };
 
   useEffect(() => {
-    getSamajList();
+    getSamajList(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const samajColumn = [
@@ -96,7 +96,6 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-3 justify-between items-center"}>
-          {console.log("city : ", city, record?.row?.city_id)}
           <Tooltip title={"Edit"}>
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
@@ -243,7 +242,6 @@ export default function Index() {
   const {
     errors,
     values,
-    setValues,
     resetForm,
     handleChange,
     handleBlur,
@@ -288,7 +286,7 @@ export default function Index() {
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
       <ContainerPage className={"flex-col justify-center flex items-start"}>
-        <div className={"flex w-full items-center justify-between"}>
+        <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Samaj</p>
           <Button
             variant="contained"

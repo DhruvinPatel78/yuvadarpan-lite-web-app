@@ -12,6 +12,7 @@ function CustomTable({
   className = "",
   setPage,
   setPageSize,
+  pagination = true,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const handleChangePage = (event, newPage) => {
@@ -59,16 +60,18 @@ function CustomTable({
           },
         }}
       />
-      <div className={"w-full bg-white p-2 flex justify-end"}>
-        <TablePagination
-          component="div"
-          count={data ? Math.ceil(data?.total) : 0}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={pageSize}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </div>
+      {pagination ? (
+        <div className={"w-full bg-white p-2 flex justify-end"}>
+          <TablePagination
+            component="div"
+            count={data ? Math.ceil(data?.total) : 0}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={pageSize}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

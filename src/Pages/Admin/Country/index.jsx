@@ -42,7 +42,7 @@ export default function Index() {
   };
 
   useEffect(() => {
-    getCountryList();
+    getCountryList(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const countryListColumn = [
@@ -191,7 +191,7 @@ export default function Index() {
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
       <ContainerPage className={"flex-col justify-center flex items-start"}>
-        <div className={"flex w-full items-center justify-between"}>
+        <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Country</p>
           <Button
             variant="contained"

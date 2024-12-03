@@ -52,7 +52,7 @@ export default function Index() {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
   useEffect(() => {
-    handleRequestList();
+    handleRequestList(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const handleExpansion = () => {
@@ -111,7 +111,7 @@ export default function Index() {
           samaj: selectedSamaj
             ?.filter((data) => data.name !== "All")
             ?.map((item) => item?.id),
-            ...text,
+          ...text,
         },
       })
       .then((res) => {

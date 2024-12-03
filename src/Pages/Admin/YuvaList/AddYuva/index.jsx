@@ -101,6 +101,7 @@ const AddYuva = () => {
     }));
     return list;
   };
+
   const formatLabelValue = (res, field) => {
     const list = setLableValueInList(res.data);
     switch (field) {
@@ -154,7 +155,7 @@ const AddYuva = () => {
   const selectedValueSetName = (field) => {
     switch (field) {
       case "surname":
-        surname.map((data) => {
+        surname.forEach((data) => {
           if (location?.state?.data?.lastName === data.id) {
             // setFieldValue("lastName", data.name);
             setSelectedLastName(data.name);
@@ -174,7 +175,7 @@ const AddYuva = () => {
         break;
 
       case "country":
-        country.map((data) => {
+        country.forEach((data) => {
           if (location?.state?.data?.country === data.id) {
             // setFieldValue("country", data.name);
             setSelectedCountry(data.name);
@@ -183,7 +184,7 @@ const AddYuva = () => {
         });
         break;
       case "state":
-        state.map((data) => {
+        state.forEach((data) => {
           if (location?.state?.data?.state === data.id) {
             // setFieldValue("state", data.name);
             setSelectedState(data.name);
@@ -193,7 +194,7 @@ const AddYuva = () => {
         });
         break;
       case "region":
-        region.map((data) => {
+        region.forEach((data) => {
           if (location?.state?.data?.region === data.id) {
             // setFieldValue("region", data.name);
             setSelectedRegion(data.name);
@@ -203,7 +204,7 @@ const AddYuva = () => {
         });
         break;
       case "district":
-        district.map((data) => {
+        district.forEach((data) => {
           if (location?.state?.data?.district === data.id) {
             // setFieldValue("district", data.name);
             setSelectedDistrict(data.name);
@@ -213,7 +214,7 @@ const AddYuva = () => {
         });
         break;
       case "city":
-        city.map((data) => {
+        city.forEach((data) => {
           if (location?.state?.data?.city === data.id) {
             // setFieldValue("city", data.name);
             setSelectedCity(data.name);
@@ -223,7 +224,7 @@ const AddYuva = () => {
         });
         break;
       case "samaj":
-        samaj.map((data) => {
+        samaj.forEach((data) => {
           if (location?.state?.data?.localSamaj === data.id) {
             // setFieldValue("localSamaj", data.name);
             setSelectedSamaj(data.name);
@@ -315,7 +316,7 @@ const AddYuva = () => {
     },
     onSubmit: async (values, { resetForm }) => {
       let newValue = { ...values };
-      newFieldList?.map((item) => {
+      newFieldList?.forEach((item) => {
         if (item?.title && item?.description) {
           newValue.other = {
             ...newValue?.other,
@@ -438,17 +439,17 @@ const AddYuva = () => {
         ...location?.state?.data,
         profileName: location?.state?.data?.profile?.name,
       });
-      selectArr.map((data) => {
+      selectArr.forEach((data) => {
         selectedValueSetName(data);
       });
-    }
+    } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   useEffect(() => {
     getList("native");
-    selectArr.map((data) => {
+    selectArr.forEach((data) => {
       addLabelValueInList(data);
-    });
+    }); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
