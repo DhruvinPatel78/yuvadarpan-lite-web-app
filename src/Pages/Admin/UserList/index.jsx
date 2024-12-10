@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import CustomTable from "../../../Component/Common/customTable";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
+  Button,
   CircularProgress,
   FormControl,
   Grid,
   Modal,
   Paper,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import Header from "../../../Component/Header";
@@ -25,18 +30,76 @@ import { useDispatch, useSelector } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import AddIcon from "@mui/icons-material/Add";
+import CustomRadio from "../../../Component/Common/customRadio";
+import DeleteIcon from "@mui/icons-material/Delete";
+
+const userRoleList = [
+  {
+    label: "ADMIN",
+    value: "admin",
+    name: "ADMIN",
+    id: "",
+  },
+  {
+    label: "USER",
+    value: "user",
+    name: "USER",
+    id: "",
+  },
+  {
+    label: "SAMAJ MANAGER",
+    value: "samaj_manage",
+    name: "SAMAJ MANAGER",
+    id: "",
+  },
+  {
+    label: "REGION MANAGER",
+    value: "region_manager",
+    name: "REGION MANAGER",
+    id: "",
+  },
+];
+
+const all = {
+  label: "All",
+  value: "all",
+  name: "All",
+  id: "",
+};
 
 function Index() {
-  const { notification } = NotificationData();
-  const [userInfoModel, setRequestInfoModel] = useState(false);
-  const [userList, setUserList] = useState(null);
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
+  const { surname, region, samaj } = useSelector((state) => state.location);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { surname } = useSelector((state) => state.location);
+  const [expanded, setExpanded] = React.useState(false);
+  const { notification } = NotificationData();
+  const [userInfoModel, setUserInfoModel] = useState(false);
+  const [isAddUser, setIsAddUser] = useState(false);
+  const [userList, setUserList] = useState(null);
   const [selectedLastName, setSelectedLastName] = useState(null);
-  const [lastNameList, setLastNameList] = useState(surname);
+  const [selectedRegionName, setSelectedRegionName] = useState(null);
+  const [selectedSamajName, setSelectedSamajName] = useState(null);
+  // const [lastNameList, setLastNameList] = useState(surname);
+  const [selectedSurname, setSelectedSurname] = useState([]);
+  // const [selectedState, setSelectedState] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState([]);
+  const [selectedSamaj, setSelectedSamaj] = useState([]);
+  const [selectedSearchBy, setSelectedSearchBy] = useState({
+    name: "",
+    id: "",
+  });
+  const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  // const [regionList, setRegionList] = useState(region);
+  const [samajList, setSamajList] = useState([]);
+  const [list, setList] = useState({
+    region: [],
+    lastName: [],
+  });
+  const [selectedRole, setSelectedRole] = useState([]);
 
   const formik = useFormik({
     initialValues: {
@@ -50,19 +113,29 @@ function Index() {
       confirmPassword: "",
       active: false,
       allowed: false,
+      region: "",
+      localSamaj: "",
+      dob: "",
+      gender: "",
+      role: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        axios
-          .patch(`/user/update/${rest._id}`, {
-            ...rest,
-          })
-          .then((res) => {
-            userInfoModalClose();
-            handleUserList();
-          });
+        isAddUser
+          ? axios.post(`/user/add/`, values).then((res) => {
+              userInfoModalClose();
+              handleUserList();
+            })
+          : axios
+              .patch(`/user/update/${rest._id}`, {
+                ...rest,
+              })
+              .then((res) => {
+                userInfoModalClose();
+                handleUserList();
+              });
       } catch (e) {
         console.log("Error =>", e);
       } finally {
@@ -106,19 +179,77 @@ function Index() {
     handleUserList();
   }, [page, rowsPerPage]);
 
+  const handleExpansion = () => {
+    setExpanded((prevExpanded) => !prevExpanded);
+  };
+
+  const setLabelValueInList = (data) => {
+    return data.map((data) => ({
+      ...data,
+      label: data.name,
+      value: data.id,
+    }));
+  };
+
+  const handleRequestList = () => {
+    const text = selectedSearchByText
+      ? {
+          [selectedSearchBy.id]: selectedSearchByText,
+        }
+      : {};
+    axios
+      .get(`/user/requests?page=${page + 1}&limit=${rowsPerPage}`, {
+        params: {
+          lastName: selectedSurname
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          role: selectedRole
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          region: selectedRegion
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          samaj: selectedSamaj
+            ?.filter((data) => data.name !== "All")
+            ?.map((item) => item?.id),
+          ...text,
+        },
+      })
+      .then((res) => {
+        setUserList(res?.data);
+      });
+  };
+
   const userInfoModalOpen = (userInfo) => {
-    setRequestInfoModel(true);
-    setValues({ ...userInfo, password: "" });
-    setLastNameList(
-      lastNameList.map((data) => ({
+    console.log("userInfoModalOpen");
+    setUserInfoModel(true);
+    setList((pre) => ({
+      ...pre,
+      lastName: surname.map((data) => ({
         ...data,
         label: data.name,
         value: data.id,
-      }))
-    );
-    setSelectedLastName(
-      lastNameList.find((item) => item?.id === userInfo.lastName)?.name
-    );
+      })),
+      region: region.map((data) => ({
+        ...data,
+        label: data.name,
+        value: data.id,
+      })),
+    }));
+    if (isAddUser === false) {
+      setValues({
+        ...userInfo,
+        password: "",
+        region: userInfo?.region,
+        localSamaj: userInfo?.localSamaj,
+        dob: userInfo?.dob,
+        gender: userInfo?.gender,
+        role: userInfo?.role,
+      });
+      setSelectedLastName(
+        surname.find((item) => item?.id === userInfo?.lastName)?.name
+      );
+    }
   };
 
   const userActionHandler = (userInfo, action, field) => {
@@ -133,7 +264,11 @@ function Index() {
   };
 
   const userInfoModalClose = () => {
-    setRequestInfoModel(false);
+    setUserInfoModel(false);
+    setIsAddUser(false);
+    setSelectedLastName(null);
+    setSelectedRegionName(null);
+    setSelectedSamajName(null);
     resetForm();
   };
   const handleUserList = () => {
@@ -142,6 +277,26 @@ function Index() {
       .then((res) => {
         setUserList(res.data);
       });
+  };
+
+  const getSamajList = (regionId) => {
+    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+      setSamajList(res.data);
+    });
+  };
+
+  const handleReset = () => {
+    setSelectedSearchByText("");
+    setSelectedSearchBy({
+      label: "",
+      id: "",
+    });
+    setSelectedSurname([]);
+    // setSelectedState([]);
+    setSelectedRegion([]);
+    setSelectedSamaj([]);
+    setSelectedRole([]);
+    handleRequestList(true);
   };
 
   const usersTableHeader = [
@@ -235,24 +390,242 @@ function Index() {
       filterable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <ModeEditIcon
-            className={"text-primary"}
-            onClick={() => userInfoModalOpen(record?.row)}
-          />
+          <Tooltip title={"Edit"}>
+            <ModeEditIcon
+              className={"text-primary"}
+              onClick={() => userInfoModalOpen(record?.row)}
+            />
+          </Tooltip>
+          <Tooltip title={"Delete"}>
+            <DeleteIcon
+              className={"text-primary cursor-pointer"}
+              onClick={() => deleteAPI(record?.row?.id)}
+            />
+          </Tooltip>
         </div>
       ),
     },
   ];
+
+  const deleteAPI = async (id) => {
+    axios
+      .delete(`/user/delete`, {
+        data: {
+          users: [id],
+        },
+      })
+      .then(() => {
+        handleUserList();
+      });
+  };
 
   const hasError = Object.keys(errors)?.length || 0;
 
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage className={" flex-col justify-center flex items-start"}>
-        <div className={"justify-between flex items-center"}>
+      <ContainerPage
+        className={" flex-col justify-center flex items-start gap-4"}
+      >
+        <div className={"w-full justify-between flex items-center"}>
           <p className={"text-3xl font-bold"}>Users</p>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            className={"bg-primary"}
+            onClick={() => {
+              userInfoModalOpen();
+              setUserInfoModel(!userInfoModel);
+              setIsAddUser(true);
+            }}
+          >
+            Add User
+          </Button>
         </div>
+        <Accordion
+          className={"w-full rounded"}
+          expanded={expanded}
+          onChange={handleExpansion}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon className={"text-primary"} />}
+            aria-controls="panel1-content"
+            id="panel1-header"
+            className={"text-primary font-extrabold text-[18px]"}
+          >
+            Filter & Search
+          </AccordionSummary>
+          <AccordionDetails className={"p-4"}>
+            <Grid spacing={2} container>
+              <CustomAutoComplete
+                list={[all, ...setLabelValueInList(surname)]}
+                multiple={true}
+                label={"Surname"}
+                placeholder={"Select Your Last Name"}
+                xs={3}
+                value={selectedSurname}
+                name="surname"
+                onChange={(e, lastName) => {
+                  if (lastName) {
+                    setSelectedSurname((pre) =>
+                      (lastName.map((item) => item.name).includes("All") &&
+                        lastName?.length === 1) ||
+                      (lastName.map((item) => item.name).includes("All") &&
+                        lastName
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [all]
+                        : [...lastName].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[all, ...setLabelValueInList(region)]}
+                multiple={true}
+                label={"Region"}
+                placeholder={"Select Your Region"}
+                xs={3}
+                name="region"
+                value={selectedRegion}
+                onChange={(e, region) => {
+                  if (region) {
+                    setSelectedRegion((pre) =>
+                      (region.map((item) => item.name).includes("All") &&
+                        region?.length === 1) ||
+                      (region.map((item) => item.name).includes("All") &&
+                        region
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [all]
+                        : [...region].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[all, ...setLabelValueInList(samaj)]}
+                multiple={true}
+                label={"Samaj"}
+                placeholder={"Select Your Samaj"}
+                xs={3}
+                name="samaj"
+                value={selectedSamaj}
+                onChange={(e, samaj) => {
+                  if (samaj) {
+                    setSelectedSamaj((pre) =>
+                      (samaj.map((item) => item.name).includes("All") &&
+                        samaj?.length === 1) ||
+                      (samaj.map((item) => item.name).includes("All") &&
+                        samaj
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [all]
+                        : [...samaj].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[all].concat(userRoleList)}
+                multiple={true}
+                label={"Role"}
+                placeholder={"Select Your role"}
+                xs={3}
+                name="role"
+                value={selectedRole}
+                onChange={(e, role) => {
+                  if (
+                    role &&
+                    !selectedRole.some(
+                      (item) => item.name === e.target.innerText
+                    )
+                  ) {
+                    setSelectedRole((pre) =>
+                      (role.map((item) => item.name).includes("All") &&
+                        role?.length === 1) ||
+                      (role.map((item) => item.name).includes("All") &&
+                        role
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [all]
+                        : [...role].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    value: "familyId",
+                    label: "Family Id",
+                  },
+                  {
+                    value: "firstName",
+                    label: "First Name",
+                  },
+                  {
+                    value: "mobile",
+                    label: "Mobile",
+                  },
+                  {
+                    value: "email",
+                    label: "Email",
+                  },
+                  {
+                    value: "gender",
+                    label: "Gender",
+                  },
+                ]}
+                label={"Search By"}
+                placeholder={"Select Your Search By"}
+                xs={3}
+                name="search"
+                value={selectedSearchBy.name}
+                onChange={(e, search) => {
+                  setSelectedSearchBy({
+                    name: search.label,
+                    id: search.value,
+                  });
+                }}
+              />
+              <CustomInput
+                type={"text"}
+                placeholder={"Enter Search Text"}
+                name={"firstName"}
+                xs={3}
+                value={selectedSearchByText}
+                onChange={(e) => setSelectedSearchByText(e.target.value)}
+              />
+              {(selectedSearchByText ||
+                selectedSearchBy.name ||
+                // selectedState?.length > 0 ||
+                selectedRegion?.length > 0 ||
+                selectedSurname?.length > 0 ||
+                selectedSamaj?.length > 0 ||
+                selectedRole?.length > 0) && (
+                <Grid item xs={3} className={"flex items-center"}>
+                  <button
+                    className={
+                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+                    }
+                    onClick={handleReset}
+                  >
+                    Reset
+                  </button>
+                </Grid>
+              )}
+              <Grid item xs={12} className={"flex justify-center"}>
+                <button
+                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                  onClick={() => handleRequestList()}
+                >
+                  Submit
+                </button>
+              </Grid>
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
         <CustomTable
           columns={usersTableHeader}
           data={userList}
@@ -356,7 +729,7 @@ function Index() {
                   <Grid item xs={12} sm={4} md={4}>
                     <FormControl className={"w-full"}>
                       <CustomAutoComplete
-                        list={lastNameList}
+                        list={list.lastName}
                         label={"Last Name"}
                         placeholder={"Select Your Last Name"}
                         name="lastName"
@@ -440,6 +813,107 @@ function Index() {
                       />
                     </FormControl>
                   </Grid>
+                  {isAddUser ? (
+                    <>
+                      <Grid item xs={12} sm={6} md={6}>
+                        <FormControl className={"w-full"}>
+                          <CustomAutoComplete
+                            list={list.region}
+                            label={"Region"}
+                            placeholder={"Select Your Region"}
+                            name={"region"}
+                            value={selectedRegionName}
+                            errors={
+                              touched?.region &&
+                              errors?.region &&
+                              errors?.region
+                            }
+                            onChange={(e, region) => {
+                              setFieldValue("region", region.id);
+                              setSelectedRegionName(region.name);
+                              getSamajList(region.id);
+                            }}
+                            onBlur={handleBlur}
+                          />
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={6}>
+                        <FormControl className={"w-full"}>
+                          <CustomAutoComplete
+                            list={samajList}
+                            label={"Local Samaj"}
+                            placeholder={"Select Your Samaj"}
+                            name={"localSamaj"}
+                            value={selectedSamajName}
+                            errors={
+                              touched?.localSamaj &&
+                              errors?.localSamaj &&
+                              errors?.localSamaj
+                            }
+                            onChange={(e, localSamaj) => {
+                              setFieldValue("localSamaj", localSamaj.id);
+                              setSelectedSamajName(localSamaj.name);
+                            }}
+                            onBlur={handleBlur}
+                          />
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={6}>
+                        <FormControl className={"w-full"}>
+                          <CustomInput
+                            type={"date"}
+                            label={"DOB"}
+                            placeholder={"Select Your DOB"}
+                            name="dob"
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            errors={touched.dob && errors.dob && errors.dob}
+                            value={values.dob}
+                            focused
+                          />
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={6}>
+                        <FormControl className={"w-full"}>
+                          <CustomRadio
+                            list={[
+                              { label: "Male", value: "male" },
+                              { label: "Female", value: "female" },
+                            ]}
+                            label={"Gender"}
+                            name={"gender"}
+                            value={values?.gender}
+                            errors={
+                              touched?.gender &&
+                              errors?.gender &&
+                              errors?.gender
+                            }
+                            className={"flex flex-row"}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                          />
+                        </FormControl>
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={6}>
+                        <FormControl className={"w-full"}>
+                          <CustomAutoComplete
+                            list={userRoleList}
+                            label={"User Role"}
+                            placeholder={"Select Your User Role"}
+                            name={"role"}
+                            value={values?.role}
+                            errors={
+                              touched?.role && errors?.role && errors?.role
+                            }
+                            onChange={(e, role) => {
+                              setFieldValue("role", role);
+                            }}
+                            onBlur={handleBlur}
+                          />
+                        </FormControl>
+                      </Grid>
+                    </>
+                  ) : null}
                   <Grid
                     item
                     xs={12}
@@ -455,7 +929,7 @@ function Index() {
                         type={"submit"}
                         disabled={hasError}
                       >
-                        Update
+                        {isAddUser ? "Add" : "Update"}
                       </button>
                     )}
                   </Grid>
