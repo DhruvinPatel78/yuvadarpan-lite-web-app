@@ -142,7 +142,7 @@ export default function Index() {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography
-                  className="text-center text-[#542b2b] font-bold text-2xl sm:text-4xl"
+                  className="text-center text-primary font-bold text-2xl sm:text-4xl"
                   variant="h3"
                 >
                   Registration

@@ -462,6 +462,46 @@ const AddYuva = () => {
           <Form>
             <Grid container spacing={2} className={"px-0 py-2 sm:p-4"}>
               <Grid item xs={12}>
+                <div className={"text-xl font-bold text-gray pb-2"}>PHOTO</div>
+                <Grid>
+                  {values?.profileName ? (
+                    <Grid item xs={12} className={"flex justify-center items-center"}>
+                      <img
+                        alt={values?.profile?.name}
+                        src={values?.profile?.url}
+                        className={
+                          "rounded-full w-[200px] h-[200px] object-cover cursor-pointer"
+                        }
+                      />
+                    </Grid>
+                  ) : (
+                    <CustomInput
+                      type={"file"}
+                      label={"Profile"}
+                      placeholder={"Enter Your City"}
+                      name={"profileName"}
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      focused
+                      value={values?.profileName}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          imageUploadHandler(file);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.profileName &&
+                        errors?.profileName &&
+                        errors?.profileName
+                      }
+                    />
+                  )}
+                </Grid>
+              </Grid>
+              <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>
                   PERSONAL INFO
                 </div>
@@ -937,52 +977,6 @@ const AddYuva = () => {
                     onBlur={handleBlur}
                     onChange={handleChange}
                   />
-                  {values?.profileName ? (
-                    <Grid item xs={4} className={"flex items-center"}>
-                      <span
-                        className={
-                          "flex items-center underline cursor-pointer flex-row gap-2 w-full justify-between"
-                        }
-                      >
-                        <span
-                          className={"ellipsis"}
-                          onClick={() => setShowProfileModal(!showProfileModal)}
-                        >
-                          {values?.profileName}
-                        </span>
-                        <CloseOutlinedIcon
-                          onClick={() => {
-                            setFieldValue("profileName", null);
-                            setFieldValue("profile", null);
-                          }}
-                        />
-                      </span>
-                    </Grid>
-                  ) : (
-                    <CustomInput
-                      type={"file"}
-                      label={"Profile"}
-                      placeholder={"Enter Your City"}
-                      name={"profileName"}
-                      xs={12}
-                      sm={6}
-                      md={4}
-                      focused
-                      value={values?.profileName}
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          imageUploadHandler(file);
-                        }
-                      }}
-                      onBlur={handleBlur}
-                      errors={
-                        touched?.profileName &&
-                        errors?.profileName &&
-                        errors?.profileName
-                      }
-                    />
-                  )}
                   <CustomInput
                     type={"text"}
                     label={"YSK No."}
