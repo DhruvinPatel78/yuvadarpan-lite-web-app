@@ -84,7 +84,7 @@ export default function Index() {
 
   return (
     <div className="h-screen flex flex-col justify-center items-center">
-      <p className="text-center text-[#542b2b] text-3xl mb-10 font-extrabold font-WorkBold">
+      <p className="text-center text-primary text-3xl mb-10 font-extrabold font-WorkBold">
         YUVADARPAN
       </p>
       <Paper
@@ -120,7 +120,7 @@ export default function Index() {
           <Grid item xs={12}>
             <button
               className={
-                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold"
+                "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold flex justify-center items-center"
               }
               style={
                 values.password && values.email
@@ -129,7 +129,7 @@ export default function Index() {
               }
               onClick={loading ? () => {} : handleSubmit}
             >
-              {loading ? <CircularProgress color="inherit" /> : "Sign In"}
+              {loading ? <CircularProgress color="inherit" size={25} /> : "Sign In"}
             </button>
           </Grid>
           <Grid item xs={12}>
