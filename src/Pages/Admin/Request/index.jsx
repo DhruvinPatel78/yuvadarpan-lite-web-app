@@ -31,9 +31,13 @@ import CustomInput from "../../../Component/Common/customInput";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { surname, state, region, samaj } = useSelector(
-    (state) => state.location
-  );
+  const { auth, surname, region, state, samaj } = useSelector((state) => ({
+    auth: state.auth,
+    surname: state.location.surname,
+    region: state.location.region,
+    samaj: state.location.samaj,
+    state: state.location.state,
+  }));
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -43,10 +47,11 @@ export default function Index() {
   const [expanded, setExpanded] = React.useState(false);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
+  const [selectedRole, setSelectedRole] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
-    name: "",
+    label: "",
     id: "",
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
@@ -90,33 +95,60 @@ export default function Index() {
         });
       });
   };
-  const handleRequestList = () => {
+  const handleRequestList = (isRest = false) => {
     const text = selectedSearchByText
       ? {
-          [selectedSearchBy.id]: selectedSearchByText,
+          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
         }
       : {};
     axios
       .get(`/user/requests?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
-          lastName: selectedSurname
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          state: selectedState
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          region: selectedRegion
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          samaj: selectedSamaj
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
+          lastName: isRest
+            ? []
+            : selectedSurname
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          state: isRest
+            ? []
+            : selectedState
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          region: isRest
+            ? []
+            : selectedRegion
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          samaj: isRest
+            ? []
+            : selectedSamaj
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          roles: isRest
+            ? []
+            : selectedRole
+                ?.filter((data) => data.label !== "All")
+                ?.map((item) => item?.value),
           ...text,
         },
       })
       .then((res) => {
         setUserList(res?.data);
       });
+  };
+
+  const handleReset = () => {
+    setSelectedSearchByText("");
+    setSelectedSearchBy({
+      label: "",
+      id: "",
+    });
+    setSelectedSurname([]);
+    setSelectedState([]);
+    setSelectedRegion([]);
+    setSelectedSamaj([]);
+    setSelectedRole([]);
+    handleRequestList(true);
   };
   const handleSelectedUser = (ids) => {
     setSelectedUsers([...ids]);
@@ -335,6 +367,10 @@ export default function Index() {
                               id: "",
                             },
                           ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
                         : [...lastName].filter((item) => item.name !== "All")
                     );
                   }
@@ -373,6 +409,10 @@ export default function Index() {
                               id: "",
                             },
                           ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
                         : [...state].filter((item) => item.name !== "All")
                     );
                   }
@@ -411,6 +451,10 @@ export default function Index() {
                               id: "",
                             },
                           ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
                         : [...region].filter((item) => item.name !== "All")
                     );
                   }
@@ -449,11 +493,73 @@ export default function Index() {
                               id: "",
                             },
                           ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
                         : [...samaj].filter((item) => item.name !== "All")
                     );
                   }
                 }}
               />
+              {auth.user.role === "ADMIN" && (
+                <CustomAutoComplete
+                  xs={3}
+                  multiple={true}
+                  list={[
+                    {
+                      label: "All",
+                      value: "all",
+                      name: "All",
+                      id: "",
+                    },
+                    {
+                      label: "Admin",
+                      value: "ADMIN",
+                    },
+                    {
+                      label: "Samaj Manager",
+                      value: "SAMAJ_MANAGER",
+                    },
+                    {
+                      label: "Region Manager",
+                      value: "REGION_MANAGER",
+                    },
+                    {
+                      label: "User",
+                      value: "USER",
+                    },
+                  ]}
+                  label={"Role"}
+                  name="role"
+                  value={selectedRole}
+                  onChange={(e, role) => {
+                    if (role) {
+                      setSelectedRole((pre) =>
+                        (role.map((item) => item.label).includes("All") &&
+                          role?.length === 1) ||
+                        (role.map((item) => item.label).includes("All") &&
+                          role
+                            .map((item) => item.label)
+                            ?.findIndex((data) => data === "All") !== 0)
+                          ? [
+                              {
+                                label: "All",
+                                value: "all",
+                                name: "All",
+                                id: "",
+                              },
+                            ]
+                          : pre
+                              .map((item) => item.label)
+                              ?.find((data) => data === e.target.innerText)
+                          ? [...pre]
+                          : [...role].filter((item) => item.label !== "All")
+                      );
+                    }
+                  }}
+                />
+              )}
               <CustomAutoComplete
                 list={[
                   {
@@ -481,10 +587,10 @@ export default function Index() {
                 placeholder={"Select Your Search By"}
                 xs={3}
                 name="search"
-                value={selectedSearchBy.name}
+                value={selectedSearchBy.label}
                 onChange={(e, search) => {
                   setSelectedSearchBy({
-                    name: search.label,
+                    label: search.label,
                     id: search.value,
                   });
                 }}
@@ -496,7 +602,26 @@ export default function Index() {
                 xs={3}
                 value={selectedSearchByText}
                 onChange={(e) => setSelectedSearchByText(e.target.value)}
+                disabled={!selectedSearchBy.name}
               />
+              {(selectedSearchByText ||
+                selectedSearchBy.name ||
+                selectedState?.length > 0 ||
+                selectedRegion?.length > 0 ||
+                selectedSurname?.length > 0 ||
+                selectedSamaj?.length > 0 ||
+                selectedRole?.length > 0) && (
+                <Grid item xs={3} className={"flex items-center"}>
+                  <button
+                    className={
+                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+                    }
+                    onClick={handleReset}
+                  >
+                    Reset
+                  </button>
+                </Grid>
+              )}
               <Grid item xs={12} className={"flex justify-center"}>
                 <button
                   className={"bg-primary text-white p-2 px-4 rounded font-bold"}
