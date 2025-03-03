@@ -1,9 +1,9 @@
 import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const PublicRoute = ({ Component }) => {
+const PublicRoute = ({ Component, skipCheck = false }) => {
   const { loggedIn, user } = useSelector((state) => state.auth);
-  return !loggedIn ? (
+  return skipCheck || !loggedIn ? (
     <Component />
   ) : (
     <Navigate

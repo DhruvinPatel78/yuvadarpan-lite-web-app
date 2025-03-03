@@ -50,7 +50,7 @@ export default function Index() {
   };
 
   useEffect(() => {
-    getDistrictList();
+    getDistrictList(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const districtListColumn = [
@@ -248,7 +248,7 @@ export default function Index() {
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
       <ContainerPage className={"flex-col justify-center flex items-start"}>
-        <div className={"flex w-full items-center justify-between"}>
+        <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>District</p>
           <Button
             variant="contained"

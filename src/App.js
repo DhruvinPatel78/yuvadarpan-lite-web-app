@@ -3,135 +3,157 @@ import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login/index";
 import Registration from "./Pages/Registration/index";
-import AdminDashboard from "./Pages/Admin/Dashboard/index";
-import UserList from "./Pages/Admin/UserList/index";
-import YuvaList from "./Pages/Admin/YuvaList/index";
-import Request from "./Pages/Admin/Request/index";
 import ThankYou from "./Pages/ThankYou";
-import AddYuva from "./Pages/Admin/YuvaList/AddYuva";
 import Profile from "./Pages/Profile";
 import Status from "./Pages/Status";
-import Country from "./Pages/Admin/Country";
-import State from "./Pages/Admin/State";
-import Region from "./Pages/Admin/Region";
-import District from "./Pages/Admin/District";
-import City from "./Pages/Admin/City";
-import Samaj from "./Pages/Admin/Samaj";
-import Surname from "./Pages/Admin/Surname";
-import Native from "./Pages/Admin/Native";
+import {
+  City,
+  Country,
+  District,
+  Native,
+  Region,
+  Roles,
+  Samaj,
+  Surname,
+  UserList,
+  YuvaList,
+  Request,
+  State,
+  AddYuva,
+  AdminDashboard,
+} from "./Pages/Admin";
 
 import NewUser from "./Pages/User/NewUser";
-import Dashboard from "./Pages/User/Dashboard";
+import Dashboard from "./Pages/Dashboard";
 import NotFound from "./Pages/NotFound";
 import PrivateRoute from "./util/PrivateRoute";
 import PublicRoute from "./util/PublicRoute";
+import Home from "./Pages/User/Dashboard";
 
 function App() {
   return (
     <Routes>
-      {/* Admin Routes*/}
-      <Route
-        path="/"
-        exact
-        element={<PrivateRoute Component={AdminDashboard} />}
-      />
-      <Route path="/login" exact element={<PublicRoute Component={Login} />} />
-      <Route
-        path="/register"
-        exact
-        element={<PublicRoute Component={Registration} />}
-      />
+      <Route path={"/"}>
+        {/*Public Routes*/}
+        <Route path="login" exact element={<PublicRoute Component={Login} />} />
+        <Route
+          path="register"
+          exact
+          element={<PublicRoute Component={Registration} />}
+        />
 
-      <Route
-        path="/admin/dashboard"
-        exact
-        element={<PrivateRoute Component={AdminDashboard} />}
-      />
-      <Route
-        path="/admin/userlist"
-        exact
-        element={<PrivateRoute Component={UserList} />}
-      />
-      <Route
-        path="/admin/yuvalist"
-        exact
-        element={<PrivateRoute Component={YuvaList} />}
-      />
-      <Route
-        path="/admin/request"
-        exact
-        element={<PrivateRoute Component={Request} />}
-      />
-      <Route
-        path="/admin/country"
-        exact
-        element={<PrivateRoute Component={Country} />}
-      />
-      <Route
-        path="/admin/state"
-        exact
-        element={<PrivateRoute Component={State} />}
-      />
-      <Route
-        path="/admin/region"
-        exact
-        element={<PrivateRoute Component={Region} />}
-      />
-      <Route
-        path="/admin/district"
-        exact
-        element={<PrivateRoute Component={District} />}
-      />
-      <Route
-        path="/admin/city"
-        exact
-        element={<PrivateRoute Component={City} />}
-      />
-      <Route
-        path="/admin/samaj"
-        exact
-        element={<PrivateRoute Component={Samaj} />}
-      />
-      <Route
-        path="/admin/surname"
-        exact
-        element={<PrivateRoute Component={Surname} />}
-      />
-      <Route
-        path="/admin/native"
-        exact
-        element={<PrivateRoute Component={Native} />}
-      />
+        {/*Private Routes*/}
+        <Route index element={<PrivateRoute Component={Dashboard} />} />
+        <Route
+          path="pdf"
+          exact
+          element={<PrivateRoute Component={NewUser} />}
+        />
 
-      <Route
-        path="/yuvalist/add"
-        exact
-        element={<PrivateRoute Component={AddYuva} />}
-      />
-      <Route
-        path="/thankyou"
-        exact
-        element={<PublicRoute Component={ThankYou} />}
-      />
-      <Route
-        path="/yuvalist/:id"
-        exact
-        element={<PrivateRoute Component={Profile} />}
-      />
-      <Route
-        path="/status"
-        exact
-        element={<PrivateRoute Component={Status} />}
-      />
+        {/*Admin Routes*/}
+        <Route path={"admin"}>
+          <Route
+            path="dashboard"
+            exact
+            element={<PrivateRoute Component={AdminDashboard} />}
+          />
+          <Route
+            path="userlist"
+            exact
+            element={<PrivateRoute Component={UserList} />}
+          />
 
-      {/*User Routes*/}
-      <Route path="/pdf" exact element={<PrivateRoute Component={NewUser} />} />
-      <Route
-        path="/dashboard"
-        exact
-        element={<PrivateRoute Component={Dashboard} />}
-      />
-      <Route path="*" exact={true} element={<NotFound />} />
+          <Route path={"yuvalist"}>
+            <Route index element={<PrivateRoute Component={YuvaList} />} />
+            <Route
+              path="add"
+              exact
+              element={<PrivateRoute Component={AddYuva} />}
+            />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={Profile} />}
+            />
+            <Route
+                path=":id/edit"
+                exact
+                element={<PrivateRoute Component={AddYuva} />}
+            />
+          </Route>
+
+          <Route
+            path="request"
+            exact
+            element={<PrivateRoute Component={Request} />}
+          />
+          <Route
+            path="country"
+            exact
+            element={<PrivateRoute Component={Country} />}
+          />
+          <Route
+            path="state"
+            exact
+            element={<PrivateRoute Component={State} />}
+          />
+          <Route
+            path="region"
+            exact
+            element={<PrivateRoute Component={Region} />}
+          />
+          <Route
+            path="district"
+            exact
+            element={<PrivateRoute Component={District} />}
+          />
+          <Route
+            path="city"
+            exact
+            element={<PrivateRoute Component={City} />}
+          />
+          <Route
+            path="samaj"
+            exact
+            element={<PrivateRoute Component={Samaj} />}
+          />
+          <Route
+            path="surname"
+            exact
+            element={<PrivateRoute Component={Surname} />}
+          />
+          <Route
+            path="native"
+            exact
+            element={<PrivateRoute Component={Native} />}
+          />
+          <Route
+            path="role"
+            exact
+            element={<PrivateRoute Component={Roles} />}
+          />
+          <Route
+            path="userDashboard"
+            exact
+            element={<PrivateRoute Component={Home} />}
+          />
+        </Route>
+
+        <Route
+          path="thankyou"
+          exact
+          element={<PublicRoute Component={ThankYou} skipCheck={true} />}
+        />
+
+        <Route
+          path="status"
+          exact
+          element={<PrivateRoute Component={Status} />}
+        />
+
+        {/*404 not found*/}
+        <Route path="*" exact={true} element={<NotFound />} />
+      </Route>
     </Routes>
   );
 }
