@@ -400,6 +400,7 @@ const AddYuva = () => {
   } = formik;
 
   const imageUploadHandler = (file) => {
+    dispatch(startLoading());
     const formData = new FormData();
     formData.append("image", file);
     axios
@@ -410,8 +411,12 @@ const AddYuva = () => {
         setFieldValue("profile", res?.data?.data);
         setFieldValue("profileName", res?.data?.data?.name);
       })
-      .catch((e) => console.log("error API  = = = = >", e));
+      .catch((e) => console.log("error API  = = = = >", e))
+      .finally(() => {
+        dispatch(endLoading());
+      });
   };
+
   const addFieldHandler = () => {
     // setFieldValue(`${newField.title}`,newField.description)
     setNewFieldList((prevState) => [...prevState, newField]);
@@ -463,42 +468,45 @@ const AddYuva = () => {
             <Grid container spacing={2} className={"px-0 py-2 sm:p-4"}>
               <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>PHOTO</div>
-                <Grid>
-                  {values?.profileName ? (
-                    <Grid item xs={12} className={"flex justify-center items-center"}>
-                      <img
-                        alt={values?.profile?.name}
-                        src={values?.profile?.url}
-                        className={
-                          "rounded-full w-[200px] h-[200px] object-cover cursor-pointer"
-                        }
-                      />
-                    </Grid>
-                  ) : (
-                    <CustomInput
-                      type={"file"}
-                      label={"Profile"}
-                      placeholder={"Enter Your City"}
-                      name={"profileName"}
-                      xs={12}
-                      sm={6}
-                      md={4}
-                      focused
-                      value={values?.profileName}
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          imageUploadHandler(file);
-                        }
-                      }}
-                      onBlur={handleBlur}
-                      errors={
-                        touched?.profileName &&
-                        errors?.profileName &&
-                        errors?.profileName
+                <Grid
+                  className={"w-fit flex items-center gap-4 cursor-pointer"}
+                >
+                  {loading ? (
+                    <CircularProgress
+                      className={
+                        "w-[150px] h-[150px] rounded-full border border-primary cursor-pointer text-primary"
                       }
                     />
+                  ) : (
+                    <label htmlFor="upload-button">
+                      <img
+                        src={
+                          values?.profileName
+                            ? values?.profile?.url
+                            : `https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541`
+                        }
+                        alt={
+                          values?.profileName
+                            ? values?.profile?.name
+                            : `profile`
+                        }
+                        className={
+                          "w-[150px] h-[150px] rounded-full border border-primary cursor-pointer"
+                        }
+                      />
+                    </label>
                   )}
+                  <input
+                    type="file"
+                    id="upload-button"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        imageUploadHandler(file);
+                      }
+                    }}
+                  />
                 </Grid>
               </Grid>
               <Grid item xs={12}>
