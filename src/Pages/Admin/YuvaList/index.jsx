@@ -49,7 +49,7 @@ const YuvaList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { surname, city, state, region } = useSelector(
-    (state) => state.location
+    (state) => state.location,
   );
   const [nativeList, setNativeList] = useState([]);
   const [expanded, setExpanded] = React.useState(false);
@@ -91,7 +91,7 @@ const YuvaList = () => {
             ...data,
             label: data.name,
             value: data.id,
-          }))
+          })),
         );
       })
       .catch(function (error) {
@@ -121,7 +121,9 @@ const YuvaList = () => {
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
             {record.row.firstName} {record.row.middleName}{" "}
-            {surname.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
+            {
+              surname.find((item) => item?.id === record?.row?.lastName)?.name
+            }{" "}
           </p>
         </div>
       ),
@@ -230,21 +232,25 @@ const YuvaList = () => {
     }));
   };
 
-  const handleRequestList = () => {
+  const handleRequestList = (isRest = false) => {
     const text = selectedSearchByText
       ? {
-          [selectedSearchBy.id]: selectedSearchByText,
+          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
         }
       : {};
     axios
-      .get(`/yuvaList/requests?page=${page + 1}&limit=${rowsPerPage}`, {
+      .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
-          fullName: selectedSurname
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          native: selectedNative
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
+          lastName: isRest
+            ? []
+            : selectedSurname
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          native: isRest
+            ? []
+            : selectedNative
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
           ...text,
         },
       })
@@ -322,7 +328,7 @@ const YuvaList = () => {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...lastName].filter((item) => item.name !== "All")
+                        : [...lastName].filter((item) => item.name !== "All"),
                     );
                   }
                 }}
@@ -345,7 +351,7 @@ const YuvaList = () => {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...native].filter((item) => item.name !== "All")
+                        : [...native].filter((item) => item.name !== "All"),
                     );
                   }
                 }}
@@ -383,7 +389,12 @@ const YuvaList = () => {
                 name={"firstName"}
                 xs={3}
                 value={selectedSearchByText}
-                onChange={(e) => setSelectedSearchByText(e.target.value)}
+                onChange={(e) => {
+                  setSelectedSearchByText(e.target.value);
+                  if (e.target.value === "") {
+                    handleRequestList(true);
+                  }
+                }}
               />
 
               <Grid
@@ -456,7 +467,7 @@ const YuvaList = () => {
                   window.open(
                     userData?.profile?.url ||
                       "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank"
+                    "_blank",
                   )
                 }
               >

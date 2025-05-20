@@ -54,9 +54,18 @@ export default function Index() {
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
-  const getCountryList = async () => {
+  const getCountryList = async (isRest = false) => {
+    const text = selectedSearchByText
+      ? {
+        [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
+      }
+      : {};
     axios
-      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`)
+      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`,{
+        params: {
+          ...text,
+        }
+      })
       .then((res) => {
         setCountryData(res.data);
       });
