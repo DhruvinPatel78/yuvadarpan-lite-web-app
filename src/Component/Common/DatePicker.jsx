@@ -51,6 +51,11 @@ const DatePicker = ({
           onBlur={onBlur}
           {...rest}
           className={"w-full"}
+          sx={{
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: errors?"red !important":"#572a2a !important",
+            }
+          }}
         />
       </LocalizationProvider>
       {errors && (

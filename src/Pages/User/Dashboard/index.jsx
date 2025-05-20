@@ -14,8 +14,8 @@ const Home = () => {
 
   const getYuvaList = async () => {
     axios.get(`/yuvaList/list?page=${page}&limit=${20}`).then((res) => {
-      setYuvaList(res.data.data);
-      if (page !== res.data.totalPages) {
+      setYuvaList(res?.data?.data);
+      if (page !== res?.data?.totalPages) {
         setPage((prev) => prev + 1);
         setHasMore(true);
       } else {
@@ -40,14 +40,15 @@ const Home = () => {
             "grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 grid-cols-1 gap-2 p-4 sm:flex hidden"
           }
         >
-          {yuvaList.map((data) => {
+          {yuvaList?.map((data) => {
             return (
-              <Grid item className="flex justify-center items-center">
+              <Grid item className="flex justify-center items-center" key={data?.id}>
                 <Card
                   className="flex flex-col justify-between items-center rounded-[50px] font-bold max-h-[calc(100vh - 428px)] w-[350px] cursor-pointer text-2xl hover:transition-all"
                   style={{ boxShadow: "0px 4px 35px 0px rgb(0 0 0 / 0.25)" }}
                   variant="outlined"
                   // onClick={action}
+                    key={data?.id}
                 >
                   <Card
                     className={
@@ -56,8 +57,8 @@ const Home = () => {
                     variant="outlined"
                   >
                     <img
-                      alt={data.id + "yuva"}
-                      src={data.profile.url}
+                      alt={data?.id + "yuva"}
+                      src={data?.profile?.url}
                       className={"sm:size-44 size-40 rounded-full"}
                     />
                   </Card>
@@ -72,7 +73,7 @@ const Home = () => {
                     >
                       {toCamelCase(data?.firstName)}{" "}
                       {toCamelCase(
-                        surname.find((i) => i.id === data?.lastName).name
+                        surname.find((i) => i?.id === data?.lastName)?.name
                       )}
                     </div>
                     <div
@@ -80,10 +81,10 @@ const Home = () => {
                         "sm:text-base md:text-lg lg:text-xl text-lg font-medium text-center text-[#6D6666]"
                       }
                     >
-                      {toCamelCase(city.find((i) => i.id === data?.city).name)}{" "}
+                      {toCamelCase(city.find((i) => i?.id === data?.city)?.name)}{" "}
                       -{" "}
                       {toCamelCase(
-                        region.find((i) => i.id === data?.region).name
+                        region.find((i) => i?.id === data?.region)?.name
                       )}
                     </div>
                     <div
@@ -91,7 +92,7 @@ const Home = () => {
                         "sm:text-base md:text-lg lg:text-xl text-lg font-medium text-center text-[#6D6666] pb-1"
                       }
                     >
-                      {moment().diff(data.dob, "years")} Years
+                      {moment().diff(data?.dob, "years")} Years
                     </div>
                     <div className="py-1 flex items-center self-center w-11/12">
                       <div className="rounded-full h-[3px] w-[3px] bg-primary"></div>
@@ -138,11 +139,12 @@ const Home = () => {
           spacing={2}
           className={"grid grid-cols-1 gap-2 sm:hidden"}
         >
-          {yuvaList.map((data) => {
+          {yuvaList?.map((data) => {
             return (
               <Grid
                 item
                 className="flex justify-center items-center max-h-[180px]"
+                key={data?.id}
               >
                 <Card
                   className="flex items-center p-2 rounded-[30px] font-bold max-h-[calc(100vh - 428px)] w-[400px] cursor-pointer text-2xl hover:transition-all gap-2"
@@ -151,8 +153,8 @@ const Home = () => {
                   // onClick={action}
                 >
                   <Avatar
-                    alt={data.id + "yuva"}
-                    src={data.profile.url}
+                    alt={data?.id + "yuva"}
+                    src={data?.profile?.url}
                     className={"rounded-full"}
                     sx={{ width: 100, height: 100 }}
                   />
@@ -164,17 +166,17 @@ const Home = () => {
                     >
                       {toCamelCase(data?.firstName)}{" "}
                       {toCamelCase(
-                        surname.find((i) => i.id === data?.lastName).name
+                        surname.find((i) => i?.id === data?.lastName)?.name
                       )}
                     </p>
                     <p className={"text-sm text-[#6D6666] font-medium"}>
-                      ({moment().diff(data.dob, "years")}-Yr)
+                      ({moment().diff(data?.dob, "years")}-Yr)
                     </p>
                     <div className={"text-sm font-medium"}>
-                      {toCamelCase(city.find((i) => i.id === data?.city).name)}{" "}
+                      {toCamelCase(city.find((i) => i?.id === data?.city)?.name)}{" "}
                       -{" "}
                       {toCamelCase(
-                        region.find((i) => i.id === data?.region).name
+                        region.find((i) => i?.id === data?.region)?.name
                       )}
                     </div>
                     <div className="py-1 flex items-center self-center w-full">

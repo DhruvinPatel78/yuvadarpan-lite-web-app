@@ -271,6 +271,7 @@ function Index() {
     setSelectedSamajName(null);
     resetForm();
   };
+
   const handleUserList = () => {
     axios
       .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`)
@@ -597,14 +598,24 @@ function Index() {
                 value={selectedSearchByText}
                 onChange={(e) => setSelectedSearchByText(e.target.value)}
               />
-              {(selectedSearchByText ||
-                selectedSearchBy.name ||
-                // selectedState?.length > 0 ||
-                selectedRegion?.length > 0 ||
-                selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0 ||
-                selectedRole?.length > 0) && (
-                <Grid item xs={3} className={"flex items-center"}>
+              <Grid
+                item
+                xs={12}
+                className={"flex justify-center items-center gap-4"}
+              >
+                <button
+                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                  onClick={() => handleRequestList()}
+                >
+                  Submit
+                </button>
+                {(selectedSearchByText ||
+                  selectedSearchBy.name ||
+                  // selectedState?.length > 0 ||
+                  selectedRegion?.length > 0 ||
+                  selectedSurname?.length > 0 ||
+                  selectedSamaj?.length > 0 ||
+                  selectedRole?.length > 0) && (
                   <button
                     className={
                       "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
@@ -613,15 +624,7 @@ function Index() {
                   >
                     Reset
                   </button>
-                </Grid>
-              )}
-              <Grid item xs={12} className={"flex justify-center"}>
-                <button
-                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={() => handleRequestList()}
-                >
-                  Submit
-                </button>
+                )}
               </Grid>
             </Grid>
           </AccordionDetails>
@@ -638,307 +641,294 @@ function Index() {
           setPage={setPage}
         />
       </ContainerPage>
-      {userInfoModel ? (
-        <Modal
-          open={userInfoModel}
-          // onClose={userInfoModalClose}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-          sx={{
-            "& .MuiModal-backdrop": {
-              backdropFilter: " blur(2px) !important",
-              background: "#878b9499 !important",
-            },
-          }}
-          className="flex justify-center items-center m-4"
-        >
-          <Paper
-            elevation={10}
-            className="!rounded-2xl p-4 w-full max-w-[600px]"
-          >
-            <div className={"flex justify-between items-center"}>
-              <Typography className={"font-bold text-2xl"}>
-                Update User
-              </Typography>
-              <HighlightOffIcon
-                onClick={userInfoModalClose}
-                className={"cursor-pointer"}
-              />
-            </div>
-            <FormikProvider value={formik}>
-              <Form
-                className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
-                }
-              >
-                <Grid container className={"w-full pt-4"} spacing={2}>
-                  <Grid item xs={12}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"familyId"}
-                        id="familyId"
-                        label="Family ID"
-                        value={values?.familyId}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.familyId &&
-                          errors?.familyId &&
-                          errors?.familyId
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={4} md={4}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"firstName"}
-                        id="firstName"
-                        label="First Name"
-                        value={values?.firstName}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.firstName &&
-                          errors?.firstName &&
-                          errors?.firstName
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={4} md={4}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"middleName"}
-                        id="middleName"
-                        label="Middle Name"
-                        value={values?.middleName}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.middleName &&
-                          errors?.middleName &&
-                          errors?.middleName
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={4} md={4}>
-                    <FormControl className={"w-full"}>
-                      <CustomAutoComplete
-                        list={list.lastName}
-                        label={"Last Name"}
-                        placeholder={"Select Your Last Name"}
-                        name="lastName"
-                        value={selectedLastName}
-                        errors={
-                          touched.lastName && errors.lastName && errors.lastName
-                        }
-                        onChange={(e, lastName) => {
-                          setFieldValue("lastName", lastName.id);
-                          setSelectedLastName(lastName.name);
-                        }}
-                        onBlur={handleBlur}
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={6}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"email"}
-                        id="email"
-                        label="Email"
-                        value={values?.email}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.email && errors?.email && errors?.email
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={6}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"mobile"}
-                        id="mobile"
-                        label="Mobile"
-                        value={values?.mobile}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.mobile && errors?.mobile && errors?.mobile
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={6}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"password"}
-                        id="password"
-                        label="Password"
-                        value={values?.password}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.password &&
-                          errors?.password &&
-                          errors?.password
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={6}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"confirmPassword"}
-                        id="confirmPassword"
-                        label="Confirm Password"
-                        value={values?.confirmPassword}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.confirmPassword &&
-                          errors?.confirmPassword &&
-                          errors?.confirmPassword
-                        }
-                      />
-                    </FormControl>
-                  </Grid>
-                  {isAddUser ? (
-                    <>
-                      <Grid item xs={12} sm={6} md={6}>
-                        <FormControl className={"w-full"}>
-                          <CustomAutoComplete
-                            list={list.region}
-                            label={"Region"}
-                            placeholder={"Select Your Region"}
-                            name={"region"}
-                            value={selectedRegionName}
-                            errors={
-                              touched?.region &&
-                              errors?.region &&
-                              errors?.region
-                            }
-                            onChange={(e, region) => {
-                              setFieldValue("region", region.id);
-                              setSelectedRegionName(region.name);
-                              getSamajList(region.id);
-                            }}
-                            onBlur={handleBlur}
-                          />
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={6}>
-                        <FormControl className={"w-full"}>
-                          <CustomAutoComplete
-                            list={samajList}
-                            label={"Local Samaj"}
-                            placeholder={"Select Your Samaj"}
-                            name={"localSamaj"}
-                            value={selectedSamajName}
-                            errors={
-                              touched?.localSamaj &&
-                              errors?.localSamaj &&
-                              errors?.localSamaj
-                            }
-                            onChange={(e, localSamaj) => {
-                              setFieldValue("localSamaj", localSamaj.id);
-                              setSelectedSamajName(localSamaj.name);
-                            }}
-                            onBlur={handleBlur}
-                          />
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={6}>
-                        <FormControl className={"w-full"}>
-                          <CustomInput
-                            type={"date"}
-                            label={"DOB"}
-                            placeholder={"Select Your DOB"}
-                            name="dob"
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            errors={touched.dob && errors.dob && errors.dob}
-                            value={values.dob}
-                            focused
-                          />
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={6}>
-                        <FormControl className={"w-full"}>
-                          <CustomRadio
-                            list={[
-                              { label: "Male", value: "male" },
-                              { label: "Female", value: "female" },
-                            ]}
-                            label={"Gender"}
-                            name={"gender"}
-                            value={values?.gender}
-                            errors={
-                              touched?.gender &&
-                              errors?.gender &&
-                              errors?.gender
-                            }
-                            className={"flex flex-row"}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                          />
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={6}>
-                        <FormControl className={"w-full"}>
-                          <CustomAutoComplete
-                            list={userRoleList}
-                            label={"User Role"}
-                            placeholder={"Select Your User Role"}
-                            name={"role"}
-                            value={values?.role}
-                            errors={
-                              touched?.role && errors?.role && errors?.role
-                            }
-                            onChange={(e, role) => {
-                              setFieldValue("role", role);
-                            }}
-                            onBlur={handleBlur}
-                          />
-                        </FormControl>
-                      </Grid>
-                    </>
-                  ) : null}
-                  <Grid
-                    item
-                    xs={12}
-                    className={"flex justify-center items-center"}
-                  >
-                    {loading ? (
-                      <CircularProgress color="secondary" />
-                    ) : (
-                      <button
-                        className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
-                          hasError ? "opacity-50" : "opacity-100"
-                        }`}
-                        type={"submit"}
-                        disabled={hasError}
-                      >
-                        {isAddUser ? "Add" : "Update"}
-                      </button>
-                    )}
-                  </Grid>
+      <Modal
+        open={userInfoModel}
+        onClose={userInfoModalClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+        sx={{
+          "& .MuiModal-backdrop": {
+            backdropFilter: " blur(2px) !important",
+            background: "#878b9499 !important",
+          },
+        }}
+        className="flex justify-center items-center m-4"
+      >
+        <Paper elevation={10} className="!rounded-2xl p-4 w-full max-w-[600px]">
+          <div className={"flex justify-between items-center"}>
+            <Typography className={"font-bold text-2xl"}>
+              {`${isAddUser ? `New` : `Update`} User`}
+            </Typography>
+            <HighlightOffIcon
+              onClick={userInfoModalClose}
+              className={"cursor-pointer"}
+            />
+          </div>
+          <FormikProvider value={formik}>
+            <Form
+              className={
+                "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+              }
+            >
+              <Grid container className={"w-full pt-4"} spacing={2}>
+                <Grid item xs={12}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"familyId"}
+                      id="familyId"
+                      label="Family ID"
+                      value={values?.familyId}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.familyId &&
+                        errors?.familyId &&
+                        errors?.familyId
+                      }
+                    />
+                  </FormControl>
                 </Grid>
-              </Form>
-            </FormikProvider>
-          </Paper>
-        </Modal>
-      ) : null}
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"firstName"}
+                      id="firstName"
+                      label="First Name"
+                      value={values?.firstName}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.firstName &&
+                        errors?.firstName &&
+                        errors?.firstName
+                      }
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"middleName"}
+                      id="middleName"
+                      label="Middle Name"
+                      value={values?.middleName}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.middleName &&
+                        errors?.middleName &&
+                        errors?.middleName
+                      }
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={list.lastName}
+                      label={"Last Name"}
+                      placeholder={"Select Your Last Name"}
+                      name="lastName"
+                      value={selectedLastName}
+                      errors={
+                        touched.lastName && errors.lastName && errors.lastName
+                      }
+                      onChange={(e, lastName) => {
+                        setFieldValue("lastName", lastName.id);
+                        setSelectedLastName(lastName.name);
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"email"}
+                      id="email"
+                      label="Email"
+                      value={values?.email}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={touched?.email && errors?.email && errors?.email}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"mobile"}
+                      id="mobile"
+                      label="Mobile"
+                      value={values?.mobile}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.mobile && errors?.mobile && errors?.mobile
+                      }
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"password"}
+                      id="password"
+                      label="Password"
+                      value={values?.password}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.password &&
+                        errors?.password &&
+                        errors?.password
+                      }
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"confirmPassword"}
+                      id="confirmPassword"
+                      label="Confirm Password"
+                      value={values?.confirmPassword}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={
+                        touched?.confirmPassword &&
+                        errors?.confirmPassword &&
+                        errors?.confirmPassword
+                      }
+                    />
+                  </FormControl>
+                </Grid>
+                {isAddUser ? (
+                  <>
+                    <Grid item xs={12} sm={6} md={6}>
+                      <FormControl className={"w-full"}>
+                        <CustomAutoComplete
+                          list={list.region}
+                          label={"Region"}
+                          placeholder={"Select Your Region"}
+                          name={"region"}
+                          value={selectedRegionName}
+                          errors={
+                            touched?.region && errors?.region && errors?.region
+                          }
+                          onChange={(e, region) => {
+                            setFieldValue("region", region.id);
+                            setSelectedRegionName(region.name);
+                            getSamajList(region.id);
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={6}>
+                      <FormControl className={"w-full"}>
+                        <CustomAutoComplete
+                          list={samajList}
+                          label={"Local Samaj"}
+                          placeholder={"Select Your Samaj"}
+                          name={"localSamaj"}
+                          value={selectedSamajName}
+                          errors={
+                            touched?.localSamaj &&
+                            errors?.localSamaj &&
+                            errors?.localSamaj
+                          }
+                          onChange={(e, localSamaj) => {
+                            setFieldValue("localSamaj", localSamaj.id);
+                            setSelectedSamajName(localSamaj.name);
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={6}>
+                      <FormControl className={"w-full"}>
+                        <CustomInput
+                          type={"date"}
+                          label={"DOB"}
+                          placeholder={"Select Your DOB"}
+                          name="dob"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          errors={touched.dob && errors.dob && errors.dob}
+                          value={values.dob}
+                          focused
+                        />
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={6}>
+                      <FormControl className={"w-full"}>
+                        <CustomRadio
+                          list={[
+                            { label: "Male", value: "male" },
+                            { label: "Female", value: "female" },
+                          ]}
+                          label={"Gender"}
+                          name={"gender"}
+                          value={values?.gender}
+                          errors={
+                            touched?.gender && errors?.gender && errors?.gender
+                          }
+                          className={"flex flex-row"}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                        />
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={6}>
+                      <FormControl className={"w-full"}>
+                        <CustomAutoComplete
+                          list={userRoleList}
+                          label={"User Role"}
+                          placeholder={"Select Your User Role"}
+                          name={"role"}
+                          value={values?.role}
+                          errors={touched?.role && errors?.role && errors?.role}
+                          onChange={(e, role) => {
+                            setFieldValue("role", role);
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </FormControl>
+                    </Grid>
+                  </>
+                ) : null}
+                <Grid
+                  item
+                  xs={12}
+                  className={"flex justify-center items-center"}
+                >
+                  {loading ? (
+                    <CircularProgress color="secondary" />
+                  ) : (
+                    <button
+                      className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
+                        hasError ? "opacity-50" : "opacity-100"
+                      }`}
+                      type={"submit"}
+                      disabled={hasError}
+                    >
+                      {isAddUser ? "Add" : "Update"}
+                    </button>
+                  )}
+                </Grid>
+              </Grid>
+            </Form>
+          </FormikProvider>
+        </Paper>
+      </Modal>
       <NotificationSnackbar notification={notification} />
     </Box>
   );

@@ -32,6 +32,14 @@ const PrimaryAutocomplete = styled(Autocomplete)`
   & .Mui-disabled {
     opacity: 0.5;
   }
+  & .Mui-error {
+    &.Mui-focused fieldset {
+      border-color: #ff0000 !important;
+    }
+    & .MuiOutlinedInput-notchedOutline {
+      border-color: #ff0000 !important;
+    }
+  }
 `;
 export default function CustomAutoComplete({
   label,
@@ -66,7 +74,7 @@ export default function CustomAutoComplete({
         name={name}
         className={className}
         renderInput={(params) => (
-          <TextField {...params} name={name} label={label} value={value} />
+          <TextField {...params} name={name} label={label} value={value} error={errors} onBlur={onBlur} />
         )}
         onSelect={onSelect}
         onChange={onChange}

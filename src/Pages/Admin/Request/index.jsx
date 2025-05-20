@@ -218,6 +218,7 @@ export default function Index() {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      renderCell: (record) => <>{record?.row?.gender || "-"}</>,
     },
     {
       field: "region",
@@ -601,17 +602,32 @@ export default function Index() {
                 name={"firstName"}
                 xs={3}
                 value={selectedSearchByText}
-                onChange={(e) => setSelectedSearchByText(e.target.value)}
-                disabled={!selectedSearchBy.name}
+                onChange={(e) => {
+                  setSelectedSearchByText(e.target.value)
+                  if (e.target.value === "") {
+                    handleRequestList(true);
+                  }
+                }}
+                disabled={!selectedSearchBy.id}
               />
-              {(selectedSearchByText ||
-                selectedSearchBy.name ||
-                selectedState?.length > 0 ||
-                selectedRegion?.length > 0 ||
-                selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0 ||
-                selectedRole?.length > 0) && (
-                <Grid item xs={3} className={"flex items-center"}>
+              <Grid
+                item
+                xs={12}
+                className={"flex justify-center items-center gap-4"}
+              >
+                <button
+                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                  onClick={() => handleRequestList()}
+                >
+                  Submit
+                </button>
+                {(selectedSearchByText ||
+                  selectedSearchBy.name ||
+                  selectedState?.length > 0 ||
+                  selectedRegion?.length > 0 ||
+                  selectedSurname?.length > 0 ||
+                  selectedSamaj?.length > 0 ||
+                  selectedRole?.length > 0) && (
                   <button
                     className={
                       "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
@@ -620,15 +636,7 @@ export default function Index() {
                   >
                     Reset
                   </button>
-                </Grid>
-              )}
-              <Grid item xs={12} className={"flex justify-center"}>
-                <button
-                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={() => handleRequestList()}
-                >
-                  Submit
-                </button>
+                )}
               </Grid>
             </Grid>
           </AccordionDetails>

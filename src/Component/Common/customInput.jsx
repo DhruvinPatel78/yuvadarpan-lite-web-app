@@ -22,6 +22,15 @@ const PrimaryTextField = styled(TextField)`
   & .MuiOutlinedInput-notchedOutline {
     border-color: #572a2a !important;
   }
+  & .Mui-error {
+    &.Mui-focused fieldset {
+      //border-color: #572a2a;
+      border-color: #ff0000 !important;
+    }
+    & .MuiOutlinedInput-notchedOutline {
+      border-color: #ff0000 !important;
+    }
+  }
   //& .Mui-focused {
   //  border-color: #572a2a !important;
   //}
@@ -59,6 +68,7 @@ const CustomInput = ({
         focused={focused}
         onBlur={onBlur}
         disabled={disabled}
+        error={errors}
       />
       {errors && (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
