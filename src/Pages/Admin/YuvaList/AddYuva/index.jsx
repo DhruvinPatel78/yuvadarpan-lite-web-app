@@ -332,60 +332,60 @@ const AddYuva = () => {
       resetForm();
     },
     validationSchema: Yup.object({
-      firstName: Yup.string().required("Required"),
-      motherName: Yup.string().required("Required"),
-      fatherName: Yup.string().required("Required"),
-      grandFatherName: Yup.string().required("Required"),
-      gender: Yup.string().required("Required"),
-      pob: Yup.string().required("Required"),
-      profileName: Yup.string().required("Required"),
-      dob: Yup.date().required("Required"),
-      height: Yup.string().required("Required"),
-      weight: Yup.string().required("Required"),
-      firm: Yup.string().required("Required"),
-      firmAddress: Yup.string().required("Required"),
-      address: Yup.string().required("Required"),
-      state: Yup.string().required("Required"),
-      region: Yup.string().required("Required"),
-      district: Yup.string().required("Required"),
-      city: Yup.string().required("Required"),
-      native: Yup.string().required("Required"),
-      education: Yup.string().required("Required"),
+      firstName: Yup.string().required("First Name Is Required"),
+      motherName: Yup.string().required("Mother Name Is Required"),
+      fatherName: Yup.string().required("Father Name Is Required"),
+      grandFatherName: Yup.string().required("Grand Father Name Is Required"),
+      gender: Yup.string().required("Gender Is Required"),
+      pob: Yup.string().required("Birth Place Is Required"),
+      profileName: Yup.string().required("Profile Photo Is Required"),
+      dob: Yup.date().required("Date Of Birth Is Required"),
+      height: Yup.string().required("Height Is Required"),
+      weight: Yup.string().required("Weight Is Required"),
+      firm: Yup.string().required("Firm Is Required"),
+      firmAddress: Yup.string().required("Firm Address Is Required"),
+      address: Yup.string().required("Address Is Required"),
+      state: Yup.string().required("State Is Required"),
+      region: Yup.string().required("Region Is Required"),
+      district: Yup.string().required("District Is Required"),
+      city: Yup.string().required("City Is Required"),
+      native: Yup.string().required("Native Is Required"),
+      education: Yup.string().required("Education Is Required"),
       contactInfo: Yup.object({
-        name: Yup.string().required("Required"),
-        relation: Yup.string().required("Required"),
+        name: Yup.string().required("Contact Name Is Required"),
+        relation: Yup.string().required("Contact Relation Is Required"),
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
             "Phone Number must be correct"
           )
-          .required("Required"),
+          .required("Contact Phone Number Is Required"),
       }),
       mamaInfo: Yup.object({
-        name: Yup.string().required("Required"),
-        native: Yup.string().required("Required"),
-        city: Yup.string().required("Required"),
+        name: Yup.string().required("Mama Name Is Required"),
+        native: Yup.string().required("Mama Native Is Required"),
+        city: Yup.string().required("Mama City Is Required"),
       }),
-      lastName: Yup.string().required("Required"),
-      bloodGroup: Yup.string().required("Required"),
-      country: Yup.string().required("Required"),
+      lastName: Yup.string().required("Last Name Is Required"),
+      bloodGroup: Yup.string().required("Blood Group Is Required"),
+      country: Yup.string().required("Country Is Required"),
       familyId: Yup.number()
         .typeError("Must be a Number")
         .positive()
-        .required("Required"),
-      activity: Yup.string().required("Required"),
-      abroadStudy: Yup.string().required("Required"),
+        .required("Family ID IsRequired"),
+      activity: Yup.string().required("Activity Is Required"),
+      abroadStudy: Yup.string().required("AbroadStudy Required"),
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
           "Invalid email address format"
         )
-        .required("Required"),
-      martialStatus: Yup.string().required("Required"),
+        .required("Email Is Required"),
+      martialStatus: Yup.string().required("Martial Status Is Required"),
       // handicap: Yup.string().required("Required"),
       // handicapDetails: Yup.string().required("Required"),
-      YSKno: Yup.string().required("Required"),
-      localSamaj: Yup.string().required("Required"),
+      YSKno: Yup.string().required("YSKno Is Required"),
+      localSamaj: Yup.string().required("Local Samaj Required"),
     }),
   });
   const {
@@ -397,6 +397,7 @@ const AddYuva = () => {
     touched,
     handleChange,
     handleBlur,
+    setFieldTouched
   } = formik;
 
   const imageUploadHandler = (file) => {
@@ -491,7 +492,7 @@ const AddYuva = () => {
                             : `profile`
                         }
                         className={
-                          "w-[150px] h-[150px] rounded-full border border-primary cursor-pointer"
+                          `w-[150px] h-[150px] rounded-full border ${touched?.profileName  && errors?.profileName ?"border-red-600" :"border-primary"} cursor-pointer`
                         }
                       />
                     </label>
@@ -500,14 +501,21 @@ const AddYuva = () => {
                     type="file"
                     id="upload-button"
                     style={{ display: "none" }}
+                    name="profileName"
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
                         imageUploadHandler(file);
                       }
+                      setFieldTouched("profileName",true)
                     }}
+                    onClick={()=>setFieldTouched("profileName",true)}
                   />
+
                 </Grid>
+                {touched?.profileName  && errors?.profileName&& (
+                    <p className={"text-error text-sm transition-all"}>{errors?.profileName}</p>
+                )}
               </Grid>
               <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>
@@ -1075,7 +1083,7 @@ const AddYuva = () => {
                     }
                     onBlur={handleBlur}
                     errors={
-                      errors?.mamaInfo?.city &&
+                      touched?.mamaInfo?.city &&
                       errors?.mamaInfo?.city &&
                       errors?.mamaInfo?.city
                     }

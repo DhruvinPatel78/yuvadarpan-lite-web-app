@@ -643,7 +643,7 @@ function Index() {
       </ContainerPage>
       <Modal
         open={userInfoModel}
-        // onClose={userInfoModalClose}
+        onClose={userInfoModalClose}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
         sx={{

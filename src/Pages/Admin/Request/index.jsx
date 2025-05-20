@@ -602,8 +602,13 @@ export default function Index() {
                 name={"firstName"}
                 xs={3}
                 value={selectedSearchByText}
-                onChange={(e) => setSelectedSearchByText(e.target.value)}
-                disabled={!selectedSearchBy.name}
+                onChange={(e) => {
+                  setSelectedSearchByText(e.target.value)
+                  if (e.target.value === "") {
+                    handleRequestList(true);
+                  }
+                }}
+                disabled={!selectedSearchBy.id}
               />
               <Grid
                 item

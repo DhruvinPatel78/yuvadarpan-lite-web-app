@@ -58,6 +58,11 @@ export default function CustomSelect({
           fullWidth
           required={required}
           onBlur={onBlur}
+          sx={{
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: errors?"red !important":"#572a2a !important",
+            }
+          }}
         >
           <MenuItem>SELECT</MenuItem>
           {list.map((data) => (

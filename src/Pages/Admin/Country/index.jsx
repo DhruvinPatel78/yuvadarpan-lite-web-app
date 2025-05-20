@@ -257,7 +257,7 @@ export default function Index() {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage className={"flex-col justify-center flex items-start"}>
+      <ContainerPage className={"flex-col justify-center flex items-start gap-3"}>
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Country</p>
           <Button
