@@ -37,28 +37,20 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 const userRoleList = [
   {
-    label: "ADMIN",
-    value: "admin",
-    name: "ADMIN",
-    id: "",
+    label: "Admin",
+    value: "ADMIN",
   },
   {
-    label: "USER",
-    value: "user",
-    name: "USER",
-    id: "",
+    label: "Samaj Manager",
+    value: "SAMAJ_MANAGER",
   },
   {
-    label: "SAMAJ MANAGER",
-    value: "samaj_manage",
-    name: "SAMAJ MANAGER",
-    id: "",
+    label: "Region Manager",
+    value: "REGION_MANAGER",
   },
   {
-    label: "REGION MANAGER",
-    value: "region_manager",
-    name: "REGION MANAGER",
-    id: "",
+    label: "User",
+    value: "USER",
   },
 ];
 
@@ -124,7 +116,7 @@ function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         isAddUser
-          ? axios.post(`/user/add/`, values).then((res) => {
+          ? axios.post(`/user/add/`, { ...values,role:values.role.value }).then((res) => {
               userInfoModalClose();
               handleUserList();
             })
@@ -176,7 +168,7 @@ function Index() {
   } = formik;
 
   useEffect(() => {
-    handleUserList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleUserList();
   }, [page, rowsPerPage]);
 
   const handleExpansion = () => {
@@ -191,37 +183,7 @@ function Index() {
     }));
   };
 
-  const handleRequestList = () => {
-    const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: selectedSearchByText,
-        }
-      : {};
-    axios
-      .get(`/user/requests?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          lastName: selectedSurname
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          role: selectedRole
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          region: selectedRegion
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          samaj: selectedSamaj
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setUserList(res?.data);
-      });
-  };
-
   const userInfoModalOpen = (userInfo) => {
-    console.log("userInfoModalOpen");
     setUserInfoModel(true);
     setList((pre) => ({
       ...pre,
@@ -237,17 +199,18 @@ function Index() {
       })),
     }));
     if (isAddUser === false) {
-      setValues({
+      setValues((pre) => ({
+        ...pre,
         ...userInfo,
         password: "",
-        region: userInfo?.region,
-        localSamaj: userInfo?.localSamaj,
-        dob: userInfo?.dob,
-        gender: userInfo?.gender,
-        role: userInfo?.role,
-      });
+        region: userInfo?.region || "",
+        localSamaj: userInfo?.localSamaj || "",
+        dob: userInfo?.dob || "",
+        gender: userInfo?.gender || "",
+        role: userInfo?.role || "",
+      }));
       setSelectedLastName(
-        surname.find((item) => item?.id === userInfo?.lastName)?.name
+        surname.find((item) => item?.id === userInfo?.lastName)?.name,
       );
     }
   };
@@ -272,9 +235,38 @@ function Index() {
     resetForm();
   };
 
-  const handleUserList = () => {
+  const handleUserList = (isRest = false) => {
+    const text = selectedSearchByText
+      ? {
+          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
+        }
+      : {};
     axios
-      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`)
+      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`, {
+        params: {
+          lastName: isRest
+            ? []
+            : selectedSurname
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          roles: isRest
+            ? []
+            : selectedRole
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          region: isRest
+            ? []
+            : selectedRegion
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          samaj: isRest
+            ? []
+            : selectedSamaj
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          ...text,
+        },
+      })
       .then((res) => {
         setUserList(res.data);
       });
@@ -297,7 +289,7 @@ function Index() {
     setSelectedRegion([]);
     setSelectedSamaj([]);
     setSelectedRole([]);
-    handleRequestList(true);
+    handleUserList(true);
   };
 
   const usersTableHeader = [
@@ -476,7 +468,7 @@ function Index() {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...lastName].filter((item) => item.name !== "All")
+                        : [...lastName].filter((item) => item.name !== "All"),
                     );
                   }
                 }}
@@ -499,7 +491,7 @@ function Index() {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...region].filter((item) => item.name !== "All")
+                        : [...region].filter((item) => item.name !== "All"),
                     );
                   }
                 }}
@@ -522,7 +514,7 @@ function Index() {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...samaj].filter((item) => item.name !== "All")
+                        : [...samaj].filter((item) => item.name !== "All"),
                     );
                   }
                 }}
@@ -539,7 +531,7 @@ function Index() {
                   if (
                     role &&
                     !selectedRole.some(
-                      (item) => item.name === e.target.innerText
+                      (item) => item.name === e.target.innerText,
                     )
                   ) {
                     setSelectedRole((pre) =>
@@ -550,7 +542,7 @@ function Index() {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...role].filter((item) => item.name !== "All")
+                        : [...role].filter((item) => item.name !== "All"),
                     );
                   }
                 }}
@@ -596,7 +588,12 @@ function Index() {
                 name={"firstName"}
                 xs={3}
                 value={selectedSearchByText}
-                onChange={(e) => setSelectedSearchByText(e.target.value)}
+                onChange={(e) => {
+                  setSelectedSearchByText(e.target.value);
+                  if (e.target.value === "") {
+                    handleUserList(true);
+                  }
+                }}
               />
               <Grid
                 item
@@ -605,7 +602,7 @@ function Index() {
               >
                 <button
                   className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={() => handleRequestList()}
+                  onClick={() => handleUserList()}
                 >
                   Submit
                 </button>
