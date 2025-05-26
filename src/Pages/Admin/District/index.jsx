@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   CircularProgress,
@@ -24,6 +27,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -40,6 +44,11 @@ export default function Index() {
   const [districtData, setDistrictData] = useState(null);
   const [districtModalData, setDistrictModalData] = useState(null);
   const [districtAddEditModel, setDistrictAddEditModel] = useState(false);
+  const [expanded, setExpanded] = React.useState(false);
+  const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState([]);
+  const [selectedState, setSelectedState] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState([]);
 
   const getDistrictList = async () => {
     axios
@@ -244,10 +253,59 @@ export default function Index() {
 
   const hasError = Object.keys(errors)?.length || 0;
 
+  const handleExpansion = () => {
+    setExpanded((prevExpanded) => !prevExpanded);
+  };
+
+  const setLabelValueInList = (data) => {
+    return data.map((data) => ({
+      ...data,
+      label: data.name,
+      value: data.id,
+    }));
+  };
+
+  const handleDistrictList = (isRest = false) => {
+    axios
+      .get(`/district/list?page=${page + 1}&limit=${rowsPerPage}`, {
+        params: {
+          country: isRest
+            ? []
+            : selectedCountry
+                ?.filter((data) => data.label !== "All")
+                ?.map((item) => item?.value),
+          state: isRest
+            ? []
+            : selectedState
+                ?.filter((data) => data.label !== "All")
+                ?.map((item) => item?.value),
+          region: isRest
+            ? []
+            : selectedRegion
+                ?.filter((data) => data.label !== "All")
+                ?.map((item) => item?.value),
+          name: isRest ? "" : selectedSearchByText,
+        },
+      })
+      .then((res) => {
+        setDistrictData(res?.data);
+      });
+  };
+
+  const handleReset = () => {
+    setSelectedSearchByText("");
+    setSelectedCountry([]);
+    setSelectedState([]);
+    setSelectedRegion([]);
+    handleDistrictList(true);
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage className={"flex-col justify-center flex items-start"}>
+      <ContainerPage
+        className={"flex-col justify-center flex items-start gap-3"}
+      >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>District</p>
           <Button
@@ -269,6 +327,185 @@ export default function Index() {
             Add District
           </Button>
         </div>
+        <Accordion
+          className={"w-full rounded"}
+          expanded={expanded}
+          onChange={handleExpansion}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon className={"text-primary"} />}
+            aria-controls="panel1-content"
+            id="panel1-header"
+            className={"text-primary font-extrabold text-[18px]"}
+          >
+            Filter & Search
+          </AccordionSummary>
+          <AccordionDetails className={"p-4"}>
+            <Grid spacing={2} container>
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(country),
+                ]}
+                multiple={true}
+                label={"Country"}
+                placeholder={"Select Your Country"}
+                xs={3}
+                value={selectedCountry}
+                name="country"
+                onChange={(e, country) => {
+                  if (country) {
+                    setSelectedCountry((pre) =>
+                      (country.map((item) => item.name).includes("All") &&
+                        country?.length === 1) ||
+                      (country.map((item) => item.name).includes("All") &&
+                        country
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...country].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(state),
+                ]}
+                multiple={true}
+                label={"State"}
+                placeholder={"Select Your State"}
+                xs={3}
+                value={selectedState}
+                name="state"
+                onChange={(e, state) => {
+                  if (state) {
+                    setSelectedState((pre) =>
+                      (state.map((item) => item.name).includes("All") &&
+                        state?.length === 1) ||
+                      (state.map((item) => item.name).includes("All") &&
+                        state
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...state].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(region),
+                ]}
+                multiple={true}
+                label={"Region"}
+                placeholder={"Select Your Region"}
+                xs={3}
+                value={selectedRegion}
+                name="state"
+                onChange={(e, region) => {
+                  if (region) {
+                    setSelectedRegion((pre) =>
+                      (region.map((item) => item.name).includes("All") &&
+                        region?.length === 1) ||
+                      (region.map((item) => item.name).includes("All") &&
+                        region
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...region].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
+              <CustomInput
+                type={"text"}
+                placeholder={"Enter Search District"}
+                name={"district"}
+                xs={3}
+                value={selectedSearchByText}
+                onChange={(e) => {
+                  setSelectedSearchByText(e.target.value);
+                  if (e.target.value === "") {
+                    handleDistrictList(true);
+                  }
+                }}
+              />
+              <Grid
+                item
+                xs={12}
+                className={"flex justify-center items-center gap-4"}
+              >
+                <button
+                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                  onClick={() => handleDistrictList()}
+                >
+                  Submit
+                </button>
+                {(selectedSearchByText || selectedCountry?.length > 0) && (
+                  <button
+                    className={
+                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+                    }
+                    onClick={handleReset}
+                  >
+                    Reset
+                  </button>
+                )}
+              </Grid>
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
         <CustomTable
           columns={districtListColumn}
           data={districtData}

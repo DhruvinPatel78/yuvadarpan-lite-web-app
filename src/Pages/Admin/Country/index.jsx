@@ -27,27 +27,16 @@ import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-
-const all = {
-  label: "All",
-  value: "all",
-  name: "All",
-  id: "",
-};
 
 export default function Index() {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
-  const { surname, region } = useSelector((state) => state.location);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryData, setCountryData] = useState(null);
   const [countryModalData, setCountryModalData] = useState(null);
   const [countryAddEditModel, setCountryAddEditModel] = useState(false);
   const [expanded, setExpanded] = React.useState(false);
-  const [selectedSurname, setSelectedSurname] = useState([]);
-  const [selectedNative, setSelectedNative] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
     name: "",
     id: "",
@@ -57,14 +46,14 @@ export default function Index() {
   const getCountryList = async (isRest = false) => {
     const text = selectedSearchByText
       ? {
-        [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-      }
+          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
+        }
       : {};
     axios
-      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`,{
+      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
           ...text,
-        }
+        },
       })
       .then((res) => {
         setCountryData(res.data);
@@ -221,30 +210,11 @@ export default function Index() {
     setExpanded((prevExpanded) => !prevExpanded);
   };
 
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
-
-  const handleRequestList = () => {
-    const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: selectedSearchByText,
-        }
-      : {};
+  const handleCountryList = (isRest = false) => {
     axios
-      .get(`/yuvaList/requests?page=${page + 1}&limit=${rowsPerPage}`, {
+      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
-          fullName: selectedSurname
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          native: selectedNative
-            ?.filter((data) => data.name !== "All")
-            ?.map((item) => item?.id),
-          ...text,
+          name: isRest ? "" : selectedSearchByText,
         },
       })
       .then((res) => {
@@ -258,15 +228,15 @@ export default function Index() {
       label: "",
       id: "",
     });
-    setSelectedSurname([]);
-    setSelectedNative([]);
-    handleRequestList(true);
+    handleCountryList(true);
   };
 
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage className={"flex-col justify-center flex items-start gap-3"}>
+      <ContainerPage
+        className={"flex-col justify-center flex items-start gap-3"}
+      >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Country</p>
           <Button
@@ -295,83 +265,10 @@ export default function Index() {
           </AccordionSummary>
           <AccordionDetails className={"p-4"}>
             <Grid spacing={2} container>
-              <CustomAutoComplete
-                list={[all, ...setLabelValueInList(surname)]}
-                multiple={true}
-                label={"Full Name"}
-                placeholder={"Select Your Full Name"}
-                xs={3}
-                value={selectedSurname}
-                name="fullname"
-                onChange={(e, lastName) => {
-                  if (lastName) {
-                    setSelectedSurname((pre) =>
-                      (lastName.map((item) => item.name).includes("All") &&
-                        lastName?.length === 1) ||
-                      (lastName.map((item) => item.name).includes("All") &&
-                        lastName
-                          .map((item) => item.name)
-                          ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...lastName].filter((item) => item.name !== "All")
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={[all, ...setLabelValueInList(region)]}
-                multiple={true}
-                label={"Native"}
-                placeholder={"Select Your Native"}
-                xs={3}
-                name="native"
-                value={selectedNative}
-                onChange={(e, native) => {
-                  if (native) {
-                    setSelectedNative((pre) =>
-                      (native.map((item) => item.name).includes("All") &&
-                        native?.length === 1) ||
-                      (native.map((item) => item.name).includes("All") &&
-                        native
-                          .map((item) => item.name)
-                          ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...native].filter((item) => item.name !== "All")
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={[
-                  {
-                    value: "familyId",
-                    label: "Family Id",
-                  },
-                  {
-                    value: "firmName",
-                    label: "Firm Name",
-                  },
-                  {
-                    value: "gender",
-                    label: "Gender",
-                  },
-                ]}
-                label={"Search By"}
-                placeholder={"Select Your Search By"}
-                xs={3}
-                name="search"
-                value={selectedSearchBy.name}
-                onChange={(e, search) => {
-                  setSelectedSearchBy({
-                    name: search.label,
-                    id: search.value,
-                  });
-                }}
-              />
               <CustomInput
                 type={"text"}
-                placeholder={"Enter Search Text"}
-                name={"firstName"}
+                placeholder={"Enter Search Country Name"}
+                name={"name"}
                 xs={3}
                 value={selectedSearchByText}
                 onChange={(e) => setSelectedSearchByText(e.target.value)}
@@ -379,19 +276,16 @@ export default function Index() {
 
               <Grid
                 item
-                xs={12}
+                xs={4}
                 className={"flex justify-center items-center gap-4"}
               >
                 <button
                   className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={() => handleRequestList()}
+                  onClick={() => handleCountryList()}
                 >
                   Submit
                 </button>
-                {(selectedSearchByText ||
-                  selectedSearchBy.name ||
-                  selectedNative?.length > 0 ||
-                  selectedSurname?.length > 0) && (
+                {selectedSearchByText && (
                   <button
                     className={
                       "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"

@@ -49,7 +49,7 @@ const YuvaList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { surname, city, state, region } = useSelector(
-    (state) => state.location,
+    (state) => state.location
   );
   const [nativeList, setNativeList] = useState([]);
   const [expanded, setExpanded] = React.useState(false);
@@ -91,7 +91,7 @@ const YuvaList = () => {
             ...data,
             label: data.name,
             value: data.id,
-          })),
+          }))
         );
       })
       .catch(function (error) {
@@ -121,9 +121,7 @@ const YuvaList = () => {
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
             {record.row.firstName} {record.row.middleName}{" "}
-            {
-              surname.find((item) => item?.id === record?.row?.lastName)?.name
-            }{" "}
+            {surname.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
           </p>
         </div>
       ),
@@ -313,11 +311,11 @@ const YuvaList = () => {
               <CustomAutoComplete
                 list={[all, ...setLabelValueInList(surname)]}
                 multiple={true}
-                label={"Full Name"}
-                placeholder={"Select Your Full Name"}
+                label={"Surname"}
+                placeholder={"Select Your Surname"}
                 xs={3}
                 value={selectedSurname}
-                name="fullname"
+                name="surname"
                 onChange={(e, lastName) => {
                   if (lastName) {
                     setSelectedSurname((pre) =>
@@ -327,8 +325,19 @@ const YuvaList = () => {
                         lastName
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...lastName].filter((item) => item.name !== "All"),
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...lastName].filter((item) => item.name !== "All")
                     );
                   }
                 }}
@@ -350,8 +359,19 @@ const YuvaList = () => {
                         native
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...native].filter((item) => item.name !== "All"),
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...native].filter((item) => item.name !== "All")
                     );
                   }
                 }}
@@ -395,6 +415,7 @@ const YuvaList = () => {
                     handleRequestList(true);
                   }
                 }}
+                disabled={!selectedSearchBy.id}
               />
 
               <Grid
@@ -467,7 +488,7 @@ const YuvaList = () => {
                   window.open(
                     userData?.profile?.url ||
                       "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank",
+                    "_blank"
                   )
                 }
               >
