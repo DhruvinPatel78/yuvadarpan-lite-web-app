@@ -216,7 +216,6 @@ export default function Index() {
   const {
     errors,
     values,
-    setValues,
     resetForm,
     handleChange,
     handleBlur,
@@ -266,6 +265,12 @@ export default function Index() {
   };
 
   const handleDistrictList = (isRest = false) => {
+    const text =
+      selectedSearchByText && !isRest
+        ? {
+            name: selectedSearchByText,
+          }
+        : {};
     axios
       .get(`/district/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
@@ -284,7 +289,7 @@ export default function Index() {
             : selectedRegion
                 ?.filter((data) => data.label !== "All")
                 ?.map((item) => item?.value),
-          name: isRest ? "" : selectedSearchByText,
+          ...text,
         },
       })
       .then((res) => {
