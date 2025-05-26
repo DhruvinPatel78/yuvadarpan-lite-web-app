@@ -116,10 +116,12 @@ function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         isAddUser
-          ? axios.post(`/user/add/`, { ...values,role:values.role.value }).then((res) => {
-              userInfoModalClose();
-              handleUserList();
-            })
+          ? axios
+              .post(`/user/add/`, { ...values, role: values.role.value })
+              .then((res) => {
+                userInfoModalClose();
+                handleUserList();
+              })
           : axios
               .patch(`/user/update/${rest._id}`, {
                 ...rest,
@@ -210,7 +212,7 @@ function Index() {
         role: userInfo?.role || "",
       }));
       setSelectedLastName(
-        surname.find((item) => item?.id === userInfo?.lastName)?.name,
+        surname.find((item) => item?.id === userInfo?.lastName)?.name
       );
     }
   };
@@ -467,8 +469,19 @@ function Index() {
                         lastName
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...lastName].filter((item) => item.name !== "All"),
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...lastName].filter((item) => item.name !== "All")
                     );
                   }
                 }}
@@ -490,8 +503,19 @@ function Index() {
                         region
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...region].filter((item) => item.name !== "All"),
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...region].filter((item) => item.name !== "All")
                     );
                   }
                 }}
@@ -513,8 +537,19 @@ function Index() {
                         samaj
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
-                        ? [all]
-                        : [...samaj].filter((item) => item.name !== "All"),
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...samaj].filter((item) => item.name !== "All")
                     );
                   }
                 }}
@@ -531,7 +566,7 @@ function Index() {
                   if (
                     role &&
                     !selectedRole.some(
-                      (item) => item.name === e.target.innerText,
+                      (item) => item.name === e.target.innerText
                     )
                   ) {
                     setSelectedRole((pre) =>
@@ -542,7 +577,7 @@ function Index() {
                           .map((item) => item.name)
                           ?.findIndex((data) => data === "All") !== 0)
                         ? [all]
-                        : [...role].filter((item) => item.name !== "All"),
+                        : [...role].filter((item) => item.name !== "All")
                     );
                   }
                 }}
@@ -594,6 +629,7 @@ function Index() {
                     handleUserList(true);
                   }
                 }}
+                disabled={!selectedSearchBy.id}
               />
               <Grid
                 item
