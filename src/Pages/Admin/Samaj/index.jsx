@@ -306,8 +306,14 @@ export default function Index() {
   };
 
   const handleSamajList = (isRest = false) => {
+    const text =
+      selectedSearchByText && !isRest
+        ? {
+            name: selectedSearchByText,
+          }
+        : {};
     axios
-      .get(`/district/list?page=${page + 1}&limit=${rowsPerPage}`, {
+      .get(`/samaj/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
           country: isRest
             ? []
@@ -334,11 +340,11 @@ export default function Index() {
             : selectedCity
                 ?.filter((data) => data.label !== "All")
                 ?.map((item) => item?.value),
-          name: isRest ? "" : selectedSearchByText,
+          ...text,
         },
       })
       .then((res) => {
-        handleSamajList(res?.data);
+        setSamajData(res?.data);
       });
   };
 
@@ -493,7 +499,7 @@ export default function Index() {
                 placeholder={"Select Your Region"}
                 xs={3}
                 value={selectedRegion}
-                name="state"
+                name="region"
                 onChange={(e, region) => {
                   if (region) {
                     setSelectedRegion((pre) =>
@@ -535,7 +541,7 @@ export default function Index() {
                 placeholder={"Select Your District"}
                 xs={3}
                 value={selectedDistrict}
-                name="state"
+                name="district"
                 onChange={(e, district) => {
                   if (district) {
                     setSelectedDistrict((pre) =>
@@ -562,10 +568,52 @@ export default function Index() {
                   }
                 }}
               />
+              <CustomAutoComplete
+                list={[
+                  {
+                    label: "All",
+                    value: "all",
+                    name: "All",
+                    id: "",
+                  },
+                  ...setLabelValueInList(city),
+                ]}
+                multiple={true}
+                label={"City"}
+                placeholder={"Select Your City"}
+                xs={3}
+                value={selectedCity}
+                name="City"
+                onChange={(e, city) => {
+                  if (city) {
+                    setSelectedCity((pre) =>
+                      (city.map((item) => item.name).includes("All") &&
+                        city?.length === 1) ||
+                      (city.map((item) => item.name).includes("All") &&
+                        city
+                          .map((item) => item.name)
+                          ?.findIndex((data) => data === "All") !== 0)
+                        ? [
+                            {
+                              label: "All",
+                              value: "all",
+                              name: "All",
+                              id: "",
+                            },
+                          ]
+                        : pre
+                            .map((item) => item.name)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...city].filter((item) => item.name !== "All")
+                    );
+                  }
+                }}
+              />
               <CustomInput
                 type={"text"}
-                placeholder={"Enter Search City"}
-                name={"city"}
+                placeholder={"Enter Search Samaj"}
+                name={"samaj"}
                 xs={3}
                 value={selectedSearchByText}
                 onChange={(e) => {

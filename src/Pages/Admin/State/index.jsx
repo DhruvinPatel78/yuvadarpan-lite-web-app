@@ -162,7 +162,6 @@ export default function Index() {
   const {
     errors,
     values,
-    setValues,
     resetForm,
     handleChange,
     handleBlur,
@@ -204,6 +203,12 @@ export default function Index() {
   };
 
   const handleStateList = (isRest = false) => {
+    const text =
+      selectedSearchByText && !isRest
+        ? {
+            name: selectedSearchByText,
+          }
+        : {};
     axios
       .get(`/state/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
@@ -212,7 +217,7 @@ export default function Index() {
             : selectedCountry
                 ?.filter((data) => data.label !== "All")
                 ?.map((item) => item?.value),
-          name: isRest ? "" : selectedSearchByText,
+          ...text,
         },
       })
       .then((res) => {
@@ -222,7 +227,7 @@ export default function Index() {
 
   const handleReset = () => {
     setSelectedSearchByText("");
-    setSelectedCountry("");
+    setSelectedCountry([]);
     handleStateList(true);
   };
 

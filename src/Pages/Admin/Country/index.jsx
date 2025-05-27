@@ -37,24 +37,11 @@ export default function Index() {
   const [countryModalData, setCountryModalData] = useState(null);
   const [countryAddEditModel, setCountryAddEditModel] = useState(false);
   const [expanded, setExpanded] = React.useState(false);
-  const [selectedSearchBy, setSelectedSearchBy] = useState({
-    name: "",
-    id: "",
-  });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
-  const getCountryList = async (isRest = false) => {
-    const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-        }
-      : {};
+  const getCountryList = async () => {
     axios
-      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          ...text,
-        },
-      })
+      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`)
       .then((res) => {
         setCountryData(res.data);
       });
@@ -177,7 +164,6 @@ export default function Index() {
   const {
     errors,
     values,
-    setValues,
     resetForm,
     handleChange,
     handleBlur,
@@ -211,10 +197,16 @@ export default function Index() {
   };
 
   const handleCountryList = (isRest = false) => {
+    const text =
+      selectedSearchByText && !isRest
+        ? {
+            name: selectedSearchByText,
+          }
+        : {};
     axios
       .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
         params: {
-          name: isRest ? "" : selectedSearchByText,
+          ...text,
         },
       })
       .then((res) => {
@@ -224,10 +216,6 @@ export default function Index() {
 
   const handleReset = () => {
     setSelectedSearchByText("");
-    setSelectedSearchBy({
-      label: "",
-      id: "",
-    });
     handleCountryList(true);
   };
 
