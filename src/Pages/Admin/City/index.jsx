@@ -58,6 +58,9 @@ export default function Index() {
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState([]);
+  const [stateListByCountry, setStateListByCountry] = useState(state);
+  const [regionListByState, setRegionListByState] = useState(region);
+  const [districtListByRegion, setDistrictListByRegion] = useState(district);
 
   const getCityList = async () => {
     axios
@@ -333,6 +336,32 @@ export default function Index() {
     handleCityList(true);
   };
 
+  const handleListById = (field, selectedData) => {
+    axios
+      .get(`/${field}/get-all-list`, {
+        params: {
+          data: selectedData
+            ?.filter((data) => data.label !== "All")
+            ?.map((item) => item?.value),
+        },
+      })
+      .then((res) => {
+        switch (field) {
+          case "state":
+            setStateListByCountry(res?.data);
+            break;
+          case "region":
+            setRegionListByState(res?.data);
+            break;
+          case "district":
+            setDistrictListByRegion(res?.data);
+            break;
+          default:
+            return null;
+        }
+      });
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -393,6 +422,19 @@ export default function Index() {
                 name="country"
                 onChange={(e, country) => {
                   if (country) {
+                    let selectedIds = [];
+                    let selectedCountryData = [];
+                    country.map((data) => {
+                      if (data.value === "all") {
+                        selectedIds = [];
+                        selectedCountryData = [];
+                      } else {
+                        !selectedIds.includes(data?.id) &&
+                          selectedIds.push(data?.id) &&
+                          selectedCountryData.push(data);
+                      }
+                    });
+                    handleListById("state", selectedCountryData);
                     setSelectedCountry((pre) =>
                       (country.map((item) => item.name).includes("All") &&
                         country?.length === 1) ||
@@ -425,7 +467,7 @@ export default function Index() {
                     name: "All",
                     id: "",
                   },
-                  ...setLabelValueInList(state),
+                  ...setLabelValueInList(stateListByCountry),
                 ]}
                 multiple={true}
                 label={"State"}
@@ -435,6 +477,19 @@ export default function Index() {
                 name="state"
                 onChange={(e, state) => {
                   if (state) {
+                    let selectedIds = [];
+                    let selectedStateData = [];
+                    state.map((data) => {
+                      if (data.value === "all") {
+                        selectedIds = [];
+                        selectedStateData = [];
+                      } else {
+                        !selectedIds.includes(data?.id) &&
+                          selectedIds.push(data?.id) &&
+                          selectedStateData.push(data);
+                      }
+                    });
+                    handleListById("region", selectedStateData);
                     setSelectedState((pre) =>
                       (state.map((item) => item.name).includes("All") &&
                         state?.length === 1) ||
@@ -467,16 +522,29 @@ export default function Index() {
                     name: "All",
                     id: "",
                   },
-                  ...setLabelValueInList(region),
+                  ...setLabelValueInList(regionListByState),
                 ]}
                 multiple={true}
                 label={"Region"}
                 placeholder={"Select Your Region"}
                 xs={3}
                 value={selectedRegion}
-                name="state"
+                name="region"
                 onChange={(e, region) => {
                   if (region) {
+                    let selectedIds = [];
+                    let selectedRegionData = [];
+                    region.map((data) => {
+                      if (data.value === "all") {
+                        selectedIds = [];
+                        selectedRegionData = [];
+                      } else {
+                        !selectedIds.includes(data?.id) &&
+                          selectedIds.push(data?.id) &&
+                          selectedRegionData.push(data);
+                      }
+                    });
+                    handleListById("district", selectedRegionData);
                     setSelectedRegion((pre) =>
                       (region.map((item) => item.name).includes("All") &&
                         region?.length === 1) ||
@@ -509,7 +577,7 @@ export default function Index() {
                     name: "All",
                     id: "",
                   },
-                  ...setLabelValueInList(district),
+                  ...setLabelValueInList(districtListByRegion),
                 ]}
                 multiple={true}
                 label={"District"}

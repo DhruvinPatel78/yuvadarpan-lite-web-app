@@ -47,6 +47,7 @@ export default function Index() {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
+  const [stateListByCountry, setStateListByCountry] = useState(state);
 
   const getRegionList = async () => {
     axios
@@ -275,6 +276,20 @@ export default function Index() {
     handleRegionList(true);
   };
 
+  const handleListById = (selectedData) => {
+    axios
+      .get(`/state/get-all-list`, {
+        params: {
+          data: selectedData
+            ?.filter((data) => data.label !== "All")
+            ?.map((item) => item?.value),
+        },
+      })
+      .then((res) => {
+        setStateListByCountry(res?.data);
+      });
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -335,6 +350,20 @@ export default function Index() {
                 name="country"
                 onChange={(e, country) => {
                   if (country) {
+                    let selectedIds = [];
+                    let selectedCountryData = [];
+                    country.map((data) => {
+                      if (data.value === "all") {
+                        selectedIds = [];
+                        selectedCountryData = [];
+                      } else {
+                        !selectedIds.includes(data?.id) &&
+                          selectedIds.push(data?.id) &&
+                          selectedCountryData.push(data);
+                      }
+                    });
+                    handleListById(selectedCountryData);
+
                     setSelectedCountry((pre) =>
                       (country.map((item) => item.name).includes("All") &&
                         country?.length === 1) ||
@@ -367,7 +396,7 @@ export default function Index() {
                     name: "All",
                     id: "",
                   },
-                  ...setLabelValueInList(state),
+                  ...setLabelValueInList(stateListByCountry),
                 ]}
                 multiple={true}
                 label={"State"}
