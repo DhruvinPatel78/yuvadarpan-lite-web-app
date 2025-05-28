@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
-import { Box, Tooltip } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Grid,
+  Tooltip,
+} from "@mui/material";
 import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
@@ -8,12 +15,16 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CustomInput from "../../../Component/Common/customInput";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [roleData, setRoleData] = useState(null);
+  const [expanded, setExpanded] = React.useState(false);
+  const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
   const getList = async () => {
     dispatch(startLoading());
@@ -106,13 +117,90 @@ export default function Index() {
       });
   };
 
+  const handleExpansion = () => {
+    setExpanded((prevExpanded) => !prevExpanded);
+  };
+
+  const handleRoleList = (isRest = false) => {
+    const text =
+      selectedSearchByText && !isRest
+        ? {
+            name: selectedSearchByText,
+          }
+        : {};
+    axios
+      .get(`/role/list?page=${page + 1}&limit=${rowsPerPage}`, {
+        params: {
+          ...text,
+        },
+      })
+      .then((res) => {
+        setRoleData(res?.data);
+      });
+  };
+
+  const handleReset = () => {
+    setSelectedSearchByText("");
+    handleRoleList(true);
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage className={"flex-col justify-center flex items-start"}>
+      <ContainerPage
+        className={"flex-col justify-center flex items-start gap-3"}
+      >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold cursor-default"}>Roles</p>
         </div>
+        <Accordion
+          className={"w-full rounded"}
+          expanded={expanded}
+          onChange={handleExpansion}
+        >
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon className={"text-primary"} />}
+            aria-controls="panel1-content"
+            id="panel1-header"
+            className={"text-primary font-extrabold text-[18px]"}
+          >
+            Filter & Search
+          </AccordionSummary>
+          <AccordionDetails className={"p-4"}>
+            <Grid spacing={2} container>
+              <CustomInput
+                type={"text"}
+                placeholder={"Enter Search Role"}
+                name={"name"}
+                xs={3}
+                value={selectedSearchByText}
+                onChange={(e) => setSelectedSearchByText(e.target.value)}
+              />
+              <Grid
+                item
+                xs={4}
+                className={"flex justify-center items-center gap-4"}
+              >
+                <button
+                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                  onClick={() => handleRoleList()}
+                >
+                  Submit
+                </button>
+                {selectedSearchByText && (
+                  <button
+                    className={
+                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+                    }
+                    onClick={handleReset}
+                  >
+                    Reset
+                  </button>
+                )}
+              </Grid>
+            </Grid>
+          </AccordionDetails>
+        </Accordion>
         <CustomTable
           columns={roleListColumn}
           data={roleData}
