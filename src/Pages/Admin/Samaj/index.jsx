@@ -568,48 +568,6 @@ export default function Index() {
                   }
                 }}
               />
-              <CustomAutoComplete
-                list={[
-                  {
-                    label: "All",
-                    value: "all",
-                    name: "All",
-                    id: "",
-                  },
-                  ...setLabelValueInList(city),
-                ]}
-                multiple={true}
-                label={"City"}
-                placeholder={"Select Your City"}
-                xs={3}
-                value={selectedCity}
-                name="City"
-                onChange={(e, city) => {
-                  if (city) {
-                    setSelectedCity((pre) =>
-                      (city.map((item) => item.name).includes("All") &&
-                        city?.length === 1) ||
-                      (city.map((item) => item.name).includes("All") &&
-                        city
-                          .map((item) => item.name)
-                          ?.findIndex((data) => data === "All") !== 0)
-                        ? [
-                            {
-                              label: "All",
-                              value: "all",
-                              name: "All",
-                              id: "",
-                            },
-                          ]
-                        : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...city].filter((item) => item.name !== "All")
-                    );
-                  }
-                }}
-              />
               <CustomInput
                 type={"text"}
                 placeholder={"Enter Search Samaj"}
