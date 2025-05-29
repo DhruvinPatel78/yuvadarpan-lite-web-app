@@ -446,7 +446,7 @@ export default function Index() {
               <Grid
                 item
                 xs={2}
-                className={"flex justify-center items-center gap-4"}
+                className={"flex justify-start items-center gap-4"}
               >
                 <button
                   className={"bg-primary text-white p-2 px-4 rounded font-bold"}
