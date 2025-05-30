@@ -273,6 +273,7 @@ export default function Index() {
     setSelectedSearchByText("");
     setSelectedCountry([]);
     setSelectedState([]);
+    setStateListByCountry(state);
     handleRegionList(true);
   };
 
