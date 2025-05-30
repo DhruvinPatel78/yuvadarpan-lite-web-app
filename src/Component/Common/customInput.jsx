@@ -1,5 +1,6 @@
 import React from "react";
-import { Grid, styled, TextField } from "@mui/material";
+import { Grid, IconButton, styled, TextField } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 const PrimaryTextField = styled(TextField)`
   & label.Mui-focused {
     color: #572a2a;
@@ -31,9 +32,6 @@ const PrimaryTextField = styled(TextField)`
       border-color: #ff0000 !important;
     }
   }
-  //& .Mui-focused {
-  //  border-color: #572a2a !important;
-  //}
 `;
 const CustomInput = ({
   label,
@@ -50,10 +48,19 @@ const CustomInput = ({
   onBlur,
   ...rest
 }) => {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
+  const handleMouseUpPassword = (event) => {
+    event.preventDefault();
+  };
+
   return (
     <Grid item {...rest}>
       <PrimaryTextField
-        type={type}
+        type={showPassword ? "text" : type}
         label={label}
         placeholder={placeholder}
         name={name}
@@ -63,6 +70,23 @@ const CustomInput = ({
         multiline={multiline}
         InputProps={{
           rows: 5,
+          endAdornment: type === "password" && (
+            <IconButton
+              aria-label={
+                showPassword ? "hide the password" : "display the password"
+              }
+              onClick={handleClickShowPassword}
+              onMouseDown={handleMouseDownPassword}
+              onMouseUp={handleMouseUpPassword}
+              edge="end"
+            >
+              {showPassword ? (
+                <VisibilityOff sx={{ color: "#572a2a" }} />
+              ) : (
+                <Visibility sx={{ color: "#572a2a" }} />
+              )}
+            </IconButton>
+          ),
         }}
         required={required}
         focused={focused}
