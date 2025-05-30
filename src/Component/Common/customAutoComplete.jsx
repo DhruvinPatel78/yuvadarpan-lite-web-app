@@ -40,6 +40,9 @@ const PrimaryAutocomplete = styled(Autocomplete)`
       border-color: #ff0000 !important;
     }
   }
+  & .MuiChip-label {
+    max-width: 100px;
+  }
 `;
 export default function CustomAutoComplete({
   label,
@@ -54,6 +57,7 @@ export default function CustomAutoComplete({
   onChange,
   onSelect,
   onBlur,
+  limitTags = 2,
   required = true,
   multiple = false,
   ...rest
@@ -74,13 +78,21 @@ export default function CustomAutoComplete({
         name={name}
         className={className}
         renderInput={(params) => (
-          <TextField {...params} name={name} label={label} value={value} error={errors} onBlur={onBlur} />
+          <TextField
+            {...params}
+            name={name}
+            label={label}
+            value={value}
+            error={errors}
+            onBlur={onBlur}
+          />
         )}
         onSelect={onSelect}
         onChange={onChange}
         onBlur={onBlur}
         required
         disableClearable={true}
+        limitTags={limitTags}
       />
       {errors && (
         <p className={"text-error text-sm transition-all"}>{errors}</p>

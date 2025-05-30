@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   CircularProgress,
@@ -26,7 +23,7 @@ import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CustomAccordion from "../../../Component/Common/CustomAccordion";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -36,7 +33,6 @@ export default function Index() {
   const [nativeData, setNativeData] = useState(null);
   const [nativeModalData, setNativeModalData] = useState(null);
   const [nativeAddEditModel, setNativeAddEditModel] = useState(false);
-  const [expanded, setExpanded] = React.useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
   const getNativeList = async () => {
@@ -189,10 +185,6 @@ export default function Index() {
 
   const hasError = Object.keys(errors)?.length || 0;
 
-  const handleExpansion = () => {
-    setExpanded((prevExpanded) => !prevExpanded);
-  };
-
   const handleNativeList = (isRest = false) => {
     const text =
       selectedSearchByText && !isRest
@@ -235,55 +227,41 @@ export default function Index() {
             Add Native
           </Button>
         </div>
-        <Accordion
-          className={"w-full rounded"}
-          expanded={expanded}
-          onChange={handleExpansion}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon className={"text-primary"} />}
-            aria-controls="panel1-content"
-            id="panel1-header"
-            className={"text-primary font-extrabold text-[18px]"}
-          >
-            Filter & Search
-          </AccordionSummary>
-          <AccordionDetails className={"p-4"}>
-            <Grid spacing={2} container>
-              <CustomInput
-                type={"text"}
-                placeholder={"Enter Search Native"}
-                name={"name"}
-                xs={3}
-                value={selectedSearchByText}
-                onChange={(e) => setSelectedSearchByText(e.target.value)}
-              />
+        <CustomAccordion>
+          <Grid spacing={2} container>
+            <CustomInput
+              type={"text"}
+              placeholder={"Enter Search Native"}
+              name={"name"}
+              xs={3}
+              value={selectedSearchByText}
+              onChange={(e) => setSelectedSearchByText(e.target.value)}
+            />
 
-              <Grid
-                item
-                xs={4}
-                className={"flex justify-start items-center gap-4"}
+            <Grid
+              item
+              xs={4}
+              className={"flex justify-start items-center gap-4"}
+            >
+              <button
+                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                onClick={() => handleNativeList()}
               >
+                Submit
+              </button>
+              {selectedSearchByText && (
                 <button
-                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={() => handleNativeList()}
+                  className={
+                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+                  }
+                  onClick={handleReset}
                 >
-                  Submit
+                  Reset
                 </button>
-                {selectedSearchByText && (
-                  <button
-                    className={
-                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                    }
-                    onClick={handleReset}
-                  >
-                    Reset
-                  </button>
-                )}
-              </Grid>
+              )}
             </Grid>
-          </AccordionDetails>
-        </Accordion>
+          </Grid>
+        </CustomAccordion>
         <CustomTable
           columns={nativeListColumn}
           data={nativeData}

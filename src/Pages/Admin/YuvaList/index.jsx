@@ -1,9 +1,6 @@
 import Header from "../../../Component/Header";
 import React, { useEffect, useState } from "react";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   Divider,
@@ -30,9 +27,9 @@ import {
 } from "../../../Component/constant";
 import { useSelector } from "react-redux";
 import ContainerPage from "../../../Component/Container";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
+import CustomAccordion from "../../../Component/Common/CustomAccordion";
 
 const all = {
   label: "All",
@@ -49,10 +46,9 @@ const YuvaList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { surname, city, state, region } = useSelector(
-    (state) => state.location
+    (state) => state.location,
   );
   const [nativeList, setNativeList] = useState([]);
-  const [expanded, setExpanded] = React.useState(false);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
@@ -72,7 +68,7 @@ const YuvaList = () => {
       });
   };
   useEffect(() => {
-    getNativeList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    getNativeList();
     getYuvaList();
   }, [page, rowsPerPage]);
 
@@ -91,7 +87,7 @@ const YuvaList = () => {
             ...data,
             label: data.name,
             value: data.id,
-          }))
+          })),
         );
       })
       .catch(function (error) {
@@ -121,7 +117,9 @@ const YuvaList = () => {
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
             {record.row.firstName} {record.row.middleName}{" "}
-            {surname.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
+            {
+              surname.find((item) => item?.id === record?.row?.lastName)?.name
+            }{" "}
           </p>
         </div>
       ),
@@ -218,10 +216,6 @@ const YuvaList = () => {
     },
   ];
 
-  const handleExpansion = () => {
-    setExpanded((prevExpanded) => !prevExpanded);
-  };
-
   const setLabelValueInList = (data) => {
     return data.map((data) => ({
       ...data,
@@ -293,159 +287,145 @@ const YuvaList = () => {
             </Button>
           </div>
         </div>
-        <Accordion
-          className={"w-full rounded"}
-          expanded={expanded}
-          onChange={handleExpansion}
-        >
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon className={"text-primary"} />}
-            aria-controls="panel1-content"
-            id="panel1-header"
-            className={"text-primary font-extrabold text-[18px]"}
-          >
-            Filter & Search
-          </AccordionSummary>
-          <AccordionDetails className={"p-4"}>
-            <Grid spacing={2} container>
-              <CustomAutoComplete
-                list={[all, ...setLabelValueInList(surname)]}
-                multiple={true}
-                label={"Surname"}
-                placeholder={"Select Your Surname"}
-                xs={3}
-                value={selectedSurname}
-                name="surname"
-                onChange={(e, lastName) => {
-                  if (lastName) {
-                    setSelectedSurname((pre) =>
-                      (lastName.map((item) => item.name).includes("All") &&
-                        lastName?.length === 1) ||
-                      (lastName.map((item) => item.name).includes("All") &&
-                        lastName
-                          .map((item) => item.name)
-                          ?.findIndex((data) => data === "All") !== 0)
-                        ? [
-                            {
-                              label: "All",
-                              value: "all",
-                              name: "All",
-                              id: "",
-                            },
-                          ]
-                        : pre
+        <CustomAccordion>
+          <Grid spacing={2} container>
+            <CustomAutoComplete
+              list={[all, ...setLabelValueInList(surname)]}
+              multiple={true}
+              label={"Surname"}
+              placeholder={"Select Your Surname"}
+              xs={3}
+              value={selectedSurname}
+              name="surname"
+              onChange={(e, lastName) => {
+                if (lastName) {
+                  setSelectedSurname((pre) =>
+                    (lastName.map((item) => item.name).includes("All") &&
+                      lastName?.length === 1) ||
+                    (lastName.map((item) => item.name).includes("All") &&
+                      lastName
+                        .map((item) => item.name)
+                        ?.findIndex((data) => data === "All") !== 0)
+                      ? [
+                          {
+                            label: "All",
+                            value: "all",
+                            name: "All",
+                            id: "",
+                          },
+                        ]
+                      : pre
                             .map((item) => item.name)
                             ?.find((data) => data === e.target.innerText)
                         ? [...pre]
-                        : [...lastName].filter((item) => item.name !== "All")
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={[all, ...setLabelValueInList(region)]}
-                multiple={true}
-                label={"Native"}
-                placeholder={"Select Your Native"}
-                xs={3}
-                name="native"
-                value={selectedNative}
-                onChange={(e, native) => {
-                  if (native) {
-                    setSelectedNative((pre) =>
-                      (native.map((item) => item.name).includes("All") &&
-                        native?.length === 1) ||
-                      (native.map((item) => item.name).includes("All") &&
-                        native
-                          .map((item) => item.name)
-                          ?.findIndex((data) => data === "All") !== 0)
-                        ? [
-                            {
-                              label: "All",
-                              value: "all",
-                              name: "All",
-                              id: "",
-                            },
-                          ]
-                        : pre
+                        : [...lastName].filter((item) => item.name !== "All"),
+                  );
+                }
+              }}
+            />
+            <CustomAutoComplete
+              list={[all, ...setLabelValueInList(region)]}
+              multiple={true}
+              label={"Native"}
+              placeholder={"Select Your Native"}
+              xs={3}
+              name="native"
+              value={selectedNative}
+              onChange={(e, native) => {
+                if (native) {
+                  setSelectedNative((pre) =>
+                    (native.map((item) => item.name).includes("All") &&
+                      native?.length === 1) ||
+                    (native.map((item) => item.name).includes("All") &&
+                      native
+                        .map((item) => item.name)
+                        ?.findIndex((data) => data === "All") !== 0)
+                      ? [
+                          {
+                            label: "All",
+                            value: "all",
+                            name: "All",
+                            id: "",
+                          },
+                        ]
+                      : pre
                             .map((item) => item.name)
                             ?.find((data) => data === e.target.innerText)
                         ? [...pre]
-                        : [...native].filter((item) => item.name !== "All")
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={[
-                  {
-                    value: "familyId",
-                    label: "Family Id",
-                  },
-                  {
-                    value: "firmName",
-                    label: "Firm Name",
-                  },
-                  {
-                    value: "gender",
-                    label: "Gender",
-                  },
-                ]}
-                label={"Search By"}
-                placeholder={"Select Your Search By"}
-                xs={3}
-                name="search"
-                value={selectedSearchBy.name}
-                onChange={(e, search) => {
-                  setSelectedSearchBy({
-                    name: search.label,
-                    id: search.value,
-                  });
-                }}
-              />
-              <CustomInput
-                type={"text"}
-                placeholder={"Enter Search Text"}
-                name={"firstName"}
-                xs={3}
-                value={selectedSearchByText}
-                onChange={(e) => {
-                  setSelectedSearchByText(e.target.value);
-                  if (e.target.value === "") {
-                    handleRequestList(true);
-                  }
-                }}
-                disabled={!selectedSearchBy.id}
-              />
+                        : [...native].filter((item) => item.name !== "All"),
+                  );
+                }
+              }}
+            />
+            <CustomAutoComplete
+              list={[
+                {
+                  value: "familyId",
+                  label: "Family Id",
+                },
+                {
+                  value: "firmName",
+                  label: "Firm Name",
+                },
+                {
+                  value: "gender",
+                  label: "Gender",
+                },
+              ]}
+              label={"Search By"}
+              placeholder={"Select Your Search By"}
+              xs={3}
+              name="search"
+              value={selectedSearchBy.name}
+              onChange={(e, search) => {
+                setSelectedSearchBy({
+                  name: search.label,
+                  id: search.value,
+                });
+              }}
+            />
+            <CustomInput
+              type={"text"}
+              placeholder={"Enter Search Text"}
+              name={"firstName"}
+              xs={3}
+              value={selectedSearchByText}
+              onChange={(e) => {
+                setSelectedSearchByText(e.target.value);
+                if (e.target.value === "") {
+                  handleRequestList(true);
+                }
+              }}
+              disabled={!selectedSearchBy.id}
+            />
 
-              <Grid
-                item
-                xs={12}
-                className={"flex justify-center items-center gap-4"}
+            <Grid
+              item
+              xs={12}
+              className={"flex justify-center items-center gap-4"}
+            >
+              <button
+                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+                onClick={() => handleRequestList()}
               >
+                Submit
+              </button>
+              {(selectedSearchByText ||
+                selectedSearchBy.name ||
+                selectedNative?.length > 0 ||
+                selectedSurname?.length > 0) && (
                 <button
-                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={() => handleRequestList()}
+                  className={
+                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+                  }
+                  onClick={handleReset}
                 >
-                  Submit
+                  Reset
                 </button>
-                {(selectedSearchByText ||
-                  selectedSearchBy.name ||
-                  selectedNative?.length > 0 ||
-                  selectedSurname?.length > 0) && (
-                  <button
-                    className={
-                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                    }
-                    onClick={handleReset}
-                  >
-                    Reset
-                  </button>
-                )}
-              </Grid>
+              )}
             </Grid>
-          </AccordionDetails>
-        </Accordion>
+          </Grid>
+        </CustomAccordion>
         <CustomTable
           columns={yuvaListColumn}
           className={"mx-0 w-full"}
@@ -488,7 +468,7 @@ const YuvaList = () => {
                   window.open(
                     userData?.profile?.url ||
                       "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank"
+                    "_blank",
                   )
                 }
               >

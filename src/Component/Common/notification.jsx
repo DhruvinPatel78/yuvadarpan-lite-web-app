@@ -27,6 +27,7 @@ const NotificationSnackbar = ({ notification }) => {
       open={notificationOpen}
       autoHideDuration={2000}
       onClose={notificationClose}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
     >
       <Alert
         onClose={notificationClose}
