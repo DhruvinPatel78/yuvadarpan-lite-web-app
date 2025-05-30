@@ -88,6 +88,7 @@ function Index() {
     lastName: [],
   });
   const [selectedRole, setSelectedRole] = useState([]);
+  const [samajListByRegion, setSamajListByRegion] = useState(samaj);
 
   const formik = useFormik({
     initialValues: {
@@ -204,7 +205,7 @@ function Index() {
         role: userInfo?.role || "",
       }));
       setSelectedLastName(
-        surname.find((item) => item?.id === userInfo?.lastName)?.name,
+        surname.find((item) => item?.id === userInfo?.lastName)?.name
       );
     }
   };
@@ -283,6 +284,7 @@ function Index() {
     setSelectedRegion([]);
     setSelectedSamaj([]);
     setSelectedRole([]);
+    setSamajListByRegion(samaj);
     handleUserList(true);
   };
 
@@ -408,6 +410,26 @@ function Index() {
 
   const hasError = Object.keys(errors)?.length || 0;
 
+  const handleListById = (field, selectedData) => {
+    axios
+      .get(`/${field}/get-all-list`, {
+        params: {
+          data: selectedData
+            ?.filter((data) => data.label !== "All")
+            ?.map((item) => item?.value),
+        },
+      })
+      .then((res) => {
+        switch (field) {
+          case "samaj":
+            setSamajListByRegion(res?.data);
+            break;
+          default:
+            return null;
+        }
+      });
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -457,10 +479,10 @@ function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...lastName].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...lastName].filter((item) => item.name !== "All")
                   );
                 }
               }}
@@ -475,6 +497,19 @@ function Index() {
               value={selectedRegion}
               onChange={(e, region) => {
                 if (region) {
+                  let selectedIds = [];
+                  let selectedRegionData = [];
+                  region.map((data) => {
+                    if (data.value === "all") {
+                      selectedIds = [];
+                      selectedRegionData = [];
+                    } else {
+                      !selectedIds.includes(data?.id) &&
+                        selectedIds.push(data?.id) &&
+                        selectedRegionData.push(data);
+                    }
+                  });
+                  handleListById("samaj", selectedRegionData);
                   setSelectedRegion((pre) =>
                     (region.map((item) => item.name).includes("All") &&
                       region?.length === 1) ||
@@ -491,16 +526,16 @@ function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...region].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...region].filter((item) => item.name !== "All")
                   );
                 }
               }}
             />
             <CustomAutoComplete
-              list={[all, ...setLabelValueInList(samaj)]}
+              list={[all, ...setLabelValueInList(samajListByRegion)]}
               multiple={true}
               label={"Samaj"}
               placeholder={"Select Your Samaj"}
@@ -525,10 +560,10 @@ function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...samaj].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...samaj].filter((item) => item.name !== "All")
                   );
                 }
               }}
@@ -554,7 +589,7 @@ function Index() {
                         .map((item) => item.name)
                         ?.findIndex((data) => data === "All") !== 0)
                       ? [all]
-                      : [...role].filter((item) => item.name !== "All"),
+                      : [...role].filter((item) => item.name !== "All")
                   );
                 }
               }}

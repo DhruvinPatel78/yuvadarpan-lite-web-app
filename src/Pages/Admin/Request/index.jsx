@@ -44,6 +44,8 @@ export default function Index() {
     id: "",
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [regionListByState, setRegionListByState] = useState(region);
+  const [samajListByRegion, setSamajListByRegion] = useState(samaj);
 
   useEffect(() => {
     handleRequestList(); // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,6 +135,8 @@ export default function Index() {
     setSelectedRegion([]);
     setSelectedSamaj([]);
     setSelectedRole([]);
+    setRegionListByState(region);
+    setSamajListByRegion(samaj);
     handleRequestList(true);
   };
   const handleSelectedUser = (ids) => {
@@ -272,6 +276,29 @@ export default function Index() {
     },
   ];
 
+  const handleListById = (field, selectedData) => {
+    axios
+      .get(`/${field}/get-all-list`, {
+        params: {
+          data: selectedData
+            ?.filter((data) => data.label !== "All")
+            ?.map((item) => item?.value),
+        },
+      })
+      .then((res) => {
+        switch (field) {
+          case "region":
+            setRegionListByState(res?.data);
+            break;
+          case "samaj":
+            setSamajListByRegion(res?.data);
+            break;
+          default:
+            return null;
+        }
+      });
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -341,10 +368,10 @@ export default function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...lastName].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...lastName].filter((item) => item.name !== "All")
                   );
                 }
               }}
@@ -367,6 +394,19 @@ export default function Index() {
               value={selectedState}
               onChange={(e, state) => {
                 if (state) {
+                  let selectedIds = [];
+                  let selectedStateData = [];
+                  state.map((data) => {
+                    if (data.value === "all") {
+                      selectedIds = [];
+                      selectedStateData = [];
+                    } else {
+                      !selectedIds.includes(data?.id) &&
+                        selectedIds.push(data?.id) &&
+                        selectedStateData.push(data);
+                    }
+                  });
+                  handleListById("region", selectedStateData);
                   setSelectedState((pre) =>
                     (state.map((item) => item.name).includes("All") &&
                       state?.length === 1) ||
@@ -383,10 +423,10 @@ export default function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...state].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...state].filter((item) => item.name !== "All")
                   );
                 }
               }}
@@ -399,7 +439,7 @@ export default function Index() {
                   name: "All",
                   id: "",
                 },
-                ...setLabelValueInList(region),
+                ...setLabelValueInList(regionListByState),
               ]}
               multiple={true}
               label={"Region"}
@@ -409,6 +449,19 @@ export default function Index() {
               value={selectedRegion}
               onChange={(e, region) => {
                 if (region) {
+                  let selectedIds = [];
+                  let selectedRegionData = [];
+                  region.map((data) => {
+                    if (data.value === "all") {
+                      selectedIds = [];
+                      selectedRegionData = [];
+                    } else {
+                      !selectedIds.includes(data?.id) &&
+                        selectedIds.push(data?.id) &&
+                        selectedRegionData.push(data);
+                    }
+                  });
+                  handleListById("samaj", selectedRegionData);
                   setSelectedRegion((pre) =>
                     (region.map((item) => item.name).includes("All") &&
                       region?.length === 1) ||
@@ -425,10 +478,10 @@ export default function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...region].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...region].filter((item) => item.name !== "All")
                   );
                 }
               }}
@@ -441,7 +494,7 @@ export default function Index() {
                   name: "All",
                   id: "",
                 },
-                ...setLabelValueInList(samaj),
+                ...setLabelValueInList(samajListByRegion),
               ]}
               multiple={true}
               label={"Samaj"}
@@ -467,10 +520,10 @@ export default function Index() {
                           },
                         ]
                       : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...samaj].filter((item) => item.name !== "All"),
+                          .map((item) => item.name)
+                          ?.find((data) => data === e.target.innerText)
+                      ? [...pre]
+                      : [...samaj].filter((item) => item.name !== "All")
                   );
                 }
               }}
@@ -524,10 +577,10 @@ export default function Index() {
                             },
                           ]
                         : pre
-                              .map((item) => item.label)
-                              ?.find((data) => data === e.target.innerText)
-                          ? [...pre]
-                          : [...role].filter((item) => item.label !== "All"),
+                            .map((item) => item.label)
+                            ?.find((data) => data === e.target.innerText)
+                        ? [...pre]
+                        : [...role].filter((item) => item.label !== "All")
                     );
                   }
                 }}
