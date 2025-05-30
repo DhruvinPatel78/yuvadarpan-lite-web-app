@@ -333,6 +333,9 @@ export default function Index() {
     setSelectedState([]);
     setSelectedRegion([]);
     setSelectedDistrict([]);
+    setStateListByCountry(state);
+    setRegionListByState(region);
+    setDistrictListByRegion(district);
     handleCityList(true);
   };
 
