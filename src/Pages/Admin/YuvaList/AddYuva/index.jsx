@@ -21,17 +21,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import CustomSelect from "../../../../Component/Common/customSelect";
 import DatePicker from "../../../../Component/Common/DatePicker";
 import CustomCheckbox from "../../../../Component/Common/customCheckbox";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
+import { UseRedux } from "../../../../Component/useRedux";
 
 const AddYuva = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
-  const { country, state, region, district, city, samaj, surname } =
-    useSelector((state) => state.location);
+  const { loading, country, state, region, district, city, samaj, surname } =
+    UseRedux();
   const selectArr = [
     "surname",
     "native",
@@ -397,7 +397,7 @@ const AddYuva = () => {
     touched,
     handleChange,
     handleBlur,
-    setFieldTouched
+    setFieldTouched,
   } = formik;
 
   const imageUploadHandler = (file) => {
@@ -491,9 +491,11 @@ const AddYuva = () => {
                             ? values?.profile?.name
                             : `profile`
                         }
-                        className={
-                          `w-[150px] h-[150px] rounded-full border ${touched?.profileName  && errors?.profileName ?"border-red-600" :"border-primary"} cursor-pointer`
-                        }
+                        className={`w-[150px] h-[150px] rounded-full border ${
+                          touched?.profileName && errors?.profileName
+                            ? "border-red-600"
+                            : "border-primary"
+                        } cursor-pointer`}
                       />
                     </label>
                   )}
@@ -507,14 +509,15 @@ const AddYuva = () => {
                       if (file) {
                         imageUploadHandler(file);
                       }
-                      setFieldTouched("profileName",true)
+                      setFieldTouched("profileName", true);
                     }}
-                    onClick={()=>setFieldTouched("profileName",true)}
+                    onClick={() => setFieldTouched("profileName", true)}
                   />
-
                 </Grid>
-                {touched?.profileName  && errors?.profileName&& (
-                    <p className={"text-error text-sm transition-all"}>{errors?.profileName}</p>
+                {touched?.profileName && errors?.profileName && (
+                  <p className={"text-error text-sm transition-all"}>
+                    {errors?.profileName}
+                  </p>
                 )}
               </Grid>
               <Grid item xs={12}>

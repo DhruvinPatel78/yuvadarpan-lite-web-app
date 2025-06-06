@@ -18,7 +18,7 @@ import { useLocation } from "react-router-dom";
 import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
-import { useSelector } from "react-redux";
+import { UseRedux } from "../../Component/useRedux";
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -86,7 +86,7 @@ const profileTabs = [
 const ProfilePage = () => {
   const { state: data } = useLocation();
   const [tabValue, setTabValue] = React.useState(0);
-  const { city, state } = useSelector((state) => state.location);
+  const { city, state } = UseRedux();
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -210,10 +210,10 @@ const ProfilePage = () => {
                       </span>
                       <span>{data.familyId}</span>
                       <span>
-                        {city.find((item) => item?.id === data.city)?.name}
+                        {city?.find((item) => item?.id === data?.city)?.name}
                       </span>
                       <span>
-                        {state.find((item) => item?.id === data.state)?.name}
+                        {state?.find((item) => item?.id === data?.state)?.name}
                       </span>
                       <span>{data.firm}</span>
                       <span>{data.firmAddress}</span>

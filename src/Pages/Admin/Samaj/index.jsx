@@ -16,7 +16,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
 import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Form, FormikProvider, useFormik } from "formik";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
@@ -25,13 +25,17 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import {
+  getListById,
+  getSelectedData,
+  handleListById,
+  listHandler,
+} from "../../../Component/constant";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
-  const { country, state, region, district, city } = useSelector(
-    (state) => state.location,
-  );
+  const { loading, country, state, region, district, city } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({
@@ -61,16 +65,8 @@ export default function Index() {
   const [regionListByState, setRegionListByState] = useState(region);
   const [districtListByRegion, setDistrictListByRegion] = useState(district);
 
-  const getSamajList = async () => {
-    axios
-      .get(`/samaj/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        setSamajData(res.data);
-      });
-  };
-
   useEffect(() => {
-    getSamajList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleSamajList();
   }, [page, rowsPerPage]);
 
   const samajColumn = [
@@ -126,16 +122,16 @@ export default function Index() {
                     country.find((item) => item?.id === record?.row?.country_id)
                       ?.name ||
                     country.find(
-                      (item) => item?.name === record?.row?.country_id,
+                      (item) => item?.name === record?.row?.country_id
                     )?.name,
                   state: state.find(
-                    (item) => item?.id === record?.row?.state_id,
+                    (item) => item?.id === record?.row?.state_id
                   )?.name,
                   region: region.find(
-                    (item) => item?.id === record?.row?.region_id,
+                    (item) => item?.id === record?.row?.region_id
                   )?.name,
                   district: district.find(
-                    (item) => item?.id === record?.row?.district_id,
+                    (item) => item?.id === record?.row?.district_id
                   )?.name,
                   city: city.find((item) => item?.id === record?.row?.city_id)
                     ?.name,
@@ -162,49 +158,6 @@ export default function Index() {
     },
   ];
 
-  const getListById = (field, id) => {
-    axios
-      .get(`/${field}/list/${id}`)
-      .then((res) => {
-        const list = res.data.map((data) => ({
-          ...data,
-          label: data.name,
-          value: data.id,
-        }));
-        switch (field) {
-          case "state":
-            setList((pre) => ({
-              ...pre,
-              state: list,
-            }));
-            break;
-          case "region":
-            setList((pre) => ({
-              ...pre,
-              region: list,
-            }));
-            break;
-          case "district":
-            setList((pre) => ({
-              ...pre,
-              district: list,
-            }));
-            break;
-          case "city":
-            setList((pre) => ({
-              ...pre,
-              city: list,
-            }));
-            break;
-          default:
-            return null;
-        }
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
-
   const formik = useFormik({
     initialValues: {
       country_id: "",
@@ -228,7 +181,7 @@ export default function Index() {
               })
               .then((res) => {
                 samajAddEditModalClose();
-                getSamajList();
+                handleSamajList();
               })
           : axios
               .post(`/samaj/add`, {
@@ -236,7 +189,7 @@ export default function Index() {
               })
               .then((res) => {
                 samajAddEditModalClose();
-                getSamajList();
+                handleSamajList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -286,19 +239,11 @@ export default function Index() {
         },
       })
       .then(() => {
-        getSamajList();
+        handleSamajList();
       });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
-
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
 
   const handleSamajList = (isRest = false) => {
     const text =
@@ -356,32 +301,6 @@ export default function Index() {
     handleSamajList(true);
   };
 
-  const handleListById = (field, selectedData) => {
-    axios
-      .get(`/${field}/get-all-list`, {
-        params: {
-          data: selectedData
-            ?.filter((data) => data.label !== "All")
-            ?.map((item) => item?.value),
-        },
-      })
-      .then((res) => {
-        switch (field) {
-          case "state":
-            setStateListByCountry(res?.data);
-            break;
-          case "region":
-            setRegionListByState(res?.data);
-            break;
-          case "district":
-            setDistrictListByRegion(res?.data);
-            break;
-          default:
-            return null;
-        }
-      });
-  };
-
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -412,180 +331,55 @@ export default function Index() {
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(country),
-              ]}
+              list={listHandler(country)}
               multiple={true}
               label={"Country"}
               placeholder={"Select Your Country"}
               xs={3}
               value={selectedCountry}
               name="country"
-              onChange={(e, country) => {
+              onChange={async (e, country) => {
                 if (country) {
-                  let selectedIds = [];
-                  let selectedCountryData = [];
-                  country.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedCountryData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                      selectedIds.push(data?.id) &&
-                      selectedCountryData.push(data);
-                    }
-                  });
-                  handleListById("state", selectedCountryData);
-                  setSelectedCountry((pre) =>
-                    (country.map((item) => item.name).includes("All") &&
-                      country?.length === 1) ||
-                    (country.map((item) => item.name).includes("All") &&
-                      country
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                        {
-                          label: "All",
-                          value: "all",
-                          name: "All",
-                          id: "",
-                        },
-                      ]
-                      : pre
-                        .map((item) => item.name)
-                        ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...country].filter((item) => item.name !== "All")
-                  );
+                  const data = await handleListById("state", country);
+                  setStateListByCountry(data);
+                  setSelectedCountry((pre) => getSelectedData(pre, country, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(stateListByCountry),
-              ]}
+              list={listHandler(stateListByCountry)}
               multiple={true}
               label={"State"}
               placeholder={"Select Your State"}
               xs={3}
               value={selectedState}
               name="state"
-              onChange={(e, state) => {
+              onChange={async (e, state) => {
                 if (state) {
-                  let selectedIds = [];
-                  let selectedStateData = [];
-                  state.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedStateData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                      selectedIds.push(data?.id) &&
-                      selectedStateData.push(data);
-                    }
-                  });
-                  handleListById("region", selectedStateData);
-                  setSelectedState((pre) =>
-                    (state.map((item) => item.name).includes("All") &&
-                      state?.length === 1) ||
-                    (state.map((item) => item.name).includes("All") &&
-                      state
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                        {
-                          label: "All",
-                          value: "all",
-                          name: "All",
-                          id: "",
-                        },
-                      ]
-                      : pre
-                        .map((item) => item.name)
-                        ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...state].filter((item) => item.name !== "All")
-                  );
+                  const data = await handleListById("region", state);
+                  setRegionListByState(data);
+                  setSelectedState((pre) => getSelectedData(pre, state, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(regionListByState),
-              ]}
+              list={listHandler(regionListByState)}
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
               xs={3}
               value={selectedRegion}
               name="region"
-              onChange={(e, region) => {
+              onChange={async (e, region) => {
                 if (region) {
-                  let selectedIds = [];
-                  let selectedRegionData = [];
-                  region.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedRegionData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                      selectedIds.push(data?.id) &&
-                      selectedRegionData.push(data);
-                    }
-                  });
-                  handleListById("district", selectedRegionData);
-                  setSelectedRegion((pre) =>
-                    (region.map((item) => item.name).includes("All") &&
-                      region?.length === 1) ||
-                    (region.map((item) => item.name).includes("All") &&
-                      region
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                        {
-                          label: "All",
-                          value: "all",
-                          name: "All",
-                          id: "",
-                        },
-                      ]
-                      : pre
-                        .map((item) => item.name)
-                        ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...region].filter((item) => item.name !== "All")
-                  );
+                  const data = await handleListById("district", region);
+                  setDistrictListByRegion(data);
+                  setSelectedRegion((pre) => getSelectedData(pre, region, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(districtListByRegion),
-              ]}
+              list={listHandler(districtListByRegion)}
               multiple={true}
               label={"District"}
               placeholder={"Select Your District"}
@@ -595,25 +389,7 @@ export default function Index() {
               onChange={(e, district) => {
                 if (district) {
                   setSelectedDistrict((pre) =>
-                    (district.map((item) => item.name).includes("All") &&
-                      district?.length === 1) ||
-                    (district.map((item) => item.name).includes("All") &&
-                      district
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                        {
-                          label: "All",
-                          value: "all",
-                          name: "All",
-                          id: "",
-                        },
-                      ]
-                      : pre
-                        .map((item) => item.name)
-                        ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...district].filter((item) => item.name !== "All")
+                    getSelectedData(pre, district, e)
                   );
                 }
               }}
@@ -711,8 +487,8 @@ export default function Index() {
                           touched?.country && errors?.country && errors?.country
                         }
                         onSelect={handleChange}
-                        onChange={(e, country) => {
-                          setFieldValue("country_id", country.id);
+                        onChange={async (e, country) => {
+                          await setFieldValue("country_id", country.id);
                           setSelectedValue((pre) => ({
                             ...pre,
                             country: country.name,
@@ -721,7 +497,11 @@ export default function Index() {
                             district: null,
                             city: null,
                           }));
-                          getListById("state", country.id);
+                          const data = await getListById("state", country.id);
+                          setList((pre) => ({
+                            ...pre,
+                            state: data,
+                          }));
                         }}
                         onBlur={handleBlur}
                       />
@@ -734,8 +514,8 @@ export default function Index() {
                         errors={
                           touched?.state && errors?.state && errors?.state
                         }
-                        onChange={(e, state) => {
-                          setFieldValue("state_id", state.id);
+                        onChange={async (e, state) => {
+                          await setFieldValue("state_id", state.id);
                           setSelectedValue((pre) => ({
                             ...pre,
                             state: state.name,
@@ -743,7 +523,11 @@ export default function Index() {
                             district: null,
                             city: null,
                           }));
-                          getListById("region", state.id);
+                          const data = await getListById("region", state.id);
+                          setList((pre) => ({
+                            ...pre,
+                            region: data,
+                          }));
                         }}
                         onBlur={handleBlur}
                         disabled={!selectedValue.country}
@@ -757,15 +541,19 @@ export default function Index() {
                         errors={
                           touched?.region && errors?.region && errors?.region
                         }
-                        onChange={(e, region) => {
-                          setFieldValue("region_id", region.id);
+                        onChange={async (e, region) => {
+                          await setFieldValue("region_id", region.id);
                           setSelectedValue((pre) => ({
                             ...pre,
                             region: region.name,
                             district: null,
                             city: null,
                           }));
-                          getListById("district", region.id);
+                          const data = await getListById("district", region.id);
+                          setList((pre) => ({
+                            ...pre,
+                            district: data,
+                          }));
                         }}
                         onBlur={handleBlur}
                         disabled={!selectedValue.state}
@@ -781,14 +569,18 @@ export default function Index() {
                           errors?.district &&
                           errors?.district
                         }
-                        onChange={(e, district) => {
-                          setFieldValue("district_id", district.id);
+                        onChange={async (e, district) => {
+                          await setFieldValue("district_id", district.id);
                           setSelectedValue((pre) => ({
                             ...pre,
                             district: district.name,
                             city: null,
                           }));
-                          getListById("city", district.id);
+                          const data = await getListById("city", district.id);
+                          setList((pre) => ({
+                            ...pre,
+                            city: data,
+                          }));
                         }}
                         onBlur={handleBlur}
                         disabled={!selectedValue.region}

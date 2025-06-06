@@ -16,7 +16,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
 import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Form, FormikProvider, useFormik } from "formik";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
@@ -25,11 +25,17 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import {
+  getListById,
+  getSelectedData,
+  handleListById,
+  listHandler,
+} from "../../../Component/constant";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
-  const { country, state, region } = useSelector((state) => state.location);
+  const { loading, country, state, region } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({ country: [], state: [], region: [] });
@@ -48,16 +54,8 @@ export default function Index() {
   const [stateListByCountry, setStateListByCountry] = useState(state);
   const [regionListByState, setRegionListByState] = useState(region);
 
-  const getDistrictList = async () => {
-    axios
-      .get(`/district/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        setDistrictData(res.data);
-      });
-  };
-
   useEffect(() => {
-    getDistrictList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleDistrictList();
   }, [page, rowsPerPage]);
 
   const districtListColumn = [
@@ -113,13 +111,13 @@ export default function Index() {
                     country.find((item) => item?.id === record?.row?.country_id)
                       ?.name ||
                     country.find(
-                      (item) => item?.name === record?.row?.country_id,
+                      (item) => item?.name === record?.row?.country_id
                     )?.name,
                   state: state.find(
-                    (item) => item?.id === record?.row?.state_id,
+                    (item) => item?.id === record?.row?.state_id
                   )?.name,
                   region: region.find(
-                    (item) => item?.id === record?.row?.region_id,
+                    (item) => item?.id === record?.row?.region_id
                   )?.name,
                 }));
                 setFieldValue("name", record?.row.name);
@@ -140,37 +138,6 @@ export default function Index() {
     },
   ];
 
-  const getListById = (field, id) => {
-    axios
-      .get(`/${field}/list/${id}`)
-      .then((res) => {
-        const list = res.data.map((data) => ({
-          ...data,
-          label: data.name,
-          value: data.id,
-        }));
-        switch (field) {
-          case "state":
-            setList((pre) => ({
-              ...pre,
-              state: list,
-            }));
-            break;
-          case "region":
-            setList((pre) => ({
-              ...pre,
-              region: list,
-            }));
-            break;
-          default:
-            return null;
-        }
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
-
   const formik = useFormik({
     initialValues: {
       country_id: "",
@@ -190,7 +157,7 @@ export default function Index() {
               })
               .then((res) => {
                 districtAddEditModalClose();
-                getDistrictList();
+                handleDistrictList();
               })
           : axios
               .post(`/district/add`, {
@@ -198,7 +165,7 @@ export default function Index() {
               })
               .then((res) => {
                 districtAddEditModalClose();
-                getDistrictList();
+                handleDistrictList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -244,19 +211,11 @@ export default function Index() {
         },
       })
       .then(() => {
-        getDistrictList();
+        handleDistrictList();
       });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
-
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
 
   const handleDistrictList = (isRest = false) => {
     const text =
@@ -301,29 +260,6 @@ export default function Index() {
     handleDistrictList(true);
   };
 
-  const handleListById = (field, selectedData) => {
-    axios
-      .get(`/${field}/get-all-list`, {
-        params: {
-          data: selectedData
-            ?.filter((data) => data.label !== "All")
-            ?.map((item) => item?.value),
-        },
-      })
-      .then((res) => {
-        switch (field) {
-          case "state":
-            setStateListByCountry(res?.data);
-            break;
-          case "region":
-            setRegionListByState(res?.data);
-            break;
-          default:
-            return null;
-        }
-      });
-  };
-
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -354,125 +290,39 @@ export default function Index() {
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(country),
-              ]}
+              list={listHandler(country)}
               multiple={true}
               label={"Country"}
               placeholder={"Select Your Country"}
               xs={3}
               value={selectedCountry}
               name="country"
-              onChange={(e, country) => {
+              onChange={async (e, country) => {
                 if (country) {
-                  let selectedIds = [];
-                  let selectedCountryData = [];
-                  country.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedCountryData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                        selectedIds.push(data?.id) &&
-                        selectedCountryData.push(data);
-                    }
-                  });
-                  handleListById("state", selectedCountryData);
-                  setSelectedCountry((pre) =>
-                    (country.map((item) => item.name).includes("All") &&
-                      country?.length === 1) ||
-                    (country.map((item) => item.name).includes("All") &&
-                      country
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...country].filter((item) => item.name !== "All"),
-                  );
+                  const data = await handleListById("state", country);
+                  setStateListByCountry(data);
+                  setSelectedCountry((pre) => getSelectedData(pre, country, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(stateListByCountry),
-              ]}
+              list={listHandler(stateListByCountry)}
               multiple={true}
               label={"State"}
               placeholder={"Select Your State"}
               xs={3}
               value={selectedState}
               name="state"
-              onChange={(e, state) => {
+              onChange={async (e, state) => {
                 if (state) {
-                  let selectedIds = [];
-                  let selectedStateData = [];
-                  state.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedStateData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                        selectedIds.push(data?.id) &&
-                        selectedStateData.push(data);
-                    }
-                  });
-                  handleListById("region", selectedStateData);
-                  setSelectedState((pre) =>
-                    (state.map((item) => item.name).includes("All") &&
-                      state?.length === 1) ||
-                    (state.map((item) => item.name).includes("All") &&
-                      state
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...state].filter((item) => item.name !== "All"),
-                  );
+                  const data = await handleListById("region", state);
+                  setRegionListByState(data);
+                  setSelectedState((pre) => getSelectedData(pre, state, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(regionListByState),
-              ]}
+              list={listHandler(regionListByState)}
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
@@ -481,27 +331,7 @@ export default function Index() {
               name="state"
               onChange={(e, region) => {
                 if (region) {
-                  setSelectedRegion((pre) =>
-                    (region.map((item) => item.name).includes("All") &&
-                      region?.length === 1) ||
-                    (region.map((item) => item.name).includes("All") &&
-                      region
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...region].filter((item) => item.name !== "All"),
-                  );
+                  setSelectedRegion((pre) => getSelectedData(pre, region, e));
                 }
               }}
             />
@@ -598,15 +428,19 @@ export default function Index() {
                           touched?.country && errors?.country && errors?.country
                         }
                         onSelect={handleChange}
-                        onChange={(e, country) => {
-                          setFieldValue("country_id", country.id);
+                        onChange={async (e, country) => {
+                          await setFieldValue("country_id", country.id);
                           setSelectedValue((pre) => ({
                             ...pre,
                             country: country.name,
                             state: null,
                             region: null,
                           }));
-                          getListById("state", country.id);
+                          const data = await getListById("state", country.id);
+                          setList((pre) => ({
+                            ...pre,
+                            state: data,
+                          }));
                         }}
                         onBlur={handleBlur}
                       />
@@ -619,14 +453,18 @@ export default function Index() {
                         errors={
                           touched?.state && errors?.state && errors?.state
                         }
-                        onChange={(e, state) => {
-                          setFieldValue("state_id", state.id);
+                        onChange={async (e, state) => {
+                          await setFieldValue("state_id", state.id);
                           setSelectedValue((pre) => ({
                             ...pre,
                             state: state.name,
                             region: null,
                           }));
-                          getListById("region", state.id);
+                          const data = await getListById("region", state.id);
+                          setList((pre) => ({
+                            ...pre,
+                            region: data,
+                          }));
                         }}
                         onBlur={handleBlur}
                         disabled={!selectedValue.country}

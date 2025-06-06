@@ -15,19 +15,20 @@ import CloseIcon from "@mui/icons-material/Close";
 import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-import { useSelector } from "react-redux";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import {
+  getSelectedData,
+  handleListById,
+  listHandler,
+  requestFilterList,
+  rolesList,
+} from "../../../Component/constant";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { auth, surname, region, state, samaj } = useSelector((state) => ({
-    auth: state.auth,
-    surname: state.location.surname,
-    region: state.location.region,
-    samaj: state.location.samaj,
-    state: state.location.state,
-  }));
+  const { auth, samaj, region, state, surname } = UseRedux();
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -58,13 +59,7 @@ export default function Index() {
   const requestInfoModalClose = () => {
     setRequestInfoModel(false);
   };
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
+
   const userActionHandler = (userInfo, action) => {
     axios
       .patch(`/user/update/${userInfo._id}`, {
@@ -276,29 +271,6 @@ export default function Index() {
     },
   ];
 
-  const handleListById = (field, selectedData) => {
-    axios
-      .get(`/${field}/get-all-list`, {
-        params: {
-          data: selectedData
-            ?.filter((data) => data.label !== "All")
-            ?.map((item) => item?.value),
-        },
-      })
-      .then((res) => {
-        switch (field) {
-          case "region":
-            setRegionListByState(res?.data);
-            break;
-          case "samaj":
-            setSamajListByRegion(res?.data);
-            break;
-          default:
-            return null;
-        }
-      });
-  };
-
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -335,15 +307,7 @@ export default function Index() {
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(surname),
-              ]}
+              list={listHandler(surname)}
               multiple={true}
               label={"Surname"}
               placeholder={"Select Your Last Name"}
@@ -353,149 +317,45 @@ export default function Index() {
               onChange={(e, lastName) => {
                 if (lastName) {
                   setSelectedSurname((pre) =>
-                    (lastName.map((item) => item.name).includes("All") &&
-                      lastName?.length === 1) ||
-                    (lastName.map((item) => item.name).includes("All") &&
-                      lastName
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...lastName].filter((item) => item.name !== "All")
+                    getSelectedData(pre, lastName, e)
                   );
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(state),
-              ]}
+              list={listHandler(state)}
               multiple={true}
               label={"State"}
               placeholder={"Select Your State"}
               xs={3}
               name="state"
               value={selectedState}
-              onChange={(e, state) => {
+              onChange={async (e, state) => {
                 if (state) {
-                  let selectedIds = [];
-                  let selectedStateData = [];
-                  state.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedStateData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                        selectedIds.push(data?.id) &&
-                        selectedStateData.push(data);
-                    }
-                  });
-                  handleListById("region", selectedStateData);
-                  setSelectedState((pre) =>
-                    (state.map((item) => item.name).includes("All") &&
-                      state?.length === 1) ||
-                    (state.map((item) => item.name).includes("All") &&
-                      state
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...state].filter((item) => item.name !== "All")
-                  );
+                  const Data = await handleListById("region", state);
+                  setRegionListByState(Data);
+                  setSelectedState((pre) => getSelectedData(pre, state, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(regionListByState),
-              ]}
+              list={listHandler(regionListByState)}
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
               xs={3}
               name="region"
               value={selectedRegion}
-              onChange={(e, region) => {
+              onChange={async (e, region) => {
                 if (region) {
-                  let selectedIds = [];
-                  let selectedRegionData = [];
-                  region.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedRegionData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                        selectedIds.push(data?.id) &&
-                        selectedRegionData.push(data);
-                    }
-                  });
-                  handleListById("samaj", selectedRegionData);
-                  setSelectedRegion((pre) =>
-                    (region.map((item) => item.name).includes("All") &&
-                      region?.length === 1) ||
-                    (region.map((item) => item.name).includes("All") &&
-                      region
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...region].filter((item) => item.name !== "All")
-                  );
+                  const data = await handleListById("samaj", region);
+                  setSamajListByRegion(data);
+                  setSelectedRegion((pre) => getSelectedData(pre, region, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(samajListByRegion),
-              ]}
+              list={listHandler(samajListByRegion)}
               multiple={true}
               label={"Samaj"}
               placeholder={"Select Your Samaj"}
@@ -504,27 +364,7 @@ export default function Index() {
               value={selectedSamaj}
               onChange={(e, samaj) => {
                 if (samaj) {
-                  setSelectedSamaj((pre) =>
-                    (samaj.map((item) => item.name).includes("All") &&
-                      samaj?.length === 1) ||
-                    (samaj.map((item) => item.name).includes("All") &&
-                      samaj
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...samaj].filter((item) => item.name !== "All")
-                  );
+                  setSelectedSamaj((pre) => getSelectedData(pre, samaj, e));
                 }
               }}
             />
@@ -532,83 +372,19 @@ export default function Index() {
               <CustomAutoComplete
                 xs={3}
                 multiple={true}
-                list={[
-                  {
-                    label: "All",
-                    value: "all",
-                    name: "All",
-                    id: "",
-                  },
-                  {
-                    label: "Admin",
-                    value: "ADMIN",
-                  },
-                  {
-                    label: "Samaj Manager",
-                    value: "SAMAJ_MANAGER",
-                  },
-                  {
-                    label: "Region Manager",
-                    value: "REGION_MANAGER",
-                  },
-                  {
-                    label: "User",
-                    value: "USER",
-                  },
-                ]}
+                list={rolesList()}
                 label={"Role"}
                 name="role"
                 value={selectedRole}
                 onChange={(e, role) => {
                   if (role) {
-                    setSelectedRole((pre) =>
-                      (role.map((item) => item.label).includes("All") &&
-                        role?.length === 1) ||
-                      (role.map((item) => item.label).includes("All") &&
-                        role
-                          .map((item) => item.label)
-                          ?.findIndex((data) => data === "All") !== 0)
-                        ? [
-                            {
-                              label: "All",
-                              value: "all",
-                              name: "All",
-                              id: "",
-                            },
-                          ]
-                        : pre
-                            .map((item) => item.label)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...role].filter((item) => item.label !== "All")
-                    );
+                    setSelectedRole((pre) => getSelectedData(pre, role, e));
                   }
                 }}
               />
             )}
             <CustomAutoComplete
-              list={[
-                {
-                  value: "familyId",
-                  label: "Family Id",
-                },
-                {
-                  value: "firstName",
-                  label: "First Name",
-                },
-                {
-                  value: "mobile",
-                  label: "Mobile",
-                },
-                {
-                  value: "email",
-                  label: "Email",
-                },
-                {
-                  value: "gender",
-                  label: "Gender",
-                },
-              ]}
+              list={requestFilterList}
               label={"Search By"}
               placeholder={"Select Your Search By"}
               xs={3}

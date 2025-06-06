@@ -6,29 +6,14 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
-import { useDispatch } from "react-redux";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 
 export default function Index() {
-  const dispatch = useDispatch();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [roleData, setRoleData] = useState(null);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
-
-  const getList = async () => {
-    dispatch(startLoading());
-    await axios.get(`/role/get-all-list`).then((res) => {
-      setRoleData(res);
-    });
-    dispatch(endLoading());
-  };
-
-  useEffect(() => {
-    getList(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const roleListColumn = [
     {
@@ -93,7 +78,7 @@ export default function Index() {
         [field]: action,
       })
       .then(() => {
-        getList();
+        handleRoleList();
       });
   };
 
@@ -105,7 +90,7 @@ export default function Index() {
         },
       })
       .then(() => {
-        getList();
+        handleRoleList();
       });
   };
 
@@ -126,6 +111,10 @@ export default function Index() {
         setRoleData(res?.data);
       });
   };
+
+  useEffect(() => {
+    handleRoleList();
+  }, []);
 
   const handleReset = () => {
     setSelectedSearchByText("");
