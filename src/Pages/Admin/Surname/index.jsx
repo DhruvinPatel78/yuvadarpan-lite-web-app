@@ -22,12 +22,13 @@ import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [surnameData, setSurnameData] = useState(null);
@@ -35,17 +36,8 @@ export default function Index() {
   const [surnameAddEditModel, setSurnameAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
-  const getSurnameList = async () => {
-    axios
-      .get(`/surname/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        // console.log("data : ", res.data);
-        setSurnameData(res.data);
-      });
-  };
-
   useEffect(() => {
-    getSurnameList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleSurnameList();
   }, [page, rowsPerPage]);
 
   const surnameListColumn = [
@@ -116,7 +108,7 @@ export default function Index() {
         [field]: action,
       })
       .then(() => {
-        getSurnameList();
+        handleSurnameList();
       });
   };
 
@@ -138,7 +130,7 @@ export default function Index() {
               })
               .then((res) => {
                 surnameAddEditModalClose();
-                getSurnameList();
+                handleSurnameList();
               })
           : axios
               .post(`/surname/add`, {
@@ -146,7 +138,7 @@ export default function Index() {
               })
               .then((res) => {
                 surnameAddEditModalClose();
-                getSurnameList();
+                handleSurnameList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -186,7 +178,7 @@ export default function Index() {
         },
       })
       .then(() => {
-        getSurnameList();
+        handleSurnameList();
       });
   };
 

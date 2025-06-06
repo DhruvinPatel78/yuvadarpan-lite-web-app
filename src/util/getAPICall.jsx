@@ -7,6 +7,7 @@ import {
   samaj,
   surname,
   country,
+  role,
 } from "../store/locationSlice";
 
 export const getAllRegionData = (dispatch) => {
@@ -74,6 +75,16 @@ export const getAllCountryData = (dispatch) => {
     .get(`/country/get-all-list`)
     .then((res) => {
       return dispatch(country(res.data));
+    })
+    .catch(function (error) {
+      console.log(error);
+    });
+};
+export const getAllRoleData = (dispatch) => {
+  axios
+    .get(`/role/get-all-list`)
+    .then((res) => {
+      return dispatch(role(res.data));
     })
     .catch(function (error) {
       console.log(error);

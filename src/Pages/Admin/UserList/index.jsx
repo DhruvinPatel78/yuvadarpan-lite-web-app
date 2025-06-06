@@ -23,7 +23,7 @@ import axios from "../../../util/useAxios";
 import * as Yup from "yup";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
@@ -31,37 +31,18 @@ import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-
-const userRoleList = [
-  {
-    label: "Admin",
-    value: "ADMIN",
-  },
-  {
-    label: "Samaj Manager",
-    value: "SAMAJ_MANAGER",
-  },
-  {
-    label: "Region Manager",
-    value: "REGION_MANAGER",
-  },
-  {
-    label: "User",
-    value: "USER",
-  },
-];
-
-const all = {
-  label: "All",
-  value: "all",
-  name: "All",
-  id: "",
-};
+import {
+  getSelectedData,
+  handleListById,
+  listHandler,
+  requestFilterList,
+  rolesList,
+} from "../../../Component/constant";
+import { UseRedux } from "../../../Component/useRedux";
 
 function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
-  const { surname, region, samaj } = useSelector((state) => state.location);
+  const { loading, surname, region, samaj } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { notification } = NotificationData();
@@ -71,9 +52,7 @@ function Index() {
   const [selectedLastName, setSelectedLastName] = useState(null);
   const [selectedRegionName, setSelectedRegionName] = useState(null);
   const [selectedSamajName, setSelectedSamajName] = useState(null);
-  // const [lastNameList, setLastNameList] = useState(surname);
   const [selectedSurname, setSelectedSurname] = useState([]);
-  // const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
@@ -81,7 +60,6 @@ function Index() {
     id: "",
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
-  // const [regionList, setRegionList] = useState(region);
   const [samajList, setSamajList] = useState([]);
   const [list, setList] = useState({
     region: [],
@@ -166,17 +144,46 @@ function Index() {
     setFieldValue,
   } = formik;
 
+  const handleUserList = (isRest = false) => {
+    const text = selectedSearchByText
+      ? {
+          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
+        }
+      : {};
+    axios
+      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`, {
+        params: {
+          lastName: isRest
+            ? []
+            : selectedSurname
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          roles: isRest
+            ? []
+            : selectedRole
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          region: isRest
+            ? []
+            : selectedRegion
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          samaj: isRest
+            ? []
+            : selectedSamaj
+                ?.filter((data) => data.name !== "All")
+                ?.map((item) => item?.id),
+          ...text,
+        },
+      })
+      .then((res) => {
+        setUserList(res.data);
+      });
+  };
+
   useEffect(() => {
     handleUserList();
   }, [page, rowsPerPage]);
-
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
 
   const userInfoModalOpen = (userInfo) => {
     setUserInfoModel(true);
@@ -230,43 +237,6 @@ function Index() {
     resetForm();
   };
 
-  const handleUserList = (isRest = false) => {
-    const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-        }
-      : {};
-    axios
-      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          lastName: isRest
-            ? []
-            : selectedSurname
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          roles: isRest
-            ? []
-            : selectedRole
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          region: isRest
-            ? []
-            : selectedRegion
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          samaj: isRest
-            ? []
-            : selectedSamaj
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setUserList(res.data);
-      });
-  };
-
   const getSamajList = (regionId) => {
     axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
       setSamajList(res.data);
@@ -280,7 +250,6 @@ function Index() {
       id: "",
     });
     setSelectedSurname([]);
-    // setSelectedState([]);
     setSelectedRegion([]);
     setSelectedSamaj([]);
     setSelectedRole([]);
@@ -410,26 +379,6 @@ function Index() {
 
   const hasError = Object.keys(errors)?.length || 0;
 
-  const handleListById = (field, selectedData) => {
-    axios
-      .get(`/${field}/get-all-list`, {
-        params: {
-          data: selectedData
-            ?.filter((data) => data.label !== "All")
-            ?.map((item) => item?.value),
-        },
-      })
-      .then((res) => {
-        switch (field) {
-          case "samaj":
-            setSamajListByRegion(res?.data);
-            break;
-          default:
-            return null;
-        }
-      });
-  };
-
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -454,7 +403,7 @@ function Index() {
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
-              list={[all, ...setLabelValueInList(surname)]}
+              list={listHandler(surname)}
               multiple={true}
               label={"Surname"}
               placeholder={"Select Your Last Name"}
@@ -464,78 +413,29 @@ function Index() {
               onChange={(e, lastName) => {
                 if (lastName) {
                   setSelectedSurname((pre) =>
-                    (lastName.map((item) => item.name).includes("All") &&
-                      lastName?.length === 1) ||
-                    (lastName.map((item) => item.name).includes("All") &&
-                      lastName
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...lastName].filter((item) => item.name !== "All")
+                    getSelectedData(pre, lastName, e)
                   );
                 }
               }}
             />
             <CustomAutoComplete
-              list={[all, ...setLabelValueInList(region)]}
+              list={listHandler(region)}
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
               xs={3}
               name="region"
               value={selectedRegion}
-              onChange={(e, region) => {
+              onChange={async (e, region) => {
                 if (region) {
-                  let selectedIds = [];
-                  let selectedRegionData = [];
-                  region.map((data) => {
-                    if (data.value === "all") {
-                      selectedIds = [];
-                      selectedRegionData = [];
-                    } else {
-                      !selectedIds.includes(data?.id) &&
-                        selectedIds.push(data?.id) &&
-                        selectedRegionData.push(data);
-                    }
-                  });
-                  handleListById("samaj", selectedRegionData);
-                  setSelectedRegion((pre) =>
-                    (region.map((item) => item.name).includes("All") &&
-                      region?.length === 1) ||
-                    (region.map((item) => item.name).includes("All") &&
-                      region
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...region].filter((item) => item.name !== "All")
-                  );
+                  const data = await handleListById("samaj", region);
+                  setSamajListByRegion(data);
+                  setSelectedRegion((pre) => getSelectedData(pre, region, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[all, ...setLabelValueInList(samajListByRegion)]}
+              list={listHandler(samajListByRegion)}
               multiple={true}
               label={"Samaj"}
               placeholder={"Select Your Samaj"}
@@ -544,32 +444,12 @@ function Index() {
               value={selectedSamaj}
               onChange={(e, samaj) => {
                 if (samaj) {
-                  setSelectedSamaj((pre) =>
-                    (samaj.map((item) => item.name).includes("All") &&
-                      samaj?.length === 1) ||
-                    (samaj.map((item) => item.name).includes("All") &&
-                      samaj
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                          .map((item) => item.name)
-                          ?.find((data) => data === e.target.innerText)
-                      ? [...pre]
-                      : [...samaj].filter((item) => item.name !== "All")
-                  );
+                  setSelectedSamaj((pre) => getSelectedData(pre, samaj, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[all].concat(userRoleList)}
+              list={rolesList()}
               multiple={true}
               label={"Role"}
               placeholder={"Select Your role"}
@@ -581,42 +461,12 @@ function Index() {
                   role &&
                   !selectedRole.some((item) => item.name === e.target.innerText)
                 ) {
-                  setSelectedRole((pre) =>
-                    (role.map((item) => item.name).includes("All") &&
-                      role?.length === 1) ||
-                    (role.map((item) => item.name).includes("All") &&
-                      role
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [all]
-                      : [...role].filter((item) => item.name !== "All")
-                  );
+                  setSelectedRole((pre) => getSelectedData(pre, role, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  value: "familyId",
-                  label: "Family Id",
-                },
-                {
-                  value: "firstName",
-                  label: "First Name",
-                },
-                {
-                  value: "mobile",
-                  label: "Mobile",
-                },
-                {
-                  value: "email",
-                  label: "Email",
-                },
-                {
-                  value: "gender",
-                  label: "Gender",
-                },
-              ]}
+              list={requestFilterList}
               label={"Search By"}
               placeholder={"Select Your Search By"}
               xs={3}
@@ -934,7 +784,7 @@ function Index() {
                     <Grid item xs={12} sm={6} md={6}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={userRoleList}
+                          list={rolesList(false)}
                           label={"User Role"}
                           placeholder={"Select Your User Role"}
                           name={"role"}

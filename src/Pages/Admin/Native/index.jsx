@@ -22,12 +22,13 @@ import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [nativeData, setNativeData] = useState(null);
@@ -35,16 +36,8 @@ export default function Index() {
   const [nativeAddEditModel, setNativeAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
-  const getNativeList = async () => {
-    axios
-      .get(`/native/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        setNativeData(res.data);
-      });
-  };
-
   useEffect(() => {
-    getNativeList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleNativeList();
   }, [page, rowsPerPage]);
 
   const nativeListColumn = [
@@ -113,7 +106,7 @@ export default function Index() {
         [field]: action,
       })
       .then(() => {
-        getNativeList();
+        handleNativeList();
       });
   };
 
@@ -133,7 +126,7 @@ export default function Index() {
               })
               .then((res) => {
                 nativeAddEditModalClose();
-                getNativeList();
+                handleNativeList();
               })
           : axios
               .post(`/native/add`, {
@@ -141,7 +134,7 @@ export default function Index() {
               })
               .then((res) => {
                 nativeAddEditModalClose();
-                getNativeList();
+                handleNativeList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -179,7 +172,7 @@ export default function Index() {
         },
       })
       .then(() => {
-        getNativeList();
+        handleNativeList();
       });
   };
 

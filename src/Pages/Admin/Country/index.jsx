@@ -22,12 +22,13 @@ import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryData, setCountryData] = useState(null);
@@ -35,16 +36,8 @@ export default function Index() {
   const [countryAddEditModel, setCountryAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
-  const getCountryList = async () => {
-    axios
-      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        setCountryData(res.data);
-      });
-  };
-
   useEffect(() => {
-    getCountryList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleCountryList();
   }, [page, rowsPerPage]);
 
   const countryListColumn = [
@@ -85,9 +78,6 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-3 justify-between items-center"}>
-          {/*<Tooltip title={"View"}>*/}
-          {/*  <VisibilityIcon className={"text-primary cursor-pointer"} />*/}
-          {/*</Tooltip>*/}
           <Tooltip title={"Edit"}>
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
@@ -116,7 +106,7 @@ export default function Index() {
         [field]: action,
       })
       .then(() => {
-        getCountryList();
+        handleCountryList();
       });
   };
 
@@ -136,7 +126,7 @@ export default function Index() {
               })
               .then((res) => {
                 countryAddEditModalClose();
-                getCountryList();
+                handleCountryList();
               })
           : axios
               .post(`/country/add`, {
@@ -144,7 +134,7 @@ export default function Index() {
               })
               .then((res) => {
                 countryAddEditModalClose();
-                getCountryList();
+                handleCountryList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -182,7 +172,7 @@ export default function Index() {
         },
       })
       .then(() => {
-        getCountryList();
+        handleCountryList();
       });
   };
 

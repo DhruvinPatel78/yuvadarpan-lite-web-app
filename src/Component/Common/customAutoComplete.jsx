@@ -69,9 +69,14 @@ export default function CustomAutoComplete({
         defaultValue={defaultValue}
         options={list}
         value={value}
-        isOptionEqualToValue={(option, value) =>
-          option.label === value || option.id === value
-        }
+        isOptionEqualToValue={(option, value) => {
+          if (!value) return false;
+          return (
+            option.label === value.label ||
+            option.id === value.id ||
+            option.label === value
+          );
+        }}
         multiple={multiple}
         id={`autoComplete-${name}`}
         label={label}

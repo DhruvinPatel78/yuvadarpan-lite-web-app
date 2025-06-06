@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import { Button, Card, Container, Grid, Avatar } from "@mui/material";
 import axios from "../../../util/useAxios";
-import { useSelector } from "react-redux";
 import { toCamelCase } from "../../../util/util";
 import moment from "moment";
+import { UseRedux } from "../../../Component/useRedux";
 
 const Home = () => {
-  const { surname, city, region } = useSelector((state) => state.location);
+  const { surname, city, region } = UseRedux();
   const [yuvaList, setYuvaList] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -15,7 +15,7 @@ const Home = () => {
   const getYuvaList = async () => {
     axios.get(`/yuvaList/list?page=${page}&limit=${20}`).then((res) => {
       setYuvaList(res?.data?.data);
-      if (page !== res?.data?.totalPages) {
+      if (page < res?.data?.totalPages) {
         setPage((prev) => prev + 1);
         setHasMore(true);
       } else {
@@ -25,7 +25,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    getYuvaList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    getYuvaList();
   }, [page]);
 
   return (
@@ -42,13 +42,17 @@ const Home = () => {
         >
           {yuvaList?.map((data) => {
             return (
-              <Grid item className="flex justify-center items-center" key={data?.id}>
+              <Grid
+                item
+                className="flex justify-center items-center"
+                key={data?.id}
+              >
                 <Card
                   className="flex flex-col justify-between items-center rounded-[50px] font-bold max-h-[calc(100vh - 428px)] w-[350px] cursor-pointer text-2xl hover:transition-all"
                   style={{ boxShadow: "0px 4px 35px 0px rgb(0 0 0 / 0.25)" }}
                   variant="outlined"
                   // onClick={action}
-                    key={data?.id}
+                  key={data?.id}
                 >
                   <Card
                     className={
@@ -81,7 +85,9 @@ const Home = () => {
                         "sm:text-base md:text-lg lg:text-xl text-lg font-medium text-center text-[#6D6666]"
                       }
                     >
-                      {toCamelCase(city.find((i) => i?.id === data?.city)?.name)}{" "}
+                      {toCamelCase(
+                        city.find((i) => i?.id === data?.city)?.name
+                      )}{" "}
                       -{" "}
                       {toCamelCase(
                         region.find((i) => i?.id === data?.region)?.name
@@ -173,7 +179,9 @@ const Home = () => {
                       ({moment().diff(data?.dob, "years")}-Yr)
                     </p>
                     <div className={"text-sm font-medium"}>
-                      {toCamelCase(city.find((i) => i?.id === data?.city)?.name)}{" "}
+                      {toCamelCase(
+                        city.find((i) => i?.id === data?.city)?.name
+                      )}{" "}
                       -{" "}
                       {toCamelCase(
                         region.find((i) => i?.id === data?.region)?.name

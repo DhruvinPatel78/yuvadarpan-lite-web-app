@@ -6,7 +6,7 @@ import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { login, startLoading, endLoading } from "../../store/authSlice";
 import {
   getAllRegionData,
@@ -16,15 +16,17 @@ import {
   getAllStateData,
   getAllSurnameData,
   getAllCountryData,
+  getAllRoleData,
 } from "../../util/getAPICall";
 import useAxios from "../../util/useAxios";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
+import { UseRedux } from "../../Component/useRedux";
 
 export default function Index() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
+  const { loading } = UseRedux();
   const { notification, setNotification } = NotificationData();
 
   const formik = useFormik({
@@ -64,6 +66,7 @@ export default function Index() {
                 dispatch(getAllStateData);
                 dispatch(getAllSurnameData);
                 dispatch(getAllCountryData);
+                dispatch(getAllRoleData);
               }
               dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
             }, 1000);

@@ -21,22 +21,18 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import axios from "../../../util/useAxios";
 import {
+  getSelectedData,
   ImageBackdrop,
   ImageButton,
   ImageSrc,
+  listHandler,
+  yuvaFilterList,
 } from "../../../Component/constant";
-import { useSelector } from "react-redux";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-
-const all = {
-  label: "All",
-  value: "all",
-  name: "All",
-  id: "",
-};
+import { UseRedux } from "../../../Component/useRedux";
 
 const YuvaList = () => {
   const navigate = useNavigate();
@@ -45,9 +41,7 @@ const YuvaList = () => {
   const [value, setValue] = React.useState("1");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { surname, city, state, region } = useSelector(
-    (state) => state.location,
-  );
+  const { surname, city, state, region } = UseRedux();
   const [nativeList, setNativeList] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -60,21 +54,14 @@ const YuvaList = () => {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  const getYuvaList = async () => {
-    axios
-      .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        setYuvaList(res.data);
-      });
-  };
   useEffect(() => {
     getNativeList();
-    getYuvaList();
+    handleRequestList();
   }, [page, rowsPerPage]);
 
   const deleteAPI = async (id) => {
     axios.delete(`/yuvaList/${id}`).then(() => {
-      getYuvaList();
+      handleRequestList();
     });
   };
 
@@ -87,7 +74,7 @@ const YuvaList = () => {
             ...data,
             label: data.name,
             value: data.id,
-          })),
+          }))
         );
       })
       .catch(function (error) {
@@ -117,9 +104,7 @@ const YuvaList = () => {
         <div className={"w-full text-wrap px-2"}>
           <p className={"text-sm"}>
             {record.row.firstName} {record.row.middleName}{" "}
-            {
-              surname.find((item) => item?.id === record?.row?.lastName)?.name
-            }{" "}
+            {surname?.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
           </p>
         </div>
       ),
@@ -164,7 +149,7 @@ const YuvaList = () => {
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
       renderCell: (record) => (
-        <>{city.find((item) => item?.id === record?.row?.city)?.name}</>
+        <>{city?.find((item) => item?.id === record?.row?.city)?.name}</>
       ),
     },
     {
@@ -215,14 +200,6 @@ const YuvaList = () => {
       ),
     },
   ];
-
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
 
   const handleRequestList = (isRest = false) => {
     const text = selectedSearchByText
@@ -290,7 +267,7 @@ const YuvaList = () => {
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
-              list={[all, ...setLabelValueInList(surname)]}
+              list={listHandler(surname)}
               multiple={true}
               label={"Surname"}
               placeholder={"Select Your Surname"}
@@ -300,31 +277,13 @@ const YuvaList = () => {
               onChange={(e, lastName) => {
                 if (lastName) {
                   setSelectedSurname((pre) =>
-                    (lastName.map((item) => item.name).includes("All") &&
-                      lastName?.length === 1) ||
-                    (lastName.map((item) => item.name).includes("All") &&
-                      lastName
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...lastName].filter((item) => item.name !== "All"),
+                    getSelectedData(pre, lastName, e)
                   );
                 }
               }}
             />
             <CustomAutoComplete
-              list={[all, ...setLabelValueInList(region)]}
+              list={listHandler(region)}
               multiple={true}
               label={"Native"}
               placeholder={"Select Your Native"}
@@ -333,45 +292,12 @@ const YuvaList = () => {
               value={selectedNative}
               onChange={(e, native) => {
                 if (native) {
-                  setSelectedNative((pre) =>
-                    (native.map((item) => item.name).includes("All") &&
-                      native?.length === 1) ||
-                    (native.map((item) => item.name).includes("All") &&
-                      native
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...native].filter((item) => item.name !== "All"),
-                  );
+                  setSelectedNative((pre) => getSelectedData(pre, native, e));
                 }
               }}
             />
             <CustomAutoComplete
-              list={[
-                {
-                  value: "familyId",
-                  label: "Family Id",
-                },
-                {
-                  value: "firmName",
-                  label: "Firm Name",
-                },
-                {
-                  value: "gender",
-                  label: "Gender",
-                },
-              ]}
+              list={yuvaFilterList}
               label={"Search By"}
               placeholder={"Select Your Search By"}
               xs={3}
@@ -468,7 +394,7 @@ const YuvaList = () => {
                   window.open(
                     userData?.profile?.url ||
                       "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank",
+                    "_blank"
                   )
                 }
               >
@@ -598,12 +524,6 @@ const YuvaList = () => {
                             {userData?.height}
                           </span>
                         </div>
-                        {/*<div className={"text-base font-bold"}>*/}
-                        {/*  Firm:{" "}*/}
-                        {/*  <span className={"font-normal"}>*/}
-                        {/*    Mahesh Wood Industries*/}
-                        {/*  </span>*/}
-                        {/*</div>*/}
                         <div className={"text-base font-bold"}>
                           City:{" "}
                           <span className={"font-normal"}>
@@ -631,17 +551,12 @@ const YuvaList = () => {
                           State:{" "}
                           <span className={"font-normal"}>
                             {
-                              state.find((item) => item?.id === userData?.state)
-                                ?.name
+                              state?.find(
+                                (item) => item?.id === userData?.state
+                              )?.name
                             }
                           </span>
                         </div>
-                        {/*<div className={"text-base font-bold"}>*/}
-                        {/*  City:{" "}*/}
-                        {/*  <span className={"font-normal"}>*/}
-                        {/*    Bardoli*/}
-                        {/*  </span>*/}
-                        {/*</div>*/}
                       </Grid>
                       <Grid item xs={12}>
                         <Divider />
@@ -713,12 +628,6 @@ const YuvaList = () => {
                             {userData?.education}
                           </span>
                         </div>
-                        {/*<div className={"text-base font-bold"}>*/}
-                        {/*  Height:{" "}*/}
-                        {/*  <span className={"font-normal"}>*/}
-                        {/*    {userData?.height}*/}
-                        {/*  </span>*/}
-                        {/*</div>*/}
                       </Grid>
                       <Grid item xs={6}>
                         <div className={"text-base font-bold"}>
@@ -727,12 +636,6 @@ const YuvaList = () => {
                             {userData?.bloodGroup}
                           </span>
                         </div>
-                        {/*<div className={"text-base font-bold"}>*/}
-                        {/*  Weight:{" "}*/}
-                        {/*  <span className={"font-normal"}>*/}
-                        {/*    {userData?.weight}*/}
-                        {/*  </span>*/}
-                        {/*</div>*/}
                       </Grid>
                     </Grid>
                   </TabPanel>

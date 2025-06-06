@@ -21,15 +21,16 @@ import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import { getSelectedData, listHandler } from "../../../Component/constant";
+import { UseRedux } from "../../../Component/useRedux";
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth);
-  const { country } = useSelector((state) => state.location);
+  const { loading, country } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryList, setCountryList] = useState([]);
@@ -39,16 +40,8 @@ export default function Index() {
   const [stateAddEditModel, setStateAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
 
-  const getStateList = async () => {
-    axios
-      .get(`/state/list?page=${page + 1}&limit=${rowsPerPage}`)
-      .then((res) => {
-        setStateData(res.data);
-      });
-  };
-
   useEffect(() => {
-    getStateList(); // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleStateList();
   }, [page, rowsPerPage]);
 
   const stateListColumn = [
@@ -95,13 +88,13 @@ export default function Index() {
                     ...data,
                     label: data.name,
                     value: data.id,
-                  })),
+                  }))
                 );
                 setFieldValue("name", record?.row.name);
                 setFieldValue("country_id", record?.row.country_id);
                 setSelectedCountry(
                   country.find((item) => item?.id === record?.row?.country_id)
-                    ?.name,
+                    ?.name
                 );
               }}
             />
@@ -134,7 +127,7 @@ export default function Index() {
               })
               .then((res) => {
                 stateAddEditModalClose();
-                getStateList();
+                handleStateList();
               })
           : axios
               .post(`/state/add`, {
@@ -142,7 +135,7 @@ export default function Index() {
               })
               .then((res) => {
                 stateAddEditModalClose();
-                getStateList();
+                handleStateList();
               });
       } catch (e) {
         console.log("Error =>", e);
@@ -180,19 +173,11 @@ export default function Index() {
         },
       })
       .then(() => {
-        getStateList();
+        handleStateList();
       });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
-
-  const setLabelValueInList = (data) => {
-    return data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
-    }));
-  };
 
   const handleStateList = (isRest = false) => {
     const text =
@@ -242,7 +227,7 @@ export default function Index() {
                   ...data,
                   label: data.name,
                   value: data.id,
-                })),
+                }))
               );
             }}
           >
@@ -252,15 +237,7 @@ export default function Index() {
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
-              list={[
-                {
-                  label: "All",
-                  value: "all",
-                  name: "All",
-                  id: "",
-                },
-                ...setLabelValueInList(country),
-              ]}
+              list={listHandler(country)}
               multiple={true}
               label={"Country"}
               placeholder={"Select Your Country"}
@@ -269,27 +246,7 @@ export default function Index() {
               name="country"
               onChange={(e, country) => {
                 if (country) {
-                  setSelectedCountry((pre) =>
-                    (country.map((item) => item.name).includes("All") &&
-                      country?.length === 1) ||
-                    (country.map((item) => item.name).includes("All") &&
-                      country
-                        .map((item) => item.name)
-                        ?.findIndex((data) => data === "All") !== 0)
-                      ? [
-                          {
-                            label: "All",
-                            value: "all",
-                            name: "All",
-                            id: "",
-                          },
-                        ]
-                      : pre
-                            .map((item) => item.name)
-                            ?.find((data) => data === e.target.innerText)
-                        ? [...pre]
-                        : [...country].filter((item) => item.name !== "All"),
-                  );
+                  setSelectedCountry((pre) => getSelectedData(pre, country, e));
                 }
               }}
             />
