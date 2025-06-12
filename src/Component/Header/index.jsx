@@ -13,6 +13,10 @@ import {
 import { useState } from "react";
 import useHeader from "./useHeader";
 import ContainerPage from "../Container";
+import FloatingButton from "../Common/FloatingButton";
+import { UseRedux } from "../useRedux";
+import FullPageLoader from "../Common/FullPageLoader";
+import { YuvadarpanLogo } from "../Icons";
 
 const settings = ["Logout"];
 
@@ -22,21 +26,11 @@ const Header = () => {
     navigate,
     action: { handleLogOut },
   } = useHeader();
-  // eslint-disable-next-line no-unused-vars
-  const [anchorElNav, setAnchorElNav] = useState(null);
+  const { loading } = UseRedux();
   const [anchorElUser, setAnchorElUser] = useState(null);
 
-  // eslint-disable-next-line no-unused-vars
-  const handleOpenNavMenu = (event) => {
-    setAnchorElNav(event.currentTarget);
-  };
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
   };
 
   const handleCloseUserMenu = () => {
@@ -44,18 +38,15 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="static" className={"bg-primary mb-0 sm:mb-4"}>
+    <AppBar position="static" className={"bg-primary mb-4 sticky top-0 z-10"}>
       <ContainerPage>
         <Toolbar disableGutters className={"justify-between"}>
-          <p
-            className={
-              "text-xl font-bold sm:text-2xl sm:font-extrabold cursor-pointer"
-            }
-            onClick={() => navigate("/")}
-          >
-            YUVADARPAN
-          </p>
-
+          <div className="logo-container">
+            <YuvadarpanLogo
+              className={"cursor-pointer"}
+              onClick={() => navigate("/")}
+            />
+          </div>
           {user?.user ? (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
@@ -101,6 +92,8 @@ const Header = () => {
           ) : null}
         </Toolbar>
       </ContainerPage>
+      <FloatingButton />
+      {loading ? <FullPageLoader /> : null}
     </AppBar>
   );
 };

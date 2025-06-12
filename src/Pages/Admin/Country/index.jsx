@@ -99,15 +99,19 @@ export default function Index() {
     },
   ];
 
-  const userActionHandler = (countryInfo, action, field) => {
-    axios
-      .patch(`/country/update/${countryInfo?.id}`, {
-        ...countryInfo,
-        [field]: action,
-      })
-      .then(() => {
-        handleCountryList();
-      });
+  const userActionHandler = async (countryInfo, action, field) => {
+    try {
+      await axios
+        .patch(`/country/update/${countryInfo?.id}`, {
+          ...countryInfo,
+          [field]: action,
+        })
+        .then(() => {
+          handleCountryList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const formik = useFormik({
@@ -119,7 +123,7 @@ export default function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         countryModalData
-          ? axios
+          ? await axios
               .patch(`/country/update/${countryModalData.id}`, {
                 ...rest,
                 updatedAt: new Date(),
@@ -128,7 +132,7 @@ export default function Index() {
                 countryAddEditModalClose();
                 handleCountryList();
               })
-          : axios
+          : await axios
               .post(`/country/add`, {
                 ...rest,
               })
@@ -137,7 +141,7 @@ export default function Index() {
                 handleCountryList();
               });
       } catch (e) {
-        console.log("Error =>", e);
+        console.error(e);
       } finally {
         dispatch(endLoading());
       }
@@ -165,35 +169,43 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/country/delete`, {
-        data: {
-          countries: [id],
-        },
-      })
-      .then(() => {
-        handleCountryList();
-      });
+    try {
+      await axios
+        .delete(`/country/delete`, {
+          data: {
+            countries: [id],
+          },
+        })
+        .then(() => {
+          handleCountryList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
 
-  const handleCountryList = (isRest = false) => {
-    const text =
-      selectedSearchByText && !isRest
-        ? {
-            name: selectedSearchByText,
-          }
-        : {};
-    axios
-      .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          ...text,
-        },
-      })
-      .then((res) => {
-        setCountryData(res?.data);
-      });
+  const handleCountryList = async (isRest = false) => {
+    try {
+      const text =
+        selectedSearchByText && !isRest
+          ? {
+              name: selectedSearchByText,
+            }
+          : {};
+      await axios
+        .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            ...text,
+          },
+        })
+        .then((res) => {
+          setCountryData(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleReset = () => {
@@ -226,14 +238,20 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search Country Name"}
               name={"name"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => setSelectedSearchByText(e.target.value)}
             />
 
             <Grid
               item
-              xs={4}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               className={"flex justify-start items-center gap-4"}
             >
               <button

@@ -1,5 +1,6 @@
 import { ButtonBase, styled } from "@mui/material";
 import axios from "../util/useAxios";
+import { useMemo } from "react";
 
 export const ImageButton = styled(ButtonBase)(({ theme }) => ({
   position: "relative",
@@ -198,4 +199,14 @@ export const getListById = async (field, id) => {
     label: data.name,
     value: data.id,
   }));
+};
+
+export const useFilteredIds = (selectedItems, key) => {
+  return useMemo(
+    () =>
+      selectedItems
+        .filter((item) => item.name !== "All")
+        .map((item) => item[key]),
+    [selectedItems, key]
+  );
 };

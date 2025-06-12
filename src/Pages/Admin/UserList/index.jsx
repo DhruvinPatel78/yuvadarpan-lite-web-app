@@ -37,6 +37,7 @@ import {
   listHandler,
   requestFilterList,
   rolesList,
+  useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 
@@ -91,13 +92,13 @@ function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         isAddUser
-          ? axios
+          ? await axios
               .post(`/user/add/`, { ...values, role: values.role.value })
               .then((res) => {
                 userInfoModalClose();
                 handleUserList();
               })
-          : axios
+          : await axios
               .patch(`/user/update/${rest._id}`, {
                 ...rest,
               })
@@ -106,7 +107,7 @@ function Index() {
                 handleUserList();
               });
       } catch (e) {
-        console.log("Error =>", e);
+        console.error(e);
       } finally {
         dispatch(endLoading());
       }
@@ -144,41 +145,34 @@ function Index() {
     setFieldValue,
   } = formik;
 
-  const handleUserList = (isRest = false) => {
-    const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-        }
-      : {};
-    axios
-      .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          lastName: isRest
-            ? []
-            : selectedSurname
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          roles: isRest
-            ? []
-            : selectedRole
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          region: isRest
-            ? []
-            : selectedRegion
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          samaj: isRest
-            ? []
-            : selectedSamaj
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setUserList(res.data);
-      });
+  const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
+  const filteredRegionIds = useFilteredIds(selectedRegion, "id");
+  const filteredRolesIds = useFilteredIds(selectedRole, "id");
+  const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
+
+  const handleUserList = async (isRest = false) => {
+    try {
+      const text = selectedSearchByText
+        ? {
+            [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
+          }
+        : {};
+      await axios
+        .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            lastName: isRest ? [] : filteredSurnameIds,
+            roles: isRest ? [] : filteredRolesIds,
+            region: isRest ? [] : filteredRegionIds,
+            samaj: isRest ? [] : filteredSamajIds,
+            ...text,
+          },
+        })
+        .then((res) => {
+          setUserList(res.data);
+        });
+    } catch (e) {
+      console.error("Error fetching user list", e);
+    }
   };
 
   useEffect(() => {
@@ -217,15 +211,18 @@ function Index() {
     }
   };
 
-  const userActionHandler = (userInfo, action, field) => {
-    axios
-      .patch(`/user/update/${userInfo?._id}`, {
-        ...userInfo,
-        [field]: action,
-      })
-      .then((res) => {
-        handleUserList();
-      });
+  const userActionHandler = async (userInfo, action, field) => {
+    try {
+      await axios
+        .patch(`/user/update/${userInfo?._id}`, {
+          [field]: action,
+        })
+        .then((res) => {
+          handleUserList();
+        });
+    } catch (e) {
+      console.error("Update Error =>", e);
+    }
   };
 
   const userInfoModalClose = () => {
@@ -237,10 +234,14 @@ function Index() {
     resetForm();
   };
 
-  const getSamajList = (regionId) => {
-    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
-      setSamajList(res.data);
-    });
+  const getSamajList = async (regionId) => {
+    try {
+      await axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+        setSamajList(res.data);
+      });
+    } catch (e) {
+      console.error("Error =>", e);
+    }
   };
 
   const handleReset = () => {
@@ -366,15 +367,19 @@ function Index() {
   ];
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/user/delete`, {
-        data: {
-          users: [id],
-        },
-      })
-      .then(() => {
-        handleUserList();
-      });
+    try {
+      await axios
+        .delete(`/user/delete`, {
+          data: {
+            users: [id],
+          },
+        })
+        .then(() => {
+          handleUserList();
+        });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -407,7 +412,10 @@ function Index() {
               multiple={true}
               label={"Surname"}
               placeholder={"Select Your Last Name"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSurname}
               name="surname"
               onChange={(e, lastName) => {
@@ -423,7 +431,10 @@ function Index() {
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="region"
               value={selectedRegion}
               onChange={async (e, region) => {
@@ -439,7 +450,10 @@ function Index() {
               multiple={true}
               label={"Samaj"}
               placeholder={"Select Your Samaj"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="samaj"
               value={selectedSamaj}
               onChange={(e, samaj) => {
@@ -453,7 +467,10 @@ function Index() {
               multiple={true}
               label={"Role"}
               placeholder={"Select Your role"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="role"
               value={selectedRole}
               onChange={(e, role) => {
@@ -469,7 +486,10 @@ function Index() {
               list={requestFilterList}
               label={"Search By"}
               placeholder={"Select Your Search By"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="search"
               value={selectedSearchBy.name}
               onChange={(e, search) => {
@@ -483,7 +503,10 @@ function Index() {
               type={"text"}
               placeholder={"Enter Search Text"}
               name={"firstName"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => {
                 setSelectedSearchByText(e.target.value);

@@ -5,9 +5,10 @@ import { Card } from "@mui/material";
 const CustomCard = ({ title, action }) => {
   return (
     <Card
-      className="flex justify-center items-center font-bold h-28 cursor-pointer text-2xl uppercase text-[#223354] hover:bg-[#572a2a] hover:text-white hover:transition-all"
+      className="w-full flex justify-center items-center font-bold h-28 cursor-pointer text-2xl uppercase text-[#223354] transition-all duration-300 ease-in-out hover:bg-[#572a2a] hover:text-white"
       variant="outlined"
       onClick={action}
+      aria-label={`Navigate to ${title}`}
     >
       <p>{title}</p>
     </Card>

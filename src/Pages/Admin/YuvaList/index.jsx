@@ -26,6 +26,7 @@ import {
   ImageButton,
   ImageSrc,
   listHandler,
+  useFilteredIds,
   yuvaFilterList,
 } from "../../../Component/constant";
 import ContainerPage from "../../../Component/Container";
@@ -60,26 +61,34 @@ const YuvaList = () => {
   }, [page, rowsPerPage]);
 
   const deleteAPI = async (id) => {
-    axios.delete(`/yuvaList/${id}`).then(() => {
-      handleRequestList();
-    });
+    try {
+      await axios.delete(`/yuvaList/${id}`).then(() => {
+        handleRequestList();
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const getNativeList = () => {
-    axios
-      .get(`/native/get-all-list`)
-      .then((res) => {
-        setNativeList(
-          res.data.map((data) => ({
-            ...data,
-            label: data.name,
-            value: data.id,
-          }))
-        );
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+  const getNativeList = async () => {
+    try {
+      await axios
+        .get(`/native/get-all-list`)
+        .then((res) => {
+          setNativeList(
+            res.data.map((data) => ({
+              ...data,
+              label: data.name,
+              value: data.id,
+            }))
+          );
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const yuvaListColumn = [
@@ -201,31 +210,30 @@ const YuvaList = () => {
     },
   ];
 
-  const handleRequestList = (isRest = false) => {
-    const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-        }
-      : {};
-    axios
-      .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          lastName: isRest
-            ? []
-            : selectedSurname
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          native: isRest
-            ? []
-            : selectedNative
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setYuvaList(res?.data);
-      });
+  const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
+  const filteredNativeIds = useFilteredIds(selectedNative, "id");
+
+  const handleRequestList = async (isRest = false) => {
+    try {
+      const text = selectedSearchByText
+        ? {
+            [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
+          }
+        : {};
+      await axios
+        .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            lastName: isRest ? [] : filteredSurnameIds,
+            native: isRest ? [] : filteredNativeIds,
+            ...text,
+          },
+        })
+        .then((res) => {
+          setYuvaList(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleReset = () => {
@@ -245,11 +253,15 @@ const YuvaList = () => {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-4"}
       >
-        <div className={"flex w-full items-center justify-between my-2"}>
+        <div
+          className={
+            "justify-between flex sm:items-center items-left w-full sm:flex-row flex-col gap-2"
+          }
+        >
           <p className={"text-3xl font-bold"}>Yuvalist</p>
-          <div className={"flex w-full justify-end items-center gap-2"}>
+          <div className={"flex flex-row gap-3"}>
             <Button
-              className={"text-primary"}
+              className={"text-primary flex items-center justify-center"}
               onClick={() => navigate("/admin/userDashboard")}
             >
               View User Dashboard
@@ -257,7 +269,7 @@ const YuvaList = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              className={"bg-primary"}
+              className={"bg-primary flex items-center justify-center"}
               onClick={() => navigate("/admin/yuvalist/add")}
             >
               Yuva
@@ -271,7 +283,10 @@ const YuvaList = () => {
               multiple={true}
               label={"Surname"}
               placeholder={"Select Your Surname"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSurname}
               name="surname"
               onChange={(e, lastName) => {
@@ -287,7 +302,10 @@ const YuvaList = () => {
               multiple={true}
               label={"Native"}
               placeholder={"Select Your Native"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="native"
               value={selectedNative}
               onChange={(e, native) => {
@@ -300,7 +318,10 @@ const YuvaList = () => {
               list={yuvaFilterList}
               label={"Search By"}
               placeholder={"Select Your Search By"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="search"
               value={selectedSearchBy.name}
               onChange={(e, search) => {
@@ -314,7 +335,10 @@ const YuvaList = () => {
               type={"text"}
               placeholder={"Enter Search Text"}
               name={"firstName"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => {
                 setSelectedSearchByText(e.target.value);

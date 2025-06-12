@@ -57,11 +57,17 @@ body {
   height: 100vh;
 }
 .ellipsis {
-  text-overflow: ellipsis; /* enables ellipsis */
-  white-space: nowrap; /* keeps the text in a single line */
-  overflow: hidden; /* keeps the element from overflowing its parent */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.react-pdf__Page__canvas{
+.react-pdf__Page__canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  padding: 0;
 }

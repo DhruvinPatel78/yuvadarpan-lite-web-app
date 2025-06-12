@@ -71,45 +71,57 @@ export default function Index() {
     },
   ];
 
-  const userActionHandler = (roleInfo, action, field) => {
-    axios
-      .patch(`/role/update/${roleInfo?.id}`, {
-        ...roleInfo,
-        [field]: action,
-      })
-      .then(() => {
-        handleRoleList();
-      });
+  const userActionHandler = async (roleInfo, action, field) => {
+    try {
+      await axios
+        .patch(`/role/update/${roleInfo?.id}`, {
+          ...roleInfo,
+          [field]: action,
+        })
+        .then(() => {
+          handleRoleList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/role/delete`, {
-        data: {
-          role: [id],
-        },
-      })
-      .then(() => {
-        handleRoleList();
-      });
+    try {
+      await axios
+        .delete(`/role/delete`, {
+          data: {
+            role: [id],
+          },
+        })
+        .then(() => {
+          handleRoleList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleRoleList = (isRest = false) => {
-    const text =
-      selectedSearchByText && !isRest
-        ? {
-            name: selectedSearchByText,
-          }
-        : {};
-    axios
-      .get(`/role/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          ...text,
-        },
-      })
-      .then((res) => {
-        setRoleData(res?.data);
-      });
+  const handleRoleList = async (isRest = false) => {
+    try {
+      const text =
+        selectedSearchByText && !isRest
+          ? {
+              name: selectedSearchByText,
+            }
+          : {};
+      await axios
+        .get(`/role/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            ...text,
+          },
+        })
+        .then((res) => {
+          setRoleData(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   useEffect(() => {
@@ -136,13 +148,19 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search Role"}
               name={"name"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => setSelectedSearchByText(e.target.value)}
             />
             <Grid
               item
-              xs={4}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               className={"flex justify-start items-center gap-4"}
             >
               <button
