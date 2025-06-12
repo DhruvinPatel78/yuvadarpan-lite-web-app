@@ -101,15 +101,19 @@ export default function Index() {
     },
   ];
 
-  const userActionHandler = (countryInfo, action, field) => {
-    axios
-      .patch(`/surname/update/${countryInfo?.id}`, {
-        ...countryInfo,
-        [field]: action,
-      })
-      .then(() => {
-        handleSurnameList();
-      });
+  const userActionHandler = async (countryInfo, action, field) => {
+    try {
+      await axios
+        .patch(`/surname/update/${countryInfo?.id}`, {
+          ...countryInfo,
+          [field]: action,
+        })
+        .then(() => {
+          handleSurnameList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const formik = useFormik({
@@ -123,7 +127,7 @@ export default function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         surnameModalData
-          ? axios
+          ? await axios
               .patch(`/surname/update/${surnameModalData.id}`, {
                 ...rest,
                 updatedAt: new Date(),
@@ -132,7 +136,7 @@ export default function Index() {
                 surnameAddEditModalClose();
                 handleSurnameList();
               })
-          : axios
+          : await axios
               .post(`/surname/add`, {
                 ...rest,
               })
@@ -141,7 +145,7 @@ export default function Index() {
                 handleSurnameList();
               });
       } catch (e) {
-        console.log("Error =>", e);
+        console.error(e);
       } finally {
         dispatch(endLoading());
       }
@@ -171,35 +175,43 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/surname/delete`, {
-        data: {
-          surnames: [id],
-        },
-      })
-      .then(() => {
-        handleSurnameList();
-      });
+    try {
+      await axios
+        .delete(`/surname/delete`, {
+          data: {
+            surnames: [id],
+          },
+        })
+        .then(() => {
+          handleSurnameList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
 
-  const handleSurnameList = (isRest = false) => {
-    const text =
-      selectedSearchByText && !isRest
-        ? {
-            name: selectedSearchByText,
-          }
-        : {};
-    axios
-      .get(`/surname/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          ...text,
-        },
-      })
-      .then((res) => {
-        setSurnameData(res?.data);
-      });
+  const handleSurnameList = async (isRest = false) => {
+    try {
+      const text =
+        selectedSearchByText && !isRest
+          ? {
+              name: selectedSearchByText,
+            }
+          : {};
+      await axios
+        .get(`/surname/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            ...text,
+          },
+        })
+        .then((res) => {
+          setSurnameData(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleReset = () => {
@@ -232,14 +244,20 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search Surname"}
               name={"name"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => setSelectedSearchByText(e.target.value)}
             />
 
             <Grid
               item
-              xs={4}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               className={"flex justify-start items-center gap-4"}
             >
               <button

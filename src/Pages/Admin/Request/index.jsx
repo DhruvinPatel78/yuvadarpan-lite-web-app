@@ -23,8 +23,11 @@ import {
   listHandler,
   requestFilterList,
   rolesList,
+  useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { useDispatch } from "react-redux";
+import { endLoading, startLoading } from "../../../store/authSlice";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
@@ -47,6 +50,7 @@ export default function Index() {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [regionListByState, setRegionListByState] = useState(region);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     handleRequestList(); // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,63 +64,65 @@ export default function Index() {
     setRequestInfoModel(false);
   };
 
-  const userActionHandler = (userInfo, action) => {
-    axios
-      .patch(`/user/update/${userInfo._id}`, {
-        ...userInfo,
-        allowed: action,
-      })
-      .then((res) => {
-        handleRequestList();
-        setNotification({ type: "success", message: "Success !" });
-      })
-      .catch((e) => {
-        setNotification({
-          type: "error",
-          message: e.message,
+  const userActionHandler = async (userInfo, action) => {
+    dispatch(startLoading());
+    try {
+      await axios
+        .patch(`/user/update/${userInfo._id}`, {
+          // ...userInfo,
+          allowed: action,
+        })
+        .then((res) => {
+          handleRequestList();
+          setNotification({ type: "success", message: "Success !" });
+        })
+        .catch((e) => {
+          setNotification({
+            type: "error",
+            message: e.message,
+          });
         });
+    } catch (e) {
+      setNotification({
+        type: "error",
+        message: e.message,
       });
+    } finally {
+      dispatch(endLoading());
+    }
   };
-  const handleRequestList = (isRest = false) => {
+
+  const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
+  const filteredStateIds = useFilteredIds(selectedState, "id");
+  const filteredRegionIds = useFilteredIds(selectedRegion, "id");
+  const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
+  const filteredRolesIds = useFilteredIds(selectedRole, "value", "label");
+
+  const handleRequestList = async (isRest = false) => {
+    dispatch(startLoading());
     const text = selectedSearchByText
-      ? {
-          [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-        }
+      ? { [selectedSearchBy.id]: isRest ? "" : selectedSearchByText }
       : {};
-    axios
-      .get(`/user/requests?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          lastName: isRest
-            ? []
-            : selectedSurname
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          state: isRest
-            ? []
-            : selectedState
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          region: isRest
-            ? []
-            : selectedRegion
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          samaj: isRest
-            ? []
-            : selectedSamaj
-                ?.filter((data) => data.name !== "All")
-                ?.map((item) => item?.id),
-          roles: isRest
-            ? []
-            : selectedRole
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setUserList(res?.data);
-      });
+    try {
+      const response = await axios.get(
+        `/user/requests?page=${page + 1}&limit=${rowsPerPage}`,
+        {
+          params: {
+            lastName: isRest ? [] : filteredSurnameIds,
+            state: isRest ? [] : filteredStateIds,
+            region: isRest ? [] : filteredRegionIds,
+            samaj: isRest ? [] : filteredSamajIds,
+            roles: isRest ? [] : filteredRolesIds,
+            ...text,
+          },
+        }
+      );
+      setUserList(response?.data);
+    } catch (error) {
+      console.error("Error fetching user requests:", error);
+    } finally {
+      dispatch(endLoading());
+    }
   };
 
   const handleReset = () => {
@@ -138,21 +144,28 @@ export default function Index() {
     setSelectedUsers([...ids]);
   };
   const handleRequestAll = async (action) => {
-    axios
-      .patch(`/user/approveRejectMany`, {
-        ids: selectedUsers,
-        action,
-      })
-      .then((res) => {
-        handleRequestList();
-        setNotification({ type: "success", message: "Success !" });
-      })
-      .catch((e) => {
-        setNotification({
-          type: "error",
-          message: e.message,
+    dispatch(startLoading());
+    try {
+      await axios
+        .patch(`/user/approveRejectMany`, {
+          ids: selectedUsers,
+          action,
+        })
+        .then((res) => {
+          handleRequestList();
+          setNotification({ type: "success", message: "Success !" });
+        })
+        .catch((e) => {
+          setNotification({
+            type: "error",
+            message: e.message,
+          });
         });
-      });
+    } catch (e) {
+      console.error("Error Updating user Approve Reject:", e);
+    } finally {
+      dispatch(endLoading());
+    }
   };
   const pendingUsersTableHeader = [
     {
@@ -277,13 +290,17 @@ export default function Index() {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div className={"justify-between flex items-center w-full"}>
+        <div
+          className={
+            "justify-between flex sm:items-center items-left w-full sm:flex-row flex-col gap-2"
+          }
+        >
           <p className={"text-3xl font-bold"}>Pending Requests</p>
-          <div className="">
+          <div className="flex flex-row gap-3 sm:w-auto w-full">
             <Tooltip title={"Accept all selected"}>
               <button
                 className={
-                  "bg-[#572a2a] border text-white rounded p-2 hover:scale-105"
+                  "bg-[#572a2a] border text-white rounded p-2 hover:scale-105 w-full flex items-center justify-center"
                 }
                 onClick={() => handleRequestAll("accept")}
               >
@@ -291,10 +308,10 @@ export default function Index() {
                 {selectedUsers?.length > 0 ? `(${selectedUsers?.length})` : ""}
               </button>
             </Tooltip>
-            <Tooltip title={"Reject all selected"} className="ml-3">
+            <Tooltip title={"Reject all selected"}>
               <button
                 className={
-                  "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105"
+                  "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105 w-full flex items-center justify-center"
                 }
                 onClick={() => handleRequestAll("reject")}
               >
@@ -311,7 +328,10 @@ export default function Index() {
               multiple={true}
               label={"Surname"}
               placeholder={"Select Your Last Name"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSurname}
               name="surname"
               onChange={(e, lastName) => {
@@ -327,7 +347,10 @@ export default function Index() {
               multiple={true}
               label={"State"}
               placeholder={"Select Your State"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="state"
               value={selectedState}
               onChange={async (e, state) => {
@@ -343,7 +366,10 @@ export default function Index() {
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="region"
               value={selectedRegion}
               onChange={async (e, region) => {
@@ -359,7 +385,10 @@ export default function Index() {
               multiple={true}
               label={"Samaj"}
               placeholder={"Select Your Samaj"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="samaj"
               value={selectedSamaj}
               onChange={(e, samaj) => {
@@ -370,7 +399,10 @@ export default function Index() {
             />
             {auth.user.role === "ADMIN" && (
               <CustomAutoComplete
-                xs={3}
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
                 multiple={true}
                 list={rolesList()}
                 label={"Role"}
@@ -387,7 +419,10 @@ export default function Index() {
               list={requestFilterList}
               label={"Search By"}
               placeholder={"Select Your Search By"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               name="search"
               value={selectedSearchBy.label}
               onChange={(e, search) => {
@@ -401,7 +436,10 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search Text"}
               name={"firstName"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => {
                 setSelectedSearchByText(e.target.value);

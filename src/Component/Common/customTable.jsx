@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { TablePagination } from "@mui/material";
+import { useDispatch } from "react-redux";
+import { endLoading, startLoading } from "../../store/authSlice";
+import { UseRedux } from "../useRedux";
 
 function CustomTable({
   columns,
@@ -14,7 +17,8 @@ function CustomTable({
   setPageSize,
   pagination = true,
 }) {
-  const [isLoading, setIsLoading] = useState(false);
+  const { loading } = UseRedux();
+  const dispatch = useDispatch();
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -23,8 +27,10 @@ function CustomTable({
     setPageSize(parseInt(event.target.value, 10));
   };
   useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1000);
+    dispatch(startLoading());
+    setTimeout(() => {
+      dispatch(endLoading());
+    }, 2000);
   }, [data?.data, page, pageSize]);
   return (
     <div className={"w-full"}>
@@ -38,7 +44,7 @@ function CustomTable({
         disableRowSelectionOnClick
         checkboxSelection={type === "pendingList"}
         onRowSelectionModelChange={onRowSelectionModelChange}
-        loading={isLoading}
+        loading={loading}
         sx={{
           "& .MuiDataGrid-menuIconButton .MuiSvgIcon-root, & .MuiDataGrid-sortIcon, & .MuiDataGrid-columnHeaderTitleContainerContent .css-12wnr2w-MuiButtonBase-root-MuiCheckbox-root":
             {
@@ -57,6 +63,9 @@ function CustomTable({
           },
           "& .MuiDataGrid-overlay": {
             backdropFilter: "blur(4px)",
+          },
+          "& .MuiCircularProgress-circle": {
+            stroke: "#572a2a",
           },
         }}
       />

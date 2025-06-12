@@ -138,7 +138,7 @@ const AddYuva = () => {
         formatLabelValue(res, field);
       })
       .catch(function (error) {
-        console.log(error);
+        console.error(error);
       });
   };
 

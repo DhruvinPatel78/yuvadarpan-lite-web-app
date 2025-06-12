@@ -30,6 +30,7 @@ import {
   getSelectedData,
   handleListById,
   listHandler,
+  useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 
@@ -163,7 +164,7 @@ export default function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         cityModalData
-          ? axios
+          ? await axios
               .patch(`/city/update/${cityModalData.id}`, {
                 ...rest,
                 updatedAt: new Date(),
@@ -172,7 +173,7 @@ export default function Index() {
                 cityAddEditModalClose();
                 handleCityList();
               })
-          : axios
+          : await axios
               .post(`/city/add`, {
                 ...rest,
               })
@@ -181,7 +182,7 @@ export default function Index() {
                 handleCityList();
               });
       } catch (e) {
-        console.log("Error =>", e);
+        console.error(e);
       } finally {
         dispatch(endLoading());
       }
@@ -219,55 +220,55 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/city/delete`, {
-        data: {
-          cities: [id],
-        },
-      })
-      .then(() => {
-        handleCityList();
-      });
+    try {
+      await axios
+        .delete(`/city/delete`, {
+          data: {
+            cities: [id],
+          },
+        })
+        .then(() => {
+          handleCityList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
+  const filteredCountryIds = useFilteredIds(selectedCountry, "value", "label");
+  const filteredStateIds = useFilteredIds(selectedState, "value", "label");
+  const filteredRegionIds = useFilteredIds(selectedRegion, "value", "label");
+  const filteredDistrictIds = useFilteredIds(
+    selectedDistrict,
+    "value",
+    "label"
+  );
 
-  const handleCityList = (isRest = false) => {
-    const text =
-      selectedSearchByText && !isRest
-        ? {
-            name: selectedSearchByText,
-          }
-        : {};
-    axios
-      .get(`/city/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          country: isRest
-            ? []
-            : selectedCountry
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          state: isRest
-            ? []
-            : selectedState
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          region: isRest
-            ? []
-            : selectedRegion
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          district: isRest
-            ? []
-            : selectedDistrict
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setCityData(res?.data);
-      });
+  const handleCityList = async (isRest = false) => {
+    try {
+      const text =
+        selectedSearchByText && !isRest
+          ? {
+              name: selectedSearchByText,
+            }
+          : {};
+      await axios
+        .get(`/city/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            country: isRest ? [] : filteredCountryIds,
+            state: isRest ? [] : filteredStateIds,
+            region: isRest ? [] : filteredRegionIds,
+            district: isRest ? [] : filteredDistrictIds,
+            ...text,
+          },
+        })
+        .then((res) => {
+          setCityData(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleReset = () => {
@@ -316,7 +317,10 @@ export default function Index() {
               multiple={true}
               label={"Country"}
               placeholder={"Select Your Country"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedCountry}
               name="country"
               onChange={async (e, country) => {
@@ -332,7 +336,10 @@ export default function Index() {
               multiple={true}
               label={"State"}
               placeholder={"Select Your State"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedState}
               name="state"
               onChange={async (e, state) => {
@@ -348,7 +355,10 @@ export default function Index() {
               multiple={true}
               label={"Region"}
               placeholder={"Select Your Region"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedRegion}
               name="region"
               onChange={async (e, region) => {
@@ -364,7 +374,10 @@ export default function Index() {
               multiple={true}
               label={"District"}
               placeholder={"Select Your District"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedDistrict}
               name="state"
               onChange={(e, district) => {
@@ -379,7 +392,10 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search City"}
               name={"city"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => {
                 setSelectedSearchByText(e.target.value);

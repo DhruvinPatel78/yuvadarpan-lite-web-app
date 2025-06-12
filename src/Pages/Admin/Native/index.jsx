@@ -99,15 +99,19 @@ export default function Index() {
     },
   ];
 
-  const userActionHandler = (nativeInfo, action, field) => {
-    axios
-      .patch(`/native/update/${nativeInfo?.id}`, {
-        ...nativeInfo,
-        [field]: action,
-      })
-      .then(() => {
-        handleNativeList();
-      });
+  const userActionHandler = async (nativeInfo, action, field) => {
+    try {
+      await axios
+        .patch(`/native/update/${nativeInfo?.id}`, {
+          ...nativeInfo,
+          [field]: action,
+        })
+        .then(() => {
+          handleNativeList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const formik = useFormik({
@@ -119,7 +123,7 @@ export default function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         nativeModalData
-          ? axios
+          ? await axios
               .patch(`/native/update/${nativeModalData.id}`, {
                 ...rest,
                 updatedAt: new Date(),
@@ -128,7 +132,7 @@ export default function Index() {
                 nativeAddEditModalClose();
                 handleNativeList();
               })
-          : axios
+          : await axios
               .post(`/native/add`, {
                 ...rest,
               })
@@ -137,7 +141,7 @@ export default function Index() {
                 handleNativeList();
               });
       } catch (e) {
-        console.log("Error =>", e);
+        console.error(e);
       } finally {
         dispatch(endLoading());
       }
@@ -165,35 +169,43 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/native/delete`, {
-        data: {
-          natives: [id],
-        },
-      })
-      .then(() => {
-        handleNativeList();
-      });
+    try {
+      await axios
+        .delete(`/native/delete`, {
+          data: {
+            natives: [id],
+          },
+        })
+        .then(() => {
+          handleNativeList();
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
 
-  const handleNativeList = (isRest = false) => {
-    const text =
-      selectedSearchByText && !isRest
-        ? {
-            name: selectedSearchByText,
-          }
-        : {};
-    axios
-      .get(`/native/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          ...text,
-        },
-      })
-      .then((res) => {
-        setNativeData(res?.data);
-      });
+  const handleNativeList = async (isRest = false) => {
+    try {
+      const text =
+        selectedSearchByText && !isRest
+          ? {
+              name: selectedSearchByText,
+            }
+          : {};
+      await axios
+        .get(`/native/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            ...text,
+          },
+        })
+        .then((res) => {
+          setNativeData(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleReset = () => {
@@ -226,14 +238,19 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search Native"}
               name={"name"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => setSelectedSearchByText(e.target.value)}
             />
-
             <Grid
               item
-              xs={4}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               className={"flex justify-start items-center gap-4"}
             >
               <button

@@ -10,6 +10,8 @@ import "@react-pdf-viewer/core/lib/styles/index.css";
 import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import { Document, Page, pdfjs } from "react-pdf";
 import axios from "../../../util/useAxios";
+import { useDispatch } from "react-redux";
+import { endLoading, startLoading } from "../../../store/authSlice";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const PdfPaginationBtn = ({ children, disabled, onClick }) => {
@@ -35,34 +37,44 @@ export default function NewUser() {
   const [cityListGuj, setCityListGuj] = useState([]);
   const [pdf, setPdf] = useState();
 
-  useEffect(() => {
-    axios
-      .get(`/yuvaList/yuvaPDF`)
-      .then((res) => {
-        setPdf(res.data);
-      })
-      .catch((e) => {
-        console.log(e);
-      });
-
-    axios
-      .get(`/yuvaList/citylist`)
-      .then((res) => {
-        setCityList(res?.data);
-        res.data.map((city) => {
-          setCityListEn((prevCityListEn) => [
-            ...prevCityListEn,
-            city.label?.en,
-          ]);
-          setCityListGuj((prevCityListGuj) => [
-            ...prevCityListGuj,
-            city.label.gu,
-          ]);
+  const dispatch = useDispatch();
+  const getAPIData = async () => {
+    dispatch(startLoading());
+    try {
+      await axios
+        .get(`/yuvaList/yuvaPDF`)
+        .then((res) => {
+          setPdf(res.data);
+        })
+        .catch((e) => {
+          console.log(e);
         });
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+      await axios
+        .get(`/yuvaList/citylist`)
+        .then((res) => {
+          setCityList(res?.data);
+          res.data.forEach((city) => {
+            setCityListEn((prevCityListEn) => [
+              ...prevCityListEn,
+              city.label?.en,
+            ]);
+            setCityListGuj((prevCityListGuj) => [
+              ...prevCityListGuj,
+              city.label.gu,
+            ]);
+          });
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setTimeout(() => dispatch(endLoading()), 2000);
+    }
+  };
+  useEffect(() => {
+    getAPIData();
   }, []);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -76,7 +88,7 @@ export default function NewUser() {
 
   const handleCityChange = (event) => {
     setCity(event.target.value);
-    cityList.map((city) => {
+    cityList.forEach((city) => {
       if (
         city?.label?.en === event.target.value ||
         city?.label?.gu === event.target.value

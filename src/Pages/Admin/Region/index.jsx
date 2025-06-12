@@ -30,6 +30,7 @@ import {
   getSelectedData,
   handleListById,
   listHandler,
+  useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 
@@ -111,9 +112,9 @@ export default function Index() {
                     (item) => item?.id === record?.row?.state_id
                   )?.name,
                 }));
-                setFieldValue("country_id", record?.row.country_id);
-                setFieldValue("state_id", record?.row.state_id);
-                setFieldValue("name", record?.row.name);
+                setFieldValue("country_id", record?.row?.country_id);
+                setFieldValue("state_id", record?.row?.state_id);
+                setFieldValue("name", record?.row?.name);
               }}
             />
           </Tooltip>
@@ -139,7 +140,7 @@ export default function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         regionModalData
-          ? axios
+          ? await axios
               .patch(`/region/update/${regionModalData.id}`, {
                 ...rest,
                 updatedAt: new Date(),
@@ -148,7 +149,7 @@ export default function Index() {
                 regionAddEditModalClose();
                 handleRegionList();
               })
-          : axios
+          : await axios
               .post(`/region/add`, {
                 ...rest,
               })
@@ -157,7 +158,7 @@ export default function Index() {
                 handleRegionList();
               });
       } catch (e) {
-        console.log("Error =>", e);
+        console.error(e);
       } finally {
         dispatch(endLoading());
       }
@@ -191,45 +192,47 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    axios
-      .delete(`/region/delete`, {
-        data: {
-          regions: [id],
-        },
-      })
-      .then(() => {
-        handleRegionList();
-      });
+    try {
+      await axios
+        .delete(`/region/delete`, {
+          data: {
+            regions: [id],
+          },
+        })
+        .then(() => {
+          handleRegionList();
+        });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
+  const filteredCountryIds = useFilteredIds(selectedCountry, "value", "label");
+  const filteredStateIds = useFilteredIds(selectedState, "value", "label");
 
-  const handleRegionList = (isRest = false) => {
-    const text =
-      selectedSearchByText && !isRest
-        ? {
-            name: selectedSearchByText,
-          }
-        : {};
-    axios
-      .get(`/region/list?page=${page + 1}&limit=${rowsPerPage}`, {
-        params: {
-          country: isRest
-            ? []
-            : selectedCountry
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          state: isRest
-            ? []
-            : selectedState
-                ?.filter((data) => data.label !== "All")
-                ?.map((item) => item?.value),
-          ...text,
-        },
-      })
-      .then((res) => {
-        setRegionData(res?.data);
-      });
+  const handleRegionList = async (isRest = false) => {
+    try {
+      const text =
+        selectedSearchByText && !isRest
+          ? {
+              name: selectedSearchByText,
+            }
+          : {};
+      await axios
+        .get(`/region/list?page=${page + 1}&limit=${rowsPerPage}`, {
+          params: {
+            country: isRest ? [] : filteredCountryIds,
+            state: isRest ? [] : filteredStateIds,
+            ...text,
+          },
+        })
+        .then((res) => {
+          setRegionData(res?.data);
+        });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleReset = () => {
@@ -274,7 +277,10 @@ export default function Index() {
               multiple={true}
               label={"Country"}
               placeholder={"Select Your Country"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedCountry}
               name="country"
               onChange={async (e, country) => {
@@ -290,7 +296,10 @@ export default function Index() {
               multiple={true}
               label={"State"}
               placeholder={"Select Your State"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedState}
               name="state"
               onChange={(e, state) => {
@@ -303,7 +312,10 @@ export default function Index() {
               type={"text"}
               placeholder={"Enter Search Region"}
               name={"region"}
-              xs={3}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               value={selectedSearchByText}
               onChange={(e) => {
                 setSelectedSearchByText(e.target.value);
@@ -314,7 +326,10 @@ export default function Index() {
             />
             <Grid
               item
-              xs={2}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
               className={"flex justify-start items-center gap-4"}
             >
               <button
@@ -381,7 +396,7 @@ export default function Index() {
               >
                 <Grid container className={"w-full pt-4"} spacing={2}>
                   <Grid item xs={12}>
-                    <FormControl className={"w-full flex  gap-4"}>
+                    <FormControl className={"w-full flex gap-4"}>
                       <CustomAutoComplete
                         list={list.country}
                         label={"Country"}

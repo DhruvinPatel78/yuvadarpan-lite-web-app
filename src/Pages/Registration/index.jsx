@@ -20,6 +20,9 @@ export default function Index() {
   const [regionList, setRegionList] = useState([]);
   const [samajList, setSamajList] = useState([]);
   const [lastNameList, setLastNameList] = useState([]);
+  const [selectedLastName, setSelectedLastName] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedSamaj, setSelectedSamaj] = useState(null);
 
   const getList = (feild) => {
     axios.get(`/${feild}/get-all-list`).then((res) => {
@@ -185,10 +188,11 @@ export default function Index() {
                 name="lastName"
                 onChange={(e, lastName) => {
                   setFieldValue("lastName", lastName.id);
+                  setSelectedLastName(lastName.name);
                 }}
                 onBlur={handleBlur}
                 errors={touched.lastName && errors.lastName && errors.lastName}
-                value={values.lastName}
+                value={selectedLastName}
               />
               <CustomInput
                 type={"text"}
@@ -249,11 +253,12 @@ export default function Index() {
                 name={"region"}
                 xs={12}
                 md={6}
-                value={values?.region}
+                value={selectedRegion}
                 errors={touched?.region && errors?.region && errors?.region}
                 onChange={(e, region) => {
                   setFieldValue("region", region.id);
                   getSamajList(region.id);
+                  setSelectedRegion(region.name);
                 }}
                 onBlur={handleBlur}
               />
@@ -264,14 +269,16 @@ export default function Index() {
                 name={"localSamaj"}
                 xs={12}
                 md={6}
-                value={values?.localSamaj}
+                value={selectedSamaj}
                 errors={
                   touched?.localSamaj &&
                   errors?.localSamaj &&
                   errors?.localSamaj
                 }
+                disabled={!selectedRegion}
                 onChange={(e, localSamaj) => {
                   setFieldValue("localSamaj", localSamaj.id);
+                  setSelectedSamaj(localSamaj.name);
                 }}
                 onBlur={handleBlur}
               />
