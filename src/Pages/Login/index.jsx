@@ -160,12 +160,24 @@ export default function Index() {
                 <p className="flex justify-center text-sm sm:text-lg cursor-default">
                   Create a new account?
                   <span
-                    className={`px-1 font-black text-[#572a2a] no-underline text-sm sm:text-lg cursor-pointer`}
-                    // onClick={loading ? () => {} : () => navigate("/register")}
+                    className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
                     onClick={() => (loading ? {} : navigate("/register"))}
                     style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
                   >
                     Registration
+                  </span>
+                </p>
+              </Grid>
+              <Grid item xs={12}>
+                <p className="flex justify-center text-sm sm:text-lg cursor-default bg-[#f3f5f9] p-3 rounded">
+                  Forgot your password?
+                  <span
+                    className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
+                    // onClick={loading ? () => {} : () => navigate("/register")}
+                    onClick={() => (loading ? {} : navigate("/reset-password"))}
+                    style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
+                  >
+                    Reset It
                   </span>
                 </p>
               </Grid>

@@ -29,6 +29,9 @@ import NotFound from "./Pages/NotFound";
 import PrivateRoute from "./util/PrivateRoute";
 import PublicRoute from "./util/PublicRoute";
 import Home from "./Pages/User/Dashboard";
+import ResetPassword from "./Pages/RestPassword";
+import VerifyOtp from "./Pages/VerifyOtp";
+import ChangePassword from "./Pages/ChangePassword";
 
 function App() {
   return (
@@ -36,6 +39,21 @@ function App() {
       <Route path={"/"}>
         {/*Public Routes*/}
         <Route path="login" exact element={<PublicRoute Component={Login} />} />
+        <Route
+          path="reset-password"
+          exact
+          element={<PublicRoute Component={ResetPassword} />}
+        />
+        <Route
+          path="verify-opt"
+          exact
+          element={<PublicRoute Component={VerifyOtp} />}
+        />
+        <Route
+          path="forget-password"
+          exact
+          element={<PublicRoute Component={ChangePassword} />}
+        />
         <Route
           path="register"
           exact
@@ -76,9 +94,9 @@ function App() {
               element={<PrivateRoute Component={Profile} />}
             />
             <Route
-                path=":id/edit"
-                exact
-                element={<PrivateRoute Component={AddYuva} />}
+              path=":id/edit"
+              exact
+              element={<PrivateRoute Component={AddYuva} />}
             />
           </Route>
 
