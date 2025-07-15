@@ -523,7 +523,10 @@ function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleUserList()}
+                onClick={() => {
+                  setPage(0);
+                  handleUserList();
+                }}
               >
                 Submit
               </button>

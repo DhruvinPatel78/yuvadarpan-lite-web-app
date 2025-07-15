@@ -72,6 +72,7 @@ function CustomTable({
       {pagination ? (
         <div className={"w-full bg-white p-2 flex justify-end"}>
           <TablePagination
+            className={"pr-6"}
             component="div"
             count={data ? Math.ceil(data?.total) : 0}
             page={page}
