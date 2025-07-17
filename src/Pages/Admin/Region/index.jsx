@@ -106,10 +106,10 @@ export default function Index() {
                 setSelectedValue((pre) => ({
                   ...pre,
                   country: country.find(
-                    (item) => item?.id === record?.row?.country_id
+                    (item) => item?.id === record?.row?.country_id,
                   )?.name,
                   state: state.find(
-                    (item) => item?.id === record?.row?.state_id
+                    (item) => item?.id === record?.row?.state_id,
                   )?.name,
                 }));
                 setFieldValue("country_id", record?.row?.country_id);
@@ -334,7 +334,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleRegionList()}
+                onClick={() => {
+                  setPage(0);
+                  handleRegionList();
+                }}
               >
                 Submit
               </button>

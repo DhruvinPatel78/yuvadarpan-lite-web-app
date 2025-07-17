@@ -80,7 +80,7 @@ const YuvaList = () => {
               ...data,
               label: data.name,
               value: data.id,
-            }))
+            })),
           );
         })
         .catch(function (error) {
@@ -247,6 +247,8 @@ const YuvaList = () => {
     handleRequestList(true);
   };
 
+  console.log("page :", rowsPerPage, page);
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -292,7 +294,7 @@ const YuvaList = () => {
               onChange={(e, lastName) => {
                 if (lastName) {
                   setSelectedSurname((pre) =>
-                    getSelectedData(pre, lastName, e)
+                    getSelectedData(pre, lastName, e),
                   );
                 }
               }}
@@ -356,7 +358,10 @@ const YuvaList = () => {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleRequestList()}
+                onClick={() => {
+                  setPage(0);
+                  handleRequestList();
+                }}
               >
                 Submit
               </button>
@@ -378,14 +383,14 @@ const YuvaList = () => {
         </CustomAccordion>
         <CustomTable
           columns={yuvaListColumn}
-          className={"mx-0 w-full"}
           data={yuvaList}
           name={"YuvaList"}
           pageSize={rowsPerPage}
-          type={"pendingList"}
-          setPage={setPage}
-          pages={page}
           setPageSize={setRowsPerPage}
+          type={"pendingList"}
+          className={"mx-0 w-full"}
+          pages={page}
+          setPage={setPage}
         />
       </ContainerPage>
       <Modal
@@ -418,7 +423,7 @@ const YuvaList = () => {
                   window.open(
                     userData?.profile?.url ||
                       "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank"
+                    "_blank",
                   )
                 }
               >
@@ -576,7 +581,7 @@ const YuvaList = () => {
                           <span className={"font-normal"}>
                             {
                               state?.find(
-                                (item) => item?.id === userData?.state
+                                (item) => item?.id === userData?.state,
                               )?.name
                             }
                           </span>

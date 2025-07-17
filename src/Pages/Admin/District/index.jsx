@@ -112,13 +112,13 @@ export default function Index() {
                     country.find((item) => item?.id === record?.row?.country_id)
                       ?.name ||
                     country.find(
-                      (item) => item?.name === record?.row?.country_id
+                      (item) => item?.name === record?.row?.country_id,
                     )?.name,
                   state: state.find(
-                    (item) => item?.id === record?.row?.state_id
+                    (item) => item?.id === record?.row?.state_id,
                   )?.name,
                   region: region.find(
-                    (item) => item?.id === record?.row?.region_id
+                    (item) => item?.id === record?.row?.region_id,
                   )?.name,
                 }));
                 setFieldValue("name", record?.row.name);
@@ -367,7 +367,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleDistrictList()}
+                onClick={() => {
+                  setPage(0);
+                  handleDistrictList();
+                }}
               >
                 Submit
               </button>

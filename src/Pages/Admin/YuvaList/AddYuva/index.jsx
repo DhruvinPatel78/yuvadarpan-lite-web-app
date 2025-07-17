@@ -357,7 +357,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct"
+            "Phone Number must be correct",
           )
           .required("Contact Phone Number Is Required"),
       }),
@@ -376,11 +376,12 @@ const AddYuva = () => {
       activity: Yup.string().required("Activity Is Required"),
       abroadStudy: Yup.string().required("AbroadStudy Required"),
       email: Yup.string()
-        .matches(
-          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
-        )
-        .required("Email Is Required"),
+        .test("email", "", async function (value) {
+          const result = await validateEmailFormat(value);
+          const { valid, message } = result || {};
+          return valid || this.createError({ message });
+        })
+        .required("Required"),
       martialStatus: Yup.string().required("Martial Status Is Required"),
       // handicap: Yup.string().required("Required"),
       // handicapDetails: Yup.string().required("Required"),
@@ -399,6 +400,32 @@ const AddYuva = () => {
     handleBlur,
     setFieldTouched,
   } = formik;
+
+  const validateEmailFormat = async (value) => {
+    const emailRegex = /^[\w-]+@([\w-]+\.)+[\w-]{2,4}$/;
+
+    if (!value) {
+      return { valid: false, message: "Email is required" };
+    }
+
+    if (!emailRegex.test(value)) {
+      return { valid: false, message: "Invalid email address format" };
+    }
+
+    try {
+      const res = await axios.get(`/user/list?page=1&limit=100`, {
+        params: { email: value },
+      });
+
+      if (res?.data?.total > 0) {
+        return { valid: false, message: "Email is already registered" };
+      } else {
+        return { valid: true };
+      }
+    } catch (error) {
+      return { valid: false, message: "Error validating email" };
+    }
+  };
 
   const imageUploadHandler = (file) => {
     dispatch(startLoading());

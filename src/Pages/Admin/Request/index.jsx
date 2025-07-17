@@ -115,7 +115,7 @@ export default function Index() {
             roles: isRest ? [] : filteredRolesIds,
             ...text,
           },
-        }
+        },
       );
       setUserList(response?.data);
     } catch (error) {
@@ -337,7 +337,7 @@ export default function Index() {
               onChange={(e, lastName) => {
                 if (lastName) {
                   setSelectedSurname((pre) =>
-                    getSelectedData(pre, lastName, e)
+                    getSelectedData(pre, lastName, e),
                   );
                 }
               }}
@@ -456,7 +456,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleRequestList()}
+                onClick={() => {
+                  setPage(0);
+                  handleRequestList();
+                }}
               >
                 Submit
               </button>

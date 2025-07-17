@@ -255,7 +255,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleNativeList()}
+                onClick={() => {
+                  setPage(0);
+                  handleNativeList();
+                }}
               >
                 Submit
               </button>

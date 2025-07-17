@@ -123,16 +123,16 @@ export default function Index() {
                     country.find((item) => item?.id === record?.row?.country_id)
                       ?.name ||
                     country.find(
-                      (item) => item?.name === record?.row?.country_id
+                      (item) => item?.name === record?.row?.country_id,
                     )?.name,
                   state: state.find(
-                    (item) => item?.id === record?.row?.state_id
+                    (item) => item?.id === record?.row?.state_id,
                   )?.name,
                   region: region.find(
-                    (item) => item?.id === record?.row?.region_id
+                    (item) => item?.id === record?.row?.region_id,
                   )?.name,
                   district: district.find(
-                    (item) => item?.id === record?.row?.district_id
+                    (item) => item?.id === record?.row?.district_id,
                   )?.name,
                   city: city.find((item) => item?.id === record?.row?.city_id)
                     ?.name,
@@ -256,7 +256,7 @@ export default function Index() {
   const filteredDistrictIds = useFilteredIds(
     selectedDistrict,
     "value",
-    "label"
+    "label",
   );
 
   const handleSamajList = async (isRest = false) => {
@@ -399,7 +399,7 @@ export default function Index() {
               onChange={(e, district) => {
                 if (district) {
                   setSelectedDistrict((pre) =>
-                    getSelectedData(pre, district, e)
+                    getSelectedData(pre, district, e),
                   );
                 }
               }}
@@ -427,7 +427,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleSamajList()}
+                onClick={() => {
+                  setPage(0);
+                  handleSamajList();
+                }}
               >
                 Submit
               </button>

@@ -92,13 +92,13 @@ export default function Index() {
                     ...data,
                     label: data.name,
                     value: data.id,
-                  }))
+                  })),
                 );
                 setFieldValue("name", record?.row.name);
                 setFieldValue("country_id", record?.row.country_id);
                 setSelectedCountry(
                   country.find((item) => item?.id === record?.row?.country_id)
-                    ?.name
+                    ?.name,
                 );
               }}
             />
@@ -235,7 +235,7 @@ export default function Index() {
                   ...data,
                   label: data.name,
                   value: data.id,
-                }))
+                })),
               );
             }}
           >
@@ -287,7 +287,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleStateList()}
+                onClick={() => {
+                  setPage(0);
+                  handleStateList();
+                }}
               >
                 Submit
               </button>

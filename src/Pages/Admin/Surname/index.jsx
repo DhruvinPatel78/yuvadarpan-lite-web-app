@@ -262,7 +262,10 @@ export default function Index() {
             >
               <button
                 className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleSurnameList()}
+                onClick={() => {
+                  setPage(0);
+                  handleSurnameList();
+                }}
               >
                 Submit
               </button>

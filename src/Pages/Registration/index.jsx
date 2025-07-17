@@ -106,14 +106,28 @@ export default function Index() {
       localSamaj: Yup.string().required("Required"),
       region: Yup.string().required("Required"),
       gender: Yup.string().required("Required"),
+      // email: Yup.string()
+      //   .matches(
+      //     "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+      //     "Invalid email address format",
+      //   )
+      //   .required("Required"),
       email: Yup.string()
-        .matches(
-          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
-        )
+        .test("email", "", async function (value) {
+          const result = await validateEmailFormat(value);
+          const { valid, message } = result || {};
+          return valid || this.createError({ message });
+        })
         .required("Required"),
+      // mobile: Yup.string()
+      //   .matches("^(\\+\\d{1,3}[- ]?)?\\d{10}$", "Phone Number must be correct")
+      //   .required("Required"),
       mobile: Yup.string()
-        .matches("^(\\+\\d{1,3}[- ]?)?\\d{10}$", "Phone Number must be correct")
+        .test("mobile", "", async function (value) {
+          const result = await validateMobile(value);
+          const { valid, message } = result || {};
+          return valid || this.createError({ message });
+        })
         .required("Required"),
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string().required("Required"),
@@ -133,6 +147,59 @@ export default function Index() {
     handleChange,
     handleBlur,
   } = formik;
+
+  const validateEmailFormat = async (value) => {
+    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+
+    if (!value) {
+      return { valid: false, message: "Email is required" };
+    }
+
+    if (!emailRegex.test(value)) {
+      return { valid: false, message: "Invalid email address format" };
+    }
+
+    try {
+      const res = await axios.get(`/user/list?page=1&limit=100`, {
+        params: { email: value },
+      });
+
+      if (res?.data?.total > 0) {
+        return { valid: false, message: "Email is already registered" };
+      } else {
+        return { valid: true };
+      }
+    } catch (error) {
+      return { valid: false, message: "Error validating email" };
+    }
+  };
+
+  const validateMobile = async (value) => {
+    const mobileRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
+
+    if (!value) {
+      return { valid: false, message: "Mobile is required" };
+    }
+
+    if (!mobileRegex.test(value)) {
+      return { valid: false, message: "Phone Number must be correct" };
+    }
+
+    try {
+      const res = await axios.get(`/user/list?page=1&limit=100`, {
+        params: { mobile: value },
+      });
+
+      if (res?.data?.total > 0) {
+        return { valid: false, message: "Mobile is already registered" };
+      } else {
+        return { valid: true };
+      }
+    } catch (error) {
+      console.error("Mobile validation error:", error);
+      return { valid: false, message: "Error validating mobile" };
+    }
+  };
 
   return (
     <Grid className="h-screen flex justify-center items-center">
