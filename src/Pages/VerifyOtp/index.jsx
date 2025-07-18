@@ -1,18 +1,23 @@
 import { Button, Grid, Paper } from "@mui/material";
 import OTPInput from "../../Component/Common/OTPInput";
 import { useLocation, useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
 import useAxios from "../../util/useAxios";
+import { useDispatch } from "react-redux";
+import { endLoading, startLoading } from "../../store/authSlice";
 
 export default function Index() {
   const location = useLocation();
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
   const { notification, setNotification } = NotificationData();
+  const dispatch = useDispatch();
+  const otpRef = useRef();
+
   const submitHandler = async () => {
     try {
       await useAxios
@@ -25,23 +30,65 @@ export default function Index() {
             message: "OTP Verify Successfully",
             type: "success",
           });
-          navigate("/forget-password", {
-            state: { email: location.state?.email },
-          });
+          setTimeout(() => {
+            navigate("/forget-password", {
+              state: { email: location.state?.email },
+            });
+          }, 2000);
         })
         .catch((err) => {
           setNotification({
             message: err.response.data.message,
             type: "error",
           });
+          handleReset();
         });
     } catch (err) {
       setNotification({
         message: err.response.data.message,
         type: "error",
       });
+      handleReset();
     }
   };
+
+  const handleReset = () => {
+    otpRef.current?.resetOtp();
+  };
+
+  const resendOTP = async () => {
+    dispatch(startLoading());
+    const email = location.state?.email;
+    handleReset();
+    try {
+      await useAxios
+        .post(`/user/sendOtp`, {
+          email,
+        })
+        .then(() => {
+          dispatch(endLoading());
+          setNotification({
+            message: "OTP Send Successfully",
+            type: "success",
+          });
+        })
+        .catch((err) => {
+          dispatch(endLoading());
+          setNotification({
+            message: err.response.data.message,
+            type: "error",
+          });
+        });
+    } catch (err) {
+      dispatch(endLoading());
+      setNotification({
+        message: err.response.data.message,
+        type: "error",
+      });
+    }
+  };
+
+  console.log("otp : ", otp);
 
   return (
     <div className="h-screen flex flex-col justify-center items-center">
@@ -64,13 +111,18 @@ export default function Index() {
             </p>
           </Grid>
           <Grid item xs={12}>
-            <OTPInput length={6} onComplete={(otp) => setOtp(otp)} />
+            <OTPInput
+              length={6}
+              onComplete={(otp) => setOtp(otp)}
+              ref={otpRef}
+            />
           </Grid>
           <Grid item xs={12}>
             <p className="flex justify-center text-sm sm:text-lg cursor-default">
               Don't receive OTP Code?
               <span
                 className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
+                onClick={() => resendOTP()}
               >
                 Resend
               </span>

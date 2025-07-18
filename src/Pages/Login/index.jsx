@@ -1,5 +1,5 @@
 import React from "react";
-import { CircularProgress, Grid, Paper } from "@mui/material";
+import { CircularProgress, Grid, Link, Paper } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
 import {
@@ -36,11 +36,16 @@ export default function Index() {
     },
     validationSchema: Yup.object({
       email: Yup.string()
-        .matches(
-          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
-        )
-        .required("Required"),
+        .required("Required")
+        .test(
+          "email-or-phone",
+          "Must be a valid email or phone number",
+          function (value) {
+            const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+            const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
+            return emailRegex.test(value) || phoneRegex.test(value);
+          },
+        ),
       password: Yup.string().required("Required"),
     }),
     onSubmit: async (values, { resetForm }) => {
@@ -87,8 +92,8 @@ export default function Index() {
             !values.email && !values.password
               ? "Email and Password are required."
               : !values.email
-              ? "Email is required."
-              : "Password is required.",
+                ? "Email is required."
+                : "Password is required.",
           type: "error",
         });
       }
@@ -157,6 +162,14 @@ export default function Index() {
                 </button>
               </Grid>
               <Grid item xs={12}>
+                <Link
+                  href={"/reset-password"}
+                  className="px-1 !text-[#572a2a] !no-underline font-semibold"
+                >
+                  Forgot Password ?
+                </Link>
+              </Grid>
+              <Grid item xs={12}>
                 <p className="flex justify-center text-sm sm:text-lg cursor-default">
                   Create a new account?
                   <span
@@ -165,19 +178,6 @@ export default function Index() {
                     style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
                   >
                     Registration
-                  </span>
-                </p>
-              </Grid>
-              <Grid item xs={12}>
-                <p className="flex justify-center text-sm sm:text-lg cursor-default bg-[#f3f5f9] p-3 rounded">
-                  Forgot your password?
-                  <span
-                    className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
-                    // onClick={loading ? () => {} : () => navigate("/register")}
-                    onClick={() => (loading ? {} : navigate("/reset-password"))}
-                    style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
-                  >
-                    Reset It
                   </span>
                 </p>
               </Grid>

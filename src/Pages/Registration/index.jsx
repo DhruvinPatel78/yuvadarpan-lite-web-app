@@ -11,7 +11,6 @@ import moment from "moment";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
-import axios from "../../util/useAxios";
 import CustomRadio from "../../Component/Common/customRadio";
 
 export default function Index() {
@@ -23,9 +22,10 @@ export default function Index() {
   const [selectedLastName, setSelectedLastName] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [selectedSamaj, setSelectedSamaj] = useState(null);
+  const today = moment().format("YYYY-MM-DD");
 
   const getList = (feild) => {
-    axios.get(`/${feild}/get-all-list`).then((res) => {
+    useAxios.get(`/${feild}/get-all-list`).then((res) => {
       const list = res?.data?.map((data) => ({
         ...data,
         label: data?.name,
@@ -38,7 +38,7 @@ export default function Index() {
   };
 
   const getSamajList = (regionId) => {
-    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+    useAxios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
       setSamajList(res.data);
     });
   };
@@ -48,11 +48,11 @@ export default function Index() {
     getList("region");
   }, []);
 
-  const handleSubmit = (value) => {
+  const handleSubmit = async (value) => {
     if (value.password === value.confirmPassword) {
       try {
-        useAxios
-          .post("/user/signUp", {
+        await useAxios
+          .post("/user/add", {
             familyId: value?.familyId,
             firstName: value?.firstName,
             middleName: value?.middleName,
@@ -68,7 +68,9 @@ export default function Index() {
           })
           .then((res) => {
             setNotification({ type: "success", message: "Success !" });
-            navigate("/thankyou");
+            setTimeout(() => {
+              navigate("/thankyou");
+            }, 2000);
           });
       } catch (e) {
         setNotification({
@@ -109,7 +111,7 @@ export default function Index() {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
+          "Invalid email address format",
         )
         .required("Required"),
       mobile: Yup.string()
@@ -117,11 +119,17 @@ export default function Index() {
         .required("Required"),
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string().required("Required"),
-      dob: Yup.date().required("Required"),
+      dob: Yup.date()
+        .required("Required")
+        .min(new Date("1950-01-01"), "DOB cannot be before 1950")
+        .max(new Date(), "DOB cannot be in the future"),
     }),
     onSubmit: async (values, { resetForm }) => {
       handleSubmit(values);
       resetForm();
+      setSelectedLastName(null);
+      setSelectedRegion(null);
+      setSelectedSamaj(null);
     },
   });
   const {
@@ -304,6 +312,8 @@ export default function Index() {
                 errors={touched.dob && errors.dob && errors.dob}
                 value={values.dob}
                 focused
+                max={today}
+                min="1950-01-01"
               />
               <CustomRadio
                 list={[

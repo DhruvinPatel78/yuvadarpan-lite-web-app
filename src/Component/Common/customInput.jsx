@@ -57,6 +57,8 @@ const CustomInput = ({
     event.preventDefault();
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
     <Grid item {...rest}>
       <PrimaryTextField
@@ -93,6 +95,7 @@ const CustomInput = ({
         onBlur={onBlur}
         disabled={disabled}
         error={errors}
+        {...(type === "date" ? { max: today } : {})}
       />
       {errors && (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
