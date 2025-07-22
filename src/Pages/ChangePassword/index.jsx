@@ -2,7 +2,6 @@ import { Grid, Paper } from "@mui/material";
 import React from "react";
 import CustomInput from "../../Component/Common/customInput";
 import { useLocation, useNavigate } from "react-router-dom";
-import useAxios from "../../util/useAxios";
 import {
   NotificationData,
   NotificationSnackbar,
@@ -12,6 +11,7 @@ import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
 import { endLoading, startLoading } from "../../store/authSlice";
 import { useDispatch } from "react-redux";
+import { changePassword } from "../../util/authApi";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -37,42 +37,32 @@ export default function Index() {
         values.password === values.confirmPassword
       ) {
         try {
-          await useAxios
-            .patch(`/user/forgotPassword`, {
-              email: location.state?.email,
-              password: values.password,
-            })
-            .then((res) => {
-              setNotification({
-                message: res.data.message,
-                type: "success",
-              });
-              setTimeout(() => {
-                resetForm();
-                dispatch(endLoading);
-                navigate("/login");
-              }, 2000);
-            })
-            .catch((err) => {
-              setNotification({
-                message: err.response.data.message,
-                type: "error",
-              });
-              dispatch(endLoading);
-            });
+          const res = await changePassword(
+            location.state?.email,
+            values.password
+          );
+          setNotification({
+            message: res.message,
+            type: "success",
+          });
+          setTimeout(() => {
+            resetForm();
+            dispatch(endLoading());
+            navigate("/login");
+          }, 2000);
         } catch (err) {
           setNotification({
-            message: err.response.data.message,
+            message: err?.response?.data?.message || "Password change failed.",
             type: "error",
           });
-          dispatch(endLoading);
+          dispatch(endLoading());
         }
       } else {
         setNotification({
           message: `confirm password not matched !`,
           type: "error",
         });
-        dispatch(endLoading);
+        dispatch(endLoading());
       }
     },
   });

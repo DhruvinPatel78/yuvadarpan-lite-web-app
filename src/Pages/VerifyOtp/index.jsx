@@ -6,9 +6,9 @@ import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
-import useAxios from "../../util/useAxios";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../store/authSlice";
+import { verifyOtp, resendOtp } from "../../util/authApi";
 
 export default function Index() {
   const location = useLocation();
@@ -20,32 +20,19 @@ export default function Index() {
 
   const submitHandler = async () => {
     try {
-      await useAxios
-        .post(`/user/verifyOtp`, {
-          email: location.state?.email,
-          otp: otp,
-        })
-        .then(() => {
-          setNotification({
-            message: "OTP Verify Successfully",
-            type: "success",
-          });
-          setTimeout(() => {
-            navigate("/forget-password", {
-              state: { email: location.state?.email },
-            });
-          }, 2000);
-        })
-        .catch((err) => {
-          setNotification({
-            message: err.response.data.message,
-            type: "error",
-          });
-          handleReset();
+      await verifyOtp(location.state?.email, otp);
+      setNotification({
+        message: "OTP Verify Successfully",
+        type: "success",
+      });
+      setTimeout(() => {
+        navigate("/forget-password", {
+          state: { email: location.state?.email },
         });
+      }, 2000);
     } catch (err) {
       setNotification({
-        message: err.response.data.message,
+        message: err?.response?.data?.message || "OTP verification failed.",
         type: "error",
       });
       handleReset();
@@ -61,28 +48,16 @@ export default function Index() {
     const email = location.state?.email;
     handleReset();
     try {
-      await useAxios
-        .post(`/user/sendOtp`, {
-          email,
-        })
-        .then(() => {
-          dispatch(endLoading());
-          setNotification({
-            message: "OTP Send Successfully",
-            type: "success",
-          });
-        })
-        .catch((err) => {
-          dispatch(endLoading());
-          setNotification({
-            message: err.response.data.message,
-            type: "error",
-          });
-        });
+      await resendOtp(email);
+      dispatch(endLoading());
+      setNotification({
+        message: "OTP Send Successfully",
+        type: "success",
+      });
     } catch (err) {
       dispatch(endLoading());
       setNotification({
-        message: err.response.data.message,
+        message: err?.response?.data?.message || "Failed to resend OTP.",
         type: "error",
       });
     }

@@ -14,7 +14,6 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
-import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
 import { useDispatch } from "react-redux";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -33,6 +32,12 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getDistrictList,
+  addDistrict,
+  updateDistrict,
+  deleteDistrict,
+} from "../../../util/districtApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -150,26 +155,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        districtModalData
-          ? await axios
-              .patch(`/district/update/${districtModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                districtAddEditModalClose();
-                handleDistrictList();
-              })
-          : await axios
-              .post(`/district/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                districtAddEditModalClose();
-                handleDistrictList();
-              });
+        if (districtModalData) {
+          await updateDistrict(districtModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addDistrict({ ...rest });
+        }
+        districtAddEditModalClose();
+        handleDistrictList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -206,17 +203,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/district/delete`, {
-          data: {
-            districts: [id],
-          },
-        })
-        .then(() => {
-          handleDistrictList();
-        });
+      await deleteDistrict([id]);
+      handleDistrictList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -233,20 +223,18 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/district/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            country: isRest ? [] : filteredCountryIds,
-            state: isRest ? [] : filteredStateIds,
-            region: isRest ? [] : filteredRegionIds,
-            ...text,
-          },
-        })
-        .then((res) => {
-          setDistrictData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        country: isRest ? [] : filteredCountryIds,
+        state: isRest ? [] : filteredStateIds,
+        region: isRest ? [] : filteredRegionIds,
+        ...text,
+      };
+      const data = await getDistrictList(params);
+      setDistrictData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

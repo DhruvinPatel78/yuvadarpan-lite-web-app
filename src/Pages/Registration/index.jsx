@@ -12,6 +12,7 @@ import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import CustomRadio from "../../Component/Common/customRadio";
+import { registerUser } from "../../util/authApi";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -51,31 +52,28 @@ export default function Index() {
   const handleSubmit = async (value) => {
     if (value.password === value.confirmPassword) {
       try {
-        await useAxios
-          .post("/user/add", {
-            familyId: value?.familyId,
-            firstName: value?.firstName,
-            middleName: value?.middleName,
-            lastName: value?.lastName,
-            email: value?.email,
-            mobile: value?.mobile,
-            password: value?.password,
-            dob: moment(value?.dob).format(),
-            region: value?.region,
-            localSamaj: value?.localSamaj,
-            role: "USER",
-            gender: value?.gender,
-          })
-          .then((res) => {
-            setNotification({ type: "success", message: "Success !" });
-            setTimeout(() => {
-              navigate("/thankyou");
-            }, 2000);
-          });
+        await registerUser({
+          familyId: value?.familyId,
+          firstName: value?.firstName,
+          middleName: value?.middleName,
+          lastName: value?.lastName,
+          email: value?.email,
+          mobile: value?.mobile,
+          password: value?.password,
+          dob: moment(value?.dob).format(),
+          region: value?.region,
+          localSamaj: value?.localSamaj,
+          role: "USER",
+          gender: value?.gender,
+        });
+        setNotification({ type: "success", message: "Success !" });
+        setTimeout(() => {
+          navigate("/thankyou");
+        }, 2000);
       } catch (e) {
         setNotification({
           type: "error",
-          message: e.response.data.message,
+          message: e?.response?.data?.message || "Registration failed.",
         });
       }
     } else {

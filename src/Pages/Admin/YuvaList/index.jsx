@@ -19,7 +19,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
-import axios from "../../../util/useAxios";
+import { getYuvaList as fetchYuvaList, deleteYuva, getNativeList as fetchNativeList } from "../../../util/yuvaAdminApi";
 import {
   getSelectedData,
   ImageBackdrop,
@@ -62,32 +62,21 @@ const YuvaList = () => {
 
   const deleteAPI = async (id) => {
     try {
-      await axios.delete(`/yuvaList/${id}`).then(() => {
-        handleRequestList();
-      });
+      await deleteYuva(id);
+      handleRequestList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
   const getNativeList = async () => {
     try {
-      await axios
-        .get(`/native/get-all-list`)
-        .then((res) => {
-          setNativeList(
-            res.data.map((data) => ({
-              ...data,
-              label: data.name,
-              value: data.id,
-            }))
-          );
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
+      const data = await fetchNativeList();
+      setNativeList(
+        data.map((d) => ({ ...d, label: d.name, value: d.id }))
+      );
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -220,19 +209,17 @@ const YuvaList = () => {
             [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
           }
         : {};
-      await axios
-        .get(`/yuvaList/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            lastName: isRest ? [] : filteredSurnameIds,
-            native: isRest ? [] : filteredNativeIds,
-            ...text,
-          },
-        })
-        .then((res) => {
-          setYuvaList(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        lastName: isRest ? [] : filteredSurnameIds,
+        native: isRest ? [] : filteredNativeIds,
+        ...text,
+      };
+      const data = await fetchYuvaList(params);
+      setYuvaList(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

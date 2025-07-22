@@ -10,7 +10,6 @@ import {
   Paper,
   Tooltip,
 } from "@mui/material";
-import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import AddIcon from "@mui/icons-material/Add";
@@ -25,6 +24,12 @@ import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getSurnameList,
+  addSurname,
+  updateSurname,
+  deleteSurname,
+} from "../../../util/surnameApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -103,16 +108,10 @@ export default function Index() {
 
   const userActionHandler = async (countryInfo, action, field) => {
     try {
-      await axios
-        .patch(`/surname/update/${countryInfo?.id}`, {
-          ...countryInfo,
-          [field]: action,
-        })
-        .then(() => {
-          handleSurnameList();
-        });
+      await updateSurname(countryInfo?.id, { ...countryInfo, [field]: action });
+      handleSurnameList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -126,26 +125,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        surnameModalData
-          ? await axios
-              .patch(`/surname/update/${surnameModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                surnameAddEditModalClose();
-                handleSurnameList();
-              })
-          : await axios
-              .post(`/surname/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                surnameAddEditModalClose();
-                handleSurnameList();
-              });
+        if (surnameModalData) {
+          await updateSurname(surnameModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addSurname({ ...rest });
+        }
+        surnameAddEditModalClose();
+        handleSurnameList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -176,17 +167,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/surname/delete`, {
-          data: {
-            surnames: [id],
-          },
-        })
-        .then(() => {
-          handleSurnameList();
-        });
+      await deleteSurname([id]);
+      handleSurnameList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -200,17 +184,15 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/surname/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            ...text,
-          },
-        })
-        .then((res) => {
-          setSurnameData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        ...text,
+      };
+      const data = await getSurnameList(params);
+      setSurnameData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

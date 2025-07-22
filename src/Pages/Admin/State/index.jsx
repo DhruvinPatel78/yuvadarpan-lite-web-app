@@ -14,7 +14,6 @@ import CustomTable from "../../../Component/Common/customTable";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
 import CloseIcon from "@mui/icons-material/Close";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -31,6 +30,12 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getStateList,
+  addState,
+  updateState,
+  deleteState,
+} from "../../../util/stateApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -123,26 +128,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        stateModalData
-          ? await axios
-              .patch(`/state/update/${stateModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                stateAddEditModalClose();
-                handleStateList();
-              })
-          : await axios
-              .post(`/state/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                stateAddEditModalClose();
-                handleStateList();
-              });
+        if (stateModalData) {
+          await updateState(stateModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addState({ ...rest });
+        }
+        stateAddEditModalClose();
+        handleStateList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -171,17 +168,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/state/delete`, {
-          data: {
-            states: [id],
-          },
-        })
-        .then(() => {
-          handleStateList();
-        });
+      await deleteState([id]);
+      handleStateList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -195,18 +185,16 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/state/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            country: isRest ? [] : filteredCountryIds,
-            ...text,
-          },
-        })
-        .then((res) => {
-          setStateData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        country: isRest ? [] : filteredCountryIds,
+        ...text,
+      };
+      const data = await getStateList(params);
+      setStateData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

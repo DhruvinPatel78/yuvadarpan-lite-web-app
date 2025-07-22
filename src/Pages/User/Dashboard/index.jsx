@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import { Button, Container, Grid } from "@mui/material";
-import axios from "../../../util/useAxios";
 import { toCamelCase } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import { getYuvaList as fetchYuvaList } from "../../../util/yuvaApi";
 
 const Home = () => {
   const { surname, city } = UseRedux();
@@ -21,11 +21,10 @@ const Home = () => {
   const getYuvaList = async () => {
     dispatch(startLoading());
     try {
-      await axios.get(`/yuvaList/get-all-list`).then((res) => {
-        setYuvaList(res?.data);
-      });
+      const data = await fetchYuvaList();
+      setYuvaList(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     } finally {
       setTimeout(() => {
         dispatch(endLoading());

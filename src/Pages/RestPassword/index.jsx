@@ -2,7 +2,6 @@ import { Grid, Paper } from "@mui/material";
 import React from "react";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
-import useAxios from "../../util/useAxios";
 import {
   NotificationData,
   NotificationSnackbar,
@@ -12,6 +11,7 @@ import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
 import { endLoading, startLoading } from "../../store/authSlice";
 import { useDispatch } from "react-redux";
+import { sendOtp } from "../../util/authApi";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -33,37 +33,25 @@ export default function Index() {
             const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
             const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
             return emailRegex.test(value) || phoneRegex.test(value);
-          },
+          }
         ),
     }),
     onSubmit: async (values, { resetForm }) => {
       dispatch(startLoading());
       const email = values.email;
       try {
-        await useAxios
-          .post(`/user/sendOtp`, {
-            email,
-          })
-          .then(() => {
-            dispatch(endLoading());
-            setNotification({
-              message: "OTP Send Successfully",
-              type: "success",
-            });
-            navigate("/verify-opt", { state: { email: email } });
-            resetForm();
-          })
-          .catch((err) => {
-            dispatch(endLoading());
-            setNotification({
-              message: err.response.data.message,
-              type: "error",
-            });
-          });
+        await sendOtp(email);
+        dispatch(endLoading());
+        setNotification({
+          message: "OTP Send Successfully",
+          type: "success",
+        });
+        navigate("/verify-opt", { state: { email: email } });
+        resetForm();
       } catch (err) {
         dispatch(endLoading());
         setNotification({
-          message: err.response.data.message,
+          message: err?.response?.data?.message || "Failed to send OTP.",
           type: "error",
         });
       }

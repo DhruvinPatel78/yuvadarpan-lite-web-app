@@ -12,7 +12,6 @@ import {
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
@@ -28,6 +27,11 @@ import {
 import { UseRedux } from "../../../Component/useRedux";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import {
+  getUserRequests,
+  approveRejectUser,
+  approveRejectMany,
+} from "../../../util/requestApi";
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
@@ -67,25 +71,13 @@ export default function Index() {
   const userActionHandler = async (userInfo, action) => {
     dispatch(startLoading());
     try {
-      await axios
-        .patch(`/user/update/${userInfo._id}`, {
-          // ...userInfo,
-          allowed: action,
-        })
-        .then((res) => {
-          handleRequestList();
-          setNotification({ type: "success", message: "Success !" });
-        })
-        .catch((e) => {
-          setNotification({
-            type: "error",
-            message: e.message,
-          });
-        });
+      await approveRejectUser(userInfo._id, action);
+      handleRequestList();
+      setNotification({ type: "success", message: "Success !" });
     } catch (e) {
       setNotification({
         type: "error",
-        message: e.message,
+        message: e?.message || "Failed to update user.",
       });
     } finally {
       dispatch(endLoading());
@@ -104,22 +96,20 @@ export default function Index() {
       ? { [selectedSearchBy.id]: isRest ? "" : selectedSearchByText }
       : {};
     try {
-      const response = await axios.get(
-        `/user/requests?page=${page + 1}&limit=${rowsPerPage}`,
-        {
-          params: {
-            lastName: isRest ? [] : filteredSurnameIds,
-            state: isRest ? [] : filteredStateIds,
-            region: isRest ? [] : filteredRegionIds,
-            samaj: isRest ? [] : filteredSamajIds,
-            roles: isRest ? [] : filteredRolesIds,
-            ...text,
-          },
-        }
-      );
-      setUserList(response?.data);
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        lastName: isRest ? [] : filteredSurnameIds,
+        state: isRest ? [] : filteredStateIds,
+        region: isRest ? [] : filteredRegionIds,
+        samaj: isRest ? [] : filteredSamajIds,
+        roles: isRest ? [] : filteredRolesIds,
+        ...text,
+      };
+      const data = await getUserRequests(params);
+      setUserList(data);
     } catch (error) {
-      console.error("Error fetching user requests:", error);
+      // Optionally handle error with notification
     } finally {
       dispatch(endLoading());
     }
@@ -146,23 +136,14 @@ export default function Index() {
   const handleRequestAll = async (action) => {
     dispatch(startLoading());
     try {
-      await axios
-        .patch(`/user/approveRejectMany`, {
-          ids: selectedUsers,
-          action,
-        })
-        .then((res) => {
-          handleRequestList();
-          setNotification({ type: "success", message: "Success !" });
-        })
-        .catch((e) => {
-          setNotification({
-            type: "error",
-            message: e.message,
-          });
-        });
+      await approveRejectMany(selectedUsers, action);
+      handleRequestList();
+      setNotification({ type: "success", message: "Success !" });
     } catch (e) {
-      console.error("Error Updating user Approve Reject:", e);
+      setNotification({
+        type: "error",
+        message: e?.message || "Failed to update users.",
+      });
     } finally {
       dispatch(endLoading());
     }

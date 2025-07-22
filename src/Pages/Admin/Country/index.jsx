@@ -10,7 +10,6 @@ import {
   Paper,
   Tooltip,
 } from "@mui/material";
-import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import AddIcon from "@mui/icons-material/Add";
@@ -25,6 +24,12 @@ import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getCountryList,
+  addCountry,
+  updateCountry,
+  deleteCountry,
+} from "../../../util/countryApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -101,16 +106,10 @@ export default function Index() {
 
   const userActionHandler = async (countryInfo, action, field) => {
     try {
-      await axios
-        .patch(`/country/update/${countryInfo?.id}`, {
-          ...countryInfo,
-          [field]: action,
-        })
-        .then(() => {
-          handleCountryList();
-        });
+      await updateCountry(countryInfo?.id, { ...countryInfo, [field]: action });
+      handleCountryList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -122,26 +121,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        countryModalData
-          ? await axios
-              .patch(`/country/update/${countryModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                countryAddEditModalClose();
-                handleCountryList();
-              })
-          : await axios
-              .post(`/country/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                countryAddEditModalClose();
-                handleCountryList();
-              });
+        if (countryModalData) {
+          await updateCountry(countryModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addCountry({ ...rest });
+        }
+        countryAddEditModalClose();
+        handleCountryList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -170,17 +161,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/country/delete`, {
-          data: {
-            countries: [id],
-          },
-        })
-        .then(() => {
-          handleCountryList();
-        });
+      await deleteCountry([id]);
+      handleCountryList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -194,17 +178,15 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/country/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            ...text,
-          },
-        })
-        .then((res) => {
-          setCountryData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        ...text,
+      };
+      const data = await getCountryList(params);
+      setCountryData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

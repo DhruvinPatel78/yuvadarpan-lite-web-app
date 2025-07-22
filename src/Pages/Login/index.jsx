@@ -18,10 +18,10 @@ import {
   getAllCountryData,
   getAllRoleData,
 } from "../../util/getAPICall";
-import useAxios from "../../util/useAxios";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
+import { loginUser } from "../../util/authApi";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -44,56 +44,52 @@ export default function Index() {
             const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
             const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
             return emailRegex.test(value) || phoneRegex.test(value);
-          },
+          }
         ),
       password: Yup.string().required("Required"),
     }),
     onSubmit: async (values, { resetForm }) => {
       if (values.email && values.password) {
         dispatch(startLoading());
-        useAxios
-          .post(`/user/signIn`, {
-            ...values,
-          })
-          .then((res) => {
-            localStorage.setItem("user", JSON.stringify(res?.data?.data));
-            localStorage.setItem("token", res?.data?.token);
-            setNotification({ message: "Login Success", type: "success" });
-            setTimeout(() => {
-              dispatch(endLoading());
-              if (res.data?.data?.role === "USER") {
-                dispatch(getAllCityData);
-              } else {
-                dispatch(getAllRegionData);
-                dispatch(getAllCityData);
-                dispatch(getAllDistrictData);
-                dispatch(getAllSamajData);
-                dispatch(getAllStateData);
-                dispatch(getAllSurnameData);
-                dispatch(getAllCountryData);
-                dispatch(getAllRoleData);
-              }
-              dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
-            }, 1000);
-            resetForm();
-          })
-          .catch((err) => {
-            setTimeout(() => {
-              dispatch(endLoading());
-              setNotification({
-                message: err.response.data.message,
-                type: err.response.status === "403" ? "warning" : "error",
-              });
-            }, 1000);
-          });
+        try {
+          const res = await loginUser(values);
+          localStorage.setItem("user", JSON.stringify(res?.data));
+          localStorage.setItem("token", res?.token);
+          setNotification({ message: "Login Success", type: "success" });
+          setTimeout(() => {
+            dispatch(endLoading());
+            if (res.data?.role === "USER") {
+              dispatch(getAllCityData);
+            } else {
+              dispatch(getAllRegionData);
+              dispatch(getAllCityData);
+              dispatch(getAllDistrictData);
+              dispatch(getAllSamajData);
+              dispatch(getAllStateData);
+              dispatch(getAllSurnameData);
+              dispatch(getAllCountryData);
+              dispatch(getAllRoleData);
+            }
+            dispatch(login({ ...res?.data, token: res?.token }));
+          }, 1000);
+          resetForm();
+        } catch (err) {
+          setTimeout(() => {
+            dispatch(endLoading());
+            setNotification({
+              message: err?.response?.data?.message || "Login failed.",
+              type: err?.response?.status === 403 ? "warning" : "error",
+            });
+          }, 1000);
+        }
       } else {
         setNotification({
           message:
             !values.email && !values.password
               ? "Email and Password are required."
               : !values.email
-                ? "Email is required."
-                : "Password is required.",
+              ? "Email is required."
+              : "Password is required.",
           type: "error",
         });
       }

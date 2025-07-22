@@ -39,7 +39,7 @@ const locationReducer = createSlice({
     role: (state, action) => {
       state.role = action.payload;
     },
-    clearLocation: (state, action) => {
+    clearLocation: (state) => {
       state.region = [];
       state.state = [];
       state.district = [];
