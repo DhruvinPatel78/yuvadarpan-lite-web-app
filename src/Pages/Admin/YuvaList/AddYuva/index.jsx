@@ -25,6 +25,7 @@ import { useDispatch } from "react-redux";
 import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
+import { addYuva, updateYuva } from "../../../../util/yuvaAdminApi";
 
 const AddYuva = () => {
   const location = useLocation();
@@ -237,32 +238,29 @@ const AddYuva = () => {
     }
   };
 
-  const addYuvaListHandler = (data) => {
+  const addYuvaListHandler = async (data) => {
     dispatch(startLoading());
-    axios
-      .post(`/yuvaList/addYuvaList`, data)
-      .then((res) => {
-        navigate("/admin/yuvalist");
-      })
-      .finally(() => {
-        dispatch(endLoading());
-        setNewFieldList([]);
-      });
+    try {
+      await addYuva(data);
+      navigate("/admin/yuvalist");
+    } catch (e) {
+      // Optionally handle error with notification
+    } finally {
+      dispatch(endLoading());
+      setNewFieldList([]);
+    }
   };
-  const updateAPIHandler = (data) => {
+  const updateAPIHandler = async (data) => {
     dispatch(startLoading());
-    axios
-      .patch(`/yuvaList/update/${data?.id}`, {
-        ...data,
-        updatedAt: new Date(),
-      })
-      .then((res) => {
-        navigate("/admin/yuvalist");
-      })
-      .finally(() => {
-        dispatch(endLoading());
-        setNewFieldList([]);
-      });
+    try {
+      await updateYuva(data?.id, { ...data, updatedAt: new Date() });
+      navigate("/admin/yuvalist");
+    } catch (e) {
+      // Optionally handle error with notification
+    } finally {
+      dispatch(endLoading());
+      setNewFieldList([]);
+    }
   };
   const formik = useFormik({
     initialValues: {

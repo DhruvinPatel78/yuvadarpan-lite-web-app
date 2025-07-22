@@ -14,7 +14,6 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
-import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
 import { useDispatch } from "react-redux";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -33,6 +32,12 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getSamajList,
+  addSamaj,
+  updateSamaj,
+  deleteSamaj,
+} from "../../../util/samajApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -174,26 +179,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        samajModalData
-          ? await axios
-              .patch(`/samaj/update/${samajModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                samajAddEditModalClose();
-                handleSamajList();
-              })
-          : await axios
-              .post(`/samaj/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                samajAddEditModalClose();
-                handleSamajList();
-              });
+        if (samajModalData) {
+          await updateSamaj(samajModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addSamaj({ ...rest });
+        }
+        samajAddEditModalClose();
+        handleSamajList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -234,17 +231,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/samaj/delete`, {
-          data: {
-            samaj: [id],
-          },
-        })
-        .then(() => {
-          handleSamajList();
-        });
+      await deleteSamaj([id]);
+      handleSamajList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -267,22 +257,20 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/samaj/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            country: isRest ? [] : filteredCountryIds,
-            state: isRest ? [] : filteredStateIds,
-            region: isRest ? [] : filteredRegionIds,
-            district: isRest ? [] : filteredDistrictIds,
-            city: isRest ? [] : filteredCityIds,
-            ...text,
-          },
-        })
-        .then((res) => {
-          setSamajData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        country: isRest ? [] : filteredCountryIds,
+        state: isRest ? [] : filteredStateIds,
+        region: isRest ? [] : filteredRegionIds,
+        district: isRest ? [] : filteredDistrictIds,
+        city: isRest ? [] : filteredCityIds,
+        ...text,
+      };
+      const data = await getSamajList(params);
+      setSamajData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

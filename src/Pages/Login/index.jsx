@@ -1,5 +1,5 @@
 import React from "react";
-import { CircularProgress, Grid, Paper } from "@mui/material";
+import { CircularProgress, Grid, Link, Paper } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,10 +18,10 @@ import {
   getAllCountryData,
   getAllRoleData,
 } from "../../util/getAPICall";
-import useAxios from "../../util/useAxios";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
+import { loginUser } from "../../util/authApi";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -36,51 +36,52 @@ export default function Index() {
     },
     validationSchema: Yup.object({
       email: Yup.string()
-        .matches(
-          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
-        )
-        .required("Required"),
+        .required("Required")
+        .test(
+          "email-or-phone",
+          "Must be a valid email or phone number",
+          function (value) {
+            const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+            const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
+            return emailRegex.test(value) || phoneRegex.test(value);
+          }
+        ),
       password: Yup.string().required("Required"),
     }),
     onSubmit: async (values, { resetForm }) => {
       if (values.email && values.password) {
         dispatch(startLoading());
-        useAxios
-          .post(`/user/signIn`, {
-            ...values,
-          })
-          .then((res) => {
-            localStorage.setItem("user", JSON.stringify(res?.data?.data));
-            localStorage.setItem("token", res?.data?.token);
-            setNotification({ message: "Login Success", type: "success" });
-            setTimeout(() => {
-              dispatch(endLoading());
-              if (res.data?.data?.role === "USER") {
-                dispatch(getAllCityData);
-              } else {
-                dispatch(getAllRegionData);
-                dispatch(getAllCityData);
-                dispatch(getAllDistrictData);
-                dispatch(getAllSamajData);
-                dispatch(getAllStateData);
-                dispatch(getAllSurnameData);
-                dispatch(getAllCountryData);
-                dispatch(getAllRoleData);
-              }
-              dispatch(login({ ...res?.data?.data, token: res?.data?.token }));
-            }, 1000);
-            resetForm();
-          })
-          .catch((err) => {
-            setTimeout(() => {
-              dispatch(endLoading());
-              setNotification({
-                message: err.response.data.message,
-                type: err.response.status === "403" ? "warning" : "error",
-              });
-            }, 1000);
-          });
+        try {
+          const res = await loginUser(values);
+          localStorage.setItem("user", JSON.stringify(res?.data));
+          localStorage.setItem("token", res?.token);
+          setNotification({ message: "Login Success", type: "success" });
+          setTimeout(() => {
+            dispatch(endLoading());
+            if (res.data?.role === "USER") {
+              dispatch(getAllCityData);
+            } else {
+              dispatch(getAllRegionData);
+              dispatch(getAllCityData);
+              dispatch(getAllDistrictData);
+              dispatch(getAllSamajData);
+              dispatch(getAllStateData);
+              dispatch(getAllSurnameData);
+              dispatch(getAllCountryData);
+              dispatch(getAllRoleData);
+            }
+            dispatch(login({ ...res?.data, token: res?.token }));
+          }, 1000);
+          resetForm();
+        } catch (err) {
+          setTimeout(() => {
+            dispatch(endLoading());
+            setNotification({
+              message: err?.response?.data?.message || "Login failed.",
+              type: err?.response?.status === 403 ? "warning" : "error",
+            });
+          }, 1000);
+        }
       } else {
         setNotification({
           message:
@@ -157,6 +158,14 @@ export default function Index() {
                 </button>
               </Grid>
               <Grid item xs={12}>
+                <Link
+                  href={"/reset-password"}
+                  className="px-1 !text-[#572a2a] !no-underline font-semibold"
+                >
+                  Forgot Password ?
+                </Link>
+              </Grid>
+              <Grid item xs={12}>
                 <p className="flex justify-center text-sm sm:text-lg cursor-default">
                   Create a new account?
                   <span
@@ -165,19 +174,6 @@ export default function Index() {
                     style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
                   >
                     Registration
-                  </span>
-                </p>
-              </Grid>
-              <Grid item xs={12}>
-                <p className="flex justify-center text-sm sm:text-lg cursor-default bg-[#f3f5f9] p-3 rounded">
-                  Forgot your password?
-                  <span
-                    className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
-                    // onClick={loading ? () => {} : () => navigate("/register")}
-                    onClick={() => (loading ? {} : navigate("/reset-password"))}
-                    style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
-                  >
-                    Reset It
                   </span>
                 </p>
               </Grid>

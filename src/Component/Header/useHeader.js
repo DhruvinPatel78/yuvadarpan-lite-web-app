@@ -18,6 +18,7 @@ const useHeader = () => {
   const handleLogOut = () => {
     dispatch(logout());
     dispatch(clearLocation());
+    localStorage.clear();
     navigate("/login");
   };
   return {

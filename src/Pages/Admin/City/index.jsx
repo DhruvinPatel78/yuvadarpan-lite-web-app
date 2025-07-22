@@ -14,7 +14,6 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
-import axios from "../../../util/useAxios";
 import ContainerPage from "../../../Component/Container";
 import CloseIcon from "@mui/icons-material/Close";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -33,6 +32,12 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getCityList,
+  addCity,
+  updateCity,
+  deleteCity,
+} from "../../../util/cityApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -163,26 +168,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        cityModalData
-          ? await axios
-              .patch(`/city/update/${cityModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                cityAddEditModalClose();
-                handleCityList();
-              })
-          : await axios
-              .post(`/city/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                cityAddEditModalClose();
-                handleCityList();
-              });
+        if (cityModalData) {
+          await updateCity(cityModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addCity({ ...rest });
+        }
+        cityAddEditModalClose();
+        handleCityList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -221,17 +218,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/city/delete`, {
-          data: {
-            cities: [id],
-          },
-        })
-        .then(() => {
-          handleCityList();
-        });
+      await deleteCity([id]);
+      handleCityList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -253,21 +243,19 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/city/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            country: isRest ? [] : filteredCountryIds,
-            state: isRest ? [] : filteredStateIds,
-            region: isRest ? [] : filteredRegionIds,
-            district: isRest ? [] : filteredDistrictIds,
-            ...text,
-          },
-        })
-        .then((res) => {
-          setCityData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        country: isRest ? [] : filteredCountryIds,
+        state: isRest ? [] : filteredStateIds,
+        region: isRest ? [] : filteredRegionIds,
+        district: isRest ? [] : filteredDistrictIds,
+        ...text,
+      };
+      const data = await getCityList(params);
+      setCityData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

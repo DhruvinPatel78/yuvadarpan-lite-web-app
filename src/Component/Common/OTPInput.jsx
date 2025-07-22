@@ -1,6 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 
-const OTPInput = ({ length = 6, onComplete }) => {
+const OTPInput = forwardRef(({ length = 6, onComplete }, ref) => {
   const [otp, setOtp] = useState(Array(length).fill(""));
   const inputRefs = useRef([]);
 
@@ -34,6 +40,13 @@ const OTPInput = ({ length = 6, onComplete }) => {
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    resetOtp: () => {
+      setOtp(Array(length).fill(""));
+      inputRefs.current[0]?.current?.focus();
+    },
+  }));
+
   return (
     <div className="flex space-x-2 w-full justify-center">
       {otp.map((digit, index) => (
@@ -51,6 +64,6 @@ const OTPInput = ({ length = 6, onComplete }) => {
       ))}
     </div>
   );
-};
+});
 
 export default OTPInput;

@@ -19,7 +19,6 @@ import {
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider, useFormik } from "formik";
-import axios from "../../../util/useAxios";
 import * as Yup from "yup";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
@@ -40,6 +39,13 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getUserList,
+  addUser,
+  updateUser,
+  deleteUser,
+  getSamajListByRegion,
+} from "../../../util/userApi";
 
 function Index() {
   const dispatch = useDispatch();
@@ -91,23 +97,15 @@ function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        isAddUser
-          ? await axios
-              .post(`/user/add/`, { ...values, role: values.role.value })
-              .then((res) => {
-                userInfoModalClose();
-                handleUserList();
-              })
-          : await axios
-              .patch(`/user/update/${rest._id}`, {
-                ...rest,
-              })
-              .then((res) => {
-                userInfoModalClose();
-                handleUserList();
-              });
+        if (isAddUser) {
+          await addUser({ ...values, role: values.role.value });
+        } else {
+          await updateUser(rest._id, { ...rest });
+        }
+        userInfoModalClose();
+        handleUserList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -157,21 +155,19 @@ function Index() {
             [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
           }
         : {};
-      await axios
-        .get(`/user/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            lastName: isRest ? [] : filteredSurnameIds,
-            roles: isRest ? [] : filteredRolesIds,
-            region: isRest ? [] : filteredRegionIds,
-            samaj: isRest ? [] : filteredSamajIds,
-            ...text,
-          },
-        })
-        .then((res) => {
-          setUserList(res.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        lastName: isRest ? [] : filteredSurnameIds,
+        roles: isRest ? [] : filteredRolesIds,
+        region: isRest ? [] : filteredRegionIds,
+        samaj: isRest ? [] : filteredSamajIds,
+        ...text,
+      };
+      const data = await getUserList(params);
+      setUserList(data);
     } catch (e) {
-      console.error("Error fetching user list", e);
+      // Optionally handle error with notification
     }
   };
 
@@ -213,15 +209,10 @@ function Index() {
 
   const userActionHandler = async (userInfo, action, field) => {
     try {
-      await axios
-        .patch(`/user/update/${userInfo?._id}`, {
-          [field]: action,
-        })
-        .then((res) => {
-          handleUserList();
-        });
+      await updateUser(userInfo?._id, { [field]: action });
+      handleUserList();
     } catch (e) {
-      console.error("Update Error =>", e);
+      // Optionally handle error with notification
     }
   };
 
@@ -236,11 +227,10 @@ function Index() {
 
   const getSamajList = async (regionId) => {
     try {
-      await axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
-        setSamajList(res.data);
-      });
+      const data = await getSamajListByRegion(regionId);
+      setSamajList(data);
     } catch (e) {
-      console.error("Error =>", e);
+      // Optionally handle error with notification
     }
   };
 
@@ -368,17 +358,10 @@ function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/user/delete`, {
-          data: {
-            users: [id],
-          },
-        })
-        .then(() => {
-          handleUserList();
-        });
+      await deleteUser([id]);
+      handleUserList();
     } catch (error) {
-      console.error(error);
+      // Optionally handle error with notification
     }
   };
 

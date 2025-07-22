@@ -10,7 +10,6 @@ import {
   Paper,
   Tooltip,
 } from "@mui/material";
-import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import AddIcon from "@mui/icons-material/Add";
@@ -25,6 +24,12 @@ import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { UseRedux } from "../../../Component/useRedux";
+import {
+  getNativeList,
+  addNative,
+  updateNative,
+  deleteNative,
+} from "../../../util/nativeApi";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -101,16 +106,10 @@ export default function Index() {
 
   const userActionHandler = async (nativeInfo, action, field) => {
     try {
-      await axios
-        .patch(`/native/update/${nativeInfo?.id}`, {
-          ...nativeInfo,
-          [field]: action,
-        })
-        .then(() => {
-          handleNativeList();
-        });
+      await updateNative(nativeInfo?.id, { ...nativeInfo, [field]: action });
+      handleNativeList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -122,26 +121,18 @@ export default function Index() {
       try {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        nativeModalData
-          ? await axios
-              .patch(`/native/update/${nativeModalData.id}`, {
-                ...rest,
-                updatedAt: new Date(),
-              })
-              .then((res) => {
-                nativeAddEditModalClose();
-                handleNativeList();
-              })
-          : await axios
-              .post(`/native/add`, {
-                ...rest,
-              })
-              .then((res) => {
-                nativeAddEditModalClose();
-                handleNativeList();
-              });
+        if (nativeModalData) {
+          await updateNative(nativeModalData.id, {
+            ...rest,
+            updatedAt: new Date(),
+          });
+        } else {
+          await addNative({ ...rest });
+        }
+        nativeAddEditModalClose();
+        handleNativeList();
       } catch (e) {
-        console.error(e);
+        // Optionally handle error with notification
       } finally {
         dispatch(endLoading());
       }
@@ -170,17 +161,10 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/native/delete`, {
-          data: {
-            natives: [id],
-          },
-        })
-        .then(() => {
-          handleNativeList();
-        });
+      await deleteNative([id]);
+      handleNativeList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -194,17 +178,15 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/native/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            ...text,
-          },
-        })
-        .then((res) => {
-          setNativeData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        ...text,
+      };
+      const data = await getNativeList(params);
+      setNativeData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 

@@ -6,6 +6,7 @@ export const YuvadarpanLogo = ({
   className = "",
   ariaLabel = "Yuvadarpan logo",
   onClick = () => {},
+  fill = "#FFFFFF",
 }) => {
   return (
     <svg
@@ -30,7 +31,7 @@ export const YuvadarpanLogo = ({
         y="50%"
         dominantBaseline="middle"
         textAnchor="middle"
-        fill="#FFFFFF"
+        fill={fill}
         fontFamily="'Poppins', sans-serif"
         fontWeight="700"
         fontSize="36"

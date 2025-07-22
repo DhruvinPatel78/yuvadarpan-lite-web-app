@@ -11,10 +11,10 @@ const authSlice = createSlice({
   name: "AuthSlice",
   initialState,
   reducers: {
-    startLoading: (state, action) => {
+    startLoading: (state) => {
       state.loading = true;
     },
-    endLoading: (state, action) => {
+    endLoading: (state) => {
       state.loading = false;
     },
     login: (state, action) => {
@@ -23,7 +23,7 @@ const authSlice = createSlice({
       state.loggedIn = true;
       state.error = null;
     },
-    logout: (state, action) => {
+    logout: (state) => {
       state.user = null;
       state.loggedIn = false;
       state.loading = false;

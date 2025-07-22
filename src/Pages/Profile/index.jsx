@@ -1,12 +1,4 @@
-import {
-  Box,
-  Grid,
-  IconButton,
-  Tabs,
-  Tab,
-  Typography,
-  styled,
-} from "@mui/material";
+import { Box, Grid, IconButton, Tabs, Tab, styled } from "@mui/material";
 import Header from "../../Component/Header";
 import React from "react";
 import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
@@ -19,25 +11,7 @@ import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
 import { UseRedux } from "../../Component/useRedux";
-function CustomTabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3, width: "100%" }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
+import CustomTabPanel from "./CustomTabPanel";
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
@@ -83,6 +57,10 @@ const profileTabs = [
   { id: 2, title: "Mama Info" },
   { id: 3, title: "Other Info" },
 ];
+const getCityName = (cityList, cityId) =>
+  cityList?.find((item) => item?.id === cityId)?.name || "";
+const getStateName = (stateList, stateId) =>
+  stateList?.find((item) => item?.id === stateId)?.name || "";
 const ProfilePage = () => {
   const { state: data } = useLocation();
   const [tabValue, setTabValue] = React.useState(0);
@@ -209,12 +187,8 @@ const ProfilePage = () => {
                         {moment(data?.dob).format("DD/MM/YYYY hh:mm A")}
                       </span>
                       <span>{data.familyId}</span>
-                      <span>
-                        {city?.find((item) => item?.id === data?.city)?.name}
-                      </span>
-                      <span>
-                        {state?.find((item) => item?.id === data?.state)?.name}
-                      </span>
+                      <span>{getCityName(city, data?.city)}</span>
+                      <span>{getStateName(state, data?.state)}</span>
                       <span>{data.firm}</span>
                       <span>{data.firmAddress}</span>
                     </div>

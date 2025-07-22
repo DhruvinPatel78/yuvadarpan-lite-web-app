@@ -26,7 +26,9 @@ instance.interceptors.response.use(
     if (err.response) {
       if (
         err.response.status === 401 &&
-        window.location.pathname !== "/login"
+        !["/login", "/register", "/verify-opt"].includes(
+          window.location.pathname,
+        )
       ) {
         localStorage.removeItem("user");
         localStorage.removeItem("token");

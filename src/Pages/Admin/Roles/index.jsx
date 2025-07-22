@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import { Box, Grid, Tooltip } from "@mui/material";
-import axios from "../../../util/useAxios";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import { getRoleList, updateRole, deleteRole } from "../../../util/roleApi";
 
 export default function Index() {
   const [page, setPage] = useState(0);
@@ -73,32 +73,19 @@ export default function Index() {
 
   const userActionHandler = async (roleInfo, action, field) => {
     try {
-      await axios
-        .patch(`/role/update/${roleInfo?.id}`, {
-          ...roleInfo,
-          [field]: action,
-        })
-        .then(() => {
-          handleRoleList();
-        });
+      await updateRole(roleInfo?.id, { ...roleInfo, [field]: action });
+      handleRoleList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
   const deleteAPI = async (id) => {
     try {
-      await axios
-        .delete(`/role/delete`, {
-          data: {
-            role: [id],
-          },
-        })
-        .then(() => {
-          handleRoleList();
-        });
+      await deleteRole([id]);
+      handleRoleList();
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
@@ -110,17 +97,15 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
-      await axios
-        .get(`/role/list?page=${page + 1}&limit=${rowsPerPage}`, {
-          params: {
-            ...text,
-          },
-        })
-        .then((res) => {
-          setRoleData(res?.data);
-        });
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        ...text,
+      };
+      const data = await getRoleList(params);
+      setRoleData(data);
     } catch (e) {
-      console.error(e);
+      // Optionally handle error with notification
     }
   };
 
