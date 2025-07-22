@@ -13,6 +13,8 @@ import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import CustomRadio from "../../Component/Common/customRadio";
 import { registerUser } from "../../util/authApi";
+import { messaging } from "../../firebase";
+import { getToken } from "firebase/messaging";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -49,8 +51,25 @@ export default function Index() {
     getList("region");
   }, []);
 
+  const getFcmToken = async () => {
+    try {
+      const token = await getToken(messaging, {
+        vapidKey:
+          "BJL8nmbe31A9I8MuiulNUL8Ip-6ZL3rYihhIG7oA_4Q-WBZAU53BENLfw6y94Zz6m9YQQZgrXpeZ-BtXNy_R3i8",
+        serviceWorkerRegistration: await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js",
+        ),
+      });
+      return token;
+    } catch (err) {
+      console.error("FCM token error:", err);
+    }
+    return null;
+  };
+
   const handleSubmit = async (value) => {
     if (value.password === value.confirmPassword) {
+      const fcmToken = await getFcmToken();
       try {
         await registerUser({
           familyId: value?.familyId,
@@ -65,6 +84,7 @@ export default function Index() {
           localSamaj: value?.localSamaj,
           role: "USER",
           gender: value?.gender,
+          fcmToken: fcmToken,
         });
         setNotification({ type: "success", message: "Success !" });
         setTimeout(() => {

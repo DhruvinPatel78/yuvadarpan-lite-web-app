@@ -2,18 +2,20 @@
 import { getAuth } from "firebase/auth";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBuneOulsyZ8OZui7jntjfDVhZYrlx2lWM",
-  authDomain: "yuvadarpan-1a730.firebaseapp.com",
-  projectId: "yuvadarpan-1a730",
-  storageBucket: "yuvadarpan-1a730.appspot.com",
-  messagingSenderId: "941392148346",
-  appId: "1:941392148346:web:ff8d0bbfbb369237f9c8c3",
+  apiKey: "AIzaSyDs93nc_DBmoyZcxJZhPGlObIABhdlnSj8",
+  authDomain: "yuvadarpan-97eeb.firebaseapp.com",
+  projectId: "yuvadarpan-97eeb",
+  storageBucket: "yuvadarpan-97eeb.firebasestorage.app",
+  messagingSenderId: "925386428228",
+  appId: "1:925386428228:android:fe6a7a76772b1381ad1111",
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const messaging = getMessaging(app);
 
-export { app, auth, db };
+export { app, auth, db, messaging, getToken, onMessage };
