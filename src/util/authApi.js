@@ -11,7 +11,7 @@ export const loginUser = async (credentials) => {
 
 export const registerUser = async (payload) => {
   try {
-    const response = await useAxios.post("/user/add", payload);
+    const response = await useAxios.post("/user/signup", payload);
     return response.data;
   } catch (error) {
     throw error;
@@ -20,7 +20,10 @@ export const registerUser = async (payload) => {
 
 export const changePassword = async (email, password) => {
   try {
-    const response = await useAxios.patch("/user/forgotPassword", { email, password });
+    const response = await useAxios.patch("/user/forgotPassword", {
+      email,
+      password,
+    });
     return response.data;
   } catch (error) {
     throw error;
@@ -52,4 +55,4 @@ export const resendOtp = async (email) => {
   } catch (error) {
     throw error;
   }
-}; 
+};
