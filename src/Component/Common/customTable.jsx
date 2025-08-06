@@ -45,6 +45,7 @@ function CustomTable({
         checkboxSelection={type === "pendingList"}
         onRowSelectionModelChange={onRowSelectionModelChange}
         loading={loading}
+        getRowId={(row) => row._id}
         sx={{
           "& .MuiDataGrid-menuIconButton .MuiSvgIcon-root, & .MuiDataGrid-sortIcon, & .MuiDataGrid-columnHeaderTitleContainerContent .css-12wnr2w-MuiButtonBase-root-MuiCheckbox-root":
             {
