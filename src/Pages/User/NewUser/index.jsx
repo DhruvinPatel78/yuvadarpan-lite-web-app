@@ -11,7 +11,7 @@ import "@react-pdf-viewer/default-layout/lib/styles/index.css";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
-import { getYuvaPDF, getCityList } from "../../../util/yuvaApi";
+import { getCityList } from "../../../util/yuvaApi";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const PdfPaginationBtn = ({ children, disabled, onClick }) => {
@@ -41,8 +41,6 @@ export default function NewUser() {
   const getAPIData = async () => {
     dispatch(startLoading());
     try {
-      const pdfData = await getYuvaPDF();
-      setPdf(pdfData);
       const cityData = await getCityList();
       setCityList(cityData);
       setCityListEn(cityData.map((city) => city.label?.en));
