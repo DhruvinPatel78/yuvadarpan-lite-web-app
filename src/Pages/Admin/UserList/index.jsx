@@ -100,7 +100,7 @@ function Index() {
         if (isAddUser) {
           await addUser({ ...values, role: values.role.value });
         } else {
-          await updateUser(rest._id, { ...rest });
+          await updateUser(rest.id, { ...rest });
         }
         userInfoModalClose();
         handleUserList();
@@ -209,7 +209,7 @@ function Index() {
 
   const userActionHandler = async (userInfo, action, field) => {
     try {
-      await updateUser(userInfo?._id, { [field]: action });
+      await updateUser(userInfo?.id, { [field]: action });
       handleUserList();
     } catch (e) {
       // Optionally handle error with notification
