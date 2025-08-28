@@ -71,7 +71,7 @@ export default function Index() {
   const userActionHandler = async (userInfo, action) => {
     dispatch(startLoading());
     try {
-      await approveRejectUser(userInfo._id, action);
+      await approveRejectUser(userInfo.id, action);
       handleRequestList();
       setNotification({ type: "success", message: "Success !" });
     } catch (e) {
