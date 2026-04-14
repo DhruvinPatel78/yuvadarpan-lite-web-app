@@ -62,19 +62,34 @@ export default function CustomAutoComplete({
   multiple = false,
   ...rest
 }) {
+  const optionsSafe = Array.isArray(list) ? list : [];
+  const valueSafe = multiple
+    ? (Array.isArray(value) ? value : [])
+    : (value ?? null);
+  const defaultValueSafe = multiple
+    ? (Array.isArray(defaultValue) ? defaultValue : [])
+    : (defaultValue ?? null);
   return (
     <Grid item {...rest}>
       <PrimaryAutocomplete
         disabled={disabled}
-        defaultValue={defaultValue}
-        options={list}
-        value={value}
+        defaultValue={defaultValueSafe}
+        options={optionsSafe}
+        value={valueSafe}
+        getOptionLabel={(option) => {
+          if (option == null) return "";
+          if (typeof option === "string") return option;
+          return option.label ?? option.name ?? String(option?.value ?? "");
+        }}
         isOptionEqualToValue={(option, value) => {
-          if (!value) return false;
+          if (!option || !value) return false;
+          if (typeof option === "string" || typeof value === "string") {
+            return option === value;
+          }
           return (
             option.label === value.label ||
             option.id === value.id ||
-            option.label === value
+            option.value === value.value
           );
         }}
         multiple={multiple}
@@ -87,7 +102,7 @@ export default function CustomAutoComplete({
             {...params}
             name={name}
             label={label}
-            value={value}
+            value={valueSafe}
             error={errors}
             onBlur={onBlur}
           />
@@ -95,8 +110,8 @@ export default function CustomAutoComplete({
         onSelect={onSelect}
         onChange={onChange}
         onBlur={onBlur}
-        required
-        disableClearable={true}
+        required={required}
+        disableClearable={!multiple}
         limitTags={limitTags}
       />
       {errors && (

@@ -203,10 +203,13 @@ export const getListById = async (field, id) => {
 
 export const useFilteredIds = (selectedItems, key) => {
   return useMemo(
-    () =>
-      selectedItems
-        .filter((item) => item.name !== "All")
-        .map((item) => item[key]),
+    () => {
+      const items = Array.isArray(selectedItems) ? selectedItems : [];
+      return items
+        .filter((item) => item && item.name !== "All")
+        .map((item) => item?.[key])
+        .filter((val) => val !== undefined && val !== null);
+    },
     [selectedItems, key]
   );
 };

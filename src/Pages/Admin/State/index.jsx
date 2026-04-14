@@ -245,6 +245,7 @@ export default function Index() {
               name="country"
               onChange={(e, country) => {
                 if (country) {
+                    console.log('country : ',country);
                   setSelectedCountry((pre) => getSelectedData(pre, country, e));
                 }
               }}

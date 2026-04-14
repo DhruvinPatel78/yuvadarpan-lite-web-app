@@ -208,10 +208,10 @@ function Index() {
   };
 
   const userActionHandler = async (userInfo, action, field) => {
-    try {
+  try {
       await updateUser(userInfo?.id, { [field]: action });
       handleUserList();
-    } catch (e) {
+  } catch (e) {
       // Optionally handle error with notification
     }
   };
