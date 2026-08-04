@@ -2,17 +2,8 @@ import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const PrivateRoute = ({ Component }) => {
-  const { loggedIn, user } = useSelector((state) => state.auth);
-  const path = window.location.pathname;
+  const { loggedIn } = useSelector((state) => state.auth);
 
-  return loggedIn ? (
-    path === "/" ? (
-      <Navigate to={user.role === "USER" ? "/pdf" : "/admin/dashboard"} />
-    ) : (
-      <Component />
-    )
-  ) : (
-    <Navigate to="/login" />
-  );
+  return loggedIn ? <Component /> : <Navigate to="/login" />;
 };
 export default PrivateRoute;

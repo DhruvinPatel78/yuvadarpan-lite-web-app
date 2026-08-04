@@ -21,7 +21,6 @@ import {
   handleListById,
   listHandler,
   requestFilterList,
-  rolesList,
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
@@ -35,7 +34,7 @@ import {
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { auth, samaj, region, state, surname } = UseRedux();
+  const { samaj, region, state, surname } = UseRedux();
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -44,7 +43,6 @@ export default function Index() {
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
-  const [selectedRole, setSelectedRole] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
@@ -88,7 +86,6 @@ export default function Index() {
   const filteredStateIds = useFilteredIds(selectedState, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
-  const filteredRolesIds = useFilteredIds(selectedRole, "value", "label");
 
   const handleRequestList = async (isRest = false) => {
     dispatch(startLoading());
@@ -103,7 +100,6 @@ export default function Index() {
         state: isRest ? [] : filteredStateIds,
         region: isRest ? [] : filteredRegionIds,
         samaj: isRest ? [] : filteredSamajIds,
-        roles: isRest ? [] : filteredRolesIds,
         ...text,
       };
       const data = await getUserRequests(params);
@@ -125,7 +121,6 @@ export default function Index() {
     setSelectedState([]);
     setSelectedRegion([]);
     setSelectedSamaj([]);
-    setSelectedRole([]);
     setRegionListByState(region);
     setSamajListByRegion(samaj);
     handleRequestList(true);
@@ -378,24 +373,6 @@ export default function Index() {
                 }
               }}
             />
-            {auth.user.role === "ADMIN" && (
-              <CustomAutoComplete
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                multiple={true}
-                list={rolesList()}
-                label={"Role"}
-                name="role"
-                value={selectedRole}
-                onChange={(e, role) => {
-                  if (role) {
-                    setSelectedRole((pre) => getSelectedData(pre, role, e));
-                  }
-                }}
-              />
-            )}
             <CustomAutoComplete
               list={requestFilterList}
               label={"Search By"}
@@ -446,8 +423,7 @@ export default function Index() {
                 selectedState?.length > 0 ||
                 selectedRegion?.length > 0 ||
                 selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0 ||
-                selectedRole?.length > 0) && (
+                selectedSamaj?.length > 0) && (
                 <button
                   className={
                     "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
