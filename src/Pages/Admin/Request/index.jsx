@@ -34,7 +34,8 @@ import {
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { samaj, region, state, surname } = UseRedux();
+  const { samaj, region, state, surname, auth } = UseRedux();
+  const isSamajManager = String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -318,6 +319,8 @@ export default function Index() {
                 }
               }}
             />
+            {isSamajManager ? null : (
+              <>
             <CustomAutoComplete
               list={listHandler(state)}
               multiple={true}
@@ -373,6 +376,8 @@ export default function Index() {
                 }
               }}
             />
+              </>
+            )}
             <CustomAutoComplete
               list={requestFilterList}
               label={"Search By"}
@@ -447,6 +452,19 @@ export default function Index() {
           page={page}
           setPage={setPage}
           onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
+          bulkActions={[
+            {
+              label: "Accept Selected",
+              icon: <PlaylistAddCheckIcon />,
+              onClick: () => handleRequestAll("accept"),
+            },
+            {
+              label: "Reject Selected",
+              icon: <PlaylistRemoveIcon />,
+              variant: "outlined",
+              onClick: () => handleRequestAll("reject"),
+            },
+          ]}
         />
       </ContainerPage>
       <Modal

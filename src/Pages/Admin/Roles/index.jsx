@@ -8,12 +8,20 @@ import ContainerPage from "../../../Component/Container";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { getRoleList, updateRole, deleteRole } from "../../../util/roleApi";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
+import { UseRedux } from "../../../Component/useRedux";
+import { Navigate } from "react-router-dom";
+import { isSamajManager } from "../../../util/util";
 
 export default function Index() {
+  const { auth } = UseRedux();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [roleData, setRoleData] = useState(null);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const roleListColumn = [
     {
@@ -63,7 +71,7 @@ export default function Index() {
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
+              onClick={() => setDeleteTarget(record?.row)}
             />
           </Tooltip>
         </div>
@@ -82,7 +90,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteRole([id]);
+      await deleteRole(Array.isArray(id) ? id : [id]);
       handleRoleList();
     } catch (e) {
       // Optionally handle error with notification
@@ -117,6 +125,10 @@ export default function Index() {
     setSelectedSearchByText("");
     handleRoleList(true);
   };
+
+  if (isSamajManager(auth?.user?.role)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   return (
     <Box>
@@ -178,8 +190,19 @@ export default function Index() {
           page={page}
           setPage={setPage}
           pagination={false}
+          onDeleteSelected={deleteAPI}
         />
       </ContainerPage>
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

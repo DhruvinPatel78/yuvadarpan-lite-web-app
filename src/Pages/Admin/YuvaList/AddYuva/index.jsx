@@ -1,6 +1,7 @@
 import Header from "../../../../Component/Header";
 import {
   Box,
+  Button,
   CircularProgress,
   Divider,
   Grid,
@@ -26,6 +27,22 @@ import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
 import { addYuva, updateYuva } from "../../../../util/yuvaAdminApi";
+import dayjs from "dayjs";
+
+const slugPart = (value) =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9]/g, "") || "na";
+
+const buildYuvaPhotoName = (yuva) =>
+  `yuva_${slugPart(yuva?.firstName)}_${slugPart(yuva?.fatherName)}_${slugPart(
+    yuva?.grandFatherName
+  )}_${slugPart(yuva?.familyId)}_${
+    yuva?.dob && dayjs(yuva.dob).isValid()
+      ? dayjs(yuva.dob).format("DDMMYYYY")
+      : "na"
+  }`;
 
 const AddYuva = () => {
   const location = useLocation();
@@ -44,6 +61,9 @@ const AddYuva = () => {
     "samaj",
   ];
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [createdYuva, setCreatedYuva] = useState(null);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
   const [newFieldList, setNewFieldList] = useState([]);
   const [lastNameList, setLastNameList] = useState(surname);
   const [selectedLastName, setSelectedLastName] = useState(null);
@@ -73,7 +93,7 @@ const AddYuva = () => {
     city: false,
   });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
+  const [isEdit, setIsEdit] = useState(Boolean(location?.state));
 
   const getSamajList = (regionId) => {
     axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
@@ -238,16 +258,29 @@ const AddYuva = () => {
     }
   };
 
+  const goToYuvaList = () => {
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setShowProfileModal(false);
+    setCreatedYuva(null);
+    setSelectedPhoto(null);
+    setPhotoPreview("");
+    setNewFieldList([]);
+    navigate("/admin/yuvalist");
+  };
+
   const addYuvaListHandler = async (data) => {
     dispatch(startLoading());
     try {
-      await addYuva(data);
-      navigate("/admin/yuvalist");
+      const { profile, profileName, ...payload } = data;
+      const created = await addYuva(payload);
+      setCreatedYuva(created);
+      setShowProfileModal(true);
     } catch (e) {
       // Optionally handle error with notification
     } finally {
       dispatch(endLoading());
-      setNewFieldList([]);
     }
   };
   const updateAPIHandler = async (data) => {
@@ -324,10 +357,10 @@ const AddYuva = () => {
       });
       if (location?.state) {
         updateAPIHandler(newValue);
+        resetForm();
       } else {
         addYuvaListHandler(newValue);
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("First Name Is Required"),
@@ -336,7 +369,9 @@ const AddYuva = () => {
       grandFatherName: Yup.string().required("Grand Father Name Is Required"),
       gender: Yup.string().required("Gender Is Required"),
       pob: Yup.string().required("Birth Place Is Required"),
-      profileName: Yup.string().required("Profile Photo Is Required"),
+      ...(location?.state
+        ? { profileName: Yup.string().required("Profile Photo Is Required") }
+        : {}),
       dob: Yup.date().required("Date Of Birth Is Required"),
       height: Yup.string().required("Height Is Required"),
       weight: Yup.string().required("Weight Is Required"),
@@ -402,6 +437,7 @@ const AddYuva = () => {
     dispatch(startLoading());
     const formData = new FormData();
     formData.append("image", file);
+    formData.append("filename", buildYuvaPhotoName(values));
     axios
       .post(`/image/upload`, formData, {
         contentType: "multipart/form-data",
@@ -414,6 +450,38 @@ const AddYuva = () => {
       .finally(() => {
         dispatch(endLoading());
       });
+  };
+
+  const handleCreatedPhotoSelect = (file) => {
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setSelectedPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCreatedYuvaPhoto = async () => {
+    if (!selectedPhoto || !createdYuva) {
+      return;
+    }
+    dispatch(startLoading());
+    try {
+      const formData = new FormData();
+      formData.append("image", selectedPhoto);
+      formData.append("filename", buildYuvaPhotoName(createdYuva));
+      const res = await axios.post(`/image/upload`, formData, {
+        contentType: "multipart/form-data",
+      });
+      await updateYuva(createdYuva.id, {
+        ...createdYuva,
+        profile: res?.data?.data,
+      });
+      goToYuvaList();
+    } catch (e) {
+      // Optionally handle error with notification
+    } finally {
+      dispatch(endLoading());
+    }
   };
 
   const addFieldHandler = () => {
@@ -465,6 +533,7 @@ const AddYuva = () => {
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2} className={"px-0 py-2 sm:p-4"}>
+              {isEdit ? (
               <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>PHOTO</div>
                 <Grid
@@ -502,6 +571,7 @@ const AddYuva = () => {
                     id="upload-button"
                     style={{ display: "none" }}
                     name="profileName"
+                    accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
@@ -518,6 +588,7 @@ const AddYuva = () => {
                   </p>
                 )}
               </Grid>
+              ) : null}
               <Grid item xs={12}>
                 <div className={"text-xl font-bold text-gray pb-2"}>
                   PERSONAL INFO
@@ -1376,21 +1447,71 @@ const AddYuva = () => {
             background: "#878b9499 !important",
           },
         }}
-        onClose={() => setShowProfileModal(!showProfileModal)}
+        onClose={goToYuvaList}
         className="flex justify-center items-center"
       >
         <Paper
           elevation={10}
-          className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none flex flex-col gap-2"
+          className="!rounded-2xl p-5 w-3/4 max-w-[520px] outline-none flex flex-col gap-4"
         >
-          <div className={"flex flex-row justify-between"}>
-            {values?.profile?.name}
+          <div className={"flex flex-row justify-between items-start"}>
+            <div>
+              <p className={"text-xl font-bold"}>Yuva created successfully</p>
+              <p className={"text-sm text-gray-600 mt-1"}>
+                Upload a profile photo to finish.
+              </p>
+            </div>
             <CloseOutlinedIcon
               className={"cursor-pointer"}
-              onClick={() => setShowProfileModal(!showProfileModal)}
+              onClick={goToYuvaList}
             />
           </div>
-          <img alt={values?.profile?.name} src={values?.profile?.url} />
+          <label htmlFor="created-yuva-upload" className="w-fit mx-auto">
+            {loading ? (
+              <CircularProgress className="text-primary" />
+            ) : (
+              <img
+                src={
+                  photoPreview ||
+                  `https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541`
+                }
+                alt="profile"
+                className="w-[160px] h-[160px] rounded-full border border-primary object-cover cursor-pointer"
+              />
+            )}
+          </label>
+          <input
+            type="file"
+            id="created-yuva-upload"
+            style={{ display: "none" }}
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) {
+                handleCreatedPhotoSelect(file);
+              }
+            }}
+          />
+          <p className={"text-sm text-center break-all text-[#572a2a]"}>
+            {buildYuvaPhotoName(createdYuva)}
+          </p>
+          <div className={"flex gap-3"}>
+            <Button
+              variant="outlined"
+              className={"!border-[#572a2a] !text-[#572a2a] w-full"}
+              onClick={goToYuvaList}
+            >
+              Skip for now
+            </Button>
+            <Button
+              variant="contained"
+              className={"!bg-[#572a2a] w-full"}
+              onClick={uploadCreatedYuvaPhoto}
+              disabled={!selectedPhoto || loading}
+            >
+              Upload Photo
+            </Button>
+          </div>
         </Paper>
       </Modal>
     </Box>

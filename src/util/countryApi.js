@@ -34,4 +34,13 @@ export const deleteCountry = async (ids) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getCountryInfo = async (id) => {
+  try {
+    const response = await axios.get(`/country/getInfo/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }; 

@@ -6,3 +6,9 @@ export const toCamelCase = (str = "") => {
 
   return result;
 };
+
+export const isRegularUser = (role) =>
+  String(role || "").toUpperCase() === "USER";
+
+export const isSamajManager = (role) =>
+  String(role || "").toUpperCase() === "SAMAJ_MANAGER";

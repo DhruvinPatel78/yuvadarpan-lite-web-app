@@ -23,7 +23,11 @@ import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import { UseRedux } from "../../../Component/useRedux";
+import { isSamajManager } from "../../../util/util";
 import {
   getSurnameList,
   addSurname,
@@ -33,13 +37,15 @@ import {
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = UseRedux();
+  const { loading, auth } = UseRedux();
+  const canManage = !isSamajManager(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [surnameData, setSurnameData] = useState(null);
   const [surnameModalData, setSurnameModalData] = useState(null);
   const [surnameAddEditModel, setSurnameAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     handleSurnameList();
@@ -66,9 +72,11 @@ export default function Index() {
         <div className={"flex gap-2"}>
           <CustomSwitch
             checked={record?.row?.active}
-            onClick={(e) =>
-              userActionHandler(record?.row, !record?.row?.active, "active")
-            }
+            disabled={!canManage}
+            onClick={() => {
+              if (!canManage) return;
+              userActionHandler(record?.row, !record?.row?.active, "active");
+            }}
           />
         </div>
       ),
@@ -98,13 +106,13 @@ export default function Index() {
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
+              onClick={() => setDeleteTarget(record?.row)}
             />
           </Tooltip>
         </div>
       ),
     },
-  ];
+  ].filter((column) => canManage || column.field !== "action");
 
   const userActionHandler = async (countryInfo, action, field) => {
     try {
@@ -167,7 +175,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteSurname([id]);
+      await deleteSurname(Array.isArray(id) ? id : [id]);
       handleSurnameList();
     } catch (e) {
       // Optionally handle error with notification
@@ -209,16 +217,18 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Surname</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              setSurnameAddEditModel(!surnameAddEditModel);
-            }}
-          >
-            Add Surname
-          </Button>
+          {canManage ? (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => {
+                setSurnameAddEditModel(!surnameAddEditModel);
+              }}
+            >
+              Add Surname
+            </Button>
+          ) : null}
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -271,6 +281,7 @@ export default function Index() {
           className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>
       {surnameAddEditModel ? (
@@ -370,6 +381,16 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

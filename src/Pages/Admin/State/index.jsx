@@ -14,6 +14,7 @@ import CustomTable from "../../../Component/Common/customTable";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import ContainerPage from "../../../Component/Container";
 import CloseIcon from "@mui/icons-material/Close";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -21,15 +22,20 @@ import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import {
   getSelectedData,
   listHandler,
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { isSamajManager } from "../../../util/util";
 import {
   getStateList,
   addState,
@@ -39,7 +45,9 @@ import {
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading, country } = UseRedux();
+  const navigate = useNavigate();
+  const { loading, country, auth } = UseRedux();
+  const canManage = !isSamajManager(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryList, setCountryList] = useState([]);
@@ -48,6 +56,7 @@ export default function Index() {
   const [stateModalData, setStateModalData] = useState(null);
   const [stateAddEditModel, setStateAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   useEffect(() => {
     handleStateList();
@@ -61,6 +70,16 @@ export default function Index() {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+    },
+    {
+      field: "regionCount",
+      headerName: "Regions",
+      flex: 1,
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center justify-center flex px-8 outline-none",
+      filterable: false,
+      sortable: false,
+      renderCell: (record) => record?.row?.regionCount ?? 0,
     },
     {
       field: "active",
@@ -86,34 +105,48 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-3 justify-between items-center"}>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
+          <Tooltip title={"View"}>
+            <VisibilityIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => {
-                setStateModalData(record?.row);
-                setStateAddEditModel(!stateAddEditModel);
-                setCountryList(
-                  country.map((data) => ({
-                    ...data,
-                    label: data.name,
-                    value: data.id,
-                  }))
-                );
-                setFieldValue("name", record?.row.name);
-                setFieldValue("country_id", record?.row.country_id);
-                setSelectedCountry(
-                  country.find((item) => item?.id === record?.row?.country_id)
-                    ?.name
-                );
-              }}
+              onClick={() =>
+                navigate(`/admin/state/${record?.row?.id}`, {
+                  state: { ...record?.row, backTo: "/admin/state" },
+                })
+              }
             />
           </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
-            />
-          </Tooltip>
+          {canManage ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => {
+                    setStateModalData(record?.row);
+                    setStateAddEditModel(!stateAddEditModel);
+                    setCountryList(
+                      country.map((data) => ({
+                        ...data,
+                        label: data.name,
+                        value: data.id,
+                      }))
+                    );
+                    setFieldValue("name", record?.row.name);
+                    setFieldValue("country_id", record?.row.country_id);
+                    setSelectedCountry(
+                      country.find((item) => item?.id === record?.row?.country_id)
+                        ?.name
+                    );
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => setDeleteTarget(record?.row)}
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
@@ -168,7 +201,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteState([id]);
+      await deleteState(Array.isArray(id) ? id : [id]);
       handleStateList();
     } catch (e) {
       // Optionally handle error with notification
@@ -212,23 +245,25 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>State</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              setStateAddEditModel(!stateAddEditModel);
-              setCountryList(
-                country.map((data) => ({
-                  ...data,
-                  label: data.name,
-                  value: data.id,
-                }))
-              );
-            }}
-          >
-            Add State
-          </Button>
+          {canManage ? (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => {
+                setStateAddEditModel(!stateAddEditModel);
+                setCountryList(
+                  country.map((data) => ({
+                    ...data,
+                    label: data.name,
+                    value: data.id,
+                  }))
+                );
+              }}
+            >
+              Add State
+            </Button>
+          ) : null}
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -302,6 +337,7 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>
       {stateAddEditModel ? (
@@ -392,6 +428,16 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

@@ -34,4 +34,22 @@ export const deleteRegion = async (ids) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getRegionsByState = async (id) => {
+  try {
+    const response = await axios.get(`/region/list/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getRegionInfo = async (id) => {
+  try {
+    const response = await axios.get(`/region/getInfo/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }; 

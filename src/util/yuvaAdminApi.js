@@ -1,5 +1,14 @@
 import axios from "./useAxios";
 
+export const getPublicYuva = async (id) => {
+  try {
+    const response = await axios.get(`/yuvaList/public/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getYuvaList = async (params) => {
   try {
     const response = await axios.get("/yuvaList/list", { params });
@@ -9,9 +18,11 @@ export const getYuvaList = async (params) => {
   }
 };
 
-export const deleteYuva = async (id) => {
+export const deleteYuva = async (ids) => {
   try {
-    const response = await axios.delete(`/yuvaList/${id}`);
+    const response = await axios.delete("/yuvaList/delete", {
+      data: { ids: Array.isArray(ids) ? ids : [ids] },
+    });
     return response.data;
   } catch (error) {
     throw error;

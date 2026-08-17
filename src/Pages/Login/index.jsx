@@ -58,15 +58,13 @@ export default function Index() {
           setNotification({ message: "Login Success", type: "success" });
           setTimeout(() => {
             dispatch(endLoading());
-            if (res.data?.role === "USER") {
-              dispatch(getAllCityData);
-            } else {
-              dispatch(getAllRegionData);
-              dispatch(getAllCityData);
-              dispatch(getAllDistrictData);
-              dispatch(getAllSamajData);
-              dispatch(getAllStateData);
-              dispatch(getAllSurnameData);
+            dispatch(getAllCityData);
+            dispatch(getAllStateData);
+            dispatch(getAllRegionData);
+            dispatch(getAllDistrictData);
+            dispatch(getAllSamajData);
+            dispatch(getAllSurnameData);
+            if (res.data?.role !== "USER") {
               dispatch(getAllCountryData);
               dispatch(getAllRoleData);
             }

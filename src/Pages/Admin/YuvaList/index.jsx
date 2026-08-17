@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Divider,
+  FormControlLabel,
   Grid,
   Modal,
   Paper,
@@ -15,6 +16,9 @@ import moment from "moment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import AddIcon from "@mui/icons-material/Add";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
@@ -33,6 +37,7 @@ import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import { UseRedux } from "../../../Component/useRedux";
 
 const YuvaList = () => {
@@ -42,7 +47,12 @@ const YuvaList = () => {
   const [value, setValue] = React.useState("1");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const { surname, city, state, region } = UseRedux();
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const { surname, city, state, region, auth } = UseRedux();
+  const isSamajManager =
+    String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
+  const [ownUserList, setOwnUserList] = useState(false);
+  const canAct = !isSamajManager || ownUserList;
   const [nativeList, setNativeList] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -58,11 +68,11 @@ const YuvaList = () => {
   useEffect(() => {
     getNativeList();
     handleRequestList();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, ownUserList]);
 
   const deleteAPI = async (id) => {
     try {
-      await deleteYuva(id);
+      await deleteYuva(Array.isArray(id) ? id : [id]);
       handleRequestList();
     } catch (e) {
       // Optionally handle error with notification
@@ -191,13 +201,20 @@ const YuvaList = () => {
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.id)}
+              onClick={() =>
+                setDeleteTarget({
+                  id: record?.id || record?.row?.id,
+                  name: [record?.row?.firstName, record?.row?.fatherName]
+                    .filter(Boolean)
+                    .join(" "),
+                })
+              }
             />
           </Tooltip>
         </div>
       ),
     },
-  ];
+  ].filter((column) => canAct || column.field !== "action");
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
@@ -216,6 +233,9 @@ const YuvaList = () => {
         native: isRest ? [] : filteredNativeIds,
         ...text,
       };
+      if (isSamajManager) {
+        params.ownSamaj = ownUserList;
+      }
       const data = await fetchYuvaList(params);
       setYuvaList(data);
     } catch (e) {
@@ -246,21 +266,43 @@ const YuvaList = () => {
           }
         >
           <p className={"text-3xl font-bold"}>Yuvalist</p>
-          <div className={"flex flex-row gap-3"}>
+          <div className={"flex flex-row items-center gap-3"}>
+            {isSamajManager ? (
+              <FormControlLabel
+                labelPlacement="start"
+                className={"!mr-0"}
+                control={
+                  <CustomSwitch
+                    checked={ownUserList}
+                    onChange={(e) => {
+                      setOwnUserList(e.target.checked);
+                      setPage(0);
+                    }}
+                  />
+                }
+                label={
+                  <span className={"font-semibold text-[#572a2a]"}>
+                    Your Yuva
+                  </span>
+                }
+              />
+            ) : null}
             <Button
               className={"text-primary flex items-center justify-center"}
               onClick={() => navigate("/admin/userDashboard")}
             >
               View User Dashboard
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              className={"bg-primary flex items-center justify-center"}
-              onClick={() => navigate("/admin/yuvalist/add")}
-            >
-              Yuva
-            </Button>
+            {canAct ? (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                className={"bg-primary flex items-center justify-center"}
+                onClick={() => navigate("/admin/yuvalist/add")}
+              >
+                Yuva
+              </Button>
+            ) : null}
           </div>
         </div>
         <CustomAccordion>
@@ -371,8 +413,10 @@ const YuvaList = () => {
           pageSize={rowsPerPage}
           type={"pendingList"}
           setPage={setPage}
-          pages={page}
+          page={page}
           setPageSize={setRowsPerPage}
+          checkboxSelection={canAct}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
         />
       </ContainerPage>
       <Modal
@@ -682,6 +726,16 @@ const YuvaList = () => {
           </Grid>
         </Paper>
       </Modal>
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 };

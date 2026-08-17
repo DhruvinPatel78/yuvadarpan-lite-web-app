@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   Grid,
   Modal,
   Paper,
@@ -26,6 +27,9 @@ import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -49,7 +53,11 @@ import {
 
 function Index() {
   const dispatch = useDispatch();
-  const { loading, surname, region, samaj } = UseRedux();
+  const { loading, surname, region, samaj, auth } = UseRedux();
+  const isSamajManager =
+    String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
+  const [ownUserList, setOwnUserList] = useState(false);
+  const canAct = !isSamajManager || ownUserList;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { notification } = NotificationData();
@@ -74,6 +82,7 @@ function Index() {
   });
   const [selectedRole, setSelectedRole] = useState([]);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const formik = useFormik({
     initialValues: {
@@ -98,7 +107,10 @@ function Index() {
         dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
         if (isAddUser) {
-          await addUser({ ...values, role: values.role.value });
+          await addUser({
+            ...values,
+            role: isSamajManager ? "USER" : values.role.value,
+          });
         } else {
           await updateUser(rest.id, { ...rest });
         }
@@ -164,6 +176,9 @@ function Index() {
         samaj: isRest ? [] : filteredSamajIds,
         ...text,
       };
+      if (isSamajManager) {
+        params.ownSamaj = ownUserList;
+      }
       const data = await getUserList(params);
       setUserList(data);
     } catch (e) {
@@ -173,7 +188,7 @@ function Index() {
 
   useEffect(() => {
     handleUserList();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, ownUserList]);
 
   const userInfoModalOpen = (userInfo) => {
     setUserInfoModel(true);
@@ -303,9 +318,11 @@ function Index() {
         <div className={"flex gap-2"}>
           <CustomSwitch
             checked={record?.row?.allowed}
-            onClick={(e) =>
-              userActionHandler(record?.row, !record?.row?.allowed, "allowed")
-            }
+            disabled={!canAct}
+            onClick={(e) => {
+              if (!canAct) return;
+              userActionHandler(record?.row, !record?.row?.allowed, "allowed");
+            }}
           />
         </div>
       ),
@@ -322,9 +339,11 @@ function Index() {
         <div className={"flex gap-2"}>
           <CustomSwitch
             checked={record?.row?.active}
-            onClick={(e) =>
-              userActionHandler(record?.row, !record?.row?.active, "active")
-            }
+            disabled={!canAct}
+            onClick={(e) => {
+              if (!canAct) return;
+              userActionHandler(record?.row, !record?.row?.active, "active");
+            }}
           />
         </div>
       ),
@@ -341,24 +360,28 @@ function Index() {
         <div className={"flex gap-2"}>
           <Tooltip title={"Edit"}>
             <ModeEditIcon
-              className={"text-primary"}
+              className={"text-primary cursor-pointer"}
               onClick={() => userInfoModalOpen(record?.row)}
             />
           </Tooltip>
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
+              onClick={() => setDeleteTarget(record?.row)}
             />
           </Tooltip>
         </div>
       ),
     },
-  ];
+  ].filter(
+    (column) =>
+      (canAct || column.field !== "action") &&
+      (!isSamajManager || column.field !== "role")
+  );
 
   const deleteAPI = async (id) => {
     try {
-      await deleteUser([id]);
+      await deleteUser(Array.isArray(id) ? id : [id]);
       handleUserList();
     } catch (error) {
       // Optionally handle error with notification
@@ -373,20 +396,44 @@ function Index() {
       <ContainerPage
         className={" flex-col justify-center flex items-start gap-4"}
       >
-        <div className={"w-full justify-between flex items-center"}>
+        <div className={"w-full justify-between flex items-center gap-3"}>
           <p className={"text-3xl font-bold"}>Users</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              userInfoModalOpen();
-              setUserInfoModel(!userInfoModel);
-              setIsAddUser(true);
-            }}
-          >
-            Add User
-          </Button>
+          <div className={"flex items-center gap-3"}>
+            {isSamajManager ? (
+              <FormControlLabel
+                labelPlacement="start"
+                className={"!mr-0"}
+                control={
+                  <CustomSwitch
+                    checked={ownUserList}
+                    onChange={(e) => {
+                      setOwnUserList(e.target.checked);
+                      setPage(0);
+                    }}
+                  />
+                }
+                label={
+                  <span className={"font-semibold text-[#572a2a]"}>
+                    Your Users
+                  </span>
+                }
+              />
+            ) : null}
+            {canAct ? (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                className={"bg-primary"}
+                onClick={() => {
+                  userInfoModalOpen();
+                  setUserInfoModel(!userInfoModel);
+                  setIsAddUser(true);
+                }}
+              >
+                Add User
+              </Button>
+            ) : null}
+          </div>
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -445,6 +492,7 @@ function Index() {
                 }
               }}
             />
+            {isSamajManager ? null : (
             <CustomAutoComplete
               list={rolesList()}
               multiple={true}
@@ -465,6 +513,7 @@ function Index() {
                 }
               }}
             />
+            )}
             <CustomAutoComplete
               list={requestFilterList}
               label={"Search By"}
@@ -539,6 +588,7 @@ function Index() {
           className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
         />
       </ContainerPage>
       <Modal
@@ -787,6 +837,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
+                    {isSamajManager ? null : (
                     <Grid item xs={12} sm={6} md={6}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
@@ -803,6 +854,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
+                    )}
                   </>
                 ) : null}
                 <Grid
@@ -830,6 +882,16 @@ function Index() {
         </Paper>
       </Modal>
       <NotificationSnackbar notification={notification} />
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.firstName)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

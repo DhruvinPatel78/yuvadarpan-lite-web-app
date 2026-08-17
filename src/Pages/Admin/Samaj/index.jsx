@@ -24,6 +24,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import {
   getListById,
   getSelectedData,
@@ -32,6 +35,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { isSamajManager } from "../../../util/util";
 import {
   getSamajList,
   addSamaj,
@@ -41,7 +45,8 @@ import {
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading, country, state, region, district, city } = UseRedux();
+  const { loading, country, state, region, district, city, auth } = UseRedux();
+  const canManage = !isSamajManager(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({
@@ -62,6 +67,7 @@ export default function Index() {
   const [samajModalData, setSamajModalData] = useState(null);
   const [samajAddEditModel, setSamajAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
@@ -156,13 +162,13 @@ export default function Index() {
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
+              onClick={() => setDeleteTarget(record?.row)}
             />
           </Tooltip>
         </div>
       ),
     },
-  ];
+  ].filter((column) => canManage || column.field !== "action");
 
   const formik = useFormik({
     initialValues: {
@@ -231,7 +237,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteSamaj([id]);
+      await deleteSamaj(Array.isArray(id) ? id : [id]);
       handleSamajList();
     } catch (e) {
       // Optionally handle error with notification
@@ -295,24 +301,26 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Samaj</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              setSamajAddEditModel(!samajAddEditModel);
-              setList((pre) => ({
-                ...pre,
-                country: country.map((data) => ({
-                  ...data,
-                  label: data.name,
-                  value: data.id,
-                })),
-              }));
-            }}
-          >
-            Add Samaj
-          </Button>
+          {canManage ? (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => {
+                setSamajAddEditModel(!samajAddEditModel);
+                setList((pre) => ({
+                  ...pre,
+                  country: country.map((data) => ({
+                    ...data,
+                    label: data.name,
+                    value: data.id,
+                  })),
+                }));
+              }}
+            >
+              Add Samaj
+            </Button>
+          ) : null}
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -442,6 +450,7 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>
       {samajAddEditModel ? (
@@ -667,6 +676,16 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

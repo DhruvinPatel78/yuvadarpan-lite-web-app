@@ -2,9 +2,10 @@ import React from "react";
 import { Grid, Box } from "@mui/material";
 import CustomCard from "../../../Component/Card";
 import Header from "../../../Component/Header";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContainerPage from "../../../Component/Container";
+import { isRegularUser, isSamajManager } from "../../../util/util";
 
 const dashboardItems = {
   ADMIN: [
@@ -21,17 +22,21 @@ const dashboardItems = {
     { id: 11, title: "Native", href: "/admin/native" },
     { id: 12, title: "Roles", href: "/admin/role" },
   ],
-  USER: [
-    { id: 1, title: "New Requests", href: "/admin/request" },
-    { id: 2, title: "User  List", href: "/admin/userlist" },
-    { id: 3, title: "Yuva List", href: "/admin/yuvalist" },
-  ],
 };
 
 export default function Index() {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
-  const dashBoardList = dashboardItems[user.role] || dashboardItems.USER;
+
+  if (isRegularUser(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  const dashBoardList = (
+    dashboardItems[user?.role] || dashboardItems.ADMIN
+  ).filter(
+    (item) => !(isSamajManager(user?.role) && item.href === "/admin/role")
+  );
 
   return (
     <div>

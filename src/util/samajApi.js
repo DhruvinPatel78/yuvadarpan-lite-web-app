@@ -34,4 +34,13 @@ export const deleteSamaj = async (ids) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getSamajByCity = async (id) => {
+  try {
+    const response = await axios.get(`/samaj/list/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }; 

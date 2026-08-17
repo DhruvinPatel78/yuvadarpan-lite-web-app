@@ -13,6 +13,7 @@ import {
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import CustomTable from "../../../Component/Common/customTable";
 import ContainerPage from "../../../Component/Container";
 import AddIcon from "@mui/icons-material/Add";
@@ -21,9 +22,13 @@ import { Form, FormikProvider, useFormik } from "formik";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import {
   getListById,
   getSelectedData,
@@ -32,6 +37,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { isSamajManager } from "../../../util/util";
 import {
   getRegionList,
   addRegion,
@@ -41,7 +47,9 @@ import {
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading, country, state } = UseRedux();
+  const navigate = useNavigate();
+  const { loading, country, state, auth } = UseRedux();
+  const canManage = !isSamajManager(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({ country: [], state: [] });
@@ -53,6 +61,7 @@ export default function Index() {
   const [regionModalData, setRegionModalData] = useState(null);
   const [regionAddEditModel, setRegionAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [stateListByCountry, setStateListByCountry] = useState(state);
@@ -69,6 +78,16 @@ export default function Index() {
       headerClassName: "bg-[#572a2a] text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+    },
+    {
+      field: "districtCount",
+      headerName: "Districts",
+      flex: 1,
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center justify-center flex px-8 outline-none",
+      filterable: false,
+      sortable: false,
+      renderCell: (record) => record?.row?.districtCount ?? 0,
     },
     {
       field: "active",
@@ -94,41 +113,55 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-3 justify-between items-center"}>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
+          <Tooltip title={"View"}>
+            <VisibilityIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => {
-                setRegionModalData(record?.row);
-                setRegionAddEditModel(!regionAddEditModel);
-                setList((pre) => ({
-                  ...pre,
-                  country: country.map((data) => ({
-                    ...data,
-                    label: data.name,
-                    value: data.id,
-                  })),
-                }));
-                setSelectedValue((pre) => ({
-                  ...pre,
-                  country: country.find(
-                    (item) => item?.id === record?.row?.country_id
-                  )?.name,
-                  state: state.find(
-                    (item) => item?.id === record?.row?.state_id
-                  )?.name,
-                }));
-                setFieldValue("country_id", record?.row?.country_id);
-                setFieldValue("state_id", record?.row?.state_id);
-                setFieldValue("name", record?.row?.name);
-              }}
+              onClick={() =>
+                navigate(`/admin/region/${record?.row?.id}`, {
+                  state: { ...record?.row, backTo: "/admin/region" },
+                })
+              }
             />
           </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
-            />
-          </Tooltip>
+          {canManage ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => {
+                    setRegionModalData(record?.row);
+                    setRegionAddEditModel(!regionAddEditModel);
+                    setList((pre) => ({
+                      ...pre,
+                      country: country.map((data) => ({
+                        ...data,
+                        label: data.name,
+                        value: data.id,
+                      })),
+                    }));
+                    setSelectedValue((pre) => ({
+                      ...pre,
+                      country: country.find(
+                        (item) => item?.id === record?.row?.country_id
+                      )?.name,
+                      state: state.find(
+                        (item) => item?.id === record?.row?.state_id
+                      )?.name,
+                    }));
+                    setFieldValue("country_id", record?.row?.country_id);
+                    setFieldValue("state_id", record?.row?.state_id);
+                    setFieldValue("name", record?.row?.name);
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => setDeleteTarget(record?.row)}
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
@@ -190,7 +223,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteRegion([id]);
+      await deleteRegion(Array.isArray(id) ? id : [id]);
       handleRegionList();
     } catch (error) {
       // Optionally handle error with notification
@@ -239,24 +272,26 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Region</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              setRegionAddEditModel(!regionAddEditModel);
-              setList((pre) => ({
-                ...pre,
-                country: country.map((data) => ({
-                  ...data,
-                  label: data.name,
-                  value: data.id,
-                })),
-              }));
-            }}
-          >
-            Add Region
-          </Button>
+          {canManage ? (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => {
+                setRegionAddEditModel(!regionAddEditModel);
+                setList((pre) => ({
+                  ...pre,
+                  country: country.map((data) => ({
+                    ...data,
+                    label: data.name,
+                    value: data.id,
+                  })),
+                }));
+              }}
+            >
+              Add Region
+            </Button>
+          ) : null}
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -349,6 +384,7 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>
       {regionAddEditModel ? (
@@ -467,6 +503,16 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }
