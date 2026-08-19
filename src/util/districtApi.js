@@ -34,4 +34,22 @@ export const deleteDistrict = async (ids) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getDistrictsByRegion = async (id) => {
+  try {
+    const response = await axios.get(`/district/list/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getDistrictInfo = async (id) => {
+  try {
+    const response = await axios.get(`/district/getInfo/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }; 

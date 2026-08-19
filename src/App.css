@@ -37,3 +37,339 @@
     transform: rotate(360deg);
   }
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body,
+  #root {
+    width: 210mm;
+    height: 297mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    background: #f7fbff !important;
+  }
+
+  .MuiAppBar-root,
+  .MuiFab-root,
+  .print-hidden {
+    display: none !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .yuva-print-sheet {
+    display: block !important;
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: #111;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .MuiBox-root:has(.yuva-print-sheet) {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+  }
+
+  .yuva-print-header {
+    background: #4a4a4a !important;
+    color: #fff !important;
+    text-align: center;
+    padding: 24px 28px 20px;
+    margin: 0 0 28px;
+  }
+
+  .yuva-print-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .yuva-print-header p {
+    margin: 10px 0 0;
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  .yuva-print-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 28px;
+    margin: 0 16px 32px;
+  }
+
+  .yuva-print-details p {
+    margin: 0 0 10px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .yuva-print-photo {
+    width: 140px;
+    height: 160px;
+    object-fit: cover;
+    border: 1px solid #222;
+    flex-shrink: 0;
+  }
+
+  .yuva-print-section {
+    margin: 0 16px 26px;
+  }
+
+  .yuva-print-template-1 h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .yuva-print-section p {
+    margin: 0 0 10px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .yuva-print-footer {
+    margin: 36px 16px 0;
+    font-size: 14px;
+  }
+
+  .yuva-print-footer p {
+    margin: 0 0 32px;
+  }
+
+  .yuva-print-template-2 {
+    color: #0a3d62;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    background: #f7fbff !important;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .yuva-print-template-2 .yuva-biodata {
+    position: relative;
+    box-sizing: border-box;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    display: flex;
+    flex-direction: column;
+    padding: 16mm 14mm 14mm;
+    background: #f7fbff !important;
+    border: 3px solid #0a4a7a;
+    box-shadow: inset 0 0 0 6px #f7fbff, inset 0 0 0 8px #0a4a7a;
+  }
+
+  .yuva-biodata-corner {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    z-index: 2;
+  }
+
+  .yuva-biodata-corner::before,
+  .yuva-biodata-corner::after {
+    content: "";
+    position: absolute;
+    border: 2.5px solid #0a4a7a;
+  }
+
+  .yuva-biodata-corner.tl {
+    top: 14px;
+    left: 14px;
+  }
+
+  .yuva-biodata-corner.tr {
+    top: 14px;
+    right: 14px;
+  }
+
+  .yuva-biodata-corner.bl {
+    bottom: 14px;
+    left: 14px;
+  }
+
+  .yuva-biodata-corner.br {
+    bottom: 14px;
+    right: 14px;
+  }
+
+  .yuva-biodata-corner.tl::before,
+  .yuva-biodata-corner.tr::before,
+  .yuva-biodata-corner.bl::before,
+  .yuva-biodata-corner.br::before {
+    width: 18px;
+    height: 18px;
+  }
+
+  .yuva-biodata-corner.tl::after,
+  .yuva-biodata-corner.tr::after,
+  .yuva-biodata-corner.bl::after,
+  .yuva-biodata-corner.br::after {
+    width: 10px;
+    height: 10px;
+  }
+
+  .yuva-biodata-corner.tl::before {
+    top: 0;
+    left: 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .yuva-biodata-corner.tl::after {
+    top: 8px;
+    left: 8px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .yuva-biodata-corner.tr::before {
+    top: 0;
+    right: 0;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
+  .yuva-biodata-corner.tr::after {
+    top: 8px;
+    right: 8px;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
+  .yuva-biodata-corner.bl::before {
+    bottom: 0;
+    left: 0;
+    border-right: 0;
+    border-top: 0;
+  }
+
+  .yuva-biodata-corner.bl::after {
+    bottom: 8px;
+    left: 8px;
+    border-right: 0;
+    border-top: 0;
+  }
+
+  .yuva-biodata-corner.br::before {
+    bottom: 0;
+    right: 0;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .yuva-biodata-corner.br::after {
+    bottom: 8px;
+    right: 8px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .yuva-biodata-title {
+    margin: 4px 0 22px;
+    text-align: center;
+    font-size: 30px;
+    font-weight: 800;
+    color: #0a4a7a;
+    letter-spacing: 0.4px;
+  }
+
+  .yuva-biodata-body {
+    display: flex;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+  }
+
+  .yuva-biodata-left {
+    width: 38%;
+    padding: 0 24px 0 8px;
+  }
+
+  .yuva-biodata-right {
+    width: 62%;
+    padding: 4px 8px 0 28px;
+    border-left: 1px solid #0a4a7a;
+    min-height: 0;
+  }
+
+  .yuva-biodata-photo {
+    display: block;
+    width: 148px;
+    height: 178px;
+    object-fit: cover;
+    border: 3px solid #0a4a7a;
+    border-top-left-radius: 46px;
+    border-bottom-right-radius: 46px;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-bottom: 14px;
+  }
+
+  .yuva-print-template-2 .yuva-biodata-name {
+    margin: 0 0 20px;
+    font-size: 26px;
+    line-height: 1.15;
+    font-weight: 800;
+    color: #0a4a7a;
+  }
+
+  .yuva-biodata-section {
+    margin-bottom: 18px;
+  }
+
+  .yuva-biodata-section h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0a4a7a;
+  }
+
+  .yuva-biodata-section h3.is-caps {
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 14px;
+  }
+
+  .yuva-biodata-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0 0 8px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .yuva-biodata-row span:first-child {
+    color: #16324f;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .yuva-biodata-row span:last-child {
+    color: #0a3d62;
+    font-weight: 700;
+    text-align: right;
+    max-width: 62%;
+    word-break: break-word;
+  }
+}

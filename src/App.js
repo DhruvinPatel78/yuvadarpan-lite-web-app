@@ -8,10 +8,14 @@ import Profile from "./Pages/Profile";
 import Status from "./Pages/Status";
 import {
   City,
+  CityDetails,
   Country,
+  CountryDetails,
   District,
+  DistrictDetails,
   Native,
   Region,
+  RegionDetails,
   Roles,
   Samaj,
   Surname,
@@ -19,6 +23,7 @@ import {
   YuvaList,
   Request,
   State,
+  StateDetails,
   AddYuva,
   AdminDashboard,
 } from "./Pages/Admin";
@@ -32,6 +37,8 @@ import Home from "./Pages/User/Dashboard";
 import ResetPassword from "./Pages/RestPassword";
 import VerifyOtp from "./Pages/VerifyOtp";
 import ChangePassword from "./Pages/ChangePassword";
+import AccountProfile from "./Pages/Account/Profile";
+import AccountSettings from "./Pages/Account/Settings";
 
 function App() {
   return (
@@ -59,9 +66,20 @@ function App() {
           exact
           element={<PublicRoute Component={Registration} />}
         />
+        <Route path="yuva/:id" exact element={<Profile />} />
 
         {/*Private Routes*/}
         <Route index element={<PrivateRoute Component={Dashboard} />} />
+        <Route
+          path="profile"
+          exact
+          element={<PrivateRoute Component={AccountProfile} />}
+        />
+        <Route
+          path="settings"
+          exact
+          element={<PrivateRoute Component={AccountSettings} />}
+        />
         <Route
           path="pdf"
           exact
@@ -105,31 +123,46 @@ function App() {
             exact
             element={<PrivateRoute Component={Request} />}
           />
-          <Route
-            path="country"
-            exact
-            element={<PrivateRoute Component={Country} />}
-          />
-          <Route
-            path="state"
-            exact
-            element={<PrivateRoute Component={State} />}
-          />
-          <Route
-            path="region"
-            exact
-            element={<PrivateRoute Component={Region} />}
-          />
-          <Route
-            path="district"
-            exact
-            element={<PrivateRoute Component={District} />}
-          />
-          <Route
-            path="city"
-            exact
-            element={<PrivateRoute Component={City} />}
-          />
+          <Route path={"country"}>
+            <Route index element={<PrivateRoute Component={Country} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={CountryDetails} />}
+            />
+          </Route>
+          <Route path={"state"}>
+            <Route index element={<PrivateRoute Component={State} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={StateDetails} />}
+            />
+          </Route>
+          <Route path={"region"}>
+            <Route index element={<PrivateRoute Component={Region} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={RegionDetails} />}
+            />
+          </Route>
+          <Route path={"district"}>
+            <Route index element={<PrivateRoute Component={District} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={DistrictDetails} />}
+            />
+          </Route>
+          <Route path={"city"}>
+            <Route index element={<PrivateRoute Component={City} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={CityDetails} />}
+            />
+          </Route>
           <Route
             path="samaj"
             exact

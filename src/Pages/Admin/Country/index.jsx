@@ -12,9 +12,11 @@ import {
 } from "@mui/material";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import AddIcon from "@mui/icons-material/Add";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import CloseIcon from "@mui/icons-material/Close";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -22,8 +24,13 @@ import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import { UseRedux } from "../../../Component/useRedux";
+import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
 import {
   getCountryList,
   addCountry,
@@ -33,13 +40,18 @@ import {
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading } = UseRedux();
+  const navigate = useNavigate();
+  const { loading, auth } = UseRedux();
+  const canManage = !isLocationMasterReadOnly(auth?.user?.role);
+  const hideRowActions = hideLocationRowActions(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryData, setCountryData] = useState(null);
   const [countryModalData, setCountryModalData] = useState(null);
   const [countryAddEditModel, setCountryAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     handleCountryList();
@@ -55,6 +67,16 @@ export default function Index() {
       filterable: false,
     },
     {
+      field: "stateCount",
+      headerName: "States",
+      flex: 1,
+      headerClassName: "bg-[#572a2a] text-white outline-none",
+      cellClassName: "items-center justify-center flex px-8 outline-none",
+      filterable: false,
+      sortable: false,
+      renderCell: (record) => record?.row?.stateCount ?? 0,
+    },
+    {
       field: "active",
       headerName: "Active",
       flex: 1,
@@ -66,9 +88,11 @@ export default function Index() {
         <div className={"flex gap-2"}>
           <CustomSwitch
             checked={record?.row?.active}
-            onClick={(e) =>
-              userActionHandler(record?.row, !record?.row?.active, "active")
-            }
+            disabled={!canManage}
+            onClick={() => {
+              if (!canManage) return;
+              userActionHandler(record?.row, !record?.row?.active, "active");
+            }}
           />
         </div>
       ),
@@ -83,26 +107,40 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-3 justify-between items-center"}>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
+          <Tooltip title={"View"}>
+            <VisibilityIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => {
-                setCountryModalData(record?.row);
-                setCountryAddEditModel(!countryAddEditModel);
-                setFieldValue("name", record?.row.name);
-              }}
+              onClick={() =>
+                navigate(`/admin/country/${record?.row?.id}`, {
+                  state: { ...record?.row, backTo: "/admin/country" },
+                })
+              }
             />
           </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
-            />
-          </Tooltip>
+          {canManage ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => {
+                    setCountryModalData(record?.row);
+                    setCountryAddEditModel(!countryAddEditModel);
+                    setFieldValue("name", record?.row.name);
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => setDeleteTarget(record?.row)}
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
-  ];
+  ].filter((column) => !hideRowActions || column.field !== "action");
 
   const userActionHandler = async (countryInfo, action, field) => {
     try {
@@ -161,7 +199,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteCountry([id]);
+      await deleteCountry(Array.isArray(id) ? id : [id]);
       handleCountryList();
     } catch (e) {
       // Optionally handle error with notification
@@ -195,6 +233,14 @@ export default function Index() {
     handleCountryList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const rows = countryData?.data || [];
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -203,16 +249,18 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Country</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              setCountryAddEditModel(!countryAddEditModel);
-            }}
-          >
-            Add Country
-          </Button>
+          {canManage ? (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => {
+                setCountryAddEditModel(!countryAddEditModel);
+              }}
+            >
+              Add Country
+            </Button>
+          ) : null}
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -255,6 +303,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={countryListColumn}
           data={countryData}
@@ -265,6 +314,44 @@ export default function Index() {
           className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={rows}
+          emptyText="No countries"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canManage}
+          getDetails={(row) => [`States: ${row.stateCount ?? 0}`]}
+          activeDisabled={!canManage}
+          onActiveChange={(row, next) =>
+            userActionHandler(row, next, "active")
+          }
+          onView={
+            hideRowActions
+              ? undefined
+              : (row) =>
+                  navigate(`/admin/country/${row.id}`, {
+                    state: { ...row, backTo: "/admin/country" },
+                  })
+          }
+          onEdit={
+            canManage
+              ? (row) => {
+                  setCountryModalData(row);
+                  setCountryAddEditModel(true);
+                  setFieldValue("name", row.name);
+                }
+              : undefined
+          }
+          onDelete={canManage ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={countryData?.total || 0}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>
       {countryAddEditModel ? (
@@ -338,6 +425,16 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

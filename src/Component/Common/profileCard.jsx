@@ -4,14 +4,31 @@ const ProfileCard = ({
   name,
   location,
   age,
+  dob,
   imgSrc,
   father,
   mother,
   firm,
   surname,
+  onClick,
 }) => {
   return (
-    <div className="w-full rounded-2xl overflow-hidden shadow-lg transition-all duration-300 bg-white hover:shadow-xl cursor-pointer group sm:relative">
+    <div
+      className="w-full rounded-2xl overflow-hidden shadow-lg transition-all duration-300 bg-white hover:shadow-xl cursor-pointer group sm:relative"
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="relative">
         <img
           src={imgSrc}
@@ -27,8 +44,11 @@ const ProfileCard = ({
         <h2 className="text-lg font-bold text-gray-800 sm:text-white">
           {name} {mother} {father} {surname}
         </h2>
-        <p className="text-sm text-gray-500 sm:text-gray-200 flex gap-2 items-center sm:text-white">
-          {location}
+        <p className="text-sm text-gray-500 sm:text-gray-200 flex flex-wrap gap-x-2 items-center sm:text-white">
+          <span>
+            {location}
+            {dob ? ` · ${dob}` : ""}
+          </span>
           <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full mt-1 sm:inline-block hidden">
             {age} Yrs
           </span>

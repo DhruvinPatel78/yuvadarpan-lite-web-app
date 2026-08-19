@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   Grid,
   Modal,
   Paper,
@@ -14,6 +15,7 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
 import { useDispatch } from "react-redux";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -24,6 +26,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import ConfirmModal, {
+  getDeleteDescription,
+} from "../../../Component/Common/ConfirmModal";
 import {
   getListById,
   getSelectedData,
@@ -32,6 +37,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { isSamajManager, isCityManager, isDistrictManager, isRegionManager, isStateManager, isCountryManager } from "../../../util/util";
 import {
   getSamajList,
   addSamaj,
@@ -41,7 +47,29 @@ import {
 
 export default function Index() {
   const dispatch = useDispatch();
-  const { loading, country, state, region, district, city } = UseRedux();
+  const { loading, country, state, region, district, city, auth } = UseRedux();
+  const samajManager = isSamajManager(auth?.user?.role);
+  const cityManager = isCityManager(auth?.user?.role);
+  const districtManager = isDistrictManager(auth?.user?.role);
+  const regionManager = isRegionManager(auth?.user?.role);
+  const stateManager = isStateManager(auth?.user?.role);
+  const countryManager = isCountryManager(auth?.user?.role);
+  const [ownCityList, setOwnCityList] = useState(false);
+  const [ownDistrictList, setOwnDistrictList] = useState(false);
+  const [ownRegionList, setOwnRegionList] = useState(false);
+  const [ownStateList, setOwnStateList] = useState(false);
+  const [ownCountryList, setOwnCountryList] = useState(false);
+  const canAct = cityManager
+    ? ownCityList
+    : districtManager
+      ? ownDistrictList
+      : regionManager
+        ? ownRegionList
+        : stateManager
+          ? ownStateList
+          : countryManager
+            ? ownCountryList
+            : !samajManager;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({
@@ -62,6 +90,8 @@ export default function Index() {
   const [samajModalData, setSamajModalData] = useState(null);
   const [samajAddEditModel, setSamajAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
@@ -73,7 +103,7 @@ export default function Index() {
 
   useEffect(() => {
     handleSamajList();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, ownCityList, ownDistrictList, ownRegionList, ownStateList, ownCountryList]);
 
   const samajColumn = [
     {
@@ -94,7 +124,10 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <CustomSwitch checked={record?.row?.active} />
+          <CustomSwitch
+            checked={record?.row?.active}
+            disabled={!canAct}
+          />
         </div>
       ),
     },
@@ -156,13 +189,13 @@ export default function Index() {
           <Tooltip title={"Delete"}>
             <DeleteIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => deleteAPI(record?.row?.id)}
+              onClick={() => setDeleteTarget(record?.row)}
             />
           </Tooltip>
         </div>
       ),
     },
-  ];
+  ].filter((column) => canAct || column.field !== "action");
 
   const formik = useFormik({
     initialValues: {
@@ -231,7 +264,7 @@ export default function Index() {
 
   const deleteAPI = async (id) => {
     try {
-      await deleteSamaj([id]);
+      await deleteSamaj(Array.isArray(id) ? id : [id]);
       handleSamajList();
     } catch (e) {
       // Optionally handle error with notification
@@ -267,6 +300,21 @@ export default function Index() {
         city: isRest ? [] : filteredCityIds,
         ...text,
       };
+      if (cityManager) {
+        params.ownCity = ownCityList;
+      }
+      if (districtManager) {
+        params.ownDistrict = ownDistrictList;
+      }
+      if (regionManager) {
+        params.ownRegion = ownRegionList;
+      }
+      if (stateManager) {
+        params.ownState = ownStateList;
+      }
+      if (countryManager) {
+        params.ownCountry = ownCountryList;
+      }
       const data = await getSamajList(params);
       setSamajData(data);
     } catch (e) {
@@ -287,6 +335,12 @@ export default function Index() {
     handleSamajList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -295,24 +349,68 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Samaj</p>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            className={"bg-primary"}
-            onClick={() => {
-              setSamajAddEditModel(!samajAddEditModel);
-              setList((pre) => ({
-                ...pre,
-                country: country.map((data) => ({
-                  ...data,
-                  label: data.name,
-                  value: data.id,
-                })),
-              }));
-            }}
-          >
-            Add Samaj
-          </Button>
+          <div className={"flex items-center gap-3"}>
+            {cityManager || districtManager || regionManager || stateManager || countryManager ? (
+              <FormControlLabel
+                labelPlacement="start"
+                className={"!mr-0"}
+                control={
+                  <CustomSwitch
+                    checked={
+                      cityManager
+                        ? ownCityList
+                        : districtManager
+                          ? ownDistrictList
+                          : regionManager
+                            ? ownRegionList
+                            : stateManager
+                              ? ownStateList
+                              : ownCountryList
+                    }
+                    onChange={(e) => {
+                      if (cityManager) {
+                        setOwnCityList(e.target.checked);
+                      } else if (districtManager) {
+                        setOwnDistrictList(e.target.checked);
+                      } else if (regionManager) {
+                        setOwnRegionList(e.target.checked);
+                      } else if (stateManager) {
+                        setOwnStateList(e.target.checked);
+                      } else {
+                        setOwnCountryList(e.target.checked);
+                      }
+                      setPage(0);
+                    }}
+                  />
+                }
+                label={
+                  <span className={"font-semibold text-[#572a2a]"}>
+                    Your Samaj
+                  </span>
+                }
+              />
+            ) : null}
+            {canAct ? (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              className={"bg-primary"}
+              onClick={() => {
+                setSamajAddEditModel(!samajAddEditModel);
+                setList((pre) => ({
+                  ...pre,
+                  country: country.map((data) => ({
+                    ...data,
+                    label: data.name,
+                    value: data.id,
+                  })),
+                }));
+              }}
+            >
+              Add Samaj
+            </Button>
+            ) : null}
+          </div>
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -432,6 +530,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={samajColumn}
           data={samajData}
@@ -442,6 +541,68 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={samajData?.data || []}
+          emptyText="No samaj"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canAct}
+          getDetails={(row) =>
+            [
+              city.find((item) => item?.id === row?.city_id)?.name
+                ? `City: ${city.find((item) => item?.id === row?.city_id)?.name}`
+                : null,
+              row.zipcode ? `Zipcode: ${row.zipcode}` : null,
+            ].filter(Boolean)
+          }
+          activeDisabled={!canAct}
+          onEdit={
+            canAct
+              ? (row) => {
+                  setSamajModalData(row);
+                  setSamajAddEditModel(true);
+                  setList((pre) => ({
+                    ...pre,
+                    country: country.map((data) => ({
+                      ...data,
+                      label: data.name,
+                      value: data.id,
+                    })),
+                  }));
+                  setSelectedValue((pre) => ({
+                    ...pre,
+                    country:
+                      country.find((item) => item?.id === row?.country_id)?.name ||
+                      country.find((item) => item?.name === row?.country_id)?.name,
+                    state: state.find((item) => item?.id === row?.state_id)?.name,
+                    region: region.find((item) => item?.id === row?.region_id)
+                      ?.name,
+                    district: district.find(
+                      (item) => item?.id === row?.district_id
+                    )?.name,
+                    city: city.find((item) => item?.id === row?.city_id)?.name,
+                  }));
+                  setFieldValue("name", row.name);
+                  setFieldValue("label", row.label);
+                  setFieldValue("zipcode", row.zipcode);
+                  setFieldValue("country_id", row.country_id);
+                  setFieldValue("state_id", row.state_id);
+                  setFieldValue("region_id", row.region_id);
+                  setFieldValue("district_id", row.district_id);
+                  setFieldValue("city_id", row.city_id);
+                }
+              : undefined
+          }
+          onDelete={canAct ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={samajData?.total || 0}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
         />
       </ContainerPage>
       {samajAddEditModel ? (
@@ -667,6 +828,16 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete confirmation"
+        description={getDeleteDescription(deleteTarget?.name)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </Box>
   );
 }

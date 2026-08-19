@@ -11,7 +11,10 @@ export const getUserRequests = async (params) => {
 
 export const approveRejectUser = async (id, allowed) => {
   try {
-    const response = await axios.patch(`/user/update/${id}`, { allowed });
+    const response = await axios.patch(`/user/update/${id}`, {
+      allowed,
+      active: allowed,
+    });
     return response.data;
   } catch (error) {
     throw error;

@@ -4,6 +4,13 @@ import YuvaList from "./YuvaList";
 import Request from "./Request";
 import AddYuva from "./YuvaList/AddYuva";
 import Country from "./Country";
+import {
+  CountryDetails,
+  StateDetails,
+  RegionDetails,
+  DistrictDetails,
+  CityDetails,
+} from "./LocationDetails/pages";
 import State from "./State";
 import Region from "./Region";
 import District from "./District";
@@ -20,10 +27,15 @@ export {
   Request,
   AddYuva,
   Country,
+  CountryDetails,
   State,
+  StateDetails,
   Region,
+  RegionDetails,
   District,
+  DistrictDetails,
   City,
+  CityDetails,
   Samaj,
   Surname,
   Native,

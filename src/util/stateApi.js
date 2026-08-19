@@ -34,4 +34,22 @@ export const deleteState = async (ids) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getStatesByCountry = async (id) => {
+  try {
+    const response = await axios.get(`/state/list/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getStateInfo = async (id) => {
+  try {
+    const response = await axios.get(`/state/getInfo/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }; 

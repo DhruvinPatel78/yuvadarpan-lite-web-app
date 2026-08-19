@@ -1,4 +1,4 @@
-import { Box, Grid, IconButton, Tabs, Tab, styled } from "@mui/material";
+import { Box, Button, CircularProgress, Grid, IconButton, Modal, Tabs, Tab, styled } from "@mui/material";
 import Header from "../../Component/Header";
 import React from "react";
 import PublicOutlinedIcon from "@mui/icons-material/PublicOutlined";
@@ -6,12 +6,32 @@ import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutl
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
-import { useLocation } from "react-router-dom";
+import PrintIcon from "@mui/icons-material/Print";
+import ShareIcon from "@mui/icons-material/Share";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CloseIcon from "@mui/icons-material/Close";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
 import { UseRedux } from "../../Component/useRedux";
 import CustomTabPanel from "./CustomTabPanel";
+import YuvaPrintTemplate, { getLookupName } from "./PrintTemplates";
+import { useDispatch } from "react-redux";
+import {
+  getAllCityData,
+  getAllCountryData,
+  getAllDistrictData,
+  getAllRegionData,
+  getAllSamajData,
+  getAllStateData,
+  getAllSurnameData,
+} from "../../util/getAPICall";
+import { getNativeList, getPublicYuva } from "../../util/yuvaAdminApi";
+import {
+  NotificationData,
+  NotificationSnackbar,
+} from "../../Component/Common/notification";
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
@@ -57,23 +77,222 @@ const profileTabs = [
   { id: 2, title: "Mama Info" },
   { id: 3, title: "Other Info" },
 ];
-const getCityName = (cityList, cityId) =>
-  cityList?.find((item) => item?.id === cityId)?.name || "";
-const getStateName = (stateList, stateId) =>
-  stateList?.find((item) => item?.id === stateId)?.name || "";
+
+const PLACEHOLDER_PHOTO =
+  "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg";
+
+const getYuvaShareId = (value) => {
+  const raw = decodeURIComponent(String(value || "")).trim();
+  const objectId = raw.match(/[a-fA-F0-9]{24}/);
+  if (objectId) {
+    return objectId[0];
+  }
+  const compactId = raw.match(/[a-fA-F0-9]{32}/);
+  if (compactId) {
+    return compactId[0];
+  }
+  return raw.split(/[\s/?&#]/)[0];
+};
+
 const ProfilePage = () => {
-  const { state: data } = useLocation();
+  const { id: routeId } = useParams();
+  const { pathname, state } = useLocation();
+  const navigate = useNavigate();
+  const isPublicView = pathname.startsWith("/yuva");
+  const id = getYuvaShareId(routeId);
+  const [data, setData] = React.useState(state || null);
+  const [loadError, setLoadError] = React.useState("");
   const [tabValue, setTabValue] = React.useState(0);
-  const { city, state } = UseRedux();
+  const [photoOpen, setPhotoOpen] = React.useState(false);
+  const [nativeList, setNativeList] = React.useState([]);
+  const { city, state: stateList, surname, country, region, district, samaj } = UseRedux();
+  const { notification, setNotification } = NotificationData();
+  const dispatch = useDispatch();
+  const photoUrl = data?.profile?.url || PLACEHOLDER_PHOTO;
+  const labels = data?.labels || {};
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
+  React.useEffect(() => {
+    if (!id) return;
+    getPublicYuva(id)
+      .then((yuva) => {
+        setData(yuva);
+        setLoadError("");
+      })
+      .catch(() => {
+        if (!state) {
+          setLoadError("Yuva profile not found");
+        }
+      });
+  }, [id]);
+
+  React.useEffect(() => {
+    if (isPublicView) return;
+    if (!country?.length) dispatch(getAllCountryData);
+    if (!stateList?.length) dispatch(getAllStateData);
+    if (!region?.length) dispatch(getAllRegionData);
+    if (!district?.length) dispatch(getAllDistrictData);
+    if (!city?.length) dispatch(getAllCityData);
+    if (!samaj?.length) dispatch(getAllSamajData);
+    if (!surname?.length) dispatch(getAllSurnameData);
+  }, [
+    isPublicView,
+    country?.length,
+    stateList?.length,
+    region?.length,
+    district?.length,
+    city?.length,
+    samaj?.length,
+    surname?.length,
+    dispatch,
+  ]);
+
+  React.useEffect(() => {
+    if (isPublicView) return;
+    getNativeList()
+      .then((list) => setNativeList(list || []))
+      .catch(() => {});
+  }, [isPublicView]);
+
+  const fullName = [
+    data?.firstName,
+    data?.fatherName,
+    getLookupName(surname, data?.lastName, labels.lastName),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const shareUrl = `${window.location.origin}/yuva/${getYuvaShareId(
+    data?.id || id
+  )}`;
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(isPublicView ? "/" : "/admin/yuvalist");
+  };
+
+  const copyShareLink = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = shareUrl;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+      }
+      setNotification({ type: "success", message: "Profile link copied" });
+    } catch (e) {
+      setNotification({ type: "error", message: "Unable to copy link" });
+    }
+  };
+
+  const handleShare = async () => {
+    const mobileShare =
+      typeof navigator.share === "function" &&
+      /iPhone|iPad|Android/i.test(navigator.userAgent);
+    try {
+      if (mobileShare) {
+        await navigator.share({
+          title: fullName || "Yuva Profile",
+          url: shareUrl,
+        });
+        return;
+      }
+      await copyShareLink();
+    } catch (e) {
+      if (e?.name === "AbortError") return;
+      await copyShareLink();
+    }
+  };
+
+  const handlePrint = () => {
+    const previousTitle = document.title;
+    document.title = fullName ? `Yuva Details - ${fullName}` : "Yuva Details";
+    const restoreTitle = () => {
+      document.title = previousTitle;
+      window.removeEventListener("afterprint", restoreTitle);
+    };
+    window.addEventListener("afterprint", restoreTitle);
+    window.print();
+  };
+
+  if (loadError) {
+    return (
+      <Box>
+        <Header />
+        <ContainerPage className="flex justify-center items-center py-20">
+          <p className="text-xl font-semibold">{loadError}</p>
+        </ContainerPage>
+      </Box>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Box>
+        <Header />
+        <ContainerPage className="flex justify-center items-center py-20">
+          <CircularProgress className="text-primary" />
+        </ContainerPage>
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      <Header backBtn={true} btnAction="/dashboard" />
+      <YuvaPrintTemplate
+        data={data}
+        lists={{
+          city,
+          state: stateList,
+          surname,
+          country,
+          region,
+          district,
+          samaj,
+          nativeList,
+        }}
+      />
+      <div className="print-hidden">
+      <Header />
       <ContainerPage
         className={"flex-col justify-center flex items-start h-full"}
       >
+        <div className="w-full flex justify-between items-center gap-2 mb-3">
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            className="!border-[#572a2a] !text-[#572a2a]"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+          <div className="flex gap-2">
+          <Button
+            variant="outlined"
+            startIcon={<ShareIcon />}
+            className="!border-[#572a2a] !text-[#572a2a]"
+            onClick={handleShare}
+          >
+            Share
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<PrintIcon />}
+            className="bg-primary text-white"
+            onClick={handlePrint}
+          >
+            Print
+          </Button>
+          </div>
+        </div>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={12} md={4} lg={4}>
             <div
@@ -90,18 +309,11 @@ const ProfilePage = () => {
                   border: "1px dashed #542b2b",
                   marginTop: "20px",
                 }}
-                onClick={() =>
-                  window.open(
-                    "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank"
-                  )
-                }
+                onClick={() => setPhotoOpen(true)}
               >
                 <ImageSrc
                   style={{
-                    backgroundImage:
-                      `url(${data?.profile?.url})` ||
-                      `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
+                    backgroundImage: `url(${photoUrl})`,
                   }}
                   className={"m-2"}
                 />
@@ -117,9 +329,11 @@ const ProfilePage = () => {
                     </IconButton>
                     <span className={"font-semibold"}>Personal Info</span>
                   </div>
+                  {isPublicView ? null : (
                   <IconButton size={"small"}>
                     <ModeEditOutlineOutlinedIcon />
                   </IconButton>
+                  )}
                 </div>
                 <div className={"flex flex-col gap-2 px-2"}>
                   <span className={"flex flex-row gap-2 items-center"}>
@@ -187,8 +401,8 @@ const ProfilePage = () => {
                         {moment(data?.dob).format("DD/MM/YYYY hh:mm A")}
                       </span>
                       <span>{data.familyId}</span>
-                      <span>{getCityName(city, data?.city)}</span>
-                      <span>{getStateName(state, data?.state)}</span>
+                      <span>{getLookupName(city, data?.city, labels.city)}</span>
+                      <span>{getLookupName(stateList, data?.state, labels.state)}</span>
                       <span>{data.firm}</span>
                       <span>{data.firmAddress}</span>
                     </div>
@@ -239,6 +453,32 @@ const ProfilePage = () => {
           </Grid>
         </Grid>
       </ContainerPage>
+      </div>
+      <Modal
+        open={photoOpen}
+        onClose={() => setPhotoOpen(false)}
+        className="flex justify-center items-center"
+        sx={{
+          "& .MuiModal-backdrop": {
+            backgroundColor: "rgba(0,0,0,0.92) !important",
+          },
+        }}
+      >
+        <Box className="outline-none relative w-screen h-screen flex items-center justify-center p-4">
+          <IconButton
+            onClick={() => setPhotoOpen(false)}
+            className="!absolute top-4 right-4 !text-white"
+          >
+            <CloseIcon />
+          </IconButton>
+          <img
+            src={photoUrl}
+            alt={`${data?.firstName || "Yuva"} profile`}
+            className="max-w-[96vw] max-h-[92vh] object-contain"
+          />
+        </Box>
+      </Modal>
+      <NotificationSnackbar notification={notification} />
     </Box>
   );
 };

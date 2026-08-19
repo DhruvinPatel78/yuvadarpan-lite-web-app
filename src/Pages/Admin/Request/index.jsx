@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Box, Button, Grid, Modal, Paper, Tooltip } from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
+import { Box, Button, Checkbox, CircularProgress, Grid, Modal, Paper, Tooltip, useMediaQuery } from "@mui/material";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../../../Component/Common/customTable";
@@ -21,7 +21,6 @@ import {
   handleListById,
   listHandler,
   requestFilterList,
-  rolesList,
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
@@ -33,18 +32,32 @@ import {
   approveRejectMany,
 } from "../../../util/requestApi";
 
+const MOBILE_PAGE_SIZE = 20;
+
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { auth, samaj, region, state, surname } = UseRedux();
+  const { samaj, region, state, surname, auth } = UseRedux();
+  const isSamajManager = String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
+  const isCityManager = String(auth?.user?.role || "").toUpperCase() === "CITY_MANAGER";
+  const isDistrictManager = String(auth?.user?.role || "").toUpperCase() === "DISTRICT_MANAGER";
+  const isRegionManager = String(auth?.user?.role || "").toUpperCase() === "REGION_MANAGER";
+  const isStateManager = String(auth?.user?.role || "").toUpperCase() === "STATE_MANAGER";
+  const isCountryManager = String(auth?.user?.role || "").toUpperCase() === "COUNTRY_MANAGER";
+  const hideLocationFilters = isSamajManager || isCityManager || isDistrictManager || isRegionManager || isStateManager || isCountryManager;
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [mobilePage, setMobilePage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const isMobile = useMediaQuery("(max-width:767.95px)");
+  const loadingMoreLock = useRef(false);
+  const loadMoreRef = useRef(null);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
-  const [selectedRole, setSelectedRole] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
@@ -55,10 +68,6 @@ export default function Index() {
   const [regionListByState, setRegionListByState] = useState(region);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    handleRequestList(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowsPerPage]);
 
   const requestInfoModalOpen = (userInfo) => {
     setRequestInfoModel(true);
@@ -72,7 +81,15 @@ export default function Index() {
     dispatch(startLoading());
     try {
       await approveRejectUser(userInfo.id, action);
-      handleRequestList();
+      if (isMobile) {
+        setUserList((prev) => ({
+          ...prev,
+          data: (prev?.data || []).filter((item) => item.id !== userInfo.id),
+          total: Math.max(0, (prev?.total || 1) - 1),
+        }));
+      } else {
+        handleRequestList();
+      }
       setNotification({ type: "success", message: "Success !" });
     } catch (e) {
       setNotification({
@@ -88,32 +105,100 @@ export default function Index() {
   const filteredStateIds = useFilteredIds(selectedState, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
-  const filteredRolesIds = useFilteredIds(selectedRole, "value", "label");
 
-  const handleRequestList = async (isRest = false) => {
-    dispatch(startLoading());
+  const handleRequestList = async (isRest = false, options = {}) => {
+    const append = Boolean(options.append);
+    const limit = isMobile ? MOBILE_PAGE_SIZE : rowsPerPage;
+    const pageNum = append ? options.pageNum : isMobile ? 1 : page + 1;
     const text = selectedSearchByText
       ? { [selectedSearchBy.id]: isRest ? "" : selectedSearchByText }
       : {};
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      dispatch(startLoading());
+      if (isMobile) {
+        setMobilePage(1);
+      }
+    }
     try {
       const params = {
-        page: page + 1,
-        limit: rowsPerPage,
+        page: pageNum,
+        limit,
         lastName: isRest ? [] : filteredSurnameIds,
         state: isRest ? [] : filteredStateIds,
         region: isRest ? [] : filteredRegionIds,
         samaj: isRest ? [] : filteredSamajIds,
-        roles: isRest ? [] : filteredRolesIds,
         ...text,
       };
       const data = await getUserRequests(params);
-      setUserList(data);
+      setUserList((prev) => {
+        if (!append) {
+          return data;
+        }
+        const existingIds = new Set((prev?.data || []).map((item) => item.id));
+        const incoming = (data?.data || []).filter(
+          (item) => !existingIds.has(item.id)
+        );
+        return {
+          ...data,
+          data: [...(prev?.data || []), ...incoming],
+        };
+      });
+      setHasMore(
+        (data?.data?.length || 0) === limit &&
+          pageNum * limit < (data?.total || 0)
+      );
     } catch (error) {
       // Optionally handle error with notification
     } finally {
-      dispatch(endLoading());
+      if (append) {
+        setLoadingMore(false);
+        loadingMoreLock.current = false;
+      } else {
+        dispatch(endLoading());
+      }
     }
   };
+
+  useEffect(() => {
+    handleRequestList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, rowsPerPage, isMobile]);
+
+  const loadMoreRequests = () => {
+    if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
+      return;
+    }
+    if (!(userList?.data?.length)) {
+      return;
+    }
+    loadingMoreLock.current = true;
+    const nextPage = mobilePage + 1;
+    setMobilePage(nextPage);
+    handleRequestList(false, { append: true, pageNum: nextPage });
+  };
+
+  useEffect(() => {
+    if (!isMobile) {
+      return undefined;
+    }
+    const target = loadMoreRef.current;
+    if (!target) {
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMoreRequests();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, hasMore, mobilePage, loadingMore]);
 
   const handleReset = () => {
     setSelectedSearchByText("");
@@ -125,7 +210,6 @@ export default function Index() {
     setSelectedState([]);
     setSelectedRegion([]);
     setSelectedSamaj([]);
-    setSelectedRole([]);
     setRegionListByState(region);
     setSamajListByRegion(samaj);
     handleRequestList(true);
@@ -137,7 +221,18 @@ export default function Index() {
     dispatch(startLoading());
     try {
       await approveRejectMany(selectedUsers, action);
-      handleRequestList();
+      if (isMobile) {
+        setUserList((prev) => ({
+          ...prev,
+          data: (prev?.data || []).filter(
+            (item) => !selectedUsers.includes(item.id)
+          ),
+          total: Math.max(0, (prev?.total || 0) - selectedUsers.length),
+        }));
+        setSelectedUsers([]);
+      } else {
+        handleRequestList();
+      }
       setNotification({ type: "success", message: "Success !" });
     } catch (e) {
       setNotification({
@@ -265,6 +360,16 @@ export default function Index() {
     },
   ];
 
+  const requests = userList?.data || [];
+  const lookupName = (list, id) =>
+    list?.find((item) => item?.id === id)?.name || "-";
+
+  const toggleCardSelection = (id) => {
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -323,6 +428,8 @@ export default function Index() {
                 }
               }}
             />
+            {hideLocationFilters ? null : (
+              <>
             <CustomAutoComplete
               list={listHandler(state)}
               multiple={true}
@@ -378,23 +485,7 @@ export default function Index() {
                 }
               }}
             />
-            {auth.user.role === "ADMIN" && (
-              <CustomAutoComplete
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                multiple={true}
-                list={rolesList()}
-                label={"Role"}
-                name="role"
-                value={selectedRole}
-                onChange={(e, role) => {
-                  if (role) {
-                    setSelectedRole((pre) => getSelectedData(pre, role, e));
-                  }
-                }}
-              />
+              </>
             )}
             <CustomAutoComplete
               list={requestFilterList}
@@ -446,8 +537,7 @@ export default function Index() {
                 selectedState?.length > 0 ||
                 selectedRegion?.length > 0 ||
                 selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0 ||
-                selectedRole?.length > 0) && (
+                selectedSamaj?.length > 0) && (
                 <button
                   className={
                     "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
@@ -460,18 +550,106 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
-        <CustomTable
-          columns={pendingUsersTableHeader}
-          data={userList}
-          name={"pendingUser"}
-          pageSize={rowsPerPage}
-          type={"pendingList"}
-          className={"mx-0 w-full"}
-          setPageSize={setRowsPerPage}
-          page={page}
-          setPage={setPage}
-          onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
-        />
+        <div className={"hidden md:block w-full"}>
+          <CustomTable
+            columns={pendingUsersTableHeader}
+            data={userList}
+            name={"pendingUser"}
+            pageSize={rowsPerPage}
+            type={"pendingList"}
+            className={"mx-0 w-full"}
+            setPageSize={setRowsPerPage}
+            page={page}
+            setPage={setPage}
+            onRowSelectionModelChange={(ids) => handleSelectedUser(ids)}
+            bulkActions={[
+              {
+                label: "Accept Selected",
+                icon: <PlaylistAddCheckIcon />,
+                onClick: () => handleRequestAll("accept"),
+              },
+              {
+                label: "Reject Selected",
+                icon: <PlaylistRemoveIcon />,
+                variant: "outlined",
+                onClick: () => handleRequestAll("reject"),
+              },
+            ]}
+          />
+        </div>
+        <div className={"md:hidden w-full flex flex-col gap-3"}>
+          {requests.length ? (
+            requests.map((row) => {
+              const fullName = [row.firstName, row.middleName]
+                .filter(Boolean)
+                .join(" ");
+              const lastName = lookupName(surname, row.lastName);
+              const isSelected = selectedUsers.includes(row.id);
+              return (
+                <Paper
+                  key={row.id}
+                  elevation={2}
+                  className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
+                >
+                  <div className={"p-3"}>
+                    <div className={"flex items-center justify-between gap-2"}>
+                      <p className={"font-bold text-[#572a2a] text-base leading-tight min-w-0 pr-1"}>
+                        {fullName} {lastName}
+                      </p>
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={() => toggleCardSelection(row.id)}
+                        className={"!text-[#572a2a] !p-0 !m-0 shrink-0"}
+                      />
+                    </div>
+                    <p className={"text-sm text-gray-600 mt-1"}>
+                      Family ID: {row.familyId || "-"}
+                    </p>
+                    <p className={"text-sm text-gray-600 break-all"}>
+                      {row.email || "-"}
+                    </p>
+                    <p className={"text-sm text-gray-600 capitalize"}>
+                      {row.gender || "-"} · {lookupName(region, row.region)} ·{" "}
+                      {lookupName(samaj, row.localSamaj)}
+                    </p>
+                  </div>
+                  <div className={"flex border-t border-[#ead9d9]"}>
+                    <button
+                      type="button"
+                      className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                      onClick={() => requestInfoModalOpen(row)}
+                    >
+                      View
+                    </button>
+                    <button
+                      type="button"
+                      className={"flex-1 py-2.5 text-sm font-semibold text-[#34c375] border-r border-[#ead9d9]"}
+                      onClick={() => userActionHandler(row, true)}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      className={"flex-1 py-2.5 text-sm font-semibold text-[#ff0000]"}
+                      onClick={() => userActionHandler(row, false)}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </Paper>
+              );
+            })
+          ) : (
+            <Paper className={"p-6 text-center text-gray-500 rounded-xl"}>
+              No pending requests
+            </Paper>
+          )}
+          {hasMore && requests.length ? (
+            <div ref={loadMoreRef} className={"flex justify-center py-3"}>
+              {loadingMore ? <CircularProgress size={24} className={"!text-[#572a2a]"} /> : null}
+            </div>
+          ) : null}
+        </div>
       </ContainerPage>
       <Modal
         open={requestInfoModel}
@@ -486,7 +664,7 @@ export default function Index() {
         }}
         className="flex justify-center items-center"
       >
-        <Paper elevation={10} className="!rounded-2xl p-4 w-1/2">
+        <Paper elevation={10} className="!rounded-2xl p-4 w-[95%] max-w-[720px]">
           <Grid container spacing={2} className="p-4">
             <Grid xs={12} className={"flex justify-between w-full"}>
               <span className={"text-xl font-bold"}>View Detail</span>
