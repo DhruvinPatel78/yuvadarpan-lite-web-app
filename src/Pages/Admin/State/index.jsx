@@ -5,12 +5,14 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   Grid,
   Modal,
   Paper,
   Tooltip,
 } from "@mui/material";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -35,7 +37,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
-import { isSamajManager } from "../../../util/util";
+import { isLocationMasterReadOnly, hideLocationRowActions, isCountryManager } from "../../../util/util";
 import {
   getStateList,
   addState,
@@ -47,7 +49,14 @@ export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, country, auth } = UseRedux();
-  const canManage = !isSamajManager(auth?.user?.role);
+  const countryManager = isCountryManager(auth?.user?.role);
+  const [ownCountryList, setOwnCountryList] = useState(false);
+  const canAct = countryManager
+    ? ownCountryList
+    : !isLocationMasterReadOnly(auth?.user?.role);
+  const hideRowActions =
+    (!countryManager && hideLocationRowActions(auth?.user?.role)) ||
+    (countryManager && !ownCountryList);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryList, setCountryList] = useState([]);
@@ -57,10 +66,11 @@ export default function Index() {
   const [stateAddEditModel, setStateAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     handleStateList();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, ownCountryList]);
 
   const stateListColumn = [
     {
@@ -91,7 +101,7 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <CustomSwitch checked={record?.row?.active} />
+          <CustomSwitch checked={record?.row?.active} disabled={!canAct} />
         </div>
       ),
     },
@@ -115,7 +125,7 @@ export default function Index() {
               }
             />
           </Tooltip>
-          {canManage ? (
+          {canAct ? (
             <>
               <Tooltip title={"Edit"}>
                 <ModeEditIcon
@@ -150,7 +160,7 @@ export default function Index() {
         </div>
       ),
     },
-  ];
+  ].filter((column) => !hideRowActions || column.field !== "action");
 
   const formik = useFormik({
     initialValues: {
@@ -224,6 +234,9 @@ export default function Index() {
         country: isRest ? [] : filteredCountryIds,
         ...text,
       };
+      if (countryManager) {
+        params.ownCountry = ownCountryList;
+      }
       const data = await getStateList(params);
       setStateData(data);
     } catch (e) {
@@ -237,6 +250,12 @@ export default function Index() {
     handleStateList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -245,7 +264,28 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>State</p>
-          {canManage ? (
+          <div className={"flex items-center gap-3"}>
+            {countryManager ? (
+              <FormControlLabel
+                labelPlacement="start"
+                className={"!mr-0"}
+                control={
+                  <CustomSwitch
+                    checked={ownCountryList}
+                    onChange={(e) => {
+                      setOwnCountryList(e.target.checked);
+                      setPage(0);
+                    }}
+                  />
+                }
+                label={
+                  <span className={"font-semibold text-[#572a2a]"}>
+                    Your State
+                  </span>
+                }
+              />
+            ) : null}
+            {canAct ? (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -264,6 +304,7 @@ export default function Index() {
               Add State
             </Button>
           ) : null}
+          </div>
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -327,6 +368,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={stateListColumn}
           data={stateData}
@@ -337,7 +379,52 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
-          onDeleteSelected={canManage ? deleteAPI : undefined}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={stateData?.data || []}
+          emptyText="No states"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canAct}
+          getDetails={(row) => [`Regions: ${row.regionCount ?? 0}`]}
+          activeDisabled={!canAct}
+          onView={
+            hideRowActions
+              ? undefined
+              : (row) =>
+                  navigate(`/admin/state/${row.id}`, {
+                    state: { ...row, backTo: "/admin/state" },
+                  })
+          }
+          onEdit={
+            canAct
+              ? (row) => {
+                  setStateModalData(row);
+                  setStateAddEditModel(true);
+                  setCountryList(
+                    country.map((data) => ({
+                      ...data,
+                      label: data.name,
+                      value: data.id,
+                    }))
+                  );
+                  setFieldValue("name", row.name);
+                  setFieldValue("country_id", row.country_id);
+                  setSelectedCountry(
+                    country.find((item) => item?.id === row?.country_id)?.name
+                  );
+                }
+              : undefined
+          }
+          onDelete={canAct ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={stateData?.total || 0}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
         />
       </ContainerPage>
       {stateAddEditModel ? (

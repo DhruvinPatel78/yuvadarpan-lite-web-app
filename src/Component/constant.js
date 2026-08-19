@@ -100,53 +100,51 @@ export const handleListById = async (field, data) => {
   return response.data;
 };
 
+const roleOptions = [
+  {
+    label: "Admin",
+    value: "ADMIN",
+    id: "ADMIN",
+  },
+  {
+    label: "Country Manager",
+    value: "COUNTRY_MANAGER",
+    id: "COUNTRY_MANAGER",
+  },
+  {
+    label: "State Manager",
+    value: "STATE_MANAGER",
+    id: "STATE_MANAGER",
+  },
+  {
+    label: "Region Manager",
+    value: "REGION_MANAGER",
+    id: "REGION_MANAGER",
+  },
+  {
+    label: "District Manager",
+    value: "DISTRICT_MANAGER",
+    id: "DISTRICT_MANAGER",
+  },
+  {
+    label: "City Manager",
+    value: "CITY_MANAGER",
+    id: "CITY_MANAGER",
+  },
+  {
+    label: "Samaj Manager",
+    value: "SAMAJ_MANAGER",
+    id: "SAMAJ_MANAGER",
+  },
+  {
+    label: "User",
+    value: "USER",
+    id: "USER",
+  },
+];
+
 export const rolesList = (isAllOption = true) => {
-  return isAllOption
-    ? [
-        allOptions,
-        {
-          label: "Admin",
-          value: "ADMIN",
-          id: "ADMIN",
-        },
-        {
-          label: "Samaj Manager",
-          value: "SAMAJ_MANAGER",
-          id: "SAMAJ_MANAGER",
-        },
-        {
-          label: "Region Manager",
-          value: "REGION_MANAGER",
-          id: "REGION_MANAGER",
-        },
-        {
-          label: "User",
-          value: "USER",
-          id: "USER",
-        },
-      ]
-    : [
-        {
-          label: "Admin",
-          value: "ADMIN",
-          id: "ADMIN",
-        },
-        {
-          label: "Samaj Manager",
-          value: "SAMAJ_MANAGER",
-          id: "SAMAJ_MANAGER",
-        },
-        {
-          label: "Region Manager",
-          value: "REGION_MANAGER",
-          id: "REGION_MANAGER",
-        },
-        {
-          label: "User",
-          value: "USER",
-          id: "USER",
-        },
-      ];
+  return isAllOption ? [allOptions, ...roleOptions] : roleOptions;
 };
 
 export const requestFilterList = [
@@ -180,14 +178,32 @@ export const requestFilterList = [
 export const yuvaFilterList = [
   {
     value: "familyId",
+    id: "familyId",
     label: "Family Id",
   },
   {
+    value: "firstName",
+    id: "firstName",
+    label: "First Name",
+  },
+  {
+    value: "fatherName",
+    id: "fatherName",
+    label: "Father Name",
+  },
+  {
+    value: "grandFatherName",
+    id: "grandFatherName",
+    label: "Grand Father Name",
+  },
+  {
     value: "firmName",
+    id: "firmName",
     label: "Firm Name",
   },
   {
     value: "gender",
+    id: "gender",
     label: "Gender",
   },
 ];

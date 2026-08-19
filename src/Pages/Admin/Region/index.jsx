@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   Grid,
   Modal,
   Paper,
@@ -15,6 +16,7 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
@@ -37,7 +39,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
-import { isSamajManager } from "../../../util/util";
+import { isLocationMasterReadOnly, isStateManager, isCityManager, isDistrictManager, isRegionManager, isCountryManager } from "../../../util/util";
 import {
   getRegionList,
   addRegion,
@@ -49,7 +51,21 @@ export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, country, state, auth } = UseRedux();
-  const canManage = !isSamajManager(auth?.user?.role);
+  const stateManager = isStateManager(auth?.user?.role);
+  const countryManager = isCountryManager(auth?.user?.role);
+  const [ownStateList, setOwnStateList] = useState(false);
+  const [ownCountryList, setOwnCountryList] = useState(false);
+  const canAct = countryManager
+    ? ownCountryList
+    : stateManager
+    ? ownStateList
+    : !isLocationMasterReadOnly(auth?.user?.role);
+  const hideRowActions =
+    isCityManager(auth?.user?.role) ||
+    isDistrictManager(auth?.user?.role) ||
+    isRegionManager(auth?.user?.role) ||
+    (stateManager && !ownStateList) ||
+    (countryManager && !ownCountryList);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({ country: [], state: [] });
@@ -62,13 +78,14 @@ export default function Index() {
   const [regionAddEditModel, setRegionAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [stateListByCountry, setStateListByCountry] = useState(state);
 
   useEffect(() => {
     handleRegionList();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, ownStateList, ownCountryList]);
 
   const regionListColumn = [
     {
@@ -99,7 +116,7 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <CustomSwitch checked={record?.row?.active} />
+          <CustomSwitch checked={record?.row?.active} disabled={!canAct} />
         </div>
       ),
     },
@@ -123,7 +140,7 @@ export default function Index() {
               }
             />
           </Tooltip>
-          {canManage ? (
+          {canAct ? (
             <>
               <Tooltip title={"Edit"}>
                 <ModeEditIcon
@@ -165,7 +182,7 @@ export default function Index() {
         </div>
       ),
     },
-  ];
+  ].filter((column) => !hideRowActions || column.field !== "action");
 
   const formik = useFormik({
     initialValues: {
@@ -249,6 +266,12 @@ export default function Index() {
         state: isRest ? [] : filteredStateIds,
         ...text,
       };
+      if (stateManager) {
+        params.ownState = ownStateList;
+      }
+      if (countryManager) {
+        params.ownCountry = ownCountryList;
+      }
       const data = await getRegionList(params);
       setRegionData(data);
     } catch (e) {
@@ -264,6 +287,12 @@ export default function Index() {
     handleRegionList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -272,7 +301,32 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>Region</p>
-          {canManage ? (
+          <div className={"flex items-center gap-3"}>
+            {stateManager || countryManager ? (
+              <FormControlLabel
+                labelPlacement="start"
+                className={"!mr-0"}
+                control={
+                  <CustomSwitch
+                    checked={stateManager ? ownStateList : ownCountryList}
+                    onChange={(e) => {
+                      if (stateManager) {
+                        setOwnStateList(e.target.checked);
+                      } else {
+                        setOwnCountryList(e.target.checked);
+                      }
+                      setPage(0);
+                    }}
+                  />
+                }
+                label={
+                  <span className={"font-semibold text-[#572a2a]"}>
+                    Your Region
+                  </span>
+                }
+              />
+            ) : null}
+            {canAct ? (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -291,7 +345,8 @@ export default function Index() {
             >
               Add Region
             </Button>
-          ) : null}
+            ) : null}
+          </div>
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -374,6 +429,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={regionListColumn}
           data={regionData}
@@ -384,7 +440,57 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
-          onDeleteSelected={canManage ? deleteAPI : undefined}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={regionData?.data || []}
+          emptyText="No regions"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canAct}
+          getDetails={(row) => [`Districts: ${row.districtCount ?? 0}`]}
+          activeDisabled={!canAct}
+          onView={
+            hideRowActions
+              ? undefined
+              : (row) =>
+                  navigate(`/admin/region/${row.id}`, {
+                    state: { ...row, backTo: "/admin/region" },
+                  })
+          }
+          onEdit={
+            canAct
+              ? (row) => {
+                  setRegionModalData(row);
+                  setRegionAddEditModel(true);
+                  setList((pre) => ({
+                    ...pre,
+                    country: country.map((data) => ({
+                      ...data,
+                      label: data.name,
+                      value: data.id,
+                    })),
+                  }));
+                  setSelectedValue((pre) => ({
+                    ...pre,
+                    country: country.find((item) => item?.id === row?.country_id)
+                      ?.name,
+                    state: state.find((item) => item?.id === row?.state_id)?.name,
+                  }));
+                  setFieldValue("country_id", row?.country_id);
+                  setFieldValue("state_id", row?.state_id);
+                  setFieldValue("name", row?.name);
+                }
+              : undefined
+          }
+          onDelete={canAct ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={regionData?.total || 0}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
         />
       </ContainerPage>
       {regionAddEditModel ? (

@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import AddIcon from "@mui/icons-material/Add";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -27,7 +28,7 @@ import ConfirmModal, {
   getDeleteDescription,
 } from "../../../Component/Common/ConfirmModal";
 import { UseRedux } from "../../../Component/useRedux";
-import { isSamajManager } from "../../../util/util";
+import { isLocationMasterReadOnly } from "../../../util/util";
 import {
   getSurnameList,
   addSurname,
@@ -38,7 +39,7 @@ import {
 export default function Index() {
   const dispatch = useDispatch();
   const { loading, auth } = UseRedux();
-  const canManage = !isSamajManager(auth?.user?.role);
+  const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [surnameData, setSurnameData] = useState(null);
@@ -46,6 +47,7 @@ export default function Index() {
   const [surnameAddEditModel, setSurnameAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     handleSurnameList();
@@ -209,6 +211,12 @@ export default function Index() {
     handleSurnameList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -271,6 +279,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={surnameListColumn}
           data={surnameData}
@@ -281,6 +290,40 @@ export default function Index() {
           className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={surnameData?.data || []}
+          emptyText="No surnames"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canManage}
+          getDetails={(row) =>
+            [
+              row.gotra ? `Gotra: ${row.gotra}` : null,
+              row.mainBranch ? `Main Branch: ${row.mainBranch}` : null,
+            ].filter(Boolean)
+          }
+          activeDisabled={!canManage}
+          onActiveChange={(row, next) => userActionHandler(row, next, "active")}
+          onEdit={
+            canManage
+              ? (row) => {
+                  setSurnameModalData(row);
+                  setSurnameAddEditModel(true);
+                  setFieldValue("name", row.name);
+                  setFieldValue("gotra", row.gotra);
+                  setFieldValue("mainBranch", row.mainBranch);
+                }
+              : undefined
+          }
+          onDelete={canManage ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={surnameData?.total || 0}
           onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>

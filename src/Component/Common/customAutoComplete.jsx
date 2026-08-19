@@ -68,7 +68,18 @@ export default function CustomAutoComplete({
         disabled={disabled}
         defaultValue={defaultValue}
         options={list}
-        value={value}
+        value={
+          multiple
+            ? value || []
+            : value === "" || value === undefined
+              ? null
+              : value
+        }
+        getOptionLabel={(option) =>
+          typeof option === "string"
+            ? option
+            : option?.label || option?.name || ""
+        }
         isOptionEqualToValue={(option, value) => {
           if (!value) return false;
           return (

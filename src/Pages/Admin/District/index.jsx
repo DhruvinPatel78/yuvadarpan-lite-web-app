@@ -5,6 +5,7 @@ import {
   Button,
   CircularProgress,
   FormControl,
+  FormControlLabel,
   Grid,
   Modal,
   Paper,
@@ -15,6 +16,7 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -37,7 +39,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
-import { isSamajManager } from "../../../util/util";
+import { isLocationMasterReadOnly, isRegionManager, isCityManager, isDistrictManager, isStateManager, isCountryManager } from "../../../util/util";
 import {
   getDistrictList,
   addDistrict,
@@ -49,7 +51,25 @@ export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, country, state, region, auth } = UseRedux();
-  const canManage = !isSamajManager(auth?.user?.role);
+  const regionManager = isRegionManager(auth?.user?.role);
+  const stateManager = isStateManager(auth?.user?.role);
+  const countryManager = isCountryManager(auth?.user?.role);
+  const [ownRegionList, setOwnRegionList] = useState(false);
+  const [ownStateList, setOwnStateList] = useState(false);
+  const [ownCountryList, setOwnCountryList] = useState(false);
+  const canAct = countryManager
+    ? ownCountryList
+    : stateManager
+    ? ownStateList
+    : regionManager
+      ? ownRegionList
+      : !isLocationMasterReadOnly(auth?.user?.role);
+  const hideRowActions =
+    isCityManager(auth?.user?.role) ||
+    isDistrictManager(auth?.user?.role) ||
+    (regionManager && !ownRegionList) ||
+    (stateManager && !ownStateList) ||
+    (countryManager && !ownCountryList);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [list, setList] = useState({ country: [], state: [], region: [] });
@@ -63,6 +83,7 @@ export default function Index() {
   const [districtAddEditModel, setDistrictAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
@@ -71,7 +92,7 @@ export default function Index() {
 
   useEffect(() => {
     handleDistrictList();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, ownRegionList, ownStateList, ownCountryList]);
 
   const districtListColumn = [
     {
@@ -102,7 +123,7 @@ export default function Index() {
       sortable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <CustomSwitch checked={record?.row?.active} />
+          <CustomSwitch checked={record?.row?.active} disabled={!canAct} />
         </div>
       ),
     },
@@ -126,7 +147,7 @@ export default function Index() {
               }
             />
           </Tooltip>
-          {canManage ? (
+          {canAct ? (
             <>
               <Tooltip title={"Edit"}>
                 <ModeEditIcon
@@ -175,7 +196,7 @@ export default function Index() {
         </div>
       ),
     },
-  ];
+  ].filter((column) => !hideRowActions || column.field !== "action");
 
   const formik = useFormik({
     initialValues: {
@@ -264,6 +285,15 @@ export default function Index() {
         region: isRest ? [] : filteredRegionIds,
         ...text,
       };
+      if (regionManager) {
+        params.ownRegion = ownRegionList;
+      }
+      if (stateManager) {
+        params.ownState = ownStateList;
+      }
+      if (countryManager) {
+        params.ownCountry = ownCountryList;
+      }
       const data = await getDistrictList(params);
       setDistrictData(data);
     } catch (e) {
@@ -281,6 +311,12 @@ export default function Index() {
     handleDistrictList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -289,7 +325,40 @@ export default function Index() {
       >
         <div className={"flex w-full items-center justify-between my-2"}>
           <p className={"text-3xl font-bold"}>District</p>
-          {canManage ? (
+          <div className={"flex items-center gap-3"}>
+            {regionManager || stateManager || countryManager ? (
+              <FormControlLabel
+                labelPlacement="start"
+                className={"!mr-0"}
+                control={
+                  <CustomSwitch
+                    checked={
+                      regionManager
+                        ? ownRegionList
+                        : stateManager
+                          ? ownStateList
+                          : ownCountryList
+                    }
+                    onChange={(e) => {
+                      if (regionManager) {
+                        setOwnRegionList(e.target.checked);
+                      } else if (stateManager) {
+                        setOwnStateList(e.target.checked);
+                      } else {
+                        setOwnCountryList(e.target.checked);
+                      }
+                      setPage(0);
+                    }}
+                  />
+                }
+                label={
+                  <span className={"font-semibold text-[#572a2a]"}>
+                    Your District
+                  </span>
+                }
+              />
+            ) : null}
+            {canAct ? (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -308,7 +377,8 @@ export default function Index() {
             >
               Add District
             </Button>
-          ) : null}
+            ) : null}
+          </div>
         </div>
         <CustomAccordion>
           <Grid spacing={2} container>
@@ -407,6 +477,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={districtListColumn}
           data={districtData}
@@ -417,7 +488,61 @@ export default function Index() {
           setPage={setPage}
           type={"userList"}
           className={"mx-0 w-full"}
-          onDeleteSelected={canManage ? deleteAPI : undefined}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={districtData?.data || []}
+          emptyText="No districts"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canAct}
+          getDetails={(row) => [`Cities: ${row.cityCount ?? 0}`]}
+          activeDisabled={!canAct}
+          onView={
+            hideRowActions
+              ? undefined
+              : (row) =>
+                  navigate(`/admin/district/${row.id}`, {
+                    state: { ...row, backTo: "/admin/district" },
+                  })
+          }
+          onEdit={
+            canAct
+              ? (row) => {
+                  setDistrictModalData(row);
+                  setDistrictAddEditModel(true);
+                  setList((pre) => ({
+                    ...pre,
+                    country: country.map((data) => ({
+                      ...data,
+                      label: data.name,
+                      value: data.id,
+                    })),
+                  }));
+                  setSelectedValue((pre) => ({
+                    ...pre,
+                    country:
+                      country.find((item) => item?.id === row?.country_id)?.name ||
+                      country.find((item) => item?.name === row?.country_id)?.name,
+                    state: state.find((item) => item?.id === row?.state_id)?.name,
+                    region: region.find((item) => item?.id === row?.region_id)
+                      ?.name,
+                  }));
+                  setFieldValue("name", row.name);
+                  setFieldValue("country_id", row.country_id);
+                  setFieldValue("state_id", row.state_id);
+                  setFieldValue("region_id", row.region_id);
+                }
+              : undefined
+          }
+          onDelete={canAct ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={districtData?.total || 0}
+          onDeleteSelected={canAct ? deleteAPI : undefined}
         />
       </ContainerPage>
       {districtAddEditModel ? (

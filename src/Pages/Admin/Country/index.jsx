@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import AddIcon from "@mui/icons-material/Add";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -29,7 +30,7 @@ import ConfirmModal, {
   getDeleteDescription,
 } from "../../../Component/Common/ConfirmModal";
 import { UseRedux } from "../../../Component/useRedux";
-import { isSamajManager } from "../../../util/util";
+import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
 import {
   getCountryList,
   addCountry,
@@ -41,7 +42,8 @@ export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, auth } = UseRedux();
-  const canManage = !isSamajManager(auth?.user?.role);
+  const canManage = !isLocationMasterReadOnly(auth?.user?.role);
+  const hideRowActions = hideLocationRowActions(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryData, setCountryData] = useState(null);
@@ -49,6 +51,7 @@ export default function Index() {
   const [countryAddEditModel, setCountryAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     handleCountryList();
@@ -137,7 +140,7 @@ export default function Index() {
         </div>
       ),
     },
-  ];
+  ].filter((column) => !hideRowActions || column.field !== "action");
 
   const userActionHandler = async (countryInfo, action, field) => {
     try {
@@ -230,6 +233,14 @@ export default function Index() {
     handleCountryList(true);
   };
 
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const rows = countryData?.data || [];
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
@@ -292,6 +303,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={countryListColumn}
           data={countryData}
@@ -302,6 +314,43 @@ export default function Index() {
           className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
+          onDeleteSelected={canManage ? deleteAPI : undefined}
+        />
+        </div>
+        <MasterMobileCards
+          rows={rows}
+          emptyText="No countries"
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canManage}
+          getDetails={(row) => [`States: ${row.stateCount ?? 0}`]}
+          activeDisabled={!canManage}
+          onActiveChange={(row, next) =>
+            userActionHandler(row, next, "active")
+          }
+          onView={
+            hideRowActions
+              ? undefined
+              : (row) =>
+                  navigate(`/admin/country/${row.id}`, {
+                    state: { ...row, backTo: "/admin/country" },
+                  })
+          }
+          onEdit={
+            canManage
+              ? (row) => {
+                  setCountryModalData(row);
+                  setCountryAddEditModel(true);
+                  setFieldValue("name", row.name);
+                }
+              : undefined
+          }
+          onDelete={canManage ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={countryData?.total || 0}
           onDeleteSelected={canManage ? deleteAPI : undefined}
         />
       </ContainerPage>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Badge,
@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import { toCamelCase } from "../../../util/util";
+import { formatYuvaDob, toCamelCase } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
@@ -35,8 +35,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 
-const INITIAL_VISIBLE = 6;
-const LOAD_MORE_COUNT = 5;
+const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
 
 const Home = () => {
@@ -44,8 +43,11 @@ const Home = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [yuvaList, setYuvaList] = useState([]);
-  const [dataVisibleCount, setDataVisibleCount] = useState(INITIAL_VISIBLE);
   const [searchText, setSearchText] = useState("");
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [listPage, setListPage] = useState(1);
+  const loadingMoreLock = useRef(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedSurname, setSelectedSurname] = useState([]);
@@ -74,22 +76,65 @@ const Home = () => {
   const filteredCityIds = useFilteredIds(selectedCity, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
 
-  const getYuvaList = async () => {
-    dispatch(startLoading());
+  const loadYuvas = async ({ pageNum = 1, append = false } = {}) => {
+    if (append) {
+      if (loadingMoreLock.current || loadingMore || !hasMore) {
+        return;
+      }
+      loadingMoreLock.current = true;
+      setLoadingMore(true);
+    } else {
+      dispatch(startLoading());
+    }
     try {
-      const data = await fetchYuvaList();
-      setYuvaList(data || []);
+      const params = {
+        page: pageNum,
+        limit: PAGE_SIZE,
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      if (appliedFilters.surnameIds.length) {
+        params.lastName = appliedFilters.surnameIds;
+      }
+      if (appliedFilters.stateIds.length) {
+        params.state = appliedFilters.stateIds;
+      }
+      if (appliedFilters.regionIds.length) {
+        params.region = appliedFilters.regionIds;
+      }
+      if (appliedFilters.districtIds.length) {
+        params.district = appliedFilters.districtIds;
+      }
+      if (appliedFilters.cityIds.length) {
+        params.city = appliedFilters.cityIds;
+      }
+      if (appliedFilters.samajIds.length) {
+        params.samaj = appliedFilters.samajIds;
+      }
+      const data = await fetchYuvaList(params);
+      const rows = data?.data || [];
+      setYuvaList((prev) => (append ? [...prev, ...rows] : rows));
+      setListPage(pageNum);
+      setHasMore(pageNum * PAGE_SIZE < (data?.total || 0));
     } catch (e) {
-      // Optionally handle error with notification
+      if (!append) {
+        setYuvaList([]);
+        setHasMore(false);
+      }
     } finally {
-      setTimeout(() => {
-        dispatch(endLoading());
-      }, 2000);
+      if (append) {
+        setLoadingMore(false);
+        loadingMoreLock.current = false;
+      } else {
+        setTimeout(() => {
+          dispatch(endLoading());
+        }, 400);
+      }
     }
   };
 
   useEffect(() => {
-    getYuvaList();
     dispatch(getAllCityData);
     dispatch(getAllStateData);
     dispatch(getAllRegionData);
@@ -126,70 +171,6 @@ const Home = () => {
     selectedDistrict.length,
   ]);
 
-  const filteredYuvas = useMemo(() => {
-    const query = debouncedSearch.toLowerCase();
-
-    return (yuvaList || []).filter((item) => {
-      if (query) {
-        const surnameName =
-          surname.find((entry) => entry?.id === item?.lastName)?.name || "";
-        const yuvaName = `${item?.firstName || ""} ${surnameName}`.toLowerCase();
-        const fatherName = String(item?.fatherName || "").toLowerCase();
-        const mobile = String(item?.contactInfo?.phone || "").toLowerCase();
-        const familyId = String(item?.familyId || "").toLowerCase();
-        const email = String(item?.email || "").toLowerCase();
-        const matchesSearch =
-          yuvaName.includes(query) ||
-          fatherName.includes(query) ||
-          mobile.includes(query) ||
-          familyId.includes(query) ||
-          email.includes(query);
-        if (!matchesSearch) return false;
-      }
-
-      if (
-        appliedFilters.surnameIds.length &&
-        !appliedFilters.surnameIds.includes(item?.lastName)
-      ) {
-        return false;
-      }
-      if (
-        appliedFilters.stateIds.length &&
-        !appliedFilters.stateIds.includes(item?.state)
-      ) {
-        return false;
-      }
-      if (
-        appliedFilters.regionIds.length &&
-        !appliedFilters.regionIds.includes(item?.region)
-      ) {
-        return false;
-      }
-      if (
-        appliedFilters.districtIds.length &&
-        !appliedFilters.districtIds.includes(item?.district)
-      ) {
-        return false;
-      }
-      if (
-        appliedFilters.cityIds.length &&
-        !appliedFilters.cityIds.includes(item?.city)
-      ) {
-        return false;
-      }
-      if (
-        appliedFilters.samajIds.length &&
-        !appliedFilters.samajIds.includes(item?.localSamaj)
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [yuvaList, debouncedSearch, appliedFilters, surname]);
-
-  const visibleItems = filteredYuvas.slice(0, dataVisibleCount);
-  const noMorePost = dataVisibleCount >= filteredYuvas.length;
   const loadMoreRef = useRef(null);
   const appliedFilterCount = [
     appliedFilters.surnameIds.length,
@@ -201,18 +182,17 @@ const Home = () => {
   ].filter(Boolean).length;
 
   useEffect(() => {
-    setDataVisibleCount(INITIAL_VISIBLE);
+    loadYuvas({ pageNum: 1, append: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, appliedFilters]);
 
   const handleLoadMore = useCallback(() => {
-    setDataVisibleCount((count) =>
-      Math.min(count + LOAD_MORE_COUNT, filteredYuvas.length)
-    );
-  }, [filteredYuvas.length]);
+    loadYuvas({ pageNum: listPage + 1, append: true });
+  }, [listPage, hasMore, loadingMore, debouncedSearch, appliedFilters]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
-    if (!sentinel || noMorePost) return undefined;
+    if (!sentinel || !hasMore) return undefined;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -225,7 +205,7 @@ const Home = () => {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [handleLoadMore, noMorePost, visibleItems.length]);
+  }, [handleLoadMore, hasMore, yuvaList.length]);
 
   const handleApplyFilters = () => {
     setAppliedFilters({
@@ -503,7 +483,7 @@ const Home = () => {
           </div>
         </Collapse>
         <Grid container spacing={2}>
-          {visibleItems?.map((data) => (
+          {yuvaList?.map((data) => (
             <Grid item key={data?.id} xs={12} sm={6} md={4} lg={3}>
               <ProfileCard
                 imgSrc={data?.profile?.url}
@@ -512,6 +492,7 @@ const Home = () => {
                   city.find((i) => i?.id === data?.city)?.name
                 )}
                 age={moment().diff(data?.dob, "years")}
+                dob={formatYuvaDob(data?.dob)}
                 father={`${toCamelCase(data?.fatherName)} ${toCamelCase(
                   data?.grandFatherName
                 )}`}
@@ -529,13 +510,13 @@ const Home = () => {
             </Grid>
           ))}
         </Grid>
-        {filteredYuvas.length === 0 ? (
+        {yuvaList.length === 0 ? (
           <div className="flex justify-center items-center mt-10 text-primary font-semibold">
             No yuva found.
           </div>
-        ) : noMorePost ? null : (
+        ) : hasMore ? (
           <div ref={loadMoreRef} className="h-10 w-full" />
-        )}
+        ) : null}
       </Container>
     </div>
   );

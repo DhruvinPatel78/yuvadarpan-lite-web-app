@@ -123,6 +123,8 @@ function CustomTable({
         disableColumnFilter
         disableColumnMenu
         disableRowSelectionOnClick
+        filterMode="server"
+        sortingMode="client"
         checkboxSelection={showCheckboxes}
         rowSelectionModel={selectedIds}
         onRowSelectionModelChange={handleSelectionChange}

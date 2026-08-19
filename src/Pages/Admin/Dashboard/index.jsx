@@ -5,7 +5,7 @@ import Header from "../../../Component/Header";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContainerPage from "../../../Component/Container";
-import { isRegularUser, isSamajManager } from "../../../util/util";
+import { isRegularUser, isLocationMasterReadOnly } from "../../../util/util";
 
 const dashboardItems = {
   ADMIN: [
@@ -35,7 +35,8 @@ export default function Index() {
   const dashBoardList = (
     dashboardItems[user?.role] || dashboardItems.ADMIN
   ).filter(
-    (item) => !(isSamajManager(user?.role) && item.href === "/admin/role")
+    (item) =>
+      !(isLocationMasterReadOnly(user?.role) && item.href === "/admin/role")
   );
 
   return (

@@ -37,6 +37,8 @@ import Home from "./Pages/User/Dashboard";
 import ResetPassword from "./Pages/RestPassword";
 import VerifyOtp from "./Pages/VerifyOtp";
 import ChangePassword from "./Pages/ChangePassword";
+import AccountProfile from "./Pages/Account/Profile";
+import AccountSettings from "./Pages/Account/Settings";
 
 function App() {
   return (
@@ -68,6 +70,16 @@ function App() {
 
         {/*Private Routes*/}
         <Route index element={<PrivateRoute Component={Dashboard} />} />
+        <Route
+          path="profile"
+          exact
+          element={<PrivateRoute Component={AccountProfile} />}
+        />
+        <Route
+          path="settings"
+          exact
+          element={<PrivateRoute Component={AccountSettings} />}
+        />
         <Route
           path="pdf"
           exact

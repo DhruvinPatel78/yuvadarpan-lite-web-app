@@ -18,9 +18,9 @@ export const getCityList = async () => {
   }
 };
 
-export const getYuvaList = async () => {
+export const getYuvaList = async (params) => {
   try {
-    const response = await axios.get("/yuvaList/get-all-list");
+    const response = await axios.get("/yuvaList/list", { params });
     return response.data;
   } catch (error) {
     throw error;

@@ -25,7 +25,7 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { UseRedux } from "../../../Component/useRedux";
-import { isSamajManager } from "../../../util/util";
+import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
 import ConfirmModal, {
   getDeleteDescription,
 } from "../../../Component/Common/ConfirmModal";
@@ -51,7 +51,9 @@ export default function LocationDetails({ config }) {
   const location = useLocation();
   const dispatch = useDispatch();
   const { loading, auth } = UseRedux();
-  const canManage = !isSamajManager(auth?.user?.role);
+  const canManage = !isLocationMasterReadOnly(auth?.user?.role);
+  const hideRowActions = hideLocationRowActions(auth?.user?.role);
+
   const parentFromState = location.state || null;
   const [parent, setParent] = useState(parentFromState);
   const [allChildren, setAllChildren] = useState([]);
@@ -282,7 +284,8 @@ export default function LocationDetails({ config }) {
     },
   ].filter(
     (column) =>
-      column.field !== "action" || canManage || config.childViewPath
+      column.field !== "action" ||
+      (!hideRowActions && (canManage || config.childViewPath))
   );
 
   return (

@@ -8,8 +8,9 @@ import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import PrintIcon from "@mui/icons-material/Print";
 import ShareIcon from "@mui/icons-material/Share";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { ImageBackdrop, ImageButton, ImageSrc } from "../../Component/constant";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
@@ -96,6 +97,7 @@ const getYuvaShareId = (value) => {
 const ProfilePage = () => {
   const { id: routeId } = useParams();
   const { pathname, state } = useLocation();
+  const navigate = useNavigate();
   const isPublicView = pathname.startsWith("/yuva");
   const id = getYuvaShareId(routeId);
   const [data, setData] = React.useState(state || null);
@@ -164,6 +166,14 @@ const ProfilePage = () => {
   const shareUrl = `${window.location.origin}/yuva/${getYuvaShareId(
     data?.id || id
   )}`;
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(isPublicView ? "/" : "/admin/yuvalist");
+  };
 
   const copyShareLink = async () => {
     try {
@@ -251,11 +261,20 @@ const ProfilePage = () => {
         }}
       />
       <div className="print-hidden">
-      <Header backBtn={true} btnAction="/dashboard" />
+      <Header />
       <ContainerPage
         className={"flex-col justify-center flex items-start h-full"}
       >
-        <div className="w-full flex justify-end gap-2 mb-3">
+        <div className="w-full flex justify-between items-center gap-2 mb-3">
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            className="!border-[#572a2a] !text-[#572a2a]"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+          <div className="flex gap-2">
           <Button
             variant="outlined"
             startIcon={<ShareIcon />}
@@ -272,6 +291,7 @@ const ProfilePage = () => {
           >
             Print
           </Button>
+          </div>
         </div>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={12} md={4} lg={4}>

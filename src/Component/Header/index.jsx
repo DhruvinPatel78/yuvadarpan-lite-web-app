@@ -18,7 +18,11 @@ import { UseRedux } from "../useRedux";
 import FullPageLoader from "../Common/FullPageLoader";
 import { YuvadarpanLogo } from "../Icons";
 
-const settings = ["Logout"];
+const menuItems = [
+  { label: "Profile", path: "/profile" },
+  { label: "Settings", path: "/settings" },
+  { label: "Logout", action: "logout" },
+];
 
 const Header = () => {
   const {
@@ -35,6 +39,17 @@ const Header = () => {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
+  };
+
+  const handleMenuItem = (item) => {
+    handleCloseUserMenu();
+    if (item.action === "logout") {
+      handleLogOut();
+      return;
+    }
+    if (item.path) {
+      navigate(item.path);
+    }
   };
 
   return (
@@ -76,15 +91,12 @@ const Header = () => {
                 open={Boolean(anchorElUser)}
                 onClose={handleCloseUserMenu}
               >
-                {settings.map((setting) => (
+                {menuItems.map((item) => (
                   <MenuItem
-                    key={setting}
-                    onClick={() => {
-                      handleCloseUserMenu();
-                      handleLogOut();
-                    }}
+                    key={item.label}
+                    onClick={() => handleMenuItem(item)}
                   >
-                    <Typography textAlign="center">{setting}</Typography>
+                    <Typography textAlign="center">{item.label}</Typography>
                   </MenuItem>
                 ))}
               </Menu>

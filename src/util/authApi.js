@@ -56,3 +56,21 @@ export const resendOtp = async (email) => {
     throw error;
   }
 };
+
+export const sendChangePasswordOtp = async () => {
+  try {
+    const response = await useAxios.post("/user/sendChangePasswordOtp");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changePasswordWithOtp = async (password) => {
+  try {
+    const response = await useAxios.patch("/user/changePassword", { password });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

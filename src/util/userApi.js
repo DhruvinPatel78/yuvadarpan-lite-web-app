@@ -1,5 +1,14 @@
 import axios from "./useAxios";
 
+export const getCurrentUser = async () => {
+  try {
+    const response = await axios.get("/user/me");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getUserList = async (params) => {
   try {
     const response = await axios.get("/user/list", { params });
