@@ -20,6 +20,8 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { getYuvaList as fetchYuvaList } from "../../../util/yuvaApi";
+import { getNativeList } from "../../../util/yuvaAdminApi";
+import CustomInput from "../../../Component/Common/customInput";
 import {
   getAllCityData,
   getAllDistrictData,
@@ -37,6 +39,34 @@ import {
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
+const GENDER_OPTIONS = [
+  { id: "male", name: "Male", label: "Male", value: "male" },
+  { id: "female", name: "Female", label: "Female", value: "female" },
+];
+
+const emptyAppliedFilters = {
+  surnameIds: [],
+  stateIds: [],
+  regionIds: [],
+  districtIds: [],
+  cityIds: [],
+  samajIds: [],
+  nativeIds: [],
+  genders: [],
+  minAge: "",
+  maxAge: "",
+};
+
+const sanitizeAgeInput = (raw) => {
+  if (raw === "") {
+    return "";
+  }
+  const age = Number(raw);
+  if (!Number.isFinite(age) || age < 0) {
+    return null;
+  }
+  return String(Math.min(120, Math.floor(age)));
+};
 
 const Home = () => {
   const { surname, city, state, region, district, samaj } = UseRedux();
@@ -56,18 +86,16 @@ const Home = () => {
   const [selectedDistrict, setSelectedDistrict] = useState([]);
   const [selectedCity, setSelectedCity] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
+  const [selectedNative, setSelectedNative] = useState([]);
+  const [selectedGender, setSelectedGender] = useState([]);
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
+  const [nativeList, setNativeList] = useState([]);
   const [regionListByState, setRegionListByState] = useState(region);
   const [districtListByRegion, setDistrictListByRegion] = useState(district);
   const [cityListByDistrict, setCityListByDistrict] = useState(city);
   const [samajListByParent, setSamajListByParent] = useState(samaj);
-  const [appliedFilters, setAppliedFilters] = useState({
-    surnameIds: [],
-    stateIds: [],
-    regionIds: [],
-    districtIds: [],
-    cityIds: [],
-    samajIds: [],
-  });
+  const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredStateIds = useFilteredIds(selectedState, "id");
@@ -75,6 +103,8 @@ const Home = () => {
   const filteredDistrictIds = useFilteredIds(selectedDistrict, "id");
   const filteredCityIds = useFilteredIds(selectedCity, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
+  const filteredNativeIds = useFilteredIds(selectedNative, "id");
+  const filteredGenders = useFilteredIds(selectedGender, "id");
 
   const loadYuvas = async ({ pageNum = 1, append = false } = {}) => {
     if (append) {
@@ -112,6 +142,18 @@ const Home = () => {
       if (appliedFilters.samajIds.length) {
         params.samaj = appliedFilters.samajIds;
       }
+      if (appliedFilters.nativeIds.length) {
+        params.native = appliedFilters.nativeIds;
+      }
+      if (appliedFilters.genders.length) {
+        params.gender = appliedFilters.genders;
+      }
+      if (appliedFilters.minAge !== "") {
+        params.minAge = appliedFilters.minAge;
+      }
+      if (appliedFilters.maxAge !== "") {
+        params.maxAge = appliedFilters.maxAge;
+      }
       const data = await fetchYuvaList(params);
       const rows = data?.data || [];
       setYuvaList((prev) => (append ? [...prev, ...rows] : rows));
@@ -141,6 +183,9 @@ const Home = () => {
     dispatch(getAllDistrictData);
     dispatch(getAllSamajData);
     dispatch(getAllSurnameData);
+    getNativeList()
+      .then((data) => setNativeList(Array.isArray(data) ? data : []))
+      .catch(() => setNativeList([]));
   }, []);
 
   useEffect(() => {
@@ -179,6 +224,10 @@ const Home = () => {
     appliedFilters.districtIds.length,
     appliedFilters.cityIds.length,
     appliedFilters.samajIds.length,
+    appliedFilters.nativeIds.length,
+    appliedFilters.genders.length,
+    appliedFilters.minAge !== "",
+    appliedFilters.maxAge !== "",
   ].filter(Boolean).length;
 
   useEffect(() => {
@@ -208,6 +257,14 @@ const Home = () => {
   }, [handleLoadMore, hasMore, yuvaList.length]);
 
   const handleApplyFilters = () => {
+    let nextMinAge = minAge;
+    let nextMaxAge = maxAge;
+    if (nextMinAge !== "" && nextMaxAge !== "" && Number(nextMinAge) > Number(nextMaxAge)) {
+      nextMinAge = maxAge;
+      nextMaxAge = minAge;
+      setMinAge(nextMinAge);
+      setMaxAge(nextMaxAge);
+    }
     setAppliedFilters({
       surnameIds: filteredSurnameIds,
       stateIds: filteredStateIds,
@@ -215,6 +272,10 @@ const Home = () => {
       districtIds: filteredDistrictIds,
       cityIds: filteredCityIds,
       samajIds: filteredSamajIds,
+      nativeIds: filteredNativeIds,
+      genders: filteredGenders,
+      minAge: nextMinAge,
+      maxAge: nextMaxAge,
     });
   };
 
@@ -225,18 +286,15 @@ const Home = () => {
     setSelectedDistrict([]);
     setSelectedCity([]);
     setSelectedSamaj([]);
+    setSelectedNative([]);
+    setSelectedGender([]);
+    setMinAge("");
+    setMaxAge("");
     setRegionListByState(region);
     setDistrictListByRegion(district);
     setCityListByDistrict(city);
     setSamajListByParent(samaj);
-    setAppliedFilters({
-      surnameIds: [],
-      stateIds: [],
-      regionIds: [],
-      districtIds: [],
-      cityIds: [],
-      samajIds: [],
-    });
+    setAppliedFilters(emptyAppliedFilters);
   };
 
   return (
@@ -451,6 +509,78 @@ const Home = () => {
                   }
                 }}
               />
+              <CustomAutoComplete
+                list={listHandler(nativeList)}
+                multiple={true}
+                label={"Native"}
+                placeholder={"Select Native"}
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                name="native"
+                value={selectedNative}
+                onChange={(e, selected) => {
+                  if (selected) {
+                    setSelectedNative((pre) =>
+                      getSelectedData(pre, selected, e)
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(GENDER_OPTIONS)}
+                multiple={true}
+                label={"Gender"}
+                placeholder={"Select Gender"}
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                name="gender"
+                value={selectedGender}
+                onChange={(e, selected) => {
+                  if (selected) {
+                    setSelectedGender((pre) =>
+                      getSelectedData(pre, selected, e)
+                    );
+                  }
+                }}
+              />
+              <CustomInput
+                type="number"
+                label="Min Age"
+                placeholder="From"
+                name="minAge"
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                value={minAge}
+                onChange={(event) => {
+                  const next = sanitizeAgeInput(event.target.value);
+                  if (next !== null) {
+                    setMinAge(next);
+                  }
+                }}
+              />
+              <CustomInput
+                type="number"
+                label="Max Age"
+                placeholder="To"
+                name="maxAge"
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                value={maxAge}
+                onChange={(event) => {
+                  const next = sanitizeAgeInput(event.target.value);
+                  if (next !== null) {
+                    setMaxAge(next);
+                  }
+                }}
+              />
               <Grid
                 item
                 xs={12}
@@ -468,6 +598,10 @@ const Home = () => {
                   selectedCity?.length > 0 ||
                   selectedSurname?.length > 0 ||
                   selectedSamaj?.length > 0 ||
+                  selectedNative?.length > 0 ||
+                  selectedGender?.length > 0 ||
+                  minAge !== "" ||
+                  maxAge !== "" ||
                   appliedFilterCount > 0) && (
                   <button
                     className={
@@ -482,34 +616,33 @@ const Home = () => {
             </Grid>
           </div>
         </Collapse>
-        <Grid container spacing={2}>
+        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-4">
           {yuvaList?.map((data) => (
-            <Grid item key={data?.id} xs={12} sm={6} md={4} lg={3}>
-              <ProfileCard
-                imgSrc={data?.profile?.url}
-                name={toCamelCase(data?.firstName)}
-                location={toCamelCase(
-                  city.find((i) => i?.id === data?.city)?.name
-                )}
-                age={moment().diff(data?.dob, "years")}
-                dob={formatYuvaDob(data?.dob)}
-                father={`${toCamelCase(data?.fatherName)} ${toCamelCase(
-                  data?.grandFatherName
-                )}`}
-                mother={toCamelCase(data?.motherName)}
-                firm={toCamelCase(data?.firm)}
-                surname={toCamelCase(
-                  surname.find((i) => i?.id === data?.lastName)?.name
-                )}
-                onClick={() =>
-                  navigate(`/admin/yuvalist/${data?.id}`, {
-                    state: { ...data },
-                  })
-                }
-              />
-            </Grid>
+            <ProfileCard
+              key={data?.id}
+              imgSrc={data?.profile?.url}
+              name={toCamelCase(data?.firstName)}
+              location={toCamelCase(
+                city.find((i) => i?.id === data?.city)?.name
+              )}
+              age={moment().diff(data?.dob, "years")}
+              dob={formatYuvaDob(data?.dob)}
+              father={`${toCamelCase(data?.fatherName)} ${toCamelCase(
+                data?.grandFatherName
+              )}`}
+              mother={toCamelCase(data?.motherName)}
+              firm={toCamelCase(data?.firm)}
+              surname={toCamelCase(
+                surname.find((i) => i?.id === data?.lastName)?.name
+              )}
+              onClick={() =>
+                navigate(`/admin/yuvalist/${data?.id}`, {
+                  state: { ...data },
+                })
+              }
+            />
           ))}
-        </Grid>
+        </div>
         {yuvaList.length === 0 ? (
           <div className="flex justify-center items-center mt-10 text-primary font-semibold">
             No yuva found.

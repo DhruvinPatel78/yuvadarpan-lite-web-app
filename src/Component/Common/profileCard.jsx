@@ -14,7 +14,7 @@ const ProfileCard = ({
 }) => {
   return (
     <div
-      className="w-full rounded-2xl overflow-hidden shadow-lg transition-all duration-300 bg-white hover:shadow-xl cursor-pointer group sm:relative"
+      className="w-full min-w-0 h-full rounded-2xl overflow-hidden shadow-lg transition-all duration-300 bg-white hover:shadow-xl cursor-pointer group sm:relative"
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}

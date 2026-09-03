@@ -96,6 +96,9 @@ const CustomInput = ({
         disabled={disabled}
         error={errors}
         {...(type === "date" ? { max: today } : {})}
+        {...(type === "number"
+          ? { inputProps: { min: 0, max: 120, inputMode: "numeric" } }
+          : {})}
       />
       {errors && (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
