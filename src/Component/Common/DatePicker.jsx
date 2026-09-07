@@ -2,8 +2,9 @@ import * as React from "react";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { Grid, styled } from "@mui/material";
+import { Grid, styled, TextField } from "@mui/material";
 import dayjs from "dayjs";
+
 const PrimaryDateTimePicker = styled(DateTimePicker)`
   & label.Mui-focused {
     color: #572a2a;
@@ -22,9 +23,6 @@ const PrimaryDateTimePicker = styled(DateTimePicker)`
   & .MuiOutlinedInput-notchedOutline {
     border-color: #572a2a !important;
   }
-  //& .Mui-focused {
-  //  border-color: #572a2a !important;
-  //}
 `;
 
 const DatePicker = ({
@@ -37,25 +35,45 @@ const DatePicker = ({
   errors,
   onBlur,
   required = true,
-  ...rest
+  xs,
+  sm,
+  md,
+  lg,
+  xl,
 }) => {
+  const parsedValue = value ? dayjs(value) : null;
+  const pickerValue =
+    parsedValue && parsedValue.isValid() ? parsedValue : null;
+
   return (
-    <Grid item {...rest}>
+    <Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <PrimaryDateTimePicker
-          fullWidth
-          value={dayjs(value)}
-          label={label}
-          name={name}
-          onChange={onChange}
-          onBlur={onBlur}
-          {...rest}
           className={"w-full"}
-          sx={{
-            "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: errors?"red !important":"#572a2a !important",
-            }
-          }}
+          value={pickerValue}
+          label={label}
+          onChange={onChange}
+          ampm
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              name={name}
+              fullWidth
+              required={required}
+              focused={focused}
+              placeholder={placeholder}
+              error={Boolean(errors)}
+              onBlur={onBlur}
+              className={"w-full"}
+              sx={{
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: errors
+                    ? "red !important"
+                    : "#572a2a !important",
+                },
+              }}
+            />
+          )}
         />
       </LocalizationProvider>
       {errors && (

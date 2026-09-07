@@ -60,12 +60,19 @@ export default function CustomAutoComplete({
   limitTags = 2,
   required = true,
   multiple = false,
+  disablePortal = false,
   ...rest
 }) {
   return (
     <Grid item {...rest}>
       <PrimaryAutocomplete
         disabled={disabled}
+        disablePortal={disablePortal}
+        componentsProps={{
+          popper: {
+            sx: { zIndex: 2000 },
+          },
+        }}
         defaultValue={defaultValue}
         options={list}
         value={

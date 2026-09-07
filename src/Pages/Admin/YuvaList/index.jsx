@@ -42,7 +42,7 @@ import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import { UseRedux } from "../../../Component/useRedux";
-import { formatYuvaDob } from "../../../util/util";
+import { formatYuvaDob, canEditYuvaRecord } from "../../../util/util";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -61,7 +61,7 @@ const YuvaList = () => {
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const { surname, city, state, region, auth } = UseRedux();
+  const { surname, city, state, region, district, samaj, country, auth } = UseRedux();
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager =
@@ -83,6 +83,10 @@ const YuvaList = () => {
     isCountryManager;
   const [ownUserList, setOwnUserList] = useState(false);
   const canAct = !hasOwnListToggle || ownUserList;
+  const locationLists = { samaj, city, district, region, state, country };
+  const canEditRow = (yuva) =>
+    (hasOwnListToggle && ownUserList) ||
+    canEditYuvaRecord(auth?.user, yuva, locationLists);
   const [nativeList, setNativeList] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -208,33 +212,37 @@ const YuvaList = () => {
               onClick={() => setUserData(record.row)}
             />
           </Tooltip>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() =>
-                navigate(`/admin/yuvalist/${record?.row.id}/edit`, {
-                  state: { data: record?.row },
-                })
-              }
-            />
-          </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() =>
-                setDeleteTarget({
-                  id: record?.id || record?.row?.id,
-                  name: [record?.row?.firstName, record?.row?.fatherName]
-                    .filter(Boolean)
-                    .join(" "),
-                })
-              }
-            />
-          </Tooltip>
+          {canEditRow(record?.row) ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() =>
+                    navigate(`/admin/yuvalist/${record?.row.id}/edit`, {
+                      state: { data: record?.row },
+                    })
+                  }
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() =>
+                    setDeleteTarget({
+                      id: record?.id || record?.row?.id,
+                      name: [record?.row?.firstName, record?.row?.fatherName]
+                        .filter(Boolean)
+                        .join(" "),
+                    })
+                  }
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
-  ].filter((column) => canAct || column.field !== "action");
+  ];
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
@@ -642,13 +650,13 @@ const YuvaList = () => {
                     <button
                       type="button"
                       className={`flex-1 py-2.5 text-sm font-semibold text-[#572a2a] ${
-                        canAct ? "border-r border-[#ead9d9]" : ""
+                        canEditRow(row) ? "border-r border-[#ead9d9]" : ""
                       }`}
                       onClick={() => setUserData(row)}
                     >
                       View
                     </button>
-                    {canAct ? (
+                    {canEditRow(row) ? (
                       <>
                         <button
                           type="button"
@@ -765,25 +773,27 @@ const YuvaList = () => {
                 <button
                   className={"bg-primary text-white p-2 rounded-md w-full"}
                   onClick={() =>
-                    navigate("/admin/yuvalist/profile", {
+                    navigate(`/admin/yuvalist/${userData?.id}`, {
                       state: { ...userData },
                     })
                   }
                 >
                   View Details
                 </button>
-                <button
-                  className={
-                    "border-primary border text-primary p-2 rounded-md"
-                  }
-                  onClick={() =>
-                    navigate(`/admin/yuvalist/${userData?.id}/edit`, {
-                      state: { ...userData },
-                    })
-                  }
-                >
-                  <ModeEditIcon />
-                </button>
+                {canEditRow(userData) ? (
+                  <button
+                    className={
+                      "border-primary border text-primary p-2 rounded-md"
+                    }
+                    onClick={() =>
+                      navigate(`/admin/yuvalist/${userData?.id}/edit`, {
+                        state: { data: userData },
+                      })
+                    }
+                  >
+                    <ModeEditIcon />
+                  </button>
+                ) : null}
               </div>
             </Grid>
             <Grid item xs={1} className={"flex justify-center"}>

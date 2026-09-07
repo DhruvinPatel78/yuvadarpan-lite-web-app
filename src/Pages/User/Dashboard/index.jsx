@@ -7,10 +7,14 @@ import {
   Grid,
   IconButton,
   InputAdornment,
+  Modal,
+  Paper,
   TextField,
+  useMediaQuery,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { formatYuvaDob, toCamelCase } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
@@ -72,6 +76,7 @@ const Home = () => {
   const { surname, city, state, region, district, samaj } = UseRedux();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isMobile = useMediaQuery("(max-width:767.95px)");
   const [yuvaList, setYuvaList] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [hasMore, setHasMore] = useState(false);
@@ -256,6 +261,8 @@ const Home = () => {
     return () => observer.disconnect();
   }, [handleLoadMore, hasMore, yuvaList.length]);
 
+  const closeFilterModal = () => setIsFilterOpen(false);
+
   const handleApplyFilters = () => {
     let nextMinAge = minAge;
     let nextMaxAge = maxAge;
@@ -277,6 +284,9 @@ const Home = () => {
       minAge: nextMinAge,
       maxAge: nextMaxAge,
     });
+    if (isMobile) {
+      closeFilterModal();
+    }
   };
 
   const handleReset = () => {
@@ -296,6 +306,228 @@ const Home = () => {
     setSamajListByParent(samaj);
     setAppliedFilters(emptyAppliedFilters);
   };
+
+  const fieldSize = isMobile
+    ? { xs: 12, sm: 6 }
+    : { xs: 12, sm: 6, md: 4, lg: 3 };
+  const showReset =
+    selectedState?.length > 0 ||
+    selectedRegion?.length > 0 ||
+    selectedDistrict?.length > 0 ||
+    selectedCity?.length > 0 ||
+    selectedSurname?.length > 0 ||
+    selectedSamaj?.length > 0 ||
+    selectedNative?.length > 0 ||
+    selectedGender?.length > 0 ||
+    minAge !== "" ||
+    maxAge !== "" ||
+    appliedFilterCount > 0;
+
+  const filterFields = (
+    <>
+      <CustomAutoComplete
+        list={listHandler(surname)}
+        multiple={true}
+        label={"Surname"}
+        placeholder={"Select Your Last Name"}
+        {...fieldSize}
+        value={selectedSurname}
+        name="surname"
+        onChange={(e, lastName) => {
+          if (lastName) {
+            setSelectedSurname((pre) => getSelectedData(pre, lastName, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(state)}
+        multiple={true}
+        label={"State"}
+        placeholder={"Select Your State"}
+        {...fieldSize}
+        name="state"
+        value={selectedState}
+        onChange={async (e, selected) => {
+          if (selected) {
+            const data = await handleListById("region", selected);
+            setRegionListByState(data);
+            setSelectedState((pre) => getSelectedData(pre, selected, e));
+            setSelectedRegion([]);
+            setSelectedDistrict([]);
+            setSelectedCity([]);
+            setSelectedSamaj([]);
+            setDistrictListByRegion(district);
+            setCityListByDistrict(city);
+            setSamajListByParent(samaj);
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(regionListByState)}
+        multiple={true}
+        label={"Region"}
+        placeholder={"Select Your Region"}
+        {...fieldSize}
+        name="region"
+        value={selectedRegion}
+        onChange={async (e, selected) => {
+          if (selected) {
+            const [districtData, samajData] = await Promise.all([
+              handleListById("district", selected),
+              handleListById("samaj", selected),
+            ]);
+            setDistrictListByRegion(districtData);
+            setSamajListByParent(samajData);
+            setSelectedRegion((pre) => getSelectedData(pre, selected, e));
+            setSelectedDistrict([]);
+            setSelectedCity([]);
+            setSelectedSamaj([]);
+            setCityListByDistrict(city);
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(districtListByRegion)}
+        multiple={true}
+        label={"District"}
+        placeholder={"Select Your District"}
+        {...fieldSize}
+        name="district"
+        value={selectedDistrict}
+        onChange={async (e, selected) => {
+          if (selected) {
+            const data = await handleListById("city", selected);
+            setCityListByDistrict(data);
+            setSelectedDistrict((pre) => getSelectedData(pre, selected, e));
+            const districtIds = selected
+              .filter((item) => item.name !== "All")
+              .map((item) => item.id);
+            const matchingSamaj = districtIds.length
+              ? samaj.filter((item) => districtIds.includes(item.district_id))
+              : samaj;
+            setSamajListByParent(matchingSamaj.length ? matchingSamaj : samaj);
+            setSelectedCity([]);
+            setSelectedSamaj([]);
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(cityListByDistrict)}
+        multiple={true}
+        label={"City"}
+        placeholder={"Select Your City"}
+        {...fieldSize}
+        name="city"
+        value={selectedCity}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedCity((pre) => getSelectedData(pre, selected, e));
+            const cityIds = selected
+              .filter((item) => item.name !== "All")
+              .map((item) => item.id);
+            const matchingSamaj = cityIds.length
+              ? samaj.filter((item) => cityIds.includes(item.city_id))
+              : samaj;
+            setSamajListByParent(matchingSamaj.length ? matchingSamaj : samaj);
+            setSelectedSamaj([]);
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(samajListByParent)}
+        multiple={true}
+        label={"Samaj"}
+        placeholder={"Select Your Samaj"}
+        {...fieldSize}
+        name="samaj"
+        value={selectedSamaj}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedSamaj((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(nativeList)}
+        multiple={true}
+        label={"Native"}
+        placeholder={"Select Native"}
+        {...fieldSize}
+        name="native"
+        value={selectedNative}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedNative((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(GENDER_OPTIONS)}
+        multiple={true}
+        label={"Gender"}
+        placeholder={"Select Gender"}
+        {...fieldSize}
+        name="gender"
+        value={selectedGender}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedGender((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomInput
+        type="number"
+        label="Min Age"
+        placeholder="From"
+        name="minAge"
+        {...fieldSize}
+        value={minAge}
+        onChange={(event) => {
+          const next = sanitizeAgeInput(event.target.value);
+          if (next !== null) {
+            setMinAge(next);
+          }
+        }}
+      />
+      <CustomInput
+        type="number"
+        label="Max Age"
+        placeholder="To"
+        name="maxAge"
+        {...fieldSize}
+        value={maxAge}
+        onChange={(event) => {
+          const next = sanitizeAgeInput(event.target.value);
+          if (next !== null) {
+            setMaxAge(next);
+          }
+        }}
+      />
+    </>
+  );
+
+  const filterActions = (
+    <>
+      <button
+        type="button"
+        className={"bg-primary text-white p-2 px-4 rounded font-bold"}
+        onClick={handleApplyFilters}
+      >
+        Submit
+      </button>
+      {showReset ? (
+        <button
+          type="button"
+          className={
+            "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
+          }
+          onClick={handleReset}
+        >
+          Reset
+        </button>
+      ) : null}
+    </>
+  );
 
   return (
     <div>
@@ -331,18 +563,27 @@ const Home = () => {
           >
             <IconButton
               aria-label="Filter"
-              onClick={() => setIsFilterOpen((open) => !open)}
+              onClick={() =>
+                isMobile
+                  ? setIsFilterOpen(true)
+                  : setIsFilterOpen((open) => !open)
+              }
               className={`h-14 w-14 rounded-xl border-2 border-solid ${
-                isFilterOpen
+                isFilterOpen || appliedFilterCount > 0
                   ? "bg-primary text-white"
                   : "bg-white text-primary"
               }`}
               sx={{
                 borderColor: "#572a2a",
-                color: isFilterOpen ? "#fff" : "#572a2a",
-                backgroundColor: isFilterOpen ? "#572a2a" : "#fff",
+                color:
+                  isFilterOpen || appliedFilterCount > 0 ? "#fff" : "#572a2a",
+                backgroundColor:
+                  isFilterOpen || appliedFilterCount > 0 ? "#572a2a" : "#fff",
                 "&:hover": {
-                  backgroundColor: isFilterOpen ? "#572a2a" : "#f7efef",
+                  backgroundColor:
+                    isFilterOpen || appliedFilterCount > 0
+                      ? "#572a2a"
+                      : "#f7efef",
                 },
               }}
             >
@@ -350,272 +591,62 @@ const Home = () => {
             </IconButton>
           </Badge>
         </div>
-        <Collapse in={isFilterOpen}>
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-lg">
-            <Grid spacing={2} container>
-              <CustomAutoComplete
-                list={listHandler(surname)}
-                multiple={true}
-                label={"Surname"}
-                placeholder={"Select Your Last Name"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                value={selectedSurname}
-                name="surname"
-                onChange={(e, lastName) => {
-                  if (lastName) {
-                    setSelectedSurname((pre) =>
-                      getSelectedData(pre, lastName, e)
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(state)}
-                multiple={true}
-                label={"State"}
-                placeholder={"Select Your State"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="state"
-                value={selectedState}
-                onChange={async (e, selected) => {
-                  if (selected) {
-                    const data = await handleListById("region", selected);
-                    setRegionListByState(data);
-                    setSelectedState((pre) =>
-                      getSelectedData(pre, selected, e)
-                    );
-                    setSelectedRegion([]);
-                    setSelectedDistrict([]);
-                    setSelectedCity([]);
-                    setSelectedSamaj([]);
-                    setDistrictListByRegion(district);
-                    setCityListByDistrict(city);
-                    setSamajListByParent(samaj);
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(regionListByState)}
-                multiple={true}
-                label={"Region"}
-                placeholder={"Select Your Region"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="region"
-                value={selectedRegion}
-                onChange={async (e, selected) => {
-                  if (selected) {
-                    const [districtData, samajData] = await Promise.all([
-                      handleListById("district", selected),
-                      handleListById("samaj", selected),
-                    ]);
-                    setDistrictListByRegion(districtData);
-                    setSamajListByParent(samajData);
-                    setSelectedRegion((pre) =>
-                      getSelectedData(pre, selected, e)
-                    );
-                    setSelectedDistrict([]);
-                    setSelectedCity([]);
-                    setSelectedSamaj([]);
-                    setCityListByDistrict(city);
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(districtListByRegion)}
-                multiple={true}
-                label={"District"}
-                placeholder={"Select Your District"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="district"
-                value={selectedDistrict}
-                onChange={async (e, selected) => {
-                  if (selected) {
-                    const data = await handleListById("city", selected);
-                    setCityListByDistrict(data);
-                    setSelectedDistrict((pre) =>
-                      getSelectedData(pre, selected, e)
-                    );
-                    const districtIds = selected
-                      .filter((item) => item.name !== "All")
-                      .map((item) => item.id);
-                    const matchingSamaj = districtIds.length
-                      ? samaj.filter((item) =>
-                          districtIds.includes(item.district_id)
-                        )
-                      : samaj;
-                    setSamajListByParent(
-                      matchingSamaj.length ? matchingSamaj : samaj
-                    );
-                    setSelectedCity([]);
-                    setSelectedSamaj([]);
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(cityListByDistrict)}
-                multiple={true}
-                label={"City"}
-                placeholder={"Select Your City"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="city"
-                value={selectedCity}
-                onChange={(e, selected) => {
-                  if (selected) {
-                    setSelectedCity((pre) => getSelectedData(pre, selected, e));
-                    const cityIds = selected
-                      .filter((item) => item.name !== "All")
-                      .map((item) => item.id);
-                    const matchingSamaj = cityIds.length
-                      ? samaj.filter((item) => cityIds.includes(item.city_id))
-                      : samaj;
-                    setSamajListByParent(
-                      matchingSamaj.length ? matchingSamaj : samaj
-                    );
-                    setSelectedSamaj([]);
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(samajListByParent)}
-                multiple={true}
-                label={"Samaj"}
-                placeholder={"Select Your Samaj"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="samaj"
-                value={selectedSamaj}
-                onChange={(e, selected) => {
-                  if (selected) {
-                    setSelectedSamaj((pre) =>
-                      getSelectedData(pre, selected, e)
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(nativeList)}
-                multiple={true}
-                label={"Native"}
-                placeholder={"Select Native"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="native"
-                value={selectedNative}
-                onChange={(e, selected) => {
-                  if (selected) {
-                    setSelectedNative((pre) =>
-                      getSelectedData(pre, selected, e)
-                    );
-                  }
-                }}
-              />
-              <CustomAutoComplete
-                list={listHandler(GENDER_OPTIONS)}
-                multiple={true}
-                label={"Gender"}
-                placeholder={"Select Gender"}
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                name="gender"
-                value={selectedGender}
-                onChange={(e, selected) => {
-                  if (selected) {
-                    setSelectedGender((pre) =>
-                      getSelectedData(pre, selected, e)
-                    );
-                  }
-                }}
-              />
-              <CustomInput
-                type="number"
-                label="Min Age"
-                placeholder="From"
-                name="minAge"
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                value={minAge}
-                onChange={(event) => {
-                  const next = sanitizeAgeInput(event.target.value);
-                  if (next !== null) {
-                    setMinAge(next);
-                  }
-                }}
-              />
-              <CustomInput
-                type="number"
-                label="Max Age"
-                placeholder="To"
-                name="maxAge"
-                xs={12}
-                sm={6}
-                md={4}
-                lg={3}
-                value={maxAge}
-                onChange={(event) => {
-                  const next = sanitizeAgeInput(event.target.value);
-                  if (next !== null) {
-                    setMaxAge(next);
-                  }
-                }}
-              />
-              <Grid
-                item
-                xs={12}
-                className={"flex justify-center items-center gap-4"}
-              >
-                <button
-                  className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                  onClick={handleApplyFilters}
+        {isMobile ? (
+          <Modal
+            open={isFilterOpen}
+            onClose={closeFilterModal}
+            aria-labelledby="yuva-filter-title"
+            sx={{
+              "& .MuiModal-backdrop": {
+                backdropFilter: "blur(2px) !important",
+                background: "#878b9499 !important",
+              },
+            }}
+            className="flex justify-center items-end"
+          >
+            <Paper
+              elevation={10}
+              tabIndex={-1}
+              className="!rounded-t-2xl outline-none w-full max-h-[90vh] m-0 flex flex-col"
+            >
+              <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
+                <p
+                  id="yuva-filter-title"
+                  className="text-xl font-bold text-[#572a2a]"
                 >
-                  Submit
-                </button>
-                {(selectedState?.length > 0 ||
-                  selectedRegion?.length > 0 ||
-                  selectedDistrict?.length > 0 ||
-                  selectedCity?.length > 0 ||
-                  selectedSurname?.length > 0 ||
-                  selectedSamaj?.length > 0 ||
-                  selectedNative?.length > 0 ||
-                  selectedGender?.length > 0 ||
-                  minAge !== "" ||
-                  maxAge !== "" ||
-                  appliedFilterCount > 0) && (
-                  <button
-                    className={
-                      "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                    }
-                    onClick={handleReset}
-                  >
-                    Reset
-                  </button>
-                )}
+                  Filters
+                </p>
+                <CloseOutlinedIcon
+                  className="cursor-pointer text-[#572a2a]"
+                  onClick={closeFilterModal}
+                />
+              </div>
+              <div className="overflow-y-auto px-4 py-2">
+                <Grid spacing={2} container>
+                  {filterFields}
+                </Grid>
+              </div>
+              <div className="flex justify-center items-center gap-4 px-4 py-4 shrink-0 border-t border-[#ead9d9]">
+                {filterActions}
+              </div>
+            </Paper>
+          </Modal>
+        ) : (
+          <Collapse in={isFilterOpen}>
+            <div className="bg-white rounded-2xl p-4 mb-4 shadow-lg">
+              <Grid spacing={2} container>
+                {filterFields}
+                <Grid
+                  item
+                  xs={12}
+                  className={"flex justify-center items-center gap-4"}
+                >
+                  {filterActions}
+                </Grid>
               </Grid>
-            </Grid>
-          </div>
-        </Collapse>
+            </div>
+          </Collapse>
+        )}
         <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-4">
           {yuvaList?.map((data) => (
             <ProfileCard

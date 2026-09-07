@@ -25,6 +25,39 @@ export const displayValue = (value, list) => {
   return value;
 };
 
+export const extraOtherFields = (other) => {
+  if (!other) return [];
+  const source =
+    typeof other.toObject === "function" ? other.toObject() : other;
+  const toItem = (title, description) => ({
+    title: String(title || "")
+      .replace(/[_-]+/g, " ")
+      .trim(),
+    description: String(description ?? "").trim(),
+  });
+  if (Array.isArray(source)) {
+    return source
+      .map((item, index) =>
+        toItem(item?.title || item?.label || `Item ${index + 1}`, item?.description ?? item?.value ?? "")
+      )
+      .filter((item) => hasValue(item.title) && hasValue(item.description));
+  }
+  if (typeof source !== "object") return [];
+  return Object.entries(source)
+    .filter(
+      ([key, value]) =>
+        key &&
+        !key.startsWith("$") &&
+        key !== "_id" &&
+        key !== "__v" &&
+        key !== "id" &&
+        hasValue(value) &&
+        typeof value !== "object"
+    )
+    .map(([key, value]) => toItem(key, value))
+    .filter((item) => hasValue(item.title) && hasValue(item.description));
+};
+
 const fieldValue = (fields, label) =>
   (fields || []).find((field) => field.label === label)?.value || "";
 
@@ -56,11 +89,16 @@ const buildPrintModel = (data, lists) => {
     .filter(Boolean)
     .join(" ");
 
+  const isFemale = String(data?.gender || "").toLowerCase() === "female";
+  const showHandicap = data?.handicap === true;
+
+  const additionalOther = extraOtherFields(data?.other);
+
   return {
     fullName,
     photo: data?.profile?.url,
     phone: data?.contactInfo?.phone,
-    email: data?.email,
+    email: isFemale ? "" : data?.email,
     personal: [
       { label: "Name", value: fullName },
       {
@@ -78,7 +116,7 @@ const buildPrintModel = (data, lists) => {
     ],
     contact: [
       { label: "Phone", value: data?.contactInfo?.phone },
-      { label: "Email", value: data?.email },
+      ...(isFemale ? [] : [{ label: "Email", value: data?.email }]),
       { label: "Name", value: data?.contactInfo?.name },
       { label: "Relation", value: data?.contactInfo?.relation },
       { label: "Address", value: data?.address },
@@ -90,11 +128,8 @@ const buildPrintModel = (data, lists) => {
     ],
     mama: [
       { label: "Name", value: data?.mamaInfo?.name },
-      {
-        label: "Native",
-        value: getLookupName(nativeList, data?.mamaInfo?.native),
-      },
-      { label: "City", value: displayValue(data?.mamaInfo?.city, city) },
+      { label: "Native", value: data?.mamaInfo?.native },
+      { label: "City", value: data?.mamaInfo?.city },
     ],
     education: [{ label: "Education", value: data?.education }],
     career: [
@@ -112,14 +147,27 @@ const buildPrintModel = (data, lists) => {
       { label: "Local Samaj", value: getLookupName(samaj, data?.localSamaj, labels.localSamaj) },
     ],
     other: [
-      { label: "Handicap", value: data?.handicap === true ? "Yes" : "" },
-      { label: "Handicap Details", value: data?.handicapDetails },
+      ...(showHandicap
+        ? [
+            { label: "Handicap", value: "Yes" },
+            { label: "Handicap Details", value: data?.handicapDetails },
+          ]
+        : []),
       { label: "Manglik", value: data?.manglik === true ? "Yes" : "" },
-      ...Object.entries(data?.other || {}).map(([key, value]) => ({
-        label: key.replace(/_/g, " "),
-        value,
-      })),
     ],
+    additional: additionalOther.flatMap((item, index) => [
+      {
+        label: additionalOther.length > 1 ? `Title ${index + 1}` : "Title",
+        value: item.title,
+      },
+      {
+        label:
+          additionalOther.length > 1
+            ? `Description ${index + 1}`
+            : "Description",
+        value: item.description,
+      },
+    ]),
   };
 };
 
@@ -175,6 +223,7 @@ const TemplateTwo = ({ model }) => {
           <BiodataSection title="Career" fields={career} />
           <BiodataSection title="Location" fields={model.location} />
           <BiodataSection title="Other Info" fields={model.other} />
+          <BiodataSection title="Additional Info" fields={model.additional} />
         </div>
       </div>
     </div>

@@ -27,6 +27,12 @@ import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
 import { addYuva, updateYuva } from "../../../../util/yuvaAdminApi";
+import {
+  canEditYuvaRecord,
+  isAdmin,
+  isLocationMasterReadOnly,
+  isSamajManager,
+} from "../../../../util/util";
 import dayjs from "dayjs";
 
 const slugPart = (value) =>
@@ -44,11 +50,40 @@ const buildYuvaPhotoName = (yuva) =>
       : "na"
   }`;
 
+const otherObjectToFields = (other) => {
+  if (!other || typeof other !== "object" || Array.isArray(other)) {
+    return [];
+  }
+  return Object.entries(other)
+    .filter(([, value]) => String(value ?? "").trim() !== "")
+    .map(([title, description]) => ({
+      title: String(title).replace(/_/g, " "),
+      description: String(description ?? ""),
+    }));
+};
+
+const fieldsToOtherObject = (list = [], draft) => {
+  const rows = [...list];
+  const draftTitle = String(draft?.title || "").trim();
+  const draftDescription = String(draft?.description || "").trim();
+  if (draftTitle && draftDescription) {
+    rows.push({ title: draftTitle, description: draftDescription });
+  }
+  return rows.reduce((acc, item) => {
+    const title = String(item?.title || "").trim();
+    const description = String(item?.description || "").trim();
+    if (title && description) {
+      acc[title.replace(/\s+/g, "_")] = description;
+    }
+    return acc;
+  }, {});
+};
+
 const AddYuva = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading, country, state, region, district, city, samaj, surname } =
+  const { loading, country, state, region, district, city, samaj, surname, auth } =
     UseRedux();
   const selectArr = [
     "surname",
@@ -94,6 +129,7 @@ const AddYuva = () => {
   });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
   const [isEdit, setIsEdit] = useState(Boolean(location?.state));
+  const editYuva = location?.state?.data || null;
 
   const getSamajList = (regionId) => {
     axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
@@ -289,7 +325,9 @@ const AddYuva = () => {
       await updateYuva(data?.id, { ...data, updatedAt: new Date() });
       navigate("/admin/yuvalist");
     } catch (e) {
-      // Optionally handle error with notification
+      if (e?.response?.status === 403) {
+        navigate("/admin/yuvalist", { replace: true });
+      }
     } finally {
       dispatch(endLoading());
       setNewFieldList([]);
@@ -345,19 +383,13 @@ const AddYuva = () => {
       YSKno: "",
       localSamaj: "",
     },
-    onSubmit: async (values, { resetForm }) => {
-      let newValue = { ...values };
-      newFieldList?.forEach((item) => {
-        if (item?.title && item?.description) {
-          newValue.other = {
-            ...newValue?.other,
-            [item?.title?.toString().replace(/\s+/g, "_")]: item?.description,
-          };
-        }
-      });
+    onSubmit: async (values) => {
+      const newValue = {
+        ...values,
+        other: fieldsToOtherObject(newFieldList, newField),
+      };
       if (location?.state) {
         updateAPIHandler(newValue);
-        resetForm();
       } else {
         addYuvaListHandler(newValue);
       }
@@ -485,8 +517,12 @@ const AddYuva = () => {
   };
 
   const addFieldHandler = () => {
-    // setFieldValue(`${newField.title}`,newField.description)
-    setNewFieldList((prevState) => [...prevState, newField]);
+    const title = String(newField?.title || "").trim();
+    const description = String(newField?.description || "").trim();
+    if (!title || !description) {
+      return;
+    }
+    setNewFieldList((prevState) => [...prevState, { title, description }]);
     setNewField({ title: "", description: "" });
   };
   const removeFieldHandler = (index) => {
@@ -510,7 +546,10 @@ const AddYuva = () => {
         ...values,
         ...location?.state?.data,
         profileName: location?.state?.data?.profile?.name,
+        other: location?.state?.data?.other || {},
       });
+      setNewFieldList(otherObjectToFields(location?.state?.data?.other));
+      setNewField({ title: "", description: "" });
       selectArr.forEach((data) => {
         selectedValueSetName(data);
       });
@@ -523,6 +562,42 @@ const AddYuva = () => {
       addLabelValueInList(data);
     }); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isEdit) return;
+    const role = auth?.user?.role;
+    if (isAdmin(role)) return;
+    if (!isLocationMasterReadOnly(role)) {
+      navigate("/admin/yuvalist", { replace: true });
+      return;
+    }
+    const listsReady =
+      isSamajManager(role) || Boolean(samaj?.length || city?.length);
+    if (!listsReady) return;
+    if (
+      !canEditYuvaRecord(auth?.user, editYuva, {
+        samaj,
+        city,
+        district,
+        region,
+        state,
+        country,
+      })
+    ) {
+      navigate("/admin/yuvalist", { replace: true });
+    }
+  }, [
+    isEdit,
+    auth?.user,
+    editYuva,
+    samaj,
+    city,
+    district,
+    region,
+    state,
+    country,
+    navigate,
+  ]);
 
   return (
     <Box>
