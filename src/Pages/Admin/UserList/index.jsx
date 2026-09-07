@@ -20,6 +20,8 @@ import {
   NotificationSnackbar,
 } from "../../../Component/Common/notification";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CloseIcon from "@mui/icons-material/Close";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
@@ -34,6 +36,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import moment from "moment";
 import {
   getSelectedData,
   handleListById,
@@ -120,6 +123,7 @@ function Index() {
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [viewUser, setViewUser] = useState(null);
 
   const formik = useFormik({
     initialValues: {
@@ -550,26 +554,32 @@ function Index() {
       filterable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
+          <Tooltip title={"View"}>
+            <VisibilityIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => userInfoModalOpen(record?.row)}
+              onClick={() => setViewUser(record?.row)}
             />
           </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() => setDeleteTarget(record?.row)}
-            />
-          </Tooltip>
+          {canAct ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => userInfoModalOpen(record?.row)}
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => setDeleteTarget(record?.row)}
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
-  ].filter(
-    (column) =>
-      (canAct || column.field !== "action") &&
-      (!hasOwnListToggle || column.field !== "role")
-  );
+  ].filter((column) => !hasOwnListToggle || column.field !== "role");
 
   const deleteAPI = async (id) => {
     try {
@@ -593,6 +603,16 @@ function Index() {
   const users = userList?.data || [];
   const lookupName = (list, id) =>
     list?.find((item) => item?.id === id)?.name || "-";
+  const formatUserDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
+  };
+  const formatRole = (role) =>
+    String(role || "-")
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
 
   const toggleCardSelection = (id) => {
     setSelectedUsers((prev) =>
@@ -899,6 +919,13 @@ function Index() {
                       <button
                         type="button"
                         className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                        onClick={() => setViewUser(row)}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
                         onClick={() => userInfoModalOpen(row)}
                       >
                         Edit
@@ -911,7 +938,17 @@ function Index() {
                         Delete
                       </button>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className={"flex border-t border-[#ead9d9]"}>
+                      <button
+                        type="button"
+                        className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a]"}
+                        onClick={() => setViewUser(row)}
+                      >
+                        View
+                      </button>
+                    </div>
+                  )}
                 </Paper>
               );
             })
@@ -929,6 +966,139 @@ function Index() {
           ) : null}
         </div>
       </ContainerPage>
+      <Modal
+        open={Boolean(viewUser)}
+        onClose={() => setViewUser(null)}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+        sx={{
+          "& .MuiModal-backdrop": {
+            backdropFilter: " blur(2px) !important",
+            background: "#878b9499 !important",
+          },
+        }}
+        className="flex justify-center items-center"
+      >
+        <Paper
+          elevation={10}
+          className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none max-h-[90vh] overflow-auto"
+        >
+          <Grid container>
+            <Grid item xs={3} className={"flex justify-center items-center"}>
+              <img
+                src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+                alt=""
+                className="w-[110px] h-[110px] rounded-full border border-dashed border-[#542b2b] object-cover m-2 pointer-events-none"
+              />
+            </Grid>
+            <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
+              <div className={"text-base font-bold"}>
+                Name:{" "}
+                <span className={"font-normal"}>
+                  {[viewUser?.firstName, viewUser?.middleName]
+                    .filter(Boolean)
+                    .join(" ")}{" "}
+                  {lookupName(surname, viewUser?.lastName)}
+                </span>
+              </div>
+              <div className={"text-base font-bold"}>
+                DOB:{" "}
+                <span className={"font-normal"}>
+                  {viewUser?.dob && moment(viewUser.dob).isValid()
+                    ? moment(viewUser.dob).format("DD/MM/YYYY hh:mm A")
+                    : "-"}
+                </span>
+              </div>
+              <div className={"text-base font-bold"}>
+                Family ID:{" "}
+                <span className={"font-normal"}>
+                  {viewUser?.familyId || "-"}
+                </span>
+              </div>
+            </Grid>
+            <Grid item xs={1} className={"flex justify-center"}>
+              <CloseIcon
+                className={"text-primary cursor-pointer"}
+                onClick={() => setViewUser(null)}
+              />
+            </Grid>
+            <Grid item xs={12} className={"mt-4"}>
+              <Grid spacing={2} container>
+                <Grid item xs={6}>
+                  <div className={"text-base font-bold"}>
+                    Email:{" "}
+                    <span className={"font-normal"}>
+                      {viewUser?.email || "-"}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Gender:{" "}
+                    <span className={"font-normal"}>
+                      {viewUser?.gender || "-"}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Region:{" "}
+                    <span className={"font-normal"}>
+                      {lookupName(region, viewUser?.region)}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Role:{" "}
+                    <span className={"font-normal"}>
+                      {formatRole(viewUser?.role)}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Allowed:{" "}
+                    <span className={"font-normal"}>
+                      {viewUser?.allowed ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Created At:{" "}
+                    <span className={"font-normal"}>
+                      {formatUserDate(viewUser?.createdAt)}
+                    </span>
+                  </div>
+                </Grid>
+                <Grid item xs={6}>
+                  <div className={"text-base font-bold"}>
+                    Mobile:{" "}
+                    <span className={"font-normal"}>
+                      {viewUser?.mobile || "-"}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Language:{" "}
+                    <span className={"font-normal"}>
+                      {viewUser?.language || "-"}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Local Samaj:{" "}
+                    <span className={"font-normal"}>
+                      {lookupName(samaj, viewUser?.localSamaj)}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Active:{" "}
+                    <span className={"font-normal"}>
+                      {viewUser?.active ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <div className={"text-base font-bold"}>
+                    Updated At:{" "}
+                    <span className={"font-normal"}>
+                      {formatUserDate(viewUser?.updatedAt)}
+                    </span>
+                  </div>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Modal>
       <Modal
         open={userInfoModel}
         onClose={userInfoModalClose}
