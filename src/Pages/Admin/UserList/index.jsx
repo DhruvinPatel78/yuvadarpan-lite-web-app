@@ -29,9 +29,7 @@ import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -121,6 +119,7 @@ function Index() {
   const [selectedRole, setSelectedRole] = useState([]);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -811,7 +810,7 @@ function Index() {
               variant="contained"
               startIcon={<DeleteIcon />}
               className={"!bg-[#572a2a] !text-white"}
-              onClick={() => deleteAPI(selectedUsers)}
+              onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
             </Button>
@@ -829,6 +828,7 @@ function Index() {
             page={page}
             setPage={setPage}
             onDeleteSelected={canAct ? deleteAPI : undefined}
+            deleteEntity="user"
           />
         </div>
         <div className={"md:hidden w-full flex flex-col gap-3"}>
@@ -1358,14 +1358,27 @@ function Index() {
         </Paper>
       </Modal>
       <NotificationSnackbar notification={notification} />
-      <ConfirmModal
-        open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.firstName)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={async () => {
-          await deleteAPI(deleteTarget.id);
+      <DeleteConfirmFlow
+        open={Boolean(deleteTarget) || bulkDeleteOpen}
+        entity="user"
+        ids={deleteTarget ? [deleteTarget.id] : selectedUsers}
+        name={
+          deleteTarget
+            ? [deleteTarget.firstName, deleteTarget.middleName]
+                .filter(Boolean)
+                .join(" ")
+            : `${selectedUsers.length} selected item${
+                selectedUsers.length === 1 ? "" : "s"
+              }`
+        }
+        onClose={() => {
           setDeleteTarget(null);
+          setBulkDeleteOpen(false);
+        }}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget ? deleteTarget.id : selectedUsers);
+          setDeleteTarget(null);
+          setBulkDeleteOpen(false);
         }}
       />
     </Box>

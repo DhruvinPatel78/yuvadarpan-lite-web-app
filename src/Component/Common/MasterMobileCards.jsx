@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Button,
   Checkbox,
@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomSwitch from "./CustomSwitch";
+import DeleteConfirmFlow from "./DeleteConfirmFlow";
 
 const MasterMobileCards = ({
   rows = [],
@@ -29,8 +30,10 @@ const MasterMobileCards = ({
   total = 0,
   showPagination = true,
   onDeleteSelected,
+  deleteEntity,
 }) => {
   const hasFooterActions = Boolean(onView || onEdit || onDelete);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   return (
     <div className={"md:hidden w-full flex flex-col gap-3"}>
@@ -49,7 +52,13 @@ const MasterMobileCards = ({
               variant="contained"
               startIcon={<DeleteIcon />}
               className={"!bg-[#572a2a] !text-white"}
-              onClick={() => onDeleteSelected(selectedIds)}
+              onClick={() => {
+                if (deleteEntity) {
+                  setBulkDeleteOpen(true);
+                } else {
+                  onDeleteSelected(selectedIds);
+                }
+              }}
             >
               Delete Selected
             </Button>
@@ -162,6 +171,21 @@ const MasterMobileCards = ({
             }
           />
         </div>
+      ) : null}
+      {deleteEntity && onDeleteSelected ? (
+        <DeleteConfirmFlow
+          open={bulkDeleteOpen}
+          entity={deleteEntity}
+          ids={selectedIds}
+          name={`${selectedIds.length} selected item${
+            selectedIds.length === 1 ? "" : "s"
+          }`}
+          onClose={() => setBulkDeleteOpen(false)}
+          onConfirm={async () => {
+            await onDeleteSelected(selectedIds);
+            setBulkDeleteOpen(false);
+          }}
+        />
       ) : null}
     </div>
   );

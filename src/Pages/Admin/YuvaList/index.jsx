@@ -19,9 +19,7 @@ import moment from "moment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
@@ -61,6 +59,7 @@ const YuvaList = () => {
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const { surname, city, state, region, district, samaj, country, auth } = UseRedux();
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
@@ -579,7 +578,7 @@ const YuvaList = () => {
               variant="contained"
               startIcon={<DeleteIcon />}
               className={"!bg-[#572a2a] !text-white"}
-              onClick={() => deleteAPI(selectedYuvas)}
+              onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
             </Button>
@@ -598,6 +597,7 @@ const YuvaList = () => {
             setPageSize={setRowsPerPage}
             checkboxSelection={canAct}
             onDeleteSelected={canAct ? deleteAPI : undefined}
+            deleteEntity="yuva"
           />
         </div>
         <div className={"md:hidden w-full flex flex-col gap-3"}>
@@ -1012,14 +1012,24 @@ const YuvaList = () => {
           </Grid>
         </Paper>
       </Modal>
-      <ConfirmModal
-        open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={async () => {
-          await deleteAPI(deleteTarget.id);
+      <DeleteConfirmFlow
+        open={Boolean(deleteTarget) || bulkDeleteOpen}
+        entity="yuva"
+        ids={deleteTarget ? [deleteTarget.id] : selectedYuvas}
+        name={
+          deleteTarget?.name ||
+          `${selectedYuvas.length} selected item${
+            selectedYuvas.length === 1 ? "" : "s"
+          }`
+        }
+        onClose={() => {
           setDeleteTarget(null);
+          setBulkDeleteOpen(false);
+        }}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget ? deleteTarget.id : selectedYuvas);
+          setDeleteTarget(null);
+          setBulkDeleteOpen(false);
         }}
       />
     </Box>

@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../store/authSlice";
 import { UseRedux } from "../useRedux";
 import ConfirmModal from "./ConfirmModal";
+import DeleteConfirmFlow from "./DeleteConfirmFlow";
 
 function CustomTable({
   columns,
@@ -21,6 +22,7 @@ function CustomTable({
   checkboxSelection,
   onDeleteSelected,
   bulkActions = [],
+  deleteEntity,
 }) {
   const { loading } = UseRedux();
   const dispatch = useDispatch();
@@ -195,15 +197,30 @@ function CustomTable({
         </div>
       ) : null}
       {onDeleteSelected ? (
-        <ConfirmModal
-          open={bulkDeleteOpen}
-          title="Delete confirmation"
-          description={`Are you sure you want to delete ${selectedIds.length} selected item${
-            selectedIds.length === 1 ? "" : "s"
-          }? This action cannot be undone.`}
-          onClose={() => setBulkDeleteOpen(false)}
-          onConfirm={handleBulkDelete}
-        />
+        deleteEntity ? (
+          <DeleteConfirmFlow
+            open={bulkDeleteOpen}
+            entity={deleteEntity}
+            ids={selectedIds}
+            name={`${selectedIds.length} selected item${
+              selectedIds.length === 1 ? "" : "s"
+            }`}
+            onClose={() => setBulkDeleteOpen(false)}
+            onConfirm={handleBulkDelete}
+          />
+        ) : (
+          <ConfirmModal
+            open={bulkDeleteOpen}
+            title="Are you sure?"
+            description={`Are you sure you want to delete ${selectedIds.length} selected item${
+              selectedIds.length === 1 ? "" : "s"
+            }? This action cannot be undone.`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            onClose={() => setBulkDeleteOpen(false)}
+            onConfirm={handleBulkDelete}
+          />
+        )
       ) : null}
     </div>
   );

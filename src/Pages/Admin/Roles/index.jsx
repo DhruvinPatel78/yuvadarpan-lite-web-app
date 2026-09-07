@@ -9,9 +9,7 @@ import ContainerPage from "../../../Component/Container";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { getRoleList, updateRole, deleteRole } from "../../../util/roleApi";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { Navigate } from "react-router-dom";
 import { isLocationMasterReadOnly } from "../../../util/util";
@@ -200,6 +198,7 @@ export default function Index() {
           setPage={setPage}
           pagination={false}
           onDeleteSelected={deleteAPI}
+          deleteEntity="role"
         />
         </div>
         <MasterMobileCards
@@ -213,12 +212,14 @@ export default function Index() {
           onDelete={(row) => setDeleteTarget(row)}
           showPagination={false}
           onDeleteSelected={deleteAPI}
+          deleteEntity="role"
         />
       </ContainerPage>
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="role"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

@@ -28,9 +28,7 @@ import { useNavigate } from "react-router-dom";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
   getListById,
   getSelectedData,
@@ -441,6 +439,7 @@ export default function Index() {
           type={"userList"}
           className={"mx-0 w-full"}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="region"
         />
         </div>
         <MasterMobileCards
@@ -491,6 +490,7 @@ export default function Index() {
           setRowsPerPage={setRowsPerPage}
           total={regionData?.total || 0}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="region"
         />
       </ContainerPage>
       {regionAddEditModel ? (
@@ -609,10 +609,11 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="region"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

@@ -53,6 +53,7 @@ export const locationDetailsConfig = {
     }),
     updateChild: updateState,
     deleteChild: deleteState,
+    deleteEntity: "state",
   },
   state: {
     entityLabel: "State",
@@ -72,6 +73,7 @@ export const locationDetailsConfig = {
     }),
     updateChild: updateRegion,
     deleteChild: deleteRegion,
+    deleteEntity: "region",
   },
   region: {
     entityLabel: "Region",
@@ -92,6 +94,7 @@ export const locationDetailsConfig = {
     }),
     updateChild: updateDistrict,
     deleteChild: deleteDistrict,
+    deleteEntity: "district",
   },
   district: {
     entityLabel: "District",
@@ -113,6 +116,7 @@ export const locationDetailsConfig = {
     }),
     updateChild: updateCity,
     deleteChild: deleteCity,
+    deleteEntity: "city",
   },
   city: {
     entityLabel: "City",
@@ -136,6 +140,7 @@ export const locationDetailsConfig = {
     }),
     updateChild: updateSamaj,
     deleteChild: deleteSamaj,
+    deleteEntity: "samaj",
   },
 };
 

@@ -28,9 +28,7 @@ import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
   getSelectedData,
   listHandler,
@@ -380,6 +378,7 @@ export default function Index() {
           type={"userList"}
           className={"mx-0 w-full"}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="state"
         />
         </div>
         <MasterMobileCards
@@ -425,6 +424,7 @@ export default function Index() {
           setRowsPerPage={setRowsPerPage}
           total={stateData?.total || 0}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="state"
         />
       </ContainerPage>
       {stateAddEditModel ? (
@@ -515,10 +515,11 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="state"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

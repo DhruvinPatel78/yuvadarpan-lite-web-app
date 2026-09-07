@@ -28,9 +28,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
   getListById,
   getSelectedData,
@@ -489,6 +487,7 @@ export default function Index() {
           type={"userList"}
           className={"mx-0 w-full"}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="district"
         />
         </div>
         <MasterMobileCards
@@ -543,6 +542,7 @@ export default function Index() {
           setRowsPerPage={setRowsPerPage}
           total={districtData?.total || 0}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="district"
         />
       </ContainerPage>
       {districtAddEditModel ? (
@@ -687,10 +687,11 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="district"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

@@ -24,9 +24,7 @@ import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import {
@@ -284,6 +282,7 @@ export default function Index() {
           page={page}
           setPage={setPage}
           onDeleteSelected={canManage ? deleteAPI : undefined}
+          deleteEntity="native"
         />
         </div>
         <MasterMobileCards
@@ -310,6 +309,7 @@ export default function Index() {
           setRowsPerPage={setRowsPerPage}
           total={nativeData?.total || 0}
           onDeleteSelected={canManage ? deleteAPI : undefined}
+          deleteEntity="native"
         />
       </ContainerPage>
       {nativeAddEditModel ? (
@@ -383,10 +383,11 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="native"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

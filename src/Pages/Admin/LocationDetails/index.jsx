@@ -26,9 +26,7 @@ import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 
 const omitMetaFields = (row) => {
   const {
@@ -330,6 +328,7 @@ export default function LocationDetails({ config }) {
           page={page}
           setPage={setPage}
           onDeleteSelected={canManage ? handleDelete : undefined}
+          deleteEntity={config.deleteEntity}
         />
       </ContainerPage>
       {formOpen ? (
@@ -419,10 +418,11 @@ export default function LocationDetails({ config }) {
           </Paper>
         </Modal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity={config.deleteEntity}
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await handleDelete(deleteTarget.id);

@@ -28,9 +28,7 @@ import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
   getListById,
   getSelectedData,
@@ -543,6 +541,7 @@ export default function Index() {
           type={"userList"}
           className={"mx-0 w-full"}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="city"
         />
         </div>
         <MasterMobileCards
@@ -601,6 +600,7 @@ export default function Index() {
           setRowsPerPage={setRowsPerPage}
           total={cityData?.total || 0}
           onDeleteSelected={canAct ? deleteAPI : undefined}
+          deleteEntity="city"
         />
       </ContainerPage>
       {cityAddEditModel ? (
@@ -774,10 +774,11 @@ export default function Index() {
           </Paper>
         </Modal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="city"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);
