@@ -121,72 +121,93 @@ const entityInScope = (list, scopeIds, parentKey, matchId) =>
   );
 
 const resolveManagerLocationScope = (user, lists = {}) => {
+  const role = normalizeRole(user?.role);
   const samajDoc = findEntityById(lists.samaj, user?.localSamaj);
+  const inheritFromSamaj =
+    role === "SAMAJ_MANAGER" || role === "CITY_MANAGER" || !role;
+  const inheritFromCity =
+    inheritFromSamaj || role === "DISTRICT_MANAGER";
+  const inheritFromDistrict =
+    inheritFromCity || role === "REGION_MANAGER";
+  const inheritFromRegion =
+    inheritFromDistrict || role === "STATE_MANAGER";
+  const inheritFromState =
+    inheritFromRegion || role === "COUNTRY_MANAGER";
+
   const cityDoc =
     findEntityById(lists.city, user?.city) ||
-    findEntityById(lists.city, samajDoc?.city_id);
+    (inheritFromSamaj ? findEntityById(lists.city, samajDoc?.city_id) : null);
   const districtDoc =
     findEntityById(lists.district, user?.district) ||
-    findEntityById(lists.district, samajDoc?.district_id) ||
-    findEntityById(lists.district, cityDoc?.district_id);
+    (inheritFromCity
+      ? findEntityById(lists.district, cityDoc?.district_id) ||
+        findEntityById(lists.district, samajDoc?.district_id)
+      : null);
   const regionDoc =
     findEntityById(lists.region, user?.region) ||
-    findEntityById(lists.region, samajDoc?.region_id) ||
-    findEntityById(lists.region, districtDoc?.region_id) ||
-    findEntityById(lists.region, cityDoc?.region_id);
+    (inheritFromDistrict
+      ? findEntityById(lists.region, districtDoc?.region_id) ||
+        findEntityById(lists.region, cityDoc?.region_id) ||
+        findEntityById(lists.region, samajDoc?.region_id)
+      : null);
   const stateDoc =
     findEntityById(lists.state, user?.state) ||
-    findEntityById(lists.state, samajDoc?.state_id) ||
-    findEntityById(lists.state, regionDoc?.state_id) ||
-    findEntityById(lists.state, districtDoc?.state_id) ||
-    findEntityById(lists.state, cityDoc?.state_id);
+    (inheritFromRegion
+      ? findEntityById(lists.state, regionDoc?.state_id) ||
+        findEntityById(lists.state, districtDoc?.state_id) ||
+        findEntityById(lists.state, cityDoc?.state_id) ||
+        findEntityById(lists.state, samajDoc?.state_id)
+      : null);
   const countryDoc =
     findEntityById(lists.country, user?.country) ||
-    findEntityById(lists.country, samajDoc?.country_id) ||
-    findEntityById(lists.country, stateDoc?.country_id) ||
-    findEntityById(lists.country, regionDoc?.country_id);
+    (inheritFromState
+      ? findEntityById(lists.country, stateDoc?.country_id) ||
+        findEntityById(lists.country, regionDoc?.country_id) ||
+        findEntityById(lists.country, samajDoc?.country_id)
+      : null);
 
-  return {
-    samajIds: collectEntityIds(user?.localSamaj, samajDoc?.id, samajDoc?._id),
-    cityIds: collectEntityIds(
-      user?.city,
-      samajDoc?.city_id,
-      cityDoc?.id,
-      cityDoc?._id
-    ),
-    districtIds: collectEntityIds(
-      user?.district,
-      samajDoc?.district_id,
-      cityDoc?.district_id,
-      districtDoc?.id,
-      districtDoc?._id
-    ),
-    regionIds: collectEntityIds(
-      user?.region,
-      samajDoc?.region_id,
-      districtDoc?.region_id,
-      cityDoc?.region_id,
-      regionDoc?.id,
-      regionDoc?._id
-    ),
-    stateIds: collectEntityIds(
-      user?.state,
-      samajDoc?.state_id,
-      regionDoc?.state_id,
-      districtDoc?.state_id,
-      cityDoc?.state_id,
-      stateDoc?.id,
-      stateDoc?._id
-    ),
-    countryIds: collectEntityIds(
-      user?.country,
-      samajDoc?.country_id,
-      stateDoc?.country_id,
-      regionDoc?.country_id,
-      countryDoc?.id,
-      countryDoc?._id
-    ),
-  };
+  const samajIds =
+    role === "SAMAJ_MANAGER"
+      ? collectEntityIds(user?.localSamaj, samajDoc?.id, samajDoc?._id)
+      : collectEntityIds();
+  const cityIds =
+    role === "SAMAJ_MANAGER"
+      ? collectEntityIds(samajDoc?.city_id, cityDoc?.id, cityDoc?._id)
+      : collectEntityIds(user?.city, cityDoc?.id, cityDoc?._id);
+  const districtIds = collectEntityIds(
+    user?.district,
+    districtDoc?.id,
+    districtDoc?._id,
+    inheritFromCity ? cityDoc?.district_id : null,
+    inheritFromSamaj ? samajDoc?.district_id : null
+  );
+  const regionIds = collectEntityIds(
+    user?.region,
+    regionDoc?.id,
+    regionDoc?._id,
+    inheritFromDistrict ? districtDoc?.region_id : null,
+    inheritFromCity ? cityDoc?.region_id : null,
+    inheritFromSamaj ? samajDoc?.region_id : null
+  );
+  const stateIds = collectEntityIds(
+    user?.state,
+    stateDoc?.id,
+    stateDoc?._id,
+    inheritFromRegion ? regionDoc?.state_id : null,
+    inheritFromDistrict ? districtDoc?.state_id : null,
+    inheritFromCity ? cityDoc?.state_id : null,
+    inheritFromSamaj ? samajDoc?.state_id : null
+  );
+  const countryIds = collectEntityIds(
+    user?.country,
+    countryDoc?.id,
+    countryDoc?._id,
+    inheritFromState ? stateDoc?.country_id : null,
+    inheritFromRegion ? regionDoc?.country_id : null,
+    inheritFromSamaj ? samajDoc?.country_id : null
+  );
+
+  return { samajIds, cityIds, districtIds, regionIds, stateIds, countryIds };
 };
 
 export const canEditYuvaRecord = (user, yuva, lists = {}) => {
