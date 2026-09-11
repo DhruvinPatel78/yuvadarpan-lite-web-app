@@ -11,7 +11,7 @@ import { PageHeader } from "../../../Component/UI";
 const dashboardItems = {
   ADMIN: [
     { id: 1, title: "New Requests", href: "/admin/request" },
-    { id: 2, title: "User  List", href: "/admin/userlist" },
+    { id: 2, title: "User List", href: "/admin/userlist" },
     { id: 3, title: "Yuva List", href: "/admin/yuvalist" },
     { id: 4, title: "Country", href: "/admin/country" },
     { id: 5, title: "State", href: "/admin/state" },
@@ -48,7 +48,7 @@ export default function Index() {
           title="Dashboard"
           description="Choose a section to manage."
         />
-        <Grid container spacing={1.5}>
+        <Grid container spacing={2}>
           {dashBoardList?.map((item) => (
             <Grid item xs={12} sm={6} md={4} key={item.id}>
               <CustomCard

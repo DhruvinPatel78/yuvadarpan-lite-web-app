@@ -1,5 +1,6 @@
 import React from "react";
 import Card from "./Card";
+import { YuvadarpanLogo } from "../Icons";
 
 export default function AuthShell({
   children,
@@ -19,10 +20,14 @@ export default function AuthShell({
       }}
     >
       {showBrand ? (
-        <div className="mb-6 flex flex-col items-center gap-2">
-          <span className="inline-flex items-center justify-center px-4 h-9 rounded-full bg-white/80 text-primary text-[11px] font-bold tracking-[0.34em]">
-            YUVADARPAN
-          </span>
+        <div className="mb-6 flex flex-col items-center">
+          <YuvadarpanLogo
+            fill="#542b2b"
+            maxHeight={40}
+            className="!w-auto"
+            style={{ width: "auto", maxWidth: 280 }}
+            ariaLabel="Yuvadarpan"
+          />
         </div>
       ) : null}
       <Card
@@ -31,7 +36,7 @@ export default function AuthShell({
       >
         <div className="p-6 sm:p-8">{children}</div>
       </Card>
-      <p className="mt-8 text-center text-xs text-mutedText">
+      <p className="mt-8 text-center text-xs text-mutedText font-WorkRegular">
         © {new Date().getFullYear()} Yuvadarpan
       </p>
     </div>

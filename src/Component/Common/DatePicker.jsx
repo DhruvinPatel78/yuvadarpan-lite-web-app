@@ -52,7 +52,7 @@ const DatePicker = ({
               className={"w-full"}
               sx={{
                 "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: errors ? "red !important" : "#d7d0c8 !important",
+                  borderColor: errors ? "red !important" : "#d2c8c2 !important",
                 },
               }}
             />

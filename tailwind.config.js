@@ -3,18 +3,19 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   important: true,
   theme: {
-    fontFamily: {
-      'WorkThin': ['WorkThin'],
-      'WorkExtraLight': ['WorkExtraLight'],
-      'WorkLight': ['WorkLight'],
-      'WorkRegular': ['WorkRegular'],
-      'WorkMedium': ['WorkMedium'],
-      'WorkSemiBold': ['WorkSemiBold'],
-      'WorkBold': ['WorkBold'],
-      'WorkExtraBold': ['WorkExtraBold'],
-      'WorkBlack': ['WorkBlack'],
-    },
     extend: {
+      fontFamily: {
+        sans: ['WorkRegular', 'Work Sans', 'sans-serif'],
+        WorkThin: ['WorkThin', 'Work Sans', 'sans-serif'],
+        WorkExtraLight: ['WorkExtraLight', 'Work Sans', 'sans-serif'],
+        WorkLight: ['WorkLight', 'Work Sans', 'sans-serif'],
+        WorkRegular: ['WorkRegular', 'Work Sans', 'sans-serif'],
+        WorkMedium: ['WorkMedium', 'Work Sans', 'sans-serif'],
+        WorkSemiBold: ['WorkSemiBold', 'Work Sans', 'sans-serif'],
+        WorkBold: ['WorkBold', 'Work Sans', 'sans-serif'],
+        WorkExtraBold: ['WorkExtraBold', 'Work Sans', 'sans-serif'],
+        WorkBlack: ['WorkBlack', 'Work Sans', 'sans-serif'],
+      },
       colors: {
         primary: '#542b2b',
         'primary-hover': '#462424',

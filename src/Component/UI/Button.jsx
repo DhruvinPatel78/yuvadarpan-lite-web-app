@@ -26,7 +26,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 ${
+      className={`inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-WorkSemiBold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 ${
         fullWidth ? "w-full" : ""
       } ${variants[variant] || variants.primary} ${className}`}
       {...rest}

@@ -24,6 +24,7 @@ export const AppTabs = styled((props) => (
 
 export const AppTab = styled((props) => <Tab disableRipple {...props} />)({
   textTransform: "none",
+  fontFamily: "WorkSemiBold, 'Work Sans', sans-serif",
   fontWeight: 600,
   fontSize: 14,
   minHeight: 40,

@@ -20,7 +20,7 @@ export default function PageHeader({
               {eyebrow}
             </p>
           ) : null}
-          <h1 className="text-xl sm:text-2xl font-semibold text-primary leading-tight flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-WorkSemiBold text-primary leading-tight flex items-center gap-2.5">
             <span
               className="inline-block w-2 h-2 rotate-45 bg-primary shrink-0"
               aria-hidden

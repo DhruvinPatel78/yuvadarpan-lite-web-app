@@ -133,6 +133,11 @@ function CustomTable({
         loading={loading}
         getRowId={(row) => row.id}
         sx={{
+          fontFamily: "WorkRegular, 'Work Sans', sans-serif",
+          "& .MuiDataGrid-columnHeaderTitle": {
+            fontFamily: "WorkSemiBold, 'Work Sans', sans-serif",
+            fontWeight: 600,
+          },
           "& .MuiDataGrid-sortIcon, & .MuiDataGrid-menuIconButton .MuiSvgIcon-root":
             {
               color: "white !important",

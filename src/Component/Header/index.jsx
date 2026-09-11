@@ -55,11 +55,11 @@ const Header = () => {
   return (
     <AppBar position="sticky" className={"bg-primary top-0 z-20 shadow-none"}>
       <Container className="max-w-[1600px]">
-        <Toolbar disableGutters className={"justify-between min-h-[60px]"}>
+        <Toolbar disableGutters className={"justify-between min-h-[72px]"}>
           <YuvadarpanLogo
             className={"cursor-pointer !w-auto"}
-            maxHeight={28}
-            style={{ width: "auto", maxWidth: 220 }}
+            maxHeight={46}
+            style={{ width: "auto", maxWidth: 320 }}
             onClick={() => navigate("/")}
             ariaLabel="Yuvadarpan home"
           />
@@ -72,9 +72,10 @@ const Header = () => {
                       bgcolor: "#fff",
                       color: "#542b2b",
                       fontWeight: 700,
-                      width: 36,
-                      height: 36,
-                      fontSize: 14,
+                      width: 40,
+                      height: 40,
+                      fontSize: 15,
+                      fontFamily: "WorkBold, 'Work Sans', sans-serif",
                     }}
                   >
                     {user?.user?.firstName &&
@@ -112,7 +113,7 @@ const Header = () => {
                     key={item.label}
                     onClick={() => handleMenuItem(item)}
                   >
-                    <Typography textAlign="center" className="!text-primary !text-sm">
+                    <Typography textAlign="center" className="!text-primary !text-sm !font-WorkSemiBold">
                       {item.label}
                     </Typography>
                   </MenuItem>

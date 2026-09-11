@@ -3,9 +3,15 @@ import Card from "../UI/Card";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 const CustomCard = ({ title, action }) => {
+  const initial = String(title || "")
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
   return (
     <Card
-      className="group w-full cursor-pointer hover:border-primary transition-colors duration-200"
+      padded={false}
+      className="group w-full cursor-pointer hover:border-primary hover:shadow-raised transition-all duration-200"
       onClick={action}
       role="button"
       tabIndex={0}
@@ -17,12 +23,21 @@ const CustomCard = ({ title, action }) => {
         }
       }}
     >
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-primary">{title}</h2>
-        <ChevronRightIcon
-          className="text-mutedText group-hover:text-primary shrink-0"
-          fontSize="small"
-        />
+      <div className="flex items-center justify-between gap-4 min-h-[108px] px-5 py-5">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <span
+            className="w-12 h-12 rounded-xl bg-muted text-primary font-WorkSemiBold text-lg flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors"
+            aria-hidden
+          >
+            {initial}
+          </span>
+          <h2 className="text-base font-WorkSemiBold text-primary leading-snug">
+            {title}
+          </h2>
+        </div>
+        <span className="w-9 h-9 rounded-full bg-muted text-mutedText flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+          <ChevronRightIcon fontSize="small" />
+        </span>
       </div>
     </Card>
   );

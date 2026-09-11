@@ -36,18 +36,24 @@ const theme = createTheme({
     divider: tokens.border,
   },
   typography: {
-    fontFamily: "WorkRegular, Work Sans, sans-serif",
-    h1: { fontWeight: 700, fontSize: "1.75rem", lineHeight: 1.25 },
-    h2: { fontWeight: 700, fontSize: "1.125rem", lineHeight: 1.3 },
+    fontFamily: "WorkRegular, 'Work Sans', sans-serif",
+    h1: { fontFamily: "WorkBold, 'Work Sans', sans-serif", fontWeight: 700, fontSize: "1.75rem", lineHeight: 1.25 },
+    h2: { fontFamily: "WorkSemiBold, 'Work Sans', sans-serif", fontWeight: 600, fontSize: "1.125rem", lineHeight: 1.3 },
     body1: { fontSize: "0.95rem", lineHeight: 1.5 },
     body2: { fontSize: "0.875rem", lineHeight: 1.5, color: tokens.mutedText },
-    button: { textTransform: "none", fontWeight: 600 },
+    button: { fontFamily: "WorkSemiBold, 'Work Sans', sans-serif", textTransform: "none", fontWeight: 600 },
+    subtitle1: { fontFamily: "WorkSemiBold, 'Work Sans', sans-serif" },
+    subtitle2: { fontFamily: "WorkMedium, 'Work Sans', sans-serif" },
   },
   shape: { borderRadius: tokens.radius },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
+        html: {
+          fontFamily: "WorkRegular, 'Work Sans', sans-serif",
+        },
         body: {
+          fontFamily: "WorkRegular, 'Work Sans', sans-serif",
           backgroundColor: tokens.background,
           color: tokens.text,
         },
@@ -67,6 +73,12 @@ const theme = createTheme({
         },
       },
     },
+    MuiInputBase: {
+      styleOverrides: {
+        root: { fontFamily: "WorkRegular, 'Work Sans', sans-serif" },
+        input: { fontFamily: "WorkRegular, 'Work Sans', sans-serif" },
+      },
+    },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
@@ -76,7 +88,7 @@ const theme = createTheme({
             borderColor: tokens.inputBorder,
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "#c8c8d4",
+            borderColor: "#c8bfb4",
           },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: tokens.primary,

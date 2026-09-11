@@ -1,5 +1,7 @@
 import * as React from "react";
 
+const brandFont = "WorkBold, 'Work Sans', sans-serif";
+
 export const YuvadarpanLogo = ({
   maxHeight = 50,
   style = {},
@@ -23,7 +25,7 @@ export const YuvadarpanLogo = ({
         display: "block",
         ...style,
       }}
-      preserveAspectRatio="xMidYMid meet"
+      preserveAspectRatio="xMinYMid meet"
       onClick={onClick}
     >
       <text
@@ -32,10 +34,10 @@ export const YuvadarpanLogo = ({
         dominantBaseline="middle"
         textAnchor="start"
         fill={fill}
-        fontFamily="'Poppins', sans-serif"
+        fontFamily={brandFont}
         fontWeight="700"
-        fontSize="36"
-        letterSpacing="1"
+        fontSize="42"
+        letterSpacing="1.2"
         style={{ userSelect: "none" }}
       >
         YUVADARPAN

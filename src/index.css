@@ -50,7 +50,7 @@
 
 body {
   margin: 0;
-  font-family: "WorkRegular";
+  font-family: "WorkRegular", "Work Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f4f0ea;
