@@ -36,7 +36,7 @@ const MasterMobileCards = ({
       {canSelect && selectedIds.length > 0 ? (
         <div
           className={
-            "w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
+            "w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
           }
         >
           <span className={"text-primary font-semibold"}>
@@ -52,6 +52,7 @@ const MasterMobileCards = ({
                   onDeleteSelected(selectedIds);
                 }
               }}
+              className="max-sm:w-full"
             >
               Delete Selected
             </Button>
@@ -70,11 +71,11 @@ const MasterMobileCards = ({
               padded={false}
               className={"overflow-hidden"}
             >
-              <div className={"p-3"}>
-                <div className={"flex items-center justify-between gap-2"}>
+              <div className={"p-3.5"}>
+                <div className={"flex items-start justify-between gap-2"}>
                   <p
                     className={
-                      "font-semibold text-primary text-[15px] leading-tight min-w-0 pr-1"
+                      "font-semibold text-primary text-[15px] leading-tight min-w-0 pr-1 break-words"
                     }
                   >
                     {getTitle(row)}
@@ -83,13 +84,13 @@ const MasterMobileCards = ({
                     <Checkbox
                       checked={isSelected}
                       onChange={() => onToggleSelect(id)}
-                      className={"!text-primary !p-0 !m-0 shrink-0"}
+                      className={"!text-primary !p-2 !-m-2 shrink-0"}
                     />
                   ) : null}
                 </div>
                 {details.map((line) =>
                   line ? (
-                    <p key={line} className={"text-sm text-gray-600 mt-1"}>
+                    <p key={line} className={"text-sm text-gray-600 mt-1 break-words"}>
                       {line}
                     </p>
                   ) : null
@@ -113,7 +114,7 @@ const MasterMobileCards = ({
                   {onView ? (
                     <button
                       type="button"
-                      className={`flex-1 py-2.5 text-sm font-semibold text-primary ${
+                      className={`flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary ${
                         actionCount > 1 ? "border-r border-[#ececf3]" : ""
                       }`}
                       onClick={() => onView(row)}
@@ -124,7 +125,7 @@ const MasterMobileCards = ({
                   {onEdit ? (
                     <button
                       type="button"
-                      className={`flex-1 py-2.5 text-sm font-semibold text-primary ${
+                      className={`flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary ${
                         onDelete ? "border-r border-[#ececf3]" : ""
                       }`}
                       onClick={() => onEdit(row)}
@@ -135,7 +136,7 @@ const MasterMobileCards = ({
                   {onDelete ? (
                     <button
                       type="button"
-                      className={"flex-1 py-2.5 text-sm font-semibold text-[#ff0000]"}
+                      className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-[#ff0000]"}
                       onClick={() => onDelete(row)}
                     >
                       Delete
@@ -147,12 +148,13 @@ const MasterMobileCards = ({
           );
         })
       ) : (
-        <Card className={"text-center text-gray-400"}>
-          {emptyText}
+        <Card className={"text-center py-10 px-4"}>
+          <p className="text-sm font-semibold text-primary">{emptyText}</p>
+          <p className="text-sm text-mutedText mt-1">Nothing to show yet.</p>
         </Card>
       )}
       {showPagination && rows.length ? (
-        <div className={"w-full bg-white rounded-xl flex justify-end"}>
+        <div className={"w-full bg-white rounded-xl overflow-x-auto"}>
           <TablePagination
             component="div"
             count={total}
@@ -162,6 +164,14 @@ const MasterMobileCards = ({
             onRowsPerPageChange={(event) =>
               setRowsPerPage(parseInt(event.target.value, 10))
             }
+            labelRowsPerPage=""
+            sx={{
+              width: "100%",
+              "& .MuiTablePagination-toolbar": {
+                paddingLeft: 1,
+                paddingRight: 1,
+              },
+            }}
           />
         </div>
       ) : null}

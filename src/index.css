@@ -72,3 +72,235 @@ body {
   justify-content: flex-start;
   padding: 0;
 }
+
+@media (max-width: 767.95px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .app-header-spacer {
+    min-height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  body {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid #542b2b;
+    outline-offset: 2px;
+  }
+
+  .app-header-logo {
+    width: auto !important;
+    height: auto !important;
+    max-width: min(52vw, 176px) !important;
+    max-height: 28px !important;
+  }
+
+  .app-auth-logo {
+    width: auto !important;
+    height: auto !important;
+    max-width: min(70vw, 220px) !important;
+    max-height: 32px !important;
+  }
+
+  .MuiContainer-root {
+    padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  .MuiAppBar-root {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .MuiButton-root {
+    min-height: 44px;
+  }
+
+  .MuiIconButton-root {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .MuiButtonBase-root.MuiCheckbox-root,
+  .MuiButtonBase-root.MuiRadio-root {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  input,
+  textarea,
+  select,
+  .MuiInputBase-input {
+    font-size: 16px !important;
+  }
+
+  .MuiOutlinedInput-root,
+  .MuiInputBase-root {
+    min-height: 44px;
+  }
+
+  .MuiTablePagination-root {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .MuiTablePagination-toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    min-height: 52px !important;
+    padding: 4px 8px !important;
+    gap: 4px;
+  }
+
+  .MuiTablePagination-selectLabel {
+    display: none;
+  }
+
+  .MuiTablePagination-displayedRows {
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .MuiTablePagination-actions {
+    margin-left: 0 !important;
+  }
+
+  .MuiTablePagination-actions .MuiIconButton-root {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .app-modal-paper {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+    max-height: min(92dvh, calc(100vh - env(safe-area-inset-top, 0px))) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .MuiSnackbar-root {
+    top: auto !important;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    transform: none !important;
+  }
+
+  .MuiAlert-root {
+    width: 100%;
+    word-break: break-word;
+  }
+
+  .MuiAutocomplete-root {
+    max-width: 100%;
+  }
+
+  .MuiAutocomplete-root .MuiChip-label {
+    max-width: 84px;
+  }
+
+  .MuiAutocomplete-tag {
+    max-width: calc(100% - 48px);
+  }
+
+  .MuiAutocomplete-option,
+  .MuiMenuItem-root {
+    min-height: 48px !important;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .MuiTab-root {
+    min-height: 48px !important;
+    min-width: auto;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 14px;
+  }
+
+  .MuiTabs-flexContainer {
+    gap: 0;
+  }
+
+  .MuiMenu-paper {
+    max-width: calc(100vw - 24px);
+    min-width: 196px;
+  }
+
+  .MuiGrid-item {
+    min-width: 0;
+  }
+
+  .MuiFormControlLabel-root {
+    max-width: 100%;
+    min-height: 44px;
+    margin-left: 0;
+  }
+
+  .MuiFormControlLabel-label {
+    word-break: break-word;
+  }
+
+  .MuiAccordionSummary-root {
+    min-height: 52px !important;
+  }
+
+  .MuiAccordionSummary-content {
+    margin: 12px 0 !important;
+  }
+
+  .MuiAutocomplete-popper {
+    max-width: calc(100vw - 24px);
+  }
+
+  .MuiAutocomplete-listbox {
+    max-height: 240px;
+  }
+
+  .MuiTabs-scroller {
+    overflow-x: auto !important;
+  }
+
+  .MuiChip-root {
+    max-width: 100%;
+  }
+
+  .MuiPickersLayout-root {
+    max-width: 100%;
+  }
+
+  .MuiPickersPopper-root,
+  .MuiDialog-paper {
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  .react-pdf__Page,
+  .react-pdf__Page__canvas,
+  .react-pdf__Page__textContent,
+  .react-pdf__Page__annotations {
+    max-width: 100% !important;
+  }
+
+  .break-anywhere {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}

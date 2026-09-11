@@ -17,6 +17,7 @@ import { useDispatch } from "react-redux";
 import Header from "../../../Component/Header";
 import ContainerPage from "../../../Component/Container";
 import CustomTable from "../../../Component/Common/customTable";
+import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
@@ -62,7 +63,14 @@ export default function LocationDetails({ config }) {
     zipcode: "",
   });
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const backTo = parentFromState?.backTo || config.listPath;
+
+  const toggleCardSelection = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   const loadChildren = async () => {
     try {
@@ -313,7 +321,8 @@ export default function LocationDetails({ config }) {
             ) : null
           }
         />
-        <p className={"text-xl font-semibold"}>{config.listTitle}</p>
+        <p className={"text-xl font-semibold break-words"}>{config.listTitle}</p>
+        <div className={"hidden md:block w-full"}>
         <CustomTable
           columns={columns}
           data={tableData}
@@ -324,6 +333,49 @@ export default function LocationDetails({ config }) {
           className={"mx-0 w-full"}
           page={page}
           setPage={setPage}
+          onDeleteSelected={canManage ? handleDelete : undefined}
+          deleteEntity={config.deleteEntity}
+        />
+        </div>
+        <MasterMobileCards
+          rows={tableData?.data || []}
+          emptyText={`No ${config.listTitle?.toLowerCase() || "records"}`}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleCardSelection}
+          canSelect={canManage}
+          getDetails={(row) => {
+            const lines = [];
+            if (config.countField) {
+              lines.push(`${config.countHeader}: ${row[config.countField] ?? 0}`);
+            }
+            if (row.label) {
+              lines.push(row.label);
+            }
+            if (row.zipcode) {
+              lines.push(`Zipcode: ${row.zipcode}`);
+            }
+            return lines;
+          }}
+          activeDisabled={!canManage}
+          onActiveChange={(row) => handleToggleActive(row)}
+          onView={
+            hideRowActions || !config.childViewPath
+              ? undefined
+              : (row) =>
+                  navigate(config.childViewPath(row.id), {
+                    state: {
+                      ...row,
+                      backTo: location.pathname,
+                    },
+                  })
+          }
+          onEdit={canManage ? (row) => handleEdit(row) : undefined}
+          onDelete={canManage ? (row) => setDeleteTarget(row) : undefined}
+          page={page}
+          setPage={setPage}
+          rowsPerPage={rowsPerPage}
+          setRowsPerPage={setRowsPerPage}
+          total={tableData?.total || 0}
           onDeleteSelected={canManage ? handleDelete : undefined}
           deleteEntity={config.deleteEntity}
         />

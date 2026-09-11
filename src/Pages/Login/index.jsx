@@ -153,7 +153,7 @@ export default function Index() {
                 </Button>
               </Grid>
               <Grid item xs={12}>
-                <p className="flex justify-center text-sm cursor-default text-mutedText">
+                <p className="flex justify-center flex-wrap text-sm cursor-default text-mutedText">
                   New here?
                   <span
                     className="px-1 font-semibold text-primary underline cursor-pointer"

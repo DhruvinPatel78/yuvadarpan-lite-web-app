@@ -35,13 +35,13 @@ export default function ConfirmModal({
 
   return (
     <AppModal open={open} onClose={handleClose}>
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         <div className="flex flex-col items-center text-center gap-3">
           <WarningAmberRoundedIcon className="text-primary" sx={{ fontSize: 36 }} />
-          <span className="text-xl font-semibold text-primary">{title}</span>
-          <p className="text-sm text-mutedText">{description}</p>
+          <span className="text-xl font-semibold text-primary break-words">{title}</span>
+          <p className="text-sm text-mutedText break-words">{description}</p>
         </div>
-        <div className="flex justify-center gap-3 mt-6">
+        <div className="flex flex-col-reverse md:flex-row justify-center gap-3 mt-6">
           <Button
             variant="secondary"
             className="w-full"

@@ -10,7 +10,7 @@ export default function AuthShell({
 }) {
   return (
     <div
-      className="min-h-screen flex flex-col justify-center items-center px-4 py-10 relative overflow-hidden"
+      className="min-h-screen flex flex-col justify-center items-center px-3 py-6 md:px-4 md:py-10 relative overflow-hidden"
       style={{
         backgroundColor: "#f4f0ea",
         backgroundImage: [
@@ -20,11 +20,11 @@ export default function AuthShell({
       }}
     >
       {showBrand ? (
-        <div className="mb-6 flex flex-col items-center">
+        <div className="mb-5 md:mb-6 flex flex-col items-center px-2">
           <YuvadarpanLogo
             fill="#542b2b"
             maxHeight={40}
-            className="!w-auto"
+            className="app-auth-logo !w-auto"
             style={{ width: "auto", maxWidth: 280 }}
             ariaLabel="Yuvadarpan"
           />
@@ -32,9 +32,9 @@ export default function AuthShell({
       ) : null}
       <Card
         padded={false}
-        className={`w-full max-w-[90%] ${maxWidthClass} ${cardClassName} shadow-raised !border-0`}
+        className={`w-full ${maxWidthClass} ${cardClassName} shadow-raised !border-0`}
       >
-        <div className="p-6 sm:p-8">{children}</div>
+        <div className="p-4 sm:p-8">{children}</div>
       </Card>
       <p className="mt-8 text-center text-xs text-mutedText font-WorkRegular">
         © {new Date().getFullYear()} Yuvadarpan

@@ -17,6 +17,12 @@ const InfoTextField = styled((props) => (
       backgroundColor: "transparent",
     },
   },
+  "& .MuiInputBase-input": {
+    "@media (max-width: 767.95px)": {
+      overflowWrap: "anywhere",
+      wordBreak: "break-word",
+    },
+  },
   "& .MuiFormLabel-root": {
     color: "#6b6460 !important",
     fontWeight: "600",
@@ -31,7 +37,17 @@ const InfoTextField = styled((props) => (
 }));
 const CustomTextFieldInfo = ({ grid, label, value }) => {
   return (
-    <Grid item xs={grid}>
+    <Grid
+      item
+      xs={grid}
+      sx={{
+        "@media (max-width: 767.95px)": {
+          flexBasis: "100%",
+          maxWidth: "100%",
+          width: "100%",
+        },
+      }}
+    >
       <InfoTextField
         label={label}
         defaultValue={value}

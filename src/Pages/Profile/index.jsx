@@ -1,10 +1,4 @@
-import {
-  Box,
-  CircularProgress,
-  Grid,
-  IconButton,
-  Modal,
-} from "@mui/material";
+import { Box, CircularProgress, Grid, IconButton, Modal } from "@mui/material";
 import Header from "../../Component/Header";
 import React from "react";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
@@ -122,6 +116,71 @@ const SidebarRow = ({ icon, children }) => (
     <span className="text-sm text-primary break-words pt-1.5">{children}</span>
   </div>
 );
+
+const MobileSection = ({ title, children }) => (
+  <section className="py-4 first:pt-0 last:pb-0">
+    <h2 className="text-sm font-WorkSemiBold text-primary tracking-wide mb-3 pb-2 border-b border-line">
+      {title}
+    </h2>
+    {children}
+  </section>
+);
+
+const AdditionalInfoFields = ({ additionalFields }) =>
+  additionalFields.length ? (
+    <div className="mt-5 w-full">
+      <p className="text-base font-bold text-primary mb-3 pt-2 border-t border-line">
+        Additional Info
+      </p>
+      <div className="w-full flex flex-col gap-4">
+        {additionalFields.map((item, index) => (
+          <Grid
+            container
+            spacing={2}
+            key={`${item.title}-${index}`}
+            className="w-full"
+          >
+            <Grid item xs={12} sm={6}>
+              <div className={"flex flex-col gap-1 min-w-0"}>
+                <span
+                  className={
+                    "text-[11px] font-medium tracking-wide text-gray-400"
+                  }
+                >
+                  Title
+                </span>
+                <span
+                  className={
+                    "text-[15px] sm:text-base font-semibold break-words text-primary"
+                  }
+                >
+                  {item.title}
+                </span>
+              </div>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <div className={"flex flex-col gap-1 min-w-0"}>
+                <span
+                  className={
+                    "text-[11px] font-medium tracking-wide text-gray-400"
+                  }
+                >
+                  Description
+                </span>
+                <span
+                  className={
+                    "text-[15px] sm:text-base font-semibold break-words text-primary"
+                  }
+                >
+                  {item.description}
+                </span>
+              </div>
+            </Grid>
+          </Grid>
+        ))}
+      </div>
+    </div>
+  ) : null;
 
 const ProfilePage = () => {
   const { id: routeId } = useParams();
@@ -380,12 +439,12 @@ const ProfilePage = () => {
         <ContainerPage
           className={"flex-col justify-center flex items-start h-full pb-6"}
         >
-          <div className="w-full flex justify-between items-center gap-3 mb-5">
+          <div className="w-full flex flex-wrap justify-between items-center gap-3 mb-5">
             {isPublicView ? (
               <button
                 type="button"
                 aria-label="Home"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
                 onClick={handleHome}
               >
                 <HomeOutlinedIcon fontSize="small" />
@@ -395,7 +454,7 @@ const ProfilePage = () => {
               <button
                 type="button"
                 aria-label="Back"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
                 onClick={handleBack}
               >
                 <ArrowBackIcon fontSize="small" />
@@ -427,145 +486,125 @@ const ProfilePage = () => {
             <Grid item xs={12} md={4} lg={4}>
               <Card className="md:sticky md:top-24">
                 <div className="flex flex-col items-center w-full">
-                <button
-                  type="button"
-                  onClick={() => setPhotoOpen(true)}
-                  className="w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-muted shrink-0 border border-line"
-                >
-                  <img
-                    src={photoUrl}
-                    alt={fullName || "Profile"}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-                {data?.familyId ? (
-                  <span className="mt-3 px-2.5 py-0.5 rounded-md text-xs font-medium bg-muted text-primary text-center">
-                    Family ID {data.familyId}
-                  </span>
-                ) : null}
-                <h1 className="mt-3 text-lg sm:text-xl font-semibold text-primary text-center leading-snug">
-                  {fullName || "-"}
-                </h1>
-                {activityLabel !== "-" ? (
-                  <p className="mt-1 text-sm text-mutedText text-center">
-                    {activityLabel}
-                  </p>
-                ) : null}
-                <div className="w-full mt-4 pt-4 border-t border-line flex flex-col gap-3">
-                  <SidebarRow icon={<PhoneOutlinedIcon fontSize="small" />}>
-                    {[
-                      data?.contactInfo?.name,
-                      data?.contactInfo?.relation
-                        ? `(${titleCase(data.contactInfo.relation)})`
-                        : "",
-                      data?.contactInfo?.phone,
-                    ]
-                      .filter(Boolean)
-                      .join(" ") || "-"}
-                  </SidebarRow>
-                  {showEmail ? (
-                    <SidebarRow icon={<EmailOutlinedIcon fontSize="small" />}>
-                      {data?.email || "-"}
-                    </SidebarRow>
-                  ) : null}
-                  <SidebarRow
-                    icon={<LocationOnOutlinedIcon fontSize="small" />}
+                  <button
+                    type="button"
+                    onClick={() => setPhotoOpen(true)}
+                    className="w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-muted shrink-0 border border-line"
                   >
-                    {locationLabel || "-"}
-                  </SidebarRow>
-                  <SidebarRow icon={<WorkOutlineIcon fontSize="small" />}>
-                    {data?.firm || "-"}
-                  </SidebarRow>
-                </div>
+                    <img
+                      src={photoUrl}
+                      alt={fullName || "Profile"}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                  {data?.familyId ? (
+                    <span className="mt-3 px-2.5 py-0.5 rounded-md text-xs font-medium bg-muted text-primary text-center">
+                      Family ID {data.familyId}
+                    </span>
+                  ) : null}
+                  <h1 className="mt-3 text-lg sm:text-xl font-semibold text-primary text-center leading-snug break-words px-1">
+                    {fullName || "-"}
+                  </h1>
+                  {activityLabel !== "-" ? (
+                    <p className="mt-1 text-sm text-mutedText text-center">
+                      {activityLabel}
+                    </p>
+                  ) : null}
+                  <div className="w-full mt-4 pt-4 border-t border-line flex flex-col gap-3">
+                    <SidebarRow icon={<PhoneOutlinedIcon fontSize="small" />}>
+                      {[
+                        data?.contactInfo?.name,
+                        data?.contactInfo?.relation
+                          ? `(${titleCase(data.contactInfo.relation)})`
+                          : "",
+                        data?.contactInfo?.phone,
+                      ]
+                        .filter(Boolean)
+                        .join(" ") || "-"}
+                    </SidebarRow>
+                    {showEmail ? (
+                      <SidebarRow icon={<EmailOutlinedIcon fontSize="small" />}>
+                        {data?.email || "-"}
+                      </SidebarRow>
+                    ) : null}
+                    <SidebarRow
+                      icon={<LocationOnOutlinedIcon fontSize="small" />}
+                    >
+                      {locationLabel || "-"}
+                    </SidebarRow>
+                    <SidebarRow icon={<WorkOutlineIcon fontSize="small" />}>
+                      {data?.firm || "-"}
+                    </SidebarRow>
+                  </div>
                 </div>
               </Card>
             </Grid>
             <Grid item xs={12} md={8} lg={8}>
               <Card className="flex flex-col gap-3 sm:gap-4 items-start min-w-0">
-                <AppTabs
-                  value={tabValue}
-                  onChange={handleTabChange}
-                  aria-label="yuva details tabs"
-                  variant="scrollable"
-                  scrollButtons="auto"
-                  allowScrollButtonsMobile
-                >
-                  {profileTabs?.map((item, index) => {
-                    return (
-                      <AppTab
-                        key={item.id}
-                        label={item.title}
-                        {...a11yProps(index)}
-                      />
-                    );
-                  })}
-                </AppTabs>
-                <CustomTabPanel value={tabValue} index={0} className={"w-full"}>
-                  <DetailFields fields={personalFields} />
-                </CustomTabPanel>
-                <CustomTabPanel value={tabValue} index={1} className={"w-full"}>
-                  <DetailFields fields={mamaFields} />
-                </CustomTabPanel>
-                <CustomTabPanel value={tabValue} index={2} className={"w-full"}>
-                  <DetailFields fields={contactFields} />
-                </CustomTabPanel>
-                <CustomTabPanel value={tabValue} index={3} className={"w-full"}>
-                  <DetailFields fields={otherFields} />
-                  {additionalFields.length ? (
-                    <div className="mt-5 w-full">
-                      <p className="text-base font-bold text-primary mb-3 pt-2 border-t border-line">
-                        Additional Info
-                      </p>
-                      <div className="w-full flex flex-col gap-4">
-                        {additionalFields.map((item, index) => (
-                          <Grid
-                            container
-                            spacing={2}
-                            key={`${item.title}-${index}`}
-                            className="w-full"
-                          >
-                            <Grid item xs={12} sm={6}>
-                              <div className={"flex flex-col gap-1 min-w-0"}>
-                                <span
-                                  className={
-                                    "text-[11px] font-medium tracking-wide text-gray-400"
-                                  }
-                                >
-                                  Title
-                                </span>
-                                <span
-                                  className={
-                                    "text-[15px] sm:text-base font-semibold break-words text-primary"
-                                  }
-                                >
-                                  {item.title}
-                                </span>
-                              </div>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <div className={"flex flex-col gap-1 min-w-0"}>
-                                <span
-                                  className={
-                                    "text-[11px] font-medium tracking-wide text-gray-400"
-                                  }
-                                >
-                                  Description
-                                </span>
-                                <span
-                                  className={
-                                    "text-[15px] sm:text-base font-semibold break-words text-primary"
-                                  }
-                                >
-                                  {item.description}
-                                </span>
-                              </div>
-                            </Grid>
-                          </Grid>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </CustomTabPanel>
+                <div className="hidden md:flex md:flex-col md:gap-4 md:items-start w-full min-w-0">
+                  <AppTabs
+                    value={tabValue}
+                    onChange={handleTabChange}
+                    aria-label="yuva details tabs"
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
+                  >
+                    {profileTabs?.map((item, index) => {
+                      return (
+                        <AppTab
+                          key={item.id}
+                          label={item.title}
+                          {...a11yProps(index)}
+                        />
+                      );
+                    })}
+                  </AppTabs>
+                  <CustomTabPanel
+                    value={tabValue}
+                    index={0}
+                    className={"w-full"}
+                  >
+                    <DetailFields fields={personalFields} />
+                  </CustomTabPanel>
+                  <CustomTabPanel
+                    value={tabValue}
+                    index={1}
+                    className={"w-full"}
+                  >
+                    <DetailFields fields={mamaFields} />
+                  </CustomTabPanel>
+                  <CustomTabPanel
+                    value={tabValue}
+                    index={2}
+                    className={"w-full"}
+                  >
+                    <DetailFields fields={contactFields} />
+                  </CustomTabPanel>
+                  <CustomTabPanel
+                    value={tabValue}
+                    index={3}
+                    className={"w-full"}
+                  >
+                    <DetailFields fields={otherFields} />
+                    <AdditionalInfoFields additionalFields={additionalFields} />
+                  </CustomTabPanel>
+                </div>
+                <div className="md:hidden w-full">
+                  <MobileSection title="Personal Info">
+                    <DetailFields fields={personalFields} />
+                  </MobileSection>
+                  <MobileSection title="Mama Info">
+                    <DetailFields fields={mamaFields} />
+                  </MobileSection>
+                  <MobileSection title="Contact Info">
+                    <DetailFields fields={contactFields} />
+                  </MobileSection>
+                  <MobileSection title="Other Info">
+                    <DetailFields fields={otherFields} />
+                    <AdditionalInfoFields additionalFields={additionalFields} />
+                  </MobileSection>
+                </div>
               </Card>
             </Grid>
           </Grid>
@@ -584,7 +623,7 @@ const ProfilePage = () => {
         <Box className="outline-none relative w-screen h-screen flex items-center justify-center p-4">
           <IconButton
             onClick={() => setPhotoOpen(false)}
-            className="!absolute top-4 right-4 !text-white"
+            className="!absolute top-4 right-4 !text-white !min-w-[44px] !min-h-[44px] md:!min-w-0 md:!min-h-0"
           >
             <CloseIcon />
           </IconButton>

@@ -23,7 +23,7 @@ const CustomCard = ({ title, action }) => {
         }
       }}
     >
-      <div className="flex items-center justify-between gap-4 min-h-[108px] px-5 py-5">
+      <div className="flex items-center justify-between gap-3 md:gap-4 min-h-[96px] md:min-h-[108px] px-4 py-4 md:px-5 md:py-5">
         <div className="flex items-center gap-3.5 min-w-0">
           <span
             className="w-12 h-12 rounded-xl bg-muted text-primary font-WorkSemiBold text-lg flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors"
@@ -31,7 +31,7 @@ const CustomCard = ({ title, action }) => {
           >
             {initial}
           </span>
-          <h2 className="text-base font-WorkSemiBold text-primary leading-snug">
+          <h2 className="text-base font-WorkSemiBold text-primary leading-snug break-words">
             {title}
           </h2>
         </div>

@@ -2,7 +2,6 @@ import Header from "../../../../Component/Header";
 import {
   Box,
   CircularProgress,
-  Divider,
   Grid,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
@@ -11,8 +10,9 @@ import CustomAutoComplete from "../../../../Component/Common/customAutoComplete"
 import CustomRadio from "../../../../Component/Common/customRadio";
 import { Form, FormikProvider, useFormik } from "formik";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
-import { Button as ActionButton, FormModal, PageHeader } from "../../../../Component/UI";
+import { Button as ActionButton, Card, FormModal, IconBtn, PageHeader } from "../../../../Component/UI";
 import RemoveOutlinedIcon from "@mui/icons-material/RemoveOutlined";
+import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import * as Yup from "yup";
 import axios from "../../../../util/useAxios";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -58,6 +58,18 @@ const otherObjectToFields = (other) => {
       description: String(description ?? ""),
     }));
 };
+
+const FormSection = ({ title, children, action = null }) => (
+  <Card className="w-full">
+    <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-line">
+      <h2 className="text-base font-WorkSemiBold text-primary leading-tight">
+        {title}
+      </h2>
+      {action}
+    </div>
+    {children}
+  </Card>
+);
 
 const fieldsToOtherObject = (list = [], draft) => {
   const rows = [...list];
@@ -611,21 +623,21 @@ const AddYuva = () => {
         />
         <FormikProvider value={formik}>
           <Form>
-            <Grid container spacing={2} className={"px-0 py-2 sm:p-4"}>
+            <div className="w-full flex flex-col gap-4 md:gap-5">
               {isEdit ? (
-              <Grid item xs={12}>
-                <div className={"text-sm font-semibold text-primary pb-3"}>Photo</div>
-                <Grid
-                  className={"w-fit flex items-center gap-4 cursor-pointer"}
-                >
+              <Card className="w-full">
+                <h2 className="text-base font-WorkSemiBold text-primary mb-5 pb-3 border-b border-line">
+                  Photo
+                </h2>
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5">
                   {loading ? (
                     <CircularProgress
                       className={
-                        "w-[150px] h-[150px] rounded-full border border-primary cursor-pointer text-primary"
+                        "w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border border-primary cursor-pointer text-primary"
                       }
                     />
                   ) : (
-                    <label htmlFor="upload-button">
+                    <label htmlFor="upload-button" className="relative shrink-0 cursor-pointer group">
                       <img
                         src={
                           values?.profileName
@@ -637,14 +649,31 @@ const AddYuva = () => {
                             ? values?.profile?.name
                             : `profile`
                         }
-                        className={`w-[150px] h-[150px] rounded-full border ${
+                        className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full object-cover border ${
                           touched?.profileName && errors?.profileName
                             ? "border-red-600"
-                            : "border-primary"
-                        } cursor-pointer`}
+                            : "border-line"
+                        } group-hover:border-primary`}
                       />
+                      <span className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center shadow-card">
+                        <PhotoCameraOutlinedIcon sx={{ fontSize: 18 }} />
+                      </span>
                     </label>
                   )}
+                  <div className="text-center sm:text-left min-w-0">
+                    <p className="text-sm font-semibold text-primary">
+                      Profile photo
+                    </p>
+                    <p className="text-sm text-mutedText mt-1">
+                      Click the photo to upload a new image.
+                    </p>
+                    <label
+                      htmlFor="upload-button"
+                      className="inline-flex mt-3 text-sm font-semibold text-primary underline underline-offset-4 cursor-pointer"
+                    >
+                      Change photo
+                    </label>
+                  </div>
                   <input
                     type="file"
                     id="upload-button"
@@ -660,18 +689,15 @@ const AddYuva = () => {
                     }}
                     onClick={() => setFieldTouched("profileName", true)}
                   />
-                </Grid>
+                </div>
                 {touched?.profileName && errors?.profileName && (
-                  <p className={"text-error text-sm transition-all"}>
+                  <p className={"text-error text-sm transition-all mt-3"}>
                     {errors?.profileName}
                   </p>
                 )}
-              </Grid>
+              </Card>
               ) : null}
-              <Grid item xs={12}>
-                <div className={"text-sm font-semibold text-primary pb-3"}>
-                  Personal info
-                </div>
+              <FormSection title="Personal info">
                 <Grid container spacing={2}>
                   <CustomInput
                     type={"text"}
@@ -761,7 +787,7 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"FamilyId"}
+                    label={"Family ID"}
                     placeholder={"Enter Your Family ID"}
                     name={"familyId"}
                     xs={12}
@@ -796,7 +822,7 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     placeholder="Date and Time of Birth"
-                    label={"dob"}
+                    label={"Date of birth"}
                     value={values?.dob}
                     errors={touched?.dob && errors?.dob && errors?.dob}
                     onBlur={handleBlur}
@@ -835,8 +861,8 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"E-mail"}
-                    placeholder={"Enter Your E-mail"}
+                    label={"Email"}
+                    placeholder={"Enter Your Email"}
                     name={"email"}
                     xs={12}
                     sm={6}
@@ -943,7 +969,7 @@ const AddYuva = () => {
                   <CustomAutoComplete
                     list={cityList}
                     label={"City"}
-                    placeholder={"Select Your Country"}
+                    placeholder={"Select Your City"}
                     name={"city"}
                     xs={12}
                     sm={6}
@@ -1023,8 +1049,8 @@ const AddYuva = () => {
                       "widow",
                       "widower",
                     ]}
-                    label={"Martial Status"}
-                    placeholder={"Select Your Country"}
+                    label={"Marital Status"}
+                    placeholder={"Select Marital Status"}
                     name={"martialStatus"}
                     xs={12}
                     sm={6}
@@ -1161,14 +1187,8 @@ const AddYuva = () => {
                     errors={touched?.YSKno && errors?.YSKno && errors?.YSKno}
                   />
                 </Grid>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12}>
-                <div className={"text-sm font-semibold text-primary pb-3"}>
-                  Mama info
-                </div>
+              </FormSection>
+              <FormSection title="Mama info">
                 <Grid container spacing={2}>
                   <CustomInput
                     type={"text"}
@@ -1240,14 +1260,8 @@ const AddYuva = () => {
                     }
                   />
                 </Grid>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12}>
-                <div className={"text-sm font-semibold text-primary pb-3"}>
-                  Contact info
-                </div>
+              </FormSection>
+              <FormSection title="Contact info">
                 <Grid container spacing={2}>
                   <CustomInput
                     type={"text"}
@@ -1324,18 +1338,8 @@ const AddYuva = () => {
                     }
                   />
                 </Grid>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12}>
-                <div
-                  className={
-                    "text-sm font-semibold text-primary pb-3 flex flex-row justify-between items-center"
-                  }
-                >
-                  Education
-                </div>
+              </FormSection>
+              <FormSection title="Education">
                 <Grid container spacing={2}>
                   <CustomSelect
                     list={[
@@ -1372,12 +1376,8 @@ const AddYuva = () => {
                     onChange={(e) => setFieldValue("education", e.target.value)}
                   />
                 </Grid>
-              </Grid>
-              <Grid item xs={12}>
-                <Divider />
-              </Grid>
-              <Grid item xs={12}>
-                <div className={"text-sm font-semibold text-primary pb-3"}>Other</div>
+              </FormSection>
+              <FormSection title="Other">
                 <Grid container spacing={2}>
                   <CustomCheckbox
                     label={"Handicap"}
@@ -1424,7 +1424,8 @@ const AddYuva = () => {
                           label={"Title"}
                           placeholder={"Enter Your Title"}
                           name={item?.title}
-                          xs={5}
+                          xs={12}
+                          sm={5}
                           value={item?.title}
                           onChange={(e) =>
                             newFieldValueHandler(e, index, "title")
@@ -1435,7 +1436,8 @@ const AddYuva = () => {
                           label={"Description"}
                           placeholder={"Enter Your Description"}
                           name={item?.description}
-                          xs={6}
+                          xs={12}
+                          sm={6}
                           value={item?.description}
                           onChange={(e) =>
                             newFieldValueHandler(e, index, "description")
@@ -1443,15 +1445,17 @@ const AddYuva = () => {
                         />
                         <Grid
                           item
-                          xs={1}
-                          className={"flex justify-center items-center"}
+                          xs={12}
+                          sm={1}
+                          className={"flex justify-center sm:justify-end items-center"}
                         >
-                          <button
-                            type={"button"}
+                          <IconBtn
+                            type="button"
+                            aria-label="Remove field"
                             onClick={() => removeFieldHandler(index)}
                           >
                             <RemoveOutlinedIcon />
-                          </button>
+                          </IconBtn>
                         </Grid>
                       </>
                     );
@@ -1461,7 +1465,8 @@ const AddYuva = () => {
                     label={"Title"}
                     placeholder={"Enter Your Title"}
                     name={"title"}
-                    xs={5}
+                    xs={12}
+                    sm={5}
                     value={newField?.title}
                     onChange={(e) =>
                       setNewField((pre) => ({
@@ -1476,7 +1481,8 @@ const AddYuva = () => {
                     label={"Description"}
                     placeholder={"Enter Your Description"}
                     name={"description"}
-                    xs={6}
+                    xs={12}
+                    sm={6}
                     value={newField?.description}
                     onChange={(e) => {
                       setNewField((pre) => ({
@@ -1488,26 +1494,39 @@ const AddYuva = () => {
                   />
                   <Grid
                     item
-                    xs={1}
-                    className={"flex justify-center items-center"}
+                    xs={12}
+                    sm={1}
+                    className={"flex justify-center sm:justify-end items-center"}
                   >
-                    <button type={"button"} onClick={addFieldHandler}>
+                    <IconBtn
+                      type="button"
+                      aria-label="Add field"
+                      onClick={addFieldHandler}
+                    >
                       <AddOutlinedIcon />
-                    </button>
+                    </IconBtn>
                   </Grid>
                 </Grid>
-              </Grid>
-              <Grid item xs={12}>
+              </FormSection>
+              <div className="flex flex-col-reverse md:flex-row justify-end gap-2 md:gap-3 pt-1">
+                <ActionButton
+                  type="button"
+                  variant="secondary"
+                  className="w-full md:w-auto"
+                  onClick={() => navigate("/admin/yuvalist")}
+                >
+                  Cancel
+                </ActionButton>
                 <ActionButton
                   type={"submit"}
-                  className="sm:w-[200px]"
+                  className="w-full md:w-[200px]"
                   disabled={isSubmitting}
                   loading={loading}
                 >
                   {isEdit ? "Update Yuva" : "Add New Yuva"}
                 </ActionButton>
-              </Grid>
-            </Grid>
+              </div>
+            </div>
           </Form>
         </FormikProvider>
       </ContainerPage>
@@ -1549,7 +1568,7 @@ const AddYuva = () => {
           <p className={"text-sm text-center break-all text-primary mt-4"}>
             {buildYuvaPhotoName(createdYuva)}
           </p>
-          <div className={"flex gap-3 mt-4"}>
+          <div className={"flex flex-col-reverse md:flex-row gap-3 mt-4"}>
             <ActionButton
               variant="secondary"
               fullWidth
