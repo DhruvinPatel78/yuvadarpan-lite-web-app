@@ -25,9 +25,6 @@ import { useNavigate } from "react-router-dom";
 import { getYuvaList as fetchYuvaList, deleteYuva, getNativeList as fetchNativeList } from "../../../util/yuvaAdminApi";
 import {
   getSelectedData,
-  ImageBackdrop,
-  ImageButton,
-  ImageSrc,
   listHandler,
   useFilteredIds,
   yuvaFilterList,
@@ -37,6 +34,7 @@ import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
+import LoadableImage from "../../../Component/Common/LoadableImage";
 import { UseRedux } from "../../../Component/useRedux";
 import { formatYuvaDob, canEditYuvaRecord } from "../../../util/util";
 import { PageHeader, FilterActions, Button as ActionButton, AppModal } from "../../../Component/UI";
@@ -721,30 +719,23 @@ const YuvaList = () => {
           <CloseIcon fontSize="small" />
         </button>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
-          <ImageButton
-            focusRipple
-            style={{
-              width: "96px",
-              height: "96px",
-              borderRadius: "150px",
+          <button
+            type="button"
+            className="w-24 h-24 rounded-full overflow-hidden shrink-0 border border-line"
+            onClick={() => {
+              if (userData?.profile?.url) {
+                window.open(userData.profile.url, "_blank");
+              }
             }}
-            onClick={() =>
-              window.open(
-                userData?.profile?.url ||
-                  "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                "_blank"
-              )
-            }
           >
-            <ImageSrc
-              style={{
-                backgroundImage:
-                  `url(${userData?.profile?.url})` ||
-                  `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
-              }}
+            <LoadableImage
+              src={userData?.profile?.url}
+              alt=""
+              className="w-full h-full"
+              eager
+              spinnerSize={24}
             />
-            <ImageBackdrop className="MuiImageBackdrop-root" />
-          </ImageButton>
+          </button>
           <div className="text-center sm:text-left min-w-0 flex-1">
             <h2 className="text-lg font-semibold text-primary leading-snug break-words">
               {userData?.firstName}{" "}

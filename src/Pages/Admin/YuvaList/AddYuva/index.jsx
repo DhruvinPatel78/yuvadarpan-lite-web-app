@@ -31,6 +31,7 @@ import {
   isSamajManager,
 } from "../../../../util/util";
 import dayjs from "dayjs";
+import LoadableImage from "../../../../Component/Common/LoadableImage";
 
 const slugPart = (value) =>
   String(value ?? "")
@@ -638,22 +639,16 @@ const AddYuva = () => {
                     />
                   ) : (
                     <label htmlFor="upload-button" className="relative shrink-0 cursor-pointer group">
-                      <img
-                        src={
-                          values?.profileName
-                            ? values?.profile?.url
-                            : `https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541`
-                        }
-                        alt={
-                          values?.profileName
-                            ? values?.profile?.name
-                            : `profile`
-                        }
-                        className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full object-cover border ${
+                      <LoadableImage
+                        src={values?.profile?.url}
+                        alt={values?.profile?.name || "profile"}
+                        className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border ${
                           touched?.profileName && errors?.profileName
                             ? "border-red-600"
                             : "border-line"
                         } group-hover:border-primary`}
+                        eager
+                        spinnerSize={32}
                       />
                       <span className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center shadow-card">
                         <PhotoCameraOutlinedIcon sx={{ fontSize: 18 }} />
@@ -1543,13 +1538,12 @@ const AddYuva = () => {
             {loading ? (
               <CircularProgress className="text-primary" />
             ) : (
-              <img
-                src={
-                  photoPreview ||
-                  `https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541`
-                }
+              <LoadableImage
+                src={photoPreview}
                 alt="profile"
-                className="w-[160px] h-[160px] rounded-full border border-primary object-cover cursor-pointer"
+                className="w-[160px] h-[160px] rounded-full border border-primary cursor-pointer"
+                eager
+                spinnerSize={32}
               />
             )}
           </label>

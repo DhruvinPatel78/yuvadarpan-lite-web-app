@@ -1,6 +1,7 @@
 import React from "react";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import LoadableImage from "./LoadableImage";
 
 const ProfileCard = ({
   name,
@@ -37,13 +38,13 @@ const ProfileCard = ({
       }
     >
       <div className="aspect-[5/4] bg-muted overflow-hidden">
-        {imgSrc ? (
-          <img
-            src={imgSrc}
-            alt={fullName}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : null}
+        <LoadableImage
+          src={imgSrc}
+          alt={fullName}
+          className="w-full h-full"
+          imgClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          spinnerSize={30}
+        />
       </div>
       <div className="px-3.5 pt-3.5 pb-3.5 flex flex-col flex-1 min-w-0">
         <h2 className="text-[15px] font-semibold text-primary leading-snug line-clamp-2">

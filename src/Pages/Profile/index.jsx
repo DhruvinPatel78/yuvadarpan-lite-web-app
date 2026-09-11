@@ -38,6 +38,7 @@ import {
   NotificationSnackbar,
 } from "../../Component/Common/notification";
 import { AppTabs, AppTab, Card, IconBtn } from "../../Component/UI";
+import LoadableImage from "../../Component/Common/LoadableImage";
 function a11yProps(index) {
   return {
     id: `simple-tab-${index}`,
@@ -50,9 +51,6 @@ const profileTabs = [
   { id: 3, title: "Contact Info" },
   { id: 4, title: "Other Info" },
 ];
-
-const PLACEHOLDER_PHOTO =
-  "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg";
 
 const getYuvaShareId = (value) => {
   const raw = decodeURIComponent(String(value || "")).trim();
@@ -205,7 +203,7 @@ const ProfilePage = () => {
   } = UseRedux();
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
-  const photoUrl = data?.profile?.url || PLACEHOLDER_PHOTO;
+  const photoUrl = data?.profile?.url || "";
   const labels = data?.labels || {};
   const canEdit = Boolean(
     !isPublicView &&
@@ -491,10 +489,12 @@ const ProfilePage = () => {
                     onClick={() => setPhotoOpen(true)}
                     className="w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-muted shrink-0 border border-line"
                   >
-                    <img
+                    <LoadableImage
                       src={photoUrl}
                       alt={fullName || "Profile"}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full"
+                      eager
+                      spinnerSize={32}
                     />
                   </button>
                   {data?.familyId ? (
@@ -627,10 +627,14 @@ const ProfilePage = () => {
           >
             <CloseIcon />
           </IconButton>
-          <img
+          <LoadableImage
             src={photoUrl}
             alt={`${data?.firstName || "Yuva"} profile`}
-            className="max-w-[96vw] max-h-[92vh] object-contain"
+            className="max-w-[96vw] max-h-[92vh] w-[min(96vw,720px)] h-[min(92vh,720px)] bg-transparent"
+            imgClassName="w-full h-full object-contain"
+            fit="contain"
+            eager
+            spinnerSize={40}
           />
         </Box>
       </Modal>

@@ -28,6 +28,7 @@ import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
+import LoadableImage from "../../../Component/Common/LoadableImage";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
@@ -983,10 +984,10 @@ function Index() {
           <CloseIcon fontSize="small" />
         </button>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
-          <img
-            src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+          <LoadableImage
+            src=""
             alt=""
-            className="w-24 h-24 rounded-full object-cover pointer-events-none"
+            className="w-24 h-24 rounded-full pointer-events-none"
           />
           <div className="text-center sm:text-left min-w-0">
             <h2 className="text-lg font-semibold text-primary leading-snug break-words">
