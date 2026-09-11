@@ -138,7 +138,7 @@ export default function Settings() {
                   {email || "your registered email"}
                 </span>
               </p>
-              <div className="flex justify-end mt-5">
+              <div className="flex justify-end mt-5 max-md:[&>button]:w-full">
                 {loading ? (
                   <CircularProgress color="secondary" size={28} />
                 ) : (
@@ -187,10 +187,10 @@ export default function Settings() {
                   ref={otpRef}
                 />
               </div>
-              <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 mt-6">
+              <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-3 mt-6">
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4"
+                  className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
                   onClick={handleSendOtp}
                 >
                   <RefreshIcon sx={{ fontSize: 18 }} />
@@ -203,6 +203,7 @@ export default function Settings() {
                     type="button"
                     onClick={handleVerifyOtp}
                     disabled={otp?.length !== 6}
+                    className="max-md:w-full"
                     icon={<VerifiedUserOutlinedIcon sx={{ fontSize: 18 }} />}
                   >
                     Verify OTP
@@ -239,7 +240,7 @@ export default function Settings() {
                       touched.confirmPassword && errors.confirmPassword
                     }
                   />
-                  <Grid item xs={12} className={"flex justify-end"}>
+                  <Grid item xs={12} className={"flex justify-end max-md:[&>button]:w-full"}>
                     {loading ? (
                       <CircularProgress color="secondary" size={28} />
                     ) : (

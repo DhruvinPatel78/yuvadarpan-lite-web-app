@@ -39,6 +39,7 @@ const DatePicker = ({
           label={label}
           onChange={onChange}
           ampm
+          desktopModeMediaQuery="@media (min-width: 768px)"
           renderInput={(params) => (
             <TextField
               {...params}

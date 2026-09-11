@@ -32,7 +32,11 @@ const NotificationSnackbar = ({ notification }) => {
       <Alert
         onClose={notificationClose}
         severity={notification?.type}
-        sx={{ width: "100%", borderRadius: "12px" }}
+        sx={{
+          width: "100%",
+          maxWidth: { xs: "calc(100vw - 24px)", sm: "100%" },
+          borderRadius: "12px",
+        }}
       >
         {notification?.message === ""
           ? notification?.type === "error"

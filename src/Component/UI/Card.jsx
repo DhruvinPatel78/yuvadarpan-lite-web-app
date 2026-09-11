@@ -13,7 +13,7 @@ export default function Card({
       {...rest}
     >
       {header}
-      {padded ? <div className="p-5 sm:p-6">{children}</div> : children}
+      {padded ? <div className="p-4 sm:p-6">{children}</div> : children}
     </div>
   );
 }

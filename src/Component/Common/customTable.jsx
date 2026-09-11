@@ -196,7 +196,7 @@ function CustomTable({
         }}
       />
       {pagination ? (
-        <div className={"w-full bg-white p-2 flex justify-end border-t border-line"}>
+        <div className={"w-full bg-white p-2 flex justify-end border-t border-line overflow-x-auto"}>
           <TablePagination
             component="div"
             count={data ? Math.ceil(data?.total) : 0}

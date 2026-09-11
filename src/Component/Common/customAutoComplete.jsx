@@ -40,7 +40,26 @@ export default function CustomAutoComplete({
         disablePortal={disablePortal}
         componentsProps={{
           popper: {
-            sx: { zIndex: 2000 },
+            sx: {
+              zIndex: 2000,
+              "@media (max-width: 767.95px)": {
+                maxWidth: "calc(100vw - 24px)",
+              },
+            },
+          },
+          paper: {
+            sx: {
+              "@media (max-width: 767.95px)": {
+                maxHeight: 280,
+              },
+            },
+          },
+        }}
+        ListboxProps={{
+          sx: {
+            "@media (max-width: 767.95px)": {
+              maxHeight: 240,
+            },
           },
         }}
         defaultValue={defaultValue}

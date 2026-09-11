@@ -350,7 +350,7 @@ export default function Index() {
           className="w-full"
           title="City"
           actions={
-          <div className={"flex items-center gap-3"}>
+          <div className={"flex flex-col-reverse md:flex-row md:items-center items-stretch gap-2 md:gap-3 w-full md:w-auto"}>
             {districtManager || regionManager || stateManager || countryManager ? (
               <FormControlLabel
                 labelPlacement="start"
@@ -389,6 +389,7 @@ export default function Index() {
             ) : null}
             {canAct ? (
             <ActionButton
+              className="max-md:w-full"
               icon={<AddIcon sx={{ fontSize: 18 }} />}
               onClick={() => {
                 setCityAddEditModel(!cityAddEditModel);

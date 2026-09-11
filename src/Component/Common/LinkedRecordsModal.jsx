@@ -23,12 +23,12 @@ export default function LinkedRecordsModal({
       open={open}
       onClose={handleClose}
       maxWidth="560px"
-      className="p-5 max-h-[85vh] flex flex-col"
+      className="p-4 md:p-5 max-h-[85vh] flex flex-col"
     >
       <div className="flex flex-col items-center text-center gap-2 shrink-0">
         <LinkRoundedIcon className="text-primary" sx={{ fontSize: 32 }} />
-        <span className="text-lg font-semibold text-primary">{title}</span>
-        <p className="text-sm text-mutedText">
+        <span className="text-lg font-semibold text-primary break-words px-1">{title}</span>
+        <p className="text-sm text-mutedText break-words">
           {loading
             ? "Checking mapped / linked data..."
             : name
@@ -54,11 +54,11 @@ export default function LinkedRecordsModal({
               <ul className="max-h-40 overflow-auto divide-y divide-line bg-white">
                 {(group.items || []).map((item) => (
                   <li key={item.id} className="px-3 py-2 text-left">
-                    <p className="text-sm font-medium text-primary">
+                    <p className="text-sm font-medium text-primary break-words">
                       {item.name}
                     </p>
                     {item.detail ? (
-                      <p className="text-xs text-mutedText">{item.detail}</p>
+                      <p className="text-xs text-mutedText break-words">{item.detail}</p>
                     ) : null}
                   </li>
                 ))}

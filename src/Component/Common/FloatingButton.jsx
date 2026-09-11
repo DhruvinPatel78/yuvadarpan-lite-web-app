@@ -26,7 +26,7 @@ const FloatingButton = () => {
   }, []);
 
   return isVisible ? (
-    <div className={"fixed bottom-5 right-5 z-50"}>
+    <div className={"fixed bottom-5 right-5 z-50 mb-[env(safe-area-inset-bottom)] mr-[env(safe-area-inset-right)]"}>
       <IconBtn
         aria-label="Scroll to top"
         onClick={scrollToTop}
