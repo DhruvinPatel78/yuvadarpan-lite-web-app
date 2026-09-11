@@ -7,14 +7,12 @@ import {
   Grid,
   IconButton,
   InputAdornment,
-  Modal,
-  Paper,
   TextField,
   useMediaQuery,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
+import TuneIcon from "@mui/icons-material/Tune";
 import { formatYuvaDob, toCamelCase } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
@@ -40,6 +38,7 @@ import {
   listHandler,
   useFilteredIds,
 } from "../../../Component/constant";
+import { Button, Card } from "../../../Component/UI";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -261,12 +260,14 @@ const Home = () => {
     return () => observer.disconnect();
   }, [handleLoadMore, hasMore, yuvaList.length]);
 
-  const closeFilterModal = () => setIsFilterOpen(false);
-
   const handleApplyFilters = () => {
     let nextMinAge = minAge;
     let nextMaxAge = maxAge;
-    if (nextMinAge !== "" && nextMaxAge !== "" && Number(nextMinAge) > Number(nextMaxAge)) {
+    if (
+      nextMinAge !== "" &&
+      nextMaxAge !== "" &&
+      Number(nextMinAge) > Number(nextMaxAge)
+    ) {
       nextMinAge = maxAge;
       nextMaxAge = minAge;
       setMinAge(nextMinAge);
@@ -285,7 +286,7 @@ const Home = () => {
       maxAge: nextMaxAge,
     });
     if (isMobile) {
-      closeFilterModal();
+      setIsFilterOpen(false);
     }
   };
 
@@ -477,7 +478,7 @@ const Home = () => {
       />
       <CustomInput
         type="number"
-        label="Min Age"
+        label="Min age"
         placeholder="From"
         name="minAge"
         {...fieldSize}
@@ -491,7 +492,7 @@ const Home = () => {
       />
       <CustomInput
         type="number"
-        label="Max Age"
+        label="Max age"
         placeholder="To"
         name="maxAge"
         {...fieldSize}
@@ -507,147 +508,91 @@ const Home = () => {
   );
 
   const filterActions = (
-    <>
-      <button
+    <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-4">
+      <Button
         type="button"
-        className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-        onClick={handleApplyFilters}
+        variant="ghost"
+        onClick={handleReset}
+        disabled={!showReset}
       >
-        Submit
-      </button>
-      {showReset ? (
-        <button
-          type="button"
-          className={
-            "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-          }
-          onClick={handleReset}
-        >
-          Reset
-        </button>
-      ) : null}
-    </>
+        Clear
+      </Button>
+      <Button
+        type="button"
+        onClick={handleApplyFilters}
+        icon={<FilterListIcon sx={{ fontSize: 18 }} />}
+      >
+        Apply filters
+      </Button>
+    </div>
   );
 
   return (
     <div>
       <Header />
-      <Container maxWidth="xl" className={"p-4"}>
-        <div className="flex items-stretch gap-3 mb-3">
-          <TextField
-            fullWidth
-            placeholder="Search by name, father, mobile, family ID, email"
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#572a2a" }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "#fff",
-                borderRadius: "12px",
-                "& fieldset": { borderColor: "#572a2a" },
-                "&:hover fieldset": { borderColor: "#572a2a" },
-                "&.Mui-focused fieldset": { borderColor: "#572a2a" },
-              },
-            }}
-          />
-          <Badge
-            badgeContent={appliedFilterCount}
-            color="error"
-            overlap="circular"
-          >
-            <IconButton
-              aria-label="Filter"
-              onClick={() =>
-                isMobile
-                  ? setIsFilterOpen(true)
-                  : setIsFilterOpen((open) => !open)
-              }
-              className={`h-14 w-14 rounded-xl border-2 border-solid ${
-                isFilterOpen || appliedFilterCount > 0
-                  ? "bg-primary text-white"
-                  : "bg-white text-primary"
-              }`}
+      <Container maxWidth="xl" className={"p-4 pb-6"}>
+        <Card padded={false} className="p-2.5 sm:p-3 mb-5">
+          <div className="flex items-center gap-2">
+            <TextField
+              fullWidth
+              placeholder="Search by name, father, mobile, family ID, email"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#9a9aa8" }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={{
-                borderColor: "#572a2a",
-                color:
-                  isFilterOpen || appliedFilterCount > 0 ? "#fff" : "#572a2a",
-                backgroundColor:
-                  isFilterOpen || appliedFilterCount > 0 ? "#572a2a" : "#fff",
-                "&:hover": {
-                  backgroundColor:
-                    isFilterOpen || appliedFilterCount > 0
-                      ? "#572a2a"
-                      : "#f7efef",
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                  minHeight: 44,
+                  "& fieldset": { borderColor: "#d7d7e2" },
+                  "&:hover fieldset": { borderColor: "#c8c8d4" },
+                  "&.Mui-focused fieldset": { borderColor: "#542b2b" },
                 },
               }}
+            />
+            <Badge
+              badgeContent={appliedFilterCount}
+              color="error"
+              overlap="circular"
             >
-              <FilterListIcon />
-            </IconButton>
-          </Badge>
-        </div>
-        {isMobile ? (
-          <Modal
-            open={isFilterOpen}
-            onClose={closeFilterModal}
-            aria-labelledby="yuva-filter-title"
-            sx={{
-              "& .MuiModal-backdrop": {
-                backdropFilter: "blur(2px) !important",
-                background: "#878b9499 !important",
-              },
-            }}
-            className="flex justify-center items-end"
-          >
-            <Paper
-              elevation={10}
-              tabIndex={-1}
-              className="!rounded-t-2xl outline-none w-full max-h-[90vh] m-0 flex flex-col"
-            >
-              <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
-                <p
-                  id="yuva-filter-title"
-                  className="text-xl font-bold text-[#572a2a]"
-                >
-                  Filters
-                </p>
-                <CloseOutlinedIcon
-                  className="cursor-pointer text-[#572a2a]"
-                  onClick={closeFilterModal}
-                />
-              </div>
-              <div className="overflow-y-auto px-4 py-2">
-                <Grid spacing={2} container>
-                  {filterFields}
-                </Grid>
-              </div>
-              <div className="flex justify-center items-center gap-4 px-4 py-4 shrink-0 border-t border-[#ead9d9]">
-                {filterActions}
-              </div>
-            </Paper>
-          </Modal>
-        ) : (
-          <Collapse in={isFilterOpen}>
-            <div className="bg-white rounded-2xl p-4 mb-4 shadow-lg">
+              <IconButton
+                aria-label="Filter"
+                aria-expanded={isFilterOpen}
+                onClick={() => setIsFilterOpen((open) => !open)}
+                className="!h-11 !w-11 !rounded-lg shrink-0 !border !border-solid !border-line"
+                sx={{
+                  color: "#542b2b",
+                  backgroundColor:
+                    isFilterOpen || appliedFilterCount > 0
+                      ? "#ececf4"
+                      : "#f6f6fa",
+                  "&:hover": {
+                    backgroundColor: "#e8e8ef",
+                  },
+                }}
+              >
+                <TuneIcon />
+              </IconButton>
+            </Badge>
+          </div>
+          <Collapse in={isFilterOpen} timeout={280}>
+            <div className="border-t border-line mt-3 sm:mt-4 pt-4">
               <Grid spacing={2} container>
                 {filterFields}
-                <Grid
-                  item
-                  xs={12}
-                  className={"flex justify-center items-center gap-4"}
-                >
+                <Grid item xs={12} className="!pt-4">
                   {filterActions}
                 </Grid>
               </Grid>
             </div>
           </Collapse>
-        )}
-        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-4">
+        </Card>
+        <div className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {yuvaList?.map((data) => (
             <ProfileCard
               key={data?.id}
@@ -675,9 +620,12 @@ const Home = () => {
           ))}
         </div>
         {yuvaList.length === 0 ? (
-          <div className="flex justify-center items-center mt-10 text-primary font-semibold">
+          <p className="mt-12 text-center text-sm text-mutedText">
             No yuva found.
-          </div>
+            <span className="block mt-1">
+              Try a different search or clear your filters.
+            </span>
+          </p>
         ) : hasMore ? (
           <div ref={loadMoreRef} className="h-10 w-full" />
         ) : null}

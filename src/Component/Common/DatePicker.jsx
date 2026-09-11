@@ -4,25 +4,10 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Grid, styled, TextField } from "@mui/material";
 import dayjs from "dayjs";
+import { fieldControlCss } from "../UI/fieldStyles";
 
 const PrimaryDateTimePicker = styled(DateTimePicker)`
-  & label.Mui-focused {
-    color: #572a2a;
-  }
-  & .MuiFormLabel-root {
-    color: #572a2a !important;
-  }
-  & .MuiOutlinedInput-root {
-    &.Mui-focused fieldset {
-      border-color: #572a2a;
-    }
-  }
-  & .MuiFilledInput-root:after {
-    border-color: #572a2a;
-  }
-  & .MuiOutlinedInput-notchedOutline {
-    border-color: #572a2a !important;
-  }
+  ${fieldControlCss}
 `;
 
 const DatePicker = ({
@@ -67,9 +52,7 @@ const DatePicker = ({
               className={"w-full"}
               sx={{
                 "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: errors
-                    ? "red !important"
-                    : "#572a2a !important",
+                  borderColor: errors ? "red !important" : "#d7d0c8 !important",
                 },
               }}
             />

@@ -53,7 +53,8 @@ body {
   font-family: "WorkRegular";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f6f7ff;
+  background-color: #f4f0ea;
+  color: #542b2b;
   height: 100vh;
 }
 .ellipsis {
@@ -68,6 +69,6 @@ body {
 
 .logo-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 0;
 }

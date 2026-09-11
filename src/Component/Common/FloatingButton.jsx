@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { IconButton } from "@mui/material";
 import ArrowUpwardOutlinedIcon from "@mui/icons-material/ArrowUpwardOutlined";
+import { IconBtn } from "../UI";
 
 const FloatingButton = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -27,9 +27,13 @@ const FloatingButton = () => {
 
   return isVisible ? (
     <div className={"fixed bottom-5 right-5 z-50"}>
-      <IconButton className={"bg-primary text-white"} onClick={scrollToTop}>
-        <ArrowUpwardOutlinedIcon />
-      </IconButton>
+      <IconBtn
+        aria-label="Scroll to top"
+        onClick={scrollToTop}
+        className="!bg-primary !text-white hover:!bg-primary hover:!opacity-90 !border-primary"
+      >
+        <ArrowUpwardOutlinedIcon fontSize="small" />
+      </IconBtn>
     </div>
   ) : null;
 };

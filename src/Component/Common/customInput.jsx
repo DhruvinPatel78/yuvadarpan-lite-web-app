@@ -1,38 +1,19 @@
 import React from "react";
 import { Grid, IconButton, styled, TextField } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { fieldControlCss } from "../UI/fieldStyles";
+
 const PrimaryTextField = styled(TextField)`
-  & label.Mui-focused {
-    color: #572a2a;
-  }
-  & .MuiOutlinedInput-root {
-    &.Mui-focused fieldset {
-      border-color: #572a2a;
-    }
-  }
-  & .MuiFilledInput-root:after {
-    border-color: #572a2a;
-  }
-  & .Mui-focused,
-  .MuiFormLabel-root {
-    color: #572a2a !important;
-  }
-  & .Mui-disabled {
-    opacity: 0.5;
-  }
-  & .MuiOutlinedInput-notchedOutline {
-    border-color: #572a2a !important;
-  }
-  & .Mui-error {
-    &.Mui-focused fieldset {
-      //border-color: #572a2a;
-      border-color: #ff0000 !important;
-    }
-    & .MuiOutlinedInput-notchedOutline {
-      border-color: #ff0000 !important;
-    }
-  }
+  ${fieldControlCss}
 `;
+
+const localToday = () => {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+};
+
 const CustomInput = ({
   label,
   type,
@@ -46,6 +27,11 @@ const CustomInput = ({
   required = false,
   disabled = false,
   onBlur,
+  id,
+  max,
+  min,
+  inputProps,
+  InputLabelProps,
   ...rest
 }) => {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -57,19 +43,27 @@ const CustomInput = ({
     event.preventDefault();
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  const isDate = type === "date";
 
   return (
     <Grid item {...rest}>
       <PrimaryTextField
+        id={id}
         type={showPassword ? "text" : type}
         label={label}
         placeholder={placeholder}
         name={name}
         onChange={onChange}
-        value={value}
+        value={
+          isDate && value
+            ? String(value).match(/^(\d{4}-\d{2}-\d{2})/)?.[1] || ""
+            : value
+        }
         fullWidth
         multiline={multiline}
+        InputLabelProps={
+          isDate ? { shrink: true, ...InputLabelProps } : InputLabelProps
+        }
         InputProps={{
           rows: 5,
           endAdornment: type === "password" && (
@@ -83,26 +77,34 @@ const CustomInput = ({
               edge="end"
             >
               {showPassword ? (
-                <VisibilityOff sx={{ color: "#572a2a" }} />
+                <VisibilityOff sx={{ color: "#542b2b" }} />
               ) : (
-                <Visibility sx={{ color: "#572a2a" }} />
+                <Visibility sx={{ color: "#542b2b" }} />
               )}
             </IconButton>
           ),
         }}
         required={required}
-        focused={focused}
+        focused={isDate ? undefined : focused}
         onBlur={onBlur}
         disabled={disabled}
-        error={errors}
-        {...(type === "date" ? { max: today } : {})}
+        error={Boolean(errors)}
+        {...(isDate
+          ? {
+              inputProps: {
+                max: max || localToday(),
+                min,
+                ...inputProps,
+              },
+            }
+          : {})}
         {...(type === "number"
-          ? { inputProps: { min: 0, max: 120, inputMode: "numeric" } }
+          ? { inputProps: { min: 0, max: 120, inputMode: "numeric", ...inputProps } }
           : {})}
       />
-      {errors && (
+      {errors ? (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
-      )}
+      ) : null}
     </Grid>
   );
 };

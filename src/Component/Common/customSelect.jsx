@@ -3,25 +3,12 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import { Grid, styled, Select, Typography } from "@mui/material";
+import { fieldControlCss } from "../UI/fieldStyles";
 
 const PrimarySelect = styled(Select)`
-  & .MuiSelect-root,
-  .MuiFormControl-root {
-    color: #572a2a !important;
-  }
-  & .MuiSelect-root,
-  .MuiFormLabel-root-MuiInputLabel-root .Mui-focused {
-    color: #572a2a !important;
-  }
+  ${fieldControlCss}
   & .MuiSvgIcon-root {
-    color: #572a2a !important;
-  }
-  & .MuiOutlinedInput-notchedOutline {
-    border-color: #572a2a !important;
-  }
-  & .Mui-focused,
-  .MuiSelect-outlined {
-    border-color: #572a2a !important;
+    color: #542b2b !important;
   }
 `;
 
@@ -60,7 +47,7 @@ export default function CustomSelect({
           onBlur={onBlur}
           sx={{
             "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: errors?"red !important":"#572a2a !important",
+              borderColor: errors ? "red !important" : "#d7d0c8 !important",
             }
           }}
         >

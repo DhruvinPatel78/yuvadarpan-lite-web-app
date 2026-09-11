@@ -8,10 +8,8 @@ import {
   FormControl,
   FormControlLabel,
   Grid,
-  Modal,
   Paper,
   Tooltip,
-  Typography,
   useMediaQuery,
 } from "@mui/material";
 import Header from "../../../Component/Header";
@@ -22,7 +20,6 @@ import {
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CloseIcon from "@mui/icons-material/Close";
-import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
@@ -37,6 +34,7 @@ import CustomRadio from "../../../Component/Common/customRadio";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import moment from "moment";
+import { PageHeader, FilterActions, Button as ActionButton, AppModal, FormModal } from "../../../Component/UI";
 import {
   getSelectedData,
   handleListById,
@@ -56,6 +54,17 @@ import {
 import { getSamajByCity } from "../../../util/samajApi";
 
 const MOBILE_PAGE_SIZE = 20;
+
+function UserDetailItem({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-mutedText">
+        {label}
+      </p>
+      <p className="text-sm text-primary mt-0.5 break-words">{value || "-"}</p>
+    </div>
+  );
+}
 
 function Index() {
   const dispatch = useDispatch();
@@ -464,7 +473,7 @@ function Index() {
       field: "familyId",
       headerName: "Family Id",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -472,7 +481,7 @@ function Index() {
       field: "firstName",
       headerName: "First name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -480,7 +489,7 @@ function Index() {
       field: "lastName",
       headerName: "Last name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -491,7 +500,7 @@ function Index() {
       field: "role",
       headerName: "Role",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -499,7 +508,7 @@ function Index() {
       field: "email",
       headerName: "Email",
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -507,7 +516,7 @@ function Index() {
       field: "allowed",
       headerName: "Allowed",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -527,7 +536,7 @@ function Index() {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -548,7 +557,7 @@ function Index() {
       field: "action",
       headerName: "Action",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName:
         "items-center justify-center flex px-8 outline-none cursor-pointer",
       filterable: false,
@@ -628,8 +637,10 @@ function Index() {
       <ContainerPage
         className={" flex-col justify-center flex items-start gap-4"}
       >
-        <div className={"w-full justify-between flex items-center gap-3"}>
-          <p className={"text-3xl font-bold"}>Users</p>
+        <PageHeader
+          className="w-full"
+          title="Users"
+          actions={
           <div className={"flex items-center gap-3"}>
             {hasOwnListToggle ? (
               <FormControlLabel
@@ -645,7 +656,7 @@ function Index() {
                   />
                 }
                 label={
-                  <span className={"font-semibold text-[#572a2a]"}>
+                  <span className={"font-semibold text-primary"}>
                     {isCityManager ||
                     isDistrictManager ||
                     isRegionManager ||
@@ -658,10 +669,8 @@ function Index() {
               />
             ) : null}
             {canAct ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                className={"bg-primary"}
+              <ActionButton
+                icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => {
                   userInfoModalOpen();
                   setUserInfoModel(!userInfoModel);
@@ -669,10 +678,11 @@ function Index() {
                 }}
               >
                 Add User
-              </Button>
+              </ActionButton>
             ) : null}
           </div>
-        </div>
+          }
+        />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
@@ -791,45 +801,35 @@ function Index() {
               xs={12}
               className={"flex justify-center items-center gap-4"}
             >
-              <button
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleUserList()}
-              >
-                Submit
-              </button>
-              {(selectedSearchByText ||
-                selectedSearchBy.name ||
-                // selectedState?.length > 0 ||
-                selectedRegion?.length > 0 ||
-                selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0 ||
-                selectedRole?.length > 0) && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+              <FilterActions
+                onSubmit={() => handleUserList()}
+                onReset={handleReset}
+                showReset={Boolean(
+                  selectedSearchByText ||
+                    selectedSearchBy.name ||
+                    selectedRegion?.length > 0 ||
+                    selectedSurname?.length > 0 ||
+                    selectedSamaj?.length > 0 ||
+                    selectedRole?.length > 0
+                )}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
         {canAct && selectedUsers.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-[#fff5f4] border border-[#572a2a] rounded-lg"
+              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
             }
           >
-            <span className={"text-[#572a2a] font-semibold"}>
+            <span className={"text-primary font-semibold"}>
               {selectedUsers.length} selected
             </span>
             <Button
               size="small"
               variant="contained"
               startIcon={<DeleteIcon />}
-              className={"!bg-[#572a2a] !text-white"}
+              className={"!bg-primary !text-white"}
               onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
@@ -867,14 +867,14 @@ function Index() {
                 >
                   <div className={"p-3"}>
                     <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-[#572a2a] text-base leading-tight min-w-0 pr-1"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
                         {fullName} {lastName}
                       </p>
                       {canAct ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={() => toggleCardSelection(row.id)}
-                          className={"!text-[#572a2a] !p-0 !m-0 shrink-0"}
+                          className={"!text-primary !p-0 !m-0 shrink-0"}
                         />
                       ) : null}
                     </div>
@@ -918,14 +918,14 @@ function Index() {
                     <div className={"flex border-t border-[#ead9d9]"}>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                        className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                         onClick={() => setViewUser(row)}
                       >
                         View
                       </button>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                        className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                         onClick={() => userInfoModalOpen(row)}
                       >
                         Edit
@@ -942,7 +942,7 @@ function Index() {
                     <div className={"flex border-t border-[#ead9d9]"}>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a]"}
+                        className={"flex-1 py-2.5 text-sm font-semibold text-primary"}
                         onClick={() => setViewUser(row)}
                       >
                         View
@@ -960,176 +960,101 @@ function Index() {
           {hasMore && users.length ? (
             <div ref={loadMoreRef} className={"flex justify-center py-3"}>
               {loadingMore ? (
-                <CircularProgress size={24} className={"!text-[#572a2a]"} />
+                <CircularProgress size={24} className={"!text-primary"} />
               ) : null}
             </div>
           ) : null}
         </div>
       </ContainerPage>
-      <Modal
+      <AppModal
         open={Boolean(viewUser)}
         onClose={() => setViewUser(null)}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{
-          "& .MuiModal-backdrop": {
-            backdropFilter: " blur(2px) !important",
-            background: "#878b9499 !important",
-          },
-        }}
-        className="flex justify-center items-center"
+        maxWidth="560px"
+        className="p-6 pt-7 max-h-[90vh] overflow-auto"
       >
-        <Paper
-          elevation={10}
-          className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none max-h-[90vh] overflow-auto"
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={() => setViewUser(null)}
+          className="absolute top-4 right-4 text-primary p-1 rounded-md hover:bg-muted"
         >
-          <Grid container>
-            <Grid item xs={3} className={"flex justify-center items-center"}>
-              <img
-                src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
-                alt=""
-                className="w-[110px] h-[110px] rounded-full border border-dashed border-[#542b2b] object-cover m-2 pointer-events-none"
-              />
-            </Grid>
-            <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
-              <div className={"text-base font-bold"}>
-                Name:{" "}
-                <span className={"font-normal"}>
-                  {[viewUser?.firstName, viewUser?.middleName]
-                    .filter(Boolean)
-                    .join(" ")}{" "}
-                  {lookupName(surname, viewUser?.lastName)}
-                </span>
-              </div>
-              <div className={"text-base font-bold"}>
-                DOB:{" "}
-                <span className={"font-normal"}>
-                  {viewUser?.dob && moment(viewUser.dob).isValid()
-                    ? moment(viewUser.dob).format("DD/MM/YYYY hh:mm A")
-                    : "-"}
-                </span>
-              </div>
-              <div className={"text-base font-bold"}>
-                Family ID:{" "}
-                <span className={"font-normal"}>
-                  {viewUser?.familyId || "-"}
-                </span>
-              </div>
-            </Grid>
-            <Grid item xs={1} className={"flex justify-center"}>
-              <CloseIcon
-                className={"text-primary cursor-pointer"}
-                onClick={() => setViewUser(null)}
-              />
-            </Grid>
-            <Grid item xs={12} className={"mt-4"}>
-              <Grid spacing={2} container>
-                <Grid item xs={6}>
-                  <div className={"text-base font-bold"}>
-                    Email:{" "}
-                    <span className={"font-normal"}>
-                      {viewUser?.email || "-"}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Gender:{" "}
-                    <span className={"font-normal"}>
-                      {viewUser?.gender || "-"}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Region:{" "}
-                    <span className={"font-normal"}>
-                      {lookupName(region, viewUser?.region)}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Role:{" "}
-                    <span className={"font-normal"}>
-                      {formatRole(viewUser?.role)}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Allowed:{" "}
-                    <span className={"font-normal"}>
-                      {viewUser?.allowed ? "Yes" : "No"}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Created At:{" "}
-                    <span className={"font-normal"}>
-                      {formatUserDate(viewUser?.createdAt)}
-                    </span>
-                  </div>
-                </Grid>
-                <Grid item xs={6}>
-                  <div className={"text-base font-bold"}>
-                    Mobile:{" "}
-                    <span className={"font-normal"}>
-                      {viewUser?.mobile || "-"}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Language:{" "}
-                    <span className={"font-normal"}>
-                      {viewUser?.language || "-"}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Local Samaj:{" "}
-                    <span className={"font-normal"}>
-                      {lookupName(samaj, viewUser?.localSamaj)}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Active:{" "}
-                    <span className={"font-normal"}>
-                      {viewUser?.active ? "Yes" : "No"}
-                    </span>
-                  </div>
-                  <div className={"text-base font-bold"}>
-                    Updated At:{" "}
-                    <span className={"font-normal"}>
-                      {formatUserDate(viewUser?.updatedAt)}
-                    </span>
-                  </div>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Modal>
-      <Modal
+          <CloseIcon fontSize="small" />
+        </button>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
+          <img
+            src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+            alt=""
+            className="w-24 h-24 rounded-full object-cover pointer-events-none"
+          />
+          <div className="text-center sm:text-left min-w-0">
+            <h2 className="text-lg font-semibold text-primary leading-snug">
+              {[viewUser?.firstName, viewUser?.middleName]
+                .filter(Boolean)
+                .join(" ")}{" "}
+              {lookupName(surname, viewUser?.lastName)}
+            </h2>
+            <p className="text-sm text-mutedText mt-1">
+              {formatRole(viewUser?.role)}
+            </p>
+            <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
+              Family ID {viewUser?.familyId || "-"}
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mt-6 pt-5 border-t border-line">
+          <UserDetailItem
+            label="Date of birth"
+            value={
+              viewUser?.dob && moment(viewUser.dob).isValid()
+                ? moment(viewUser.dob).format("DD/MM/YYYY hh:mm A")
+                : "-"
+            }
+          />
+          <UserDetailItem label="Email" value={viewUser?.email} />
+          <UserDetailItem label="Mobile" value={viewUser?.mobile} />
+          <UserDetailItem label="Gender" value={viewUser?.gender} />
+          <UserDetailItem label="Language" value={viewUser?.language} />
+          <UserDetailItem
+            label="Region"
+            value={lookupName(region, viewUser?.region)}
+          />
+          <UserDetailItem
+            label="Local Samaj"
+            value={lookupName(samaj, viewUser?.localSamaj)}
+          />
+          <UserDetailItem
+            label="Allowed"
+            value={viewUser?.allowed ? "Yes" : "No"}
+          />
+          <UserDetailItem
+            label="Active"
+            value={viewUser?.active ? "Yes" : "No"}
+          />
+          <UserDetailItem
+            label="Created at"
+            value={formatUserDate(viewUser?.createdAt)}
+          />
+          <UserDetailItem
+            label="Updated at"
+            value={formatUserDate(viewUser?.updatedAt)}
+          />
+        </div>
+      </AppModal>
+      <FormModal
         open={userInfoModel}
         onClose={userInfoModalClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{
-          "& .MuiModal-backdrop": {
-            backdropFilter: " blur(2px) !important",
-            background: "#878b9499 !important",
-          },
-        }}
-        className="flex justify-center items-center m-4"
+        title={`${isAddUser ? "New" : "Update"} User`}
+        maxWidth="980px"
       >
-        <Paper elevation={10} className="!rounded-2xl p-4 w-full max-w-[600px]">
-          <div className={"flex justify-between items-center"}>
-            <Typography className={"font-bold text-2xl"}>
-              {`${isAddUser ? `New` : `Update`} User`}
-            </Typography>
-            <HighlightOffIcon
-              onClick={userInfoModalClose}
-              className={"cursor-pointer"}
-            />
-          </div>
           <FormikProvider value={formik}>
-            <Form
-              className={
-                "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
-              }
-            >
-              <Grid container className={"w-full pt-4"} spacing={2}>
-                <Grid item xs={12}>
+            <Form className="flex flex-col w-full">
+              <Grid container className={"w-full"} spacing={1.5}>
+                <Grid item xs={12} className="!pt-1">
+                  <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
+                    Identity
+                  </p>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"familyId"}
@@ -1202,7 +1127,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"email"}
@@ -1216,7 +1141,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"mobile"}
@@ -1232,7 +1157,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"password"}
@@ -1250,7 +1175,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"confirmPassword"}
@@ -1270,7 +1195,12 @@ function Index() {
                 </Grid>
                 {isAddUser ? (
                   <>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12}>
+                      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
+                        Location
+                      </p>
+                    </Grid>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={list.country}
@@ -1307,7 +1237,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={stateList}
@@ -1340,7 +1270,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={regionList}
@@ -1370,7 +1300,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={districtList}
@@ -1399,7 +1329,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={cityList}
@@ -1423,7 +1353,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={samajList}
@@ -1445,22 +1375,21 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomInput
                           type={"date"}
-                          label={"DOB"}
+                          label={"Date of birth"}
                           placeholder={"Select Your DOB"}
                           name="dob"
                           onChange={handleChange}
                           onBlur={handleBlur}
                           errors={touched.dob && errors.dob && errors.dob}
                           value={values.dob}
-                          focused
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomRadio
                           list={[
@@ -1480,7 +1409,7 @@ function Index() {
                       </FormControl>
                     </Grid>
                     {hasOwnListToggle ? null : (
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={rolesList(false)}
@@ -1506,27 +1435,23 @@ function Index() {
                 <Grid
                   item
                   xs={12}
-                  className={"flex justify-center items-center"}
+                  className={"flex justify-end items-center !pt-2"}
                 >
                   {loading ? (
                     <CircularProgress color="secondary" />
                   ) : (
-                    <button
-                      className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
-                        hasError ? "opacity-50" : "opacity-100"
-                      }`}
+                    <ActionButton
                       type={"submit"}
                       disabled={hasError}
                     >
                       {isAddUser ? "Add" : "Update"}
-                    </button>
+                    </ActionButton>
                   )}
                 </Grid>
               </Grid>
             </Form>
           </FormikProvider>
-        </Paper>
-      </Modal>
+      </FormModal>
       <NotificationSnackbar notification={notification} />
       <DeleteConfirmFlow
         open={Boolean(deleteTarget) || bulkDeleteOpen}

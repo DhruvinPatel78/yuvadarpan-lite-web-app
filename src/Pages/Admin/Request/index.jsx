@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Button, Checkbox, CircularProgress, Grid, Modal, Paper, Tooltip, useMediaQuery } from "@mui/material";
+import { Box, Button, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
+import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../../../Component/Common/customTable";
@@ -249,7 +250,7 @@ export default function Index() {
       headerName: "Family Id",
       width: 100,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -258,7 +259,7 @@ export default function Index() {
       headerName: "First name",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -267,7 +268,7 @@ export default function Index() {
       headerName: "Last name",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -279,7 +280,7 @@ export default function Index() {
       headerName: "Email",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -288,7 +289,7 @@ export default function Index() {
       headerName: "Gender",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => <>{record?.row?.gender || "-"}</>,
@@ -298,7 +299,7 @@ export default function Index() {
       headerName: "Region",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -310,7 +311,7 @@ export default function Index() {
       headerName: "Local Samaj",
       width: 150,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -322,7 +323,7 @@ export default function Index() {
       headerName: "Action",
       width: 150,
       flex: 3,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -376,37 +377,35 @@ export default function Index() {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div
-          className={
-            "justify-between flex sm:items-center items-left w-full sm:flex-row flex-col gap-2"
-          }
-        >
-          <p className={"text-3xl font-bold"}>Pending Requests</p>
+        <PageHeader
+          className="w-full"
+          title="Pending Requests"
+          actions={
           <div className="flex flex-row gap-3 sm:w-auto w-full">
             <Tooltip title={"Accept all selected"}>
-              <button
-                className={
-                  "bg-[#572a2a] border text-white rounded p-2 hover:scale-105 w-full flex items-center justify-center"
-                }
+              <ActionButton
+                className="w-full"
                 onClick={() => handleRequestAll("accept")}
+                icon={<PlaylistAddCheckIcon sx={{ fontSize: 18 }} />}
               >
-                <PlaylistAddCheckIcon /> Accept{" "}
+                Accept{" "}
                 {selectedUsers?.length > 0 ? `(${selectedUsers?.length})` : ""}
-              </button>
+              </ActionButton>
             </Tooltip>
             <Tooltip title={"Reject all selected"}>
-              <button
-                className={
-                  "bg-white text-[#572a2a] border border-[#572a2a] rounded p-2 hover:scale-105 w-full flex items-center justify-center"
-                }
+              <ActionButton
+                variant="secondary"
+                className="w-full"
                 onClick={() => handleRequestAll("reject")}
+                icon={<PlaylistRemoveIcon sx={{ fontSize: 18 }} />}
               >
-                <PlaylistRemoveIcon /> Reject{" "}
+                Reject{" "}
                 {selectedUsers?.length > 0 ? `(${selectedUsers?.length})` : ""}
-              </button>
+              </ActionButton>
             </Tooltip>
           </div>
-        </div>
+          }
+        />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
@@ -526,27 +525,18 @@ export default function Index() {
               xs={12}
               className={"flex justify-center items-center gap-4"}
             >
-              <button
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleRequestList()}
-              >
-                Submit
-              </button>
-              {(selectedSearchByText ||
-                selectedSearchBy.name ||
-                selectedState?.length > 0 ||
-                selectedRegion?.length > 0 ||
-                selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0) && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+              <FilterActions
+                onSubmit={() => handleRequestList()}
+                onReset={handleReset}
+                showReset={Boolean(
+                  selectedSearchByText ||
+                    selectedSearchBy.name ||
+                    selectedState?.length > 0 ||
+                    selectedRegion?.length > 0 ||
+                    selectedSurname?.length > 0 ||
+                    selectedSamaj?.length > 0
+                )}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
@@ -593,13 +583,13 @@ export default function Index() {
                 >
                   <div className={"p-3"}>
                     <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-[#572a2a] text-base leading-tight min-w-0 pr-1"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
                         {fullName} {lastName}
                       </p>
                       <Checkbox
                         checked={isSelected}
                         onChange={() => toggleCardSelection(row.id)}
-                        className={"!text-[#572a2a] !p-0 !m-0 shrink-0"}
+                        className={"!text-primary !p-0 !m-0 shrink-0"}
                       />
                     </div>
                     <p className={"text-sm text-gray-600 mt-1"}>
@@ -616,7 +606,7 @@ export default function Index() {
                   <div className={"flex border-t border-[#ead9d9]"}>
                     <button
                       type="button"
-                      className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                      className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                       onClick={() => requestInfoModalOpen(row)}
                     >
                       View
@@ -646,33 +636,18 @@ export default function Index() {
           )}
           {hasMore && requests.length ? (
             <div ref={loadMoreRef} className={"flex justify-center py-3"}>
-              {loadingMore ? <CircularProgress size={24} className={"!text-[#572a2a]"} /> : null}
+              {loadingMore ? <CircularProgress size={24} className={"!text-primary"} /> : null}
             </div>
           ) : null}
         </div>
       </ContainerPage>
-      <Modal
+      <FormModal
         open={requestInfoModel}
         onClose={requestInfoModalClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{
-          "& .MuiModal-backdrop": {
-            backdropFilter: " blur(2px) !important",
-            background: "#878b9499 !important",
-          },
-        }}
-        className="flex justify-center items-center"
+        title="View Detail"
+        maxWidth="720px"
       >
-        <Paper elevation={10} className="!rounded-2xl p-4 w-[95%] max-w-[720px]">
-          <Grid container spacing={2} className="p-4">
-            <Grid xs={12} className={"flex justify-between w-full"}>
-              <span className={"text-xl font-bold"}>View Detail</span>
-              <CloseIcon
-                onClick={requestInfoModalClose}
-                className={"cursor-pointer"}
-              />
-            </Grid>
+          <Grid container spacing={2}>
             <CustomTextFieldInfo
               grid={12}
               label={"Family Id"}
@@ -722,8 +697,7 @@ export default function Index() {
               }
             />
           </Grid>
-        </Paper>
-      </Modal>
+      </FormModal>
       <NotificationSnackbar notification={notification} />
     </Box>
   );

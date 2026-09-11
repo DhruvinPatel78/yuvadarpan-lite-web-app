@@ -1,44 +1,14 @@
 import * as React from "react";
 import { Grid, styled, TextField, Autocomplete } from "@mui/material";
+import { fieldControlCss } from "../UI/fieldStyles";
 
 const PrimaryAutocomplete = styled(Autocomplete)`
-  & .MuiAutocomplete-root {
-    color: #572a2a;
-  }
+  ${fieldControlCss}
   & .MuiSvgIcon-root {
-    color: #572a2a;
+    color: #542b2b;
   }
   & .MuiInputBase-input {
-    color: #572a2a;
-  }
-  & .Mui-focused,
-  .MuiFormLabel-root {
-    color: #572a2a !important;
-  }
-  & .MuiOutlinedInput-root {
-    &.Mui-focused fieldset {
-      border-color: #572a2a;
-    }
-  }
-  & .MuiFilledInput-root:after {
-    border-color: #572a2a;
-  }
-  & .MuiOutlinedInput-notchedOutline {
-    border-color: #572a2a !important;
-  }
-  //& .Mui-focused {
-  //  border-color: #572a2a !important;
-  //}
-  & .Mui-disabled {
-    opacity: 0.5;
-  }
-  & .Mui-error {
-    &.Mui-focused fieldset {
-      border-color: #ff0000 !important;
-    }
-    & .MuiOutlinedInput-notchedOutline {
-      border-color: #ff0000 !important;
-    }
+    color: #542b2b;
   }
   & .MuiChip-label {
     max-width: 100px;

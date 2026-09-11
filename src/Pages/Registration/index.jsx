@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Grid, Link, Paper, Typography } from "@mui/material";
+import { Grid, Link, Typography } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
+import { AuthShell, Button } from "../../Component/UI";
 import {
   NotificationData,
   NotificationSnackbar,
@@ -161,21 +162,21 @@ export default function Index() {
   } = formik;
 
   return (
-    <Grid className="h-screen flex justify-center items-center">
-      <Paper
-        elevation={20}
-        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[600px] max-h-[90%] overflow-auto"
-      >
+    <>
+    <AuthShell maxWidthClass="sm:max-w-[600px]">
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Typography
-                  className="text-center text-primary font-bold text-2xl sm:text-4xl"
+                  className="text-center text-primary !font-semibold !text-[22px]"
                   variant="h3"
                 >
-                  Registration
+                  Create an account
                 </Typography>
+                <p className="text-center text-sm text-mutedText mt-1.5">
+                  Join the Yuvadarpan directory
+                </p>
               </Grid>
               <CustomInput
                 type={"text"}
@@ -311,7 +312,7 @@ export default function Index() {
               <CustomInput
                 type={"number"}
                 xs={6}
-                label={"Family Id"}
+                label={"Family ID"}
                 placeholder={"Enter Your Family Id"}
                 name="familyId"
                 onChange={handleChange}
@@ -322,14 +323,13 @@ export default function Index() {
               <CustomInput
                 type={"date"}
                 xs={6}
-                label={"DOB"}
+                label={"Date of birth"}
                 placeholder={"Select Your DOB"}
                 name="dob"
                 onChange={handleChange}
                 onBlur={handleBlur}
                 errors={touched.dob && errors.dob && errors.dob}
                 value={values.dob}
-                focused
                 max={today}
                 min="1950-01-01"
               />
@@ -348,39 +348,39 @@ export default function Index() {
                 onBlur={handleBlur}
               />
               <Grid item xs={12}>
-                <button
-                  className={`bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-semibold ${
-                    isSubmitting ? "cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                <Button
+                  type="submit"
+                  fullWidth
                   disabled={isSubmitting}
+                  loading={isSubmitting}
                 >
                   Sign Up
-                </button>
+                </Button>
               </Grid>
               <Grid item xs={12}>
-                <Link
-                  href={"/register"}
-                  className="px-1 !text-[#572a2a] !no-underline font-semibold"
-                >
-                  Need Help ?
-                </Link>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography className="flex justify-center flex-wrap">
-                  Do you have an account ?
+                <Typography className="flex justify-center flex-wrap text-sm text-mutedText">
+                  Already have an account?
                   <Link
                     href={"/login"}
-                    className="px-1 !text-[#572a2a] !no-underline font-semibold"
+                    className="px-1 !text-primary !no-underline !font-semibold"
                   >
-                    Sign In
+                    Sign in
                   </Link>
                 </Typography>
+              </Grid>
+              <Grid item xs={12} className="!pt-0">
+                <Link
+                  href={"/register"}
+                  className="flex justify-center !text-xs !text-mutedText !no-underline"
+                >
+                  Need help?
+                </Link>
               </Grid>
             </Grid>
           </Form>
         </FormikProvider>
-      </Paper>
+    </AuthShell>
       <NotificationSnackbar notification={notification} />
-    </Grid>
+    </>
   );
 }

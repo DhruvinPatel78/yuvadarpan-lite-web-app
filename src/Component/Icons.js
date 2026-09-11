@@ -27,10 +27,10 @@ export const YuvadarpanLogo = ({
       onClick={onClick}
     >
       <text
-        x="50%"
+        x="0"
         y="50%"
         dominantBaseline="middle"
-        textAnchor="middle"
+        textAnchor="start"
         fill={fill}
         fontFamily="'Poppins', sans-serif"
         fontWeight="700"

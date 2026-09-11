@@ -9,10 +9,10 @@ import {
   Avatar,
   Tooltip,
   MenuItem,
+  Container,
 } from "@mui/material";
 import { useState } from "react";
 import useHeader from "./useHeader";
-import ContainerPage from "../Container";
 import FloatingButton from "../Common/FloatingButton";
 import { UseRedux } from "../useRedux";
 import FullPageLoader from "../Common/FullPageLoader";
@@ -53,20 +53,30 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="static" className={"bg-primary mb-4 sticky top-0 z-10"}>
-      <ContainerPage>
-        <Toolbar disableGutters className={"justify-between"}>
-          <div className="logo-container">
-            <YuvadarpanLogo
-              className={"cursor-pointer"}
-              onClick={() => navigate("/")}
-            />
-          </div>
+    <AppBar position="sticky" className={"bg-primary top-0 z-20 shadow-none"}>
+      <Container className="max-w-[1600px]">
+        <Toolbar disableGutters className={"justify-between min-h-[60px]"}>
+          <YuvadarpanLogo
+            className={"cursor-pointer !w-auto"}
+            maxHeight={28}
+            style={{ width: "auto", maxWidth: 220 }}
+            onClick={() => navigate("/")}
+            ariaLabel="Yuvadarpan home"
+          />
           {user?.user ? (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar>
+                  <Avatar
+                    sx={{
+                      bgcolor: "#fff",
+                      color: "#542b2b",
+                      fontWeight: 700,
+                      width: 36,
+                      height: 36,
+                      fontSize: 14,
+                    }}
+                  >
                     {user?.user?.firstName &&
                       user?.user?.lastName &&
                       (
@@ -76,7 +86,13 @@ const Header = () => {
                 </IconButton>
               </Tooltip>
               <Menu
-                sx={{ mt: "45px" }}
+                sx={{
+                  mt: "45px",
+                  "& .MuiPaper-root": {
+                    borderRadius: "8px",
+                    boxShadow: "0 8px 24px rgba(84,43,43,0.12)",
+                  },
+                }}
                 id="menu-appbar"
                 anchorEl={anchorElUser}
                 anchorOrigin={{
@@ -96,14 +112,16 @@ const Header = () => {
                     key={item.label}
                     onClick={() => handleMenuItem(item)}
                   >
-                    <Typography textAlign="center">{item.label}</Typography>
+                    <Typography textAlign="center" className="!text-primary !text-sm">
+                      {item.label}
+                    </Typography>
                   </MenuItem>
                 ))}
               </Menu>
             </Box>
           ) : null}
         </Toolbar>
-      </ContainerPage>
+      </Container>
       <FloatingButton />
       {loading ? <FullPageLoader /> : null}
     </AppBar>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { CircularProgress, Modal, Paper } from "@mui/material";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import AppModal from "../UI/AppModal";
+import Button from "../UI/Button";
 
 export const getDeleteDescription = (name) =>
   name
@@ -33,49 +34,33 @@ export default function ConfirmModal({
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      sx={{
-        "& .MuiModal-backdrop": {
-          backdropFilter: "blur(2px) !important",
-          background: "#878b9499 !important",
-        },
-      }}
-      className="flex justify-center items-center"
-    >
-      <Paper
-        elevation={10}
-        className="!rounded-2xl p-5 w-3/4 max-w-[480px] outline-none"
-      >
+    <AppModal open={open} onClose={handleClose}>
+      <div className="p-5">
         <div className="flex flex-col items-center text-center gap-3">
-          <WarningAmberRoundedIcon className="text-primary" sx={{ fontSize: 48 }} />
-          <span className="text-2xl font-bold">{title}</span>
-          <p className="text-base text-gray-700">{description}</p>
+          <WarningAmberRoundedIcon className="text-primary" sx={{ fontSize: 36 }} />
+          <span className="text-xl font-semibold text-primary">{title}</span>
+          <p className="text-sm text-mutedText">{description}</p>
         </div>
         <div className="flex justify-center gap-3 mt-6">
-          <button
-            type="button"
-            className="w-full p-3 rounded-lg font-bold border border-[#572a2a] text-[#572a2a]"
+          <Button
+            variant="secondary"
+            className="w-full"
             onClick={handleClose}
             disabled={busy}
           >
             {cancelText}
-          </button>
-          <button
-            type="button"
-            className="w-full p-3 rounded-lg font-bold bg-[#572a2a] text-white disabled:opacity-50 flex justify-center items-center"
+          </Button>
+          <Button
+            variant="danger"
+            className="w-full"
             onClick={handleConfirm}
             disabled={busy}
+            loading={busy}
           >
-            {busy ? (
-              <CircularProgress size={20} sx={{ color: "#fff" }} />
-            ) : (
-              confirmText
-            )}
-          </button>
+            {confirmText}
+          </Button>
         </div>
-      </Paper>
-    </Modal>
+      </div>
+    </AppModal>
   );
 }

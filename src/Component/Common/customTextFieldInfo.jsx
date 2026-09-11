@@ -7,7 +7,7 @@ const InfoTextField = styled((props) => (
     overflow: "hidden",
     borderRadius: 5,
     backgroundColor: "#fff !important",
-    border: "2px solid #c3c3c3",
+    border: "1px solid #d7d0c8",
     transition: theme.transitions.create([
       "border-color",
       "background-color",

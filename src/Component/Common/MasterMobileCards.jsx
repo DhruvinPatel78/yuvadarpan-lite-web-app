@@ -1,13 +1,9 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Checkbox,
-  Paper,
-  TablePagination,
-} from "@mui/material";
+import { Checkbox, TablePagination } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomSwitch from "./CustomSwitch";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
+import { Button, Card } from "../UI";
 
 const MasterMobileCards = ({
   rows = [],
@@ -40,18 +36,15 @@ const MasterMobileCards = ({
       {canSelect && selectedIds.length > 0 ? (
         <div
           className={
-            "w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-[#fff5f4] border border-[#572a2a] rounded-lg"
+            "w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
           }
         >
-          <span className={"text-[#572a2a] font-semibold"}>
+          <span className={"text-primary font-semibold"}>
             {selectedIds.length} selected
           </span>
           {onDeleteSelected ? (
             <Button
-              size="small"
-              variant="contained"
-              startIcon={<DeleteIcon />}
-              className={"!bg-[#572a2a] !text-white"}
+              icon={<DeleteIcon sx={{ fontSize: 18 }} />}
               onClick={() => {
                 if (deleteEntity) {
                   setBulkDeleteOpen(true);
@@ -72,16 +65,16 @@ const MasterMobileCards = ({
           const details = getDetails ? getDetails(row) : [];
           const actionCount = [onView, onEdit, onDelete].filter(Boolean).length;
           return (
-            <Paper
+            <Card
               key={id}
-              elevation={2}
-              className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
+              padded={false}
+              className={"overflow-hidden"}
             >
               <div className={"p-3"}>
                 <div className={"flex items-center justify-between gap-2"}>
                   <p
                     className={
-                      "font-bold text-[#572a2a] text-base leading-tight min-w-0 pr-1"
+                      "font-semibold text-primary text-[15px] leading-tight min-w-0 pr-1"
                     }
                   >
                     {getTitle(row)}
@@ -90,7 +83,7 @@ const MasterMobileCards = ({
                     <Checkbox
                       checked={isSelected}
                       onChange={() => onToggleSelect(id)}
-                      className={"!text-[#572a2a] !p-0 !m-0 shrink-0"}
+                      className={"!text-primary !p-0 !m-0 shrink-0"}
                     />
                   ) : null}
                 </div>
@@ -116,12 +109,12 @@ const MasterMobileCards = ({
                 ) : null}
               </div>
               {hasFooterActions ? (
-                <div className={"flex border-t border-[#ead9d9]"}>
+                <div className={"flex border-t border-[#ececf3]"}>
                   {onView ? (
                     <button
                       type="button"
-                      className={`flex-1 py-2.5 text-sm font-semibold text-[#572a2a] ${
-                        actionCount > 1 ? "border-r border-[#ead9d9]" : ""
+                      className={`flex-1 py-2.5 text-sm font-semibold text-primary ${
+                        actionCount > 1 ? "border-r border-[#ececf3]" : ""
                       }`}
                       onClick={() => onView(row)}
                     >
@@ -131,8 +124,8 @@ const MasterMobileCards = ({
                   {onEdit ? (
                     <button
                       type="button"
-                      className={`flex-1 py-2.5 text-sm font-semibold text-[#572a2a] ${
-                        onDelete ? "border-r border-[#ead9d9]" : ""
+                      className={`flex-1 py-2.5 text-sm font-semibold text-primary ${
+                        onDelete ? "border-r border-[#ececf3]" : ""
                       }`}
                       onClick={() => onEdit(row)}
                     >
@@ -150,13 +143,13 @@ const MasterMobileCards = ({
                   ) : null}
                 </div>
               ) : null}
-            </Paper>
+            </Card>
           );
         })
       ) : (
-        <Paper className={"p-6 text-center text-gray-500 rounded-xl"}>
+        <Card className={"text-center text-gray-400"}>
           {emptyText}
-        </Paper>
+        </Card>
       )}
       {showPagination && rows.length ? (
         <div className={"w-full bg-white rounded-xl flex justify-end"}>

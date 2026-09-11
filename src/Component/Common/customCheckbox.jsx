@@ -10,10 +10,10 @@ import {
 
 const PrimaryCheckbox = styled(Checkbox)`
   & .MuiSvgIcon-root {
-    color: #572a2a;
+    color: #542b2b;
   }
   &.Mui-Checked {
-    color: #572a2a;
+    color: #542b2b;
   }
 `;
 export default function CustomCheckbox({

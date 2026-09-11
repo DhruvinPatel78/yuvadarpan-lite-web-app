@@ -1,6 +1,7 @@
-import { Grid, Paper } from "@mui/material";
+import { Grid } from "@mui/material";
 import React from "react";
 import CustomInput from "../../Component/Common/customInput";
+import { AuthShell, Button } from "../../Component/UI";
 import { useNavigate } from "react-router-dom";
 import {
   NotificationData,
@@ -60,24 +61,24 @@ export default function Index() {
   const { errors, values, touched, handleChange, handleBlur } = formik;
 
   return (
-    <div className="h-screen flex flex-col justify-center items-center">
-      <Paper
-        elevation={10}
-        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
-      >
+    <>
+    <AuthShell>
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <p className="text-center text-primary font-bold text-2xl">
-                  Reset your password
+                <p className="text-center text-primary font-semibold text-[22px] leading-tight">
+                  Reset password
+                </p>
+                <p className="text-center text-sm text-mutedText mt-1.5 leading-relaxed max-w-[280px] mx-auto">
+                  We'll send a verification code to your email or mobile.
                 </p>
               </Grid>
               <CustomInput
                 type={"text"}
                 xs={12}
-                label={"Email OR Mobile"}
-                placeholder={"Enter Your Email OR Mobile"}
+                label={"Email or mobile"}
+                placeholder={"Enter your email or mobile"}
                 name="email"
                 disabled={loading}
                 onChange={handleChange}
@@ -86,13 +87,13 @@ export default function Index() {
                 errors={touched.email && errors.email && errors.email}
               />
               <Grid item xs={12}>
-                <button
-                  className={
-                    "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold flex justify-center items-center"
-                  }
+                <Button
+                  type="submit"
+                  fullWidth
+                  loading={loading}
                 >
                   Send OTP
-                </button>
+                </Button>
               </Grid>
               <Grid item xs={12}>
                 <a
@@ -107,8 +108,8 @@ export default function Index() {
             </Grid>
           </Form>
         </FormikProvider>
-      </Paper>
+    </AuthShell>
       <NotificationSnackbar notification={notification} />
-    </div>
+    </>
   );
 }
