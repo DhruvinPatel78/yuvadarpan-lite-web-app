@@ -30,7 +30,7 @@ const FullPageLoader = () => {
               textAnchor="middle"
               fontSize="clamp(30px, 10vw, 50px)"
               fontWeight="700"
-              fontFamily="Poppins, sans-serif"
+              fontFamily="WorkBold, 'Work Sans', sans-serif"
               fill="white"
               letterSpacing="4"
               style={{ textTransform: "uppercase" }}
@@ -61,7 +61,7 @@ const FullPageLoader = () => {
           textAnchor="middle"
           fontSize="clamp(30px, 10vw, 50px)"
           fontWeight="700"
-          fontFamily="Poppins, sans-serif"
+          fontFamily="WorkBold, 'Work Sans', sans-serif"
           fill="none"
           stroke="#542b2b"
           strokeWidth="1.5"

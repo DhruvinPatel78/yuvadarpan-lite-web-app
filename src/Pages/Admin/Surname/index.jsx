@@ -2,12 +2,8 @@ import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Box,
-  Button,
-  CircularProgress,
   FormControl,
   Grid,
-  Modal,
-  Paper,
   Tooltip,
 } from "@mui/material";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
@@ -16,17 +12,15 @@ import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import AddIcon from "@mui/icons-material/Add";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
+import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import {
@@ -58,7 +52,7 @@ export default function Index() {
       field: "name",
       headerName: "Name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -66,7 +60,7 @@ export default function Index() {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -88,7 +82,7 @@ export default function Index() {
       headerName: "Action",
       width: 100,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
       sortable: false,
       renderCell: (record) => (
@@ -223,21 +217,22 @@ export default function Index() {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div className={"flex w-full items-center justify-between my-2"}>
-          <p className={"text-3xl font-bold"}>Surname</p>
-          {canManage ? (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              className={"bg-primary"}
-              onClick={() => {
-                setSurnameAddEditModel(!surnameAddEditModel);
-              }}
-            >
-              Add Surname
-            </Button>
-          ) : null}
-        </div>
+        <PageHeader
+          className="w-full"
+          title="Surname"
+          actions={
+            canManage ? (
+              <ActionButton
+                icon={<AddIcon sx={{ fontSize: 18 }} />}
+                onClick={() => {
+                  setSurnameAddEditModel(!surnameAddEditModel);
+                }}
+              >
+                Add Surname
+              </ActionButton>
+            ) : null
+          }
+        />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomInput
@@ -260,22 +255,11 @@ export default function Index() {
               lg={3}
               className={"flex justify-start items-center gap-4"}
             >
-              <button
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleSurnameList()}
-              >
-                Submit
-              </button>
-              {selectedSearchByText && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+              <FilterActions
+                onSubmit={() => handleSurnameList()}
+                onReset={handleReset}
+                showReset={Boolean(selectedSearchByText)}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
@@ -291,6 +275,7 @@ export default function Index() {
           page={page}
           setPage={setPage}
           onDeleteSelected={canManage ? deleteAPI : undefined}
+          deleteEntity="surname"
         />
         </div>
         <MasterMobileCards
@@ -325,40 +310,22 @@ export default function Index() {
           setRowsPerPage={setRowsPerPage}
           total={surnameData?.total || 0}
           onDeleteSelected={canManage ? deleteAPI : undefined}
+          deleteEntity="surname"
         />
       </ContainerPage>
       {surnameAddEditModel ? (
-        <Modal
+        <FormModal
           open={surnameAddEditModel}
           onClose={() => surnameAddEditModalClose()}
-          sx={{
-            "& .MuiModal-backdrop": {
-              backdropFilter: "blur(2px) !important",
-              background: "#878b9499 !important",
-            },
-          }}
-          className="flex justify-center items-center"
+          title="Surname"
         >
-          <Paper
-            elevation={10}
-            className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none"
-          >
-            <div className={"flex flex-row justify-between"}>
-              <span className={"text-2xl font-bold"}>Surname</span>
-              <Tooltip title={"Edit"}>
-                <CloseIcon
-                  className={"cursor-pointer"}
-                  onClick={() => surnameAddEditModalClose()}
-                />
-              </Tooltip>
-            </div>
             <FormikProvider value={formik}>
               <Form
                 className={
                   "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
                 }
               >
-                <Grid container className={"w-full pt-4"} spacing={2}>
+                <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full gap-4"}>
                       <CustomInput
@@ -404,30 +371,25 @@ export default function Index() {
                     xs={12}
                     className={"flex justify-center items-center"}
                   >
-                    {loading ? (
-                      <CircularProgress color="secondary" />
-                    ) : (
-                      <button
-                        className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
-                          hasError ? "opacity-50" : "opacity-100"
-                        }`}
-                        type={"submit"}
-                        disabled={hasError}
-                      >
-                        {surnameModalData ? "UPDATE" : "ADD"}
-                      </button>
-                    )}
+                    <ActionButton
+                      type={"submit"}
+                      fullWidth
+                      disabled={hasError}
+                      loading={loading}
+                    >
+                      {surnameModalData ? "UPDATE" : "ADD"}
+                    </ActionButton>
                   </Grid>
                 </Grid>
               </Form>
             </FormikProvider>
-          </Paper>
-        </Modal>
+        </FormModal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="surname"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

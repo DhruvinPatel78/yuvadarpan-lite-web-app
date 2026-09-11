@@ -1,4 +1,6 @@
 import React from "react";
+import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
+import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 
 const ProfileCard = ({
   name,
@@ -12,9 +14,14 @@ const ProfileCard = ({
   surname,
   onClick,
 }) => {
+  const fullName = [name, mother, father, surname]
+    .filter((part) => part && String(part).trim())
+    .join(" ");
+  const bornDate = dob ? String(dob).split(",")[0].trim() : "";
+
   return (
     <div
-      className="w-full rounded-2xl overflow-hidden shadow-lg transition-all duration-300 bg-white hover:shadow-xl cursor-pointer group sm:relative"
+      className="group w-full min-w-0 h-full rounded-xl overflow-hidden bg-white border border-line shadow-card hover:border-primary transition-colors duration-200 cursor-pointer flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -29,38 +36,45 @@ const ProfileCard = ({
           : undefined
       }
     >
-      <div className="relative">
-        <img
-          src={imgSrc}
-          alt={name}
-          className="w-full h-60 sm:h-96 object-cover group-hover:scale-110 transition-transform duration-500"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-60 transition-all duration-300 sm:block hidden" />
-        <div className="absolute bottom-2 left-2 sm:bottom-5 sm:left-5 bg-black/60 sm:bg-transparent text-white sm:text-white px-3 py-1 rounded-full text-xs sm:text-base sm:hidden">
-          {age} Yrs
-        </div>
+      <div className="aspect-[5/4] bg-muted overflow-hidden">
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={fullName}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          />
+        ) : null}
       </div>
-      <div className="px-4 sm:px-0 py-3 sm:py-0 sm:absolute sm:bottom-5 sm:left-5">
-        <h2 className="text-lg font-bold text-gray-800 sm:text-white">
-          {name} {mother} {father} {surname}
+      <div className="px-3.5 pt-3.5 pb-3.5 flex flex-col flex-1 min-w-0">
+        <h2 className="text-[15px] font-semibold text-primary leading-snug line-clamp-2">
+          {fullName}
         </h2>
-        <p className="text-sm text-gray-500 sm:text-gray-200 flex flex-wrap gap-x-2 items-center sm:text-white">
-          <span>
-            {location}
-            {dob ? ` · ${dob}` : ""}
+        <p className="mt-2 text-sm text-mutedText flex items-start gap-1.5 min-w-0">
+          <PlaceOutlinedIcon
+            sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}
+          />
+          <span className="truncate">
+            {location || "—"}
+            {age || age === 0 ? ` · ${age} yrs` : ""}
           </span>
-          <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full mt-1 sm:inline-block hidden">
-            {age} Yrs
+        </p>
+        <p className="mt-1.5 text-sm text-primary flex items-start gap-1.5 min-w-0">
+          <WorkOutlineIcon
+            sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}
+          />
+          <span className="truncate">{firm || "—"}</span>
+        </p>
+        <div className="mt-auto pt-3 border-t border-line flex items-center justify-between gap-2">
+          <span className="text-xs text-mutedText truncate">
+            {bornDate ? `Born ${bornDate}` : ""}
           </span>
-        </p>
-        <p className="sm:block hidden sm:text-white">
-          <strong>Firm:</strong> {firm}
-        </p>
-        <p className="sm:hidden">
-          <strong>Firm:</strong> {firm}
-        </p>
+          <span className="text-sm font-semibold text-primary whitespace-nowrap">
+            View
+          </span>
+        </div>
       </div>
     </div>
   );
 };
+
 export default ProfileCard;

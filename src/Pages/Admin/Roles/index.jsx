@@ -9,12 +9,11 @@ import ContainerPage from "../../../Component/Container";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { getRoleList, updateRole, deleteRole } from "../../../util/roleApi";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { Navigate } from "react-router-dom";
 import { isLocationMasterReadOnly } from "../../../util/util";
+import { PageHeader, FilterActions } from "../../../Component/UI";
 
 export default function Index() {
   const { auth } = UseRedux();
@@ -30,7 +29,7 @@ export default function Index() {
       field: "name",
       headerName: "Name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -45,7 +44,7 @@ export default function Index() {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -65,7 +64,7 @@ export default function Index() {
       headerName: "Action",
       width: 100,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
       sortable: false,
       renderCell: (record) => (
@@ -144,9 +143,7 @@ export default function Index() {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div className={"flex w-full items-center justify-between my-2"}>
-          <p className={"text-3xl font-bold cursor-default"}>Roles</p>
-        </div>
+        <PageHeader className="w-full" title="Roles" />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomInput
@@ -168,22 +165,11 @@ export default function Index() {
               lg={3}
               className={"flex justify-start items-center gap-4"}
             >
-              <button
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleRoleList()}
-              >
-                Submit
-              </button>
-              {selectedSearchByText && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+              <FilterActions
+                onSubmit={() => handleRoleList()}
+                onReset={handleReset}
+                showReset={Boolean(selectedSearchByText)}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
@@ -200,6 +186,7 @@ export default function Index() {
           setPage={setPage}
           pagination={false}
           onDeleteSelected={deleteAPI}
+          deleteEntity="role"
         />
         </div>
         <MasterMobileCards
@@ -213,12 +200,14 @@ export default function Index() {
           onDelete={(row) => setDeleteTarget(row)}
           showPagination={false}
           onDeleteSelected={deleteAPI}
+          deleteEntity="role"
         />
       </ContainerPage>
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity="role"
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

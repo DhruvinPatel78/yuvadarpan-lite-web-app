@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 
 const CustomTabPanel = ({ children, value, index, ...other }) => {
   return (
@@ -11,12 +11,10 @@ const CustomTabPanel = ({ children, value, index, ...other }) => {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3, width: "100%" }}>
-          <Typography>{children}</Typography>
-        </Box>
+        <Box sx={{ p: 1, width: "100%" }}>{children}</Box>
       )}
     </div>
   );
 };
 
-export default CustomTabPanel; 
+export default CustomTabPanel;

@@ -20,6 +20,8 @@ export const normalizeRole = (role) => {
     .replace(/[\s-]+/g, "_");
 };
 
+export const isAdmin = (role) => normalizeRole(role) === "ADMIN";
+
 export const isRegularUser = (role) => normalizeRole(role) === "USER";
 
 export const isSamajManager = (role) =>
@@ -71,3 +73,221 @@ export const hideLocationRowActions = (role) =>
   isRegionManager(role) ||
   isStateManager(role) ||
   isCountryManager(role);
+
+const asEntityId = (value) => {
+  if (value == null || value === "") return "";
+  if (typeof value === "object") {
+    return String(value.id || value._id || value.value || "");
+  }
+  return String(value);
+};
+
+const sameEntityId = (a, b) => {
+  const left = asEntityId(a);
+  const right = asEntityId(b);
+  return Boolean(left) && left === right;
+};
+
+const findEntityById = (list, id) => {
+  const target = asEntityId(id);
+  if (!target) return null;
+  return (
+    (list || []).find(
+      (item) => sameEntityId(item?.id, target) || sameEntityId(item?._id, target)
+    ) || null
+  );
+};
+
+const collectEntityIds = (...values) => {
+  const ids = new Set();
+  values.forEach((value) => {
+    const id = asEntityId(value);
+    if (id) ids.add(id);
+  });
+  return ids;
+};
+
+const scopeHasId = (scopeIds, ...values) =>
+  values.some((value) => {
+    const id = asEntityId(value);
+    return Boolean(id) && scopeIds.has(id);
+  });
+
+const entityInScope = (list, scopeIds, parentKey, matchId) =>
+  (list || []).some(
+    (item) =>
+      scopeHasId(scopeIds, item?.[parentKey]) &&
+      (sameEntityId(item?.id, matchId) || sameEntityId(item?._id, matchId))
+  );
+
+const resolveManagerLocationScope = (user, lists = {}) => {
+  const role = normalizeRole(user?.role);
+  const samajDoc = findEntityById(lists.samaj, user?.localSamaj);
+  const inheritFromSamaj =
+    role === "SAMAJ_MANAGER" || role === "CITY_MANAGER" || !role;
+  const inheritFromCity =
+    inheritFromSamaj || role === "DISTRICT_MANAGER";
+  const inheritFromDistrict =
+    inheritFromCity || role === "REGION_MANAGER";
+  const inheritFromRegion =
+    inheritFromDistrict || role === "STATE_MANAGER";
+  const inheritFromState =
+    inheritFromRegion || role === "COUNTRY_MANAGER";
+
+  const cityDoc =
+    findEntityById(lists.city, user?.city) ||
+    (inheritFromSamaj ? findEntityById(lists.city, samajDoc?.city_id) : null);
+  const districtDoc =
+    findEntityById(lists.district, user?.district) ||
+    (inheritFromCity
+      ? findEntityById(lists.district, cityDoc?.district_id) ||
+        findEntityById(lists.district, samajDoc?.district_id)
+      : null);
+  const regionDoc =
+    findEntityById(lists.region, user?.region) ||
+    (inheritFromDistrict
+      ? findEntityById(lists.region, districtDoc?.region_id) ||
+        findEntityById(lists.region, cityDoc?.region_id) ||
+        findEntityById(lists.region, samajDoc?.region_id)
+      : null);
+  const stateDoc =
+    findEntityById(lists.state, user?.state) ||
+    (inheritFromRegion
+      ? findEntityById(lists.state, regionDoc?.state_id) ||
+        findEntityById(lists.state, districtDoc?.state_id) ||
+        findEntityById(lists.state, cityDoc?.state_id) ||
+        findEntityById(lists.state, samajDoc?.state_id)
+      : null);
+  const countryDoc =
+    findEntityById(lists.country, user?.country) ||
+    (inheritFromState
+      ? findEntityById(lists.country, stateDoc?.country_id) ||
+        findEntityById(lists.country, regionDoc?.country_id) ||
+        findEntityById(lists.country, samajDoc?.country_id)
+      : null);
+
+  const samajIds =
+    role === "SAMAJ_MANAGER"
+      ? collectEntityIds(user?.localSamaj, samajDoc?.id, samajDoc?._id)
+      : collectEntityIds();
+  const cityIds =
+    role === "SAMAJ_MANAGER"
+      ? collectEntityIds(samajDoc?.city_id, cityDoc?.id, cityDoc?._id)
+      : collectEntityIds(user?.city, cityDoc?.id, cityDoc?._id);
+  const districtIds = collectEntityIds(
+    user?.district,
+    districtDoc?.id,
+    districtDoc?._id,
+    inheritFromCity ? cityDoc?.district_id : null,
+    inheritFromSamaj ? samajDoc?.district_id : null
+  );
+  const regionIds = collectEntityIds(
+    user?.region,
+    regionDoc?.id,
+    regionDoc?._id,
+    inheritFromDistrict ? districtDoc?.region_id : null,
+    inheritFromCity ? cityDoc?.region_id : null,
+    inheritFromSamaj ? samajDoc?.region_id : null
+  );
+  const stateIds = collectEntityIds(
+    user?.state,
+    stateDoc?.id,
+    stateDoc?._id,
+    inheritFromRegion ? regionDoc?.state_id : null,
+    inheritFromDistrict ? districtDoc?.state_id : null,
+    inheritFromCity ? cityDoc?.state_id : null,
+    inheritFromSamaj ? samajDoc?.state_id : null
+  );
+  const countryIds = collectEntityIds(
+    user?.country,
+    countryDoc?.id,
+    countryDoc?._id,
+    inheritFromState ? stateDoc?.country_id : null,
+    inheritFromRegion ? regionDoc?.country_id : null,
+    inheritFromSamaj ? samajDoc?.country_id : null
+  );
+
+  return { samajIds, cityIds, districtIds, regionIds, stateIds, countryIds };
+};
+
+export const canEditYuvaRecord = (user, yuva, lists = {}) => {
+  const role = normalizeRole(user?.role);
+  if (role === "ADMIN") return true;
+  if (!isLocationMasterReadOnly(role) || !yuva) return false;
+
+  const scope = resolveManagerLocationScope(user, lists);
+  const yuvaSamaj = findEntityById(lists.samaj, yuva.localSamaj);
+  const yuvaCity =
+    findEntityById(lists.city, yuva.city) ||
+    findEntityById(lists.city, yuvaSamaj?.city_id);
+
+  if (role === "SAMAJ_MANAGER") {
+    return scopeHasId(scope.samajIds, yuva.localSamaj, yuvaSamaj?.id, yuvaSamaj?._id);
+  }
+  if (role === "CITY_MANAGER") {
+    return (
+      scopeHasId(
+        scope.cityIds,
+        yuva.city,
+        yuvaSamaj?.city_id,
+        yuvaCity?.id,
+        yuvaCity?._id
+      ) || entityInScope(lists.samaj, scope.cityIds, "city_id", yuva.localSamaj)
+    );
+  }
+  if (role === "DISTRICT_MANAGER") {
+    return (
+      scopeHasId(
+        scope.districtIds,
+        yuva.district,
+        yuvaSamaj?.district_id,
+        yuvaCity?.district_id
+      ) ||
+      entityInScope(lists.city, scope.districtIds, "district_id", yuva.city) ||
+      entityInScope(lists.samaj, scope.districtIds, "district_id", yuva.localSamaj)
+    );
+  }
+  if (role === "REGION_MANAGER") {
+    return (
+      scopeHasId(
+        scope.regionIds,
+        yuva.region,
+        yuvaSamaj?.region_id,
+        yuvaCity?.region_id
+      ) ||
+      entityInScope(lists.district, scope.regionIds, "region_id", yuva.district) ||
+      entityInScope(lists.city, scope.regionIds, "region_id", yuva.city) ||
+      entityInScope(lists.samaj, scope.regionIds, "region_id", yuva.localSamaj)
+    );
+  }
+  if (role === "STATE_MANAGER") {
+    return (
+      scopeHasId(
+        scope.stateIds,
+        yuva.state,
+        yuvaSamaj?.state_id,
+        yuvaCity?.state_id
+      ) ||
+      entityInScope(lists.region, scope.stateIds, "state_id", yuva.region) ||
+      entityInScope(lists.district, scope.stateIds, "state_id", yuva.district) ||
+      entityInScope(lists.city, scope.stateIds, "state_id", yuva.city) ||
+      entityInScope(lists.samaj, scope.stateIds, "state_id", yuva.localSamaj)
+    );
+  }
+  if (role === "COUNTRY_MANAGER") {
+    return (
+      scopeHasId(
+        scope.countryIds,
+        yuva.country,
+        yuvaSamaj?.country_id,
+        yuvaCity?.country_id
+      ) ||
+      entityInScope(lists.region, scope.countryIds, "country_id", yuva.region) ||
+      entityInScope(lists.state, scope.countryIds, "country_id", yuva.state) ||
+      entityInScope(lists.district, scope.countryIds, "country_id", yuva.district) ||
+      entityInScope(lists.city, scope.countryIds, "country_id", yuva.city) ||
+      entityInScope(lists.samaj, scope.countryIds, "country_id", yuva.localSamaj)
+    );
+  }
+  return false;
+};

@@ -5,10 +5,8 @@ import {
   Button,
   Checkbox,
   CircularProgress,
-  Divider,
   FormControlLabel,
   Grid,
-  Modal,
   Paper,
   Tab,
   Tooltip,
@@ -19,9 +17,7 @@ import moment from "moment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
@@ -42,9 +38,21 @@ import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import { UseRedux } from "../../../Component/useRedux";
-import { formatYuvaDob } from "../../../util/util";
+import { formatYuvaDob, canEditYuvaRecord } from "../../../util/util";
+import { PageHeader, FilterActions, Button as ActionButton, AppModal } from "../../../Component/UI";
 
 const MOBILE_PAGE_SIZE = 20;
+
+function YuvaDetailItem({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-mutedText">
+        {label}
+      </p>
+      <p className="text-sm text-primary mt-0.5 break-words">{value || "-"}</p>
+    </div>
+  );
+}
 
 const YuvaList = () => {
   const navigate = useNavigate();
@@ -61,7 +69,8 @@ const YuvaList = () => {
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const { surname, city, state, region, auth } = UseRedux();
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const { surname, city, state, region, district, samaj, country, auth } = UseRedux();
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager =
@@ -83,6 +92,10 @@ const YuvaList = () => {
     isCountryManager;
   const [ownUserList, setOwnUserList] = useState(false);
   const canAct = !hasOwnListToggle || ownUserList;
+  const locationLists = { samaj, city, district, region, state, country };
+  const canEditRow = (yuva) =>
+    (hasOwnListToggle && ownUserList) ||
+    canEditYuvaRecord(auth?.user, yuva, locationLists);
   const [nativeList, setNativeList] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -116,7 +129,7 @@ const YuvaList = () => {
       headerName: "Family Id",
       width: 90,
       headerClassName:
-        "bg-[#572a2a] text-white items-center flex justify-center outline-none",
+        "bg-primary text-white items-center flex justify-center outline-none",
       cellClassName: "items-center flex justify-center outline-none",
       filterable: false,
     },
@@ -125,7 +138,7 @@ const YuvaList = () => {
       headerName: "Name",
       width: 100,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -141,7 +154,7 @@ const YuvaList = () => {
       field: "gender",
       headerName: "Gender",
       width: 100,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-6 outline-none",
       filterable: false,
     },
@@ -149,7 +162,7 @@ const YuvaList = () => {
       field: "dob",
       headerName: "DOB",
       width: 150,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       headerAlign: "center",
       cellClassName: "items-center flex p-0 justify-center outline-none",
       filterable: false,
@@ -164,7 +177,7 @@ const YuvaList = () => {
       headerName: "Firm",
       width: 100,
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
     },
@@ -173,7 +186,7 @@ const YuvaList = () => {
       headerName: "City",
       width: 100,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -185,7 +198,7 @@ const YuvaList = () => {
       headerName: "Native",
       width: 100,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -197,7 +210,7 @@ const YuvaList = () => {
       headerName: "",
       width: 100,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
       sortable: false,
       renderCell: (record) => (
@@ -208,33 +221,37 @@ const YuvaList = () => {
               onClick={() => setUserData(record.row)}
             />
           </Tooltip>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() =>
-                navigate(`/admin/yuvalist/${record?.row.id}/edit`, {
-                  state: { data: record?.row },
-                })
-              }
-            />
-          </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() =>
-                setDeleteTarget({
-                  id: record?.id || record?.row?.id,
-                  name: [record?.row?.firstName, record?.row?.fatherName]
-                    .filter(Boolean)
-                    .join(" "),
-                })
-              }
-            />
-          </Tooltip>
+          {canEditRow(record?.row) ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() =>
+                    navigate(`/admin/yuvalist/${record?.row.id}/edit`, {
+                      state: { data: record?.row },
+                    })
+                  }
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() =>
+                    setDeleteTarget({
+                      id: record?.id || record?.row?.id,
+                      name: [record?.row?.firstName, record?.row?.fatherName]
+                        .filter(Boolean)
+                        .join(" "),
+                    })
+                  }
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
-  ].filter((column) => canAct || column.field !== "action");
+  ];
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
@@ -402,12 +419,10 @@ const YuvaList = () => {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-4"}
       >
-        <div
-          className={
-            "justify-between flex sm:items-center items-left w-full sm:flex-row flex-col gap-2"
-          }
-        >
-          <p className={"text-3xl font-bold"}>Yuvalist</p>
+        <PageHeader
+          className="w-full"
+          title="Yuvalist"
+          actions={
           <div className={"flex flex-row items-center gap-3"}>
             {hasOwnListToggle ? (
               <FormControlLabel
@@ -423,7 +438,7 @@ const YuvaList = () => {
                   />
                 }
                 label={
-                  <span className={"font-semibold text-[#572a2a]"}>
+                  <span className={"font-semibold text-primary"}>
                     Your Yuva
                   </span>
                 }
@@ -436,17 +451,16 @@ const YuvaList = () => {
               View User Dashboard
             </Button>
             {canAct ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                className={"bg-primary flex items-center justify-center"}
+              <ActionButton
+                icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => navigate("/admin/yuvalist/add")}
               >
                 Yuva
-              </Button>
+              </ActionButton>
             ) : null}
           </div>
-        </div>
+          }
+        />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
@@ -524,10 +538,8 @@ const YuvaList = () => {
               xs={12}
               className={"flex justify-center items-center gap-4"}
             >
-              <button
-                type="button"
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => {
+              <FilterActions
+                onSubmit={() => {
                   if (isMobile) {
                     handleRequestList();
                     return;
@@ -538,40 +550,32 @@ const YuvaList = () => {
                     handleRequestList();
                   }
                 }}
-              >
-                Submit
-              </button>
-              {(selectedSearchByText ||
-                selectedSearchBy.name ||
-                selectedNative?.length > 0 ||
-                selectedSurname?.length > 0) && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+                onReset={handleReset}
+                showReset={Boolean(
+                  selectedSearchByText ||
+                    selectedSearchBy.name ||
+                    selectedNative?.length > 0 ||
+                    selectedSurname?.length > 0
+                )}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
         {canAct && selectedYuvas.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-[#fff5f4] border border-[#572a2a] rounded-lg"
+              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
             }
           >
-            <span className={"text-[#572a2a] font-semibold"}>
+            <span className={"text-primary font-semibold"}>
               {selectedYuvas.length} selected
             </span>
             <Button
               size="small"
               variant="contained"
               startIcon={<DeleteIcon />}
-              className={"!bg-[#572a2a] !text-white"}
-              onClick={() => deleteAPI(selectedYuvas)}
+              className={"!bg-primary !text-white"}
+              onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
             </Button>
@@ -590,6 +594,7 @@ const YuvaList = () => {
             setPageSize={setRowsPerPage}
             checkboxSelection={canAct}
             onDeleteSelected={canAct ? deleteAPI : undefined}
+            deleteEntity="yuva"
           />
         </div>
         <div className={"md:hidden w-full flex flex-col gap-3"}>
@@ -611,14 +616,14 @@ const YuvaList = () => {
                 >
                   <div className={"p-3"}>
                     <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-[#572a2a] text-base leading-tight min-w-0 pr-1"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
                         {fullName}
                       </p>
                       {canAct ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={() => toggleCardSelection(row.id)}
-                          className={"!text-[#572a2a] !p-0 !m-0 shrink-0"}
+                          className={"!text-primary !p-0 !m-0 shrink-0"}
                         />
                       ) : null}
                     </div>
@@ -641,18 +646,18 @@ const YuvaList = () => {
                   <div className={"flex border-t border-[#ead9d9]"}>
                     <button
                       type="button"
-                      className={`flex-1 py-2.5 text-sm font-semibold text-[#572a2a] ${
-                        canAct ? "border-r border-[#ead9d9]" : ""
+                      className={`flex-1 py-2.5 text-sm font-semibold text-primary ${
+                        canEditRow(row) ? "border-r border-[#ead9d9]" : ""
                       }`}
                       onClick={() => setUserData(row)}
                     >
                       View
                     </button>
-                    {canAct ? (
+                    {canEditRow(row) ? (
                       <>
                         <button
                           type="button"
-                          className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                          className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                           onClick={() =>
                             navigate(`/admin/yuvalist/${row.id}/edit`, {
                               state: { data: row },
@@ -689,327 +694,214 @@ const YuvaList = () => {
           {hasMore && yuvas.length ? (
             <div ref={loadMoreRef} className={"flex justify-center py-3"}>
               {loadingMore ? (
-                <CircularProgress size={24} className={"!text-[#572a2a]"} />
+                <CircularProgress size={24} className={"!text-primary"} />
               ) : null}
             </div>
           ) : null}
         </div>
       </ContainerPage>
-      <Modal
+      <AppModal
         open={Boolean(userData)}
         onClose={() => setUserData(null)}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{
-          "& .MuiModal-backdrop": {
-            backdropFilter: " blur(2px) !important",
-            background: "#878b9499 !important",
-          },
-        }}
-        className="flex justify-center items-center"
+        maxWidth="600px"
+        className="p-6 pt-7 max-h-[90vh] overflow-auto"
       >
-        <Paper
-          elevation={10}
-          className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none"
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={() => setUserData(null)}
+          className="absolute top-4 right-4 text-primary p-1 rounded-md hover:bg-muted"
         >
-          <Grid container>
-            <Grid item xs={3} className={"flex justify-center items-center"}>
-              <ImageButton
-                focusRipple
-                style={{
-                  width: "110px",
-                  borderRadius: "150px",
-                  border: "1px dashed #542b2b",
-                }}
+          <CloseIcon fontSize="small" />
+        </button>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
+          <ImageButton
+            focusRipple
+            style={{
+              width: "96px",
+              height: "96px",
+              borderRadius: "150px",
+            }}
+            onClick={() =>
+              window.open(
+                userData?.profile?.url ||
+                  "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
+                "_blank"
+              )
+            }
+          >
+            <ImageSrc
+              style={{
+                backgroundImage:
+                  `url(${userData?.profile?.url})` ||
+                  `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
+              }}
+            />
+            <ImageBackdrop className="MuiImageBackdrop-root" />
+          </ImageButton>
+          <div className="text-center sm:text-left min-w-0 flex-1">
+            <h2 className="text-lg font-semibold text-primary leading-snug">
+              {userData?.firstName}{" "}
+              {surname.find((item) => item?.id === userData?.lastName)?.name}{" "}
+            </h2>
+            <p className="text-sm text-mutedText mt-1">
+              {moment(userData?.dob).format("DD/MM/YYYY hh:mm A")}
+            </p>
+            <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
+              Family ID {userData?.familyId}
+            </span>
+            <div className="flex mt-3 gap-2 w-full">
+              <button
+                className="bg-primary text-white h-10 px-4 rounded-lg w-full text-sm font-semibold"
                 onClick={() =>
-                  window.open(
-                    userData?.profile?.url ||
-                      "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                    "_blank"
-                  )
+                  navigate(`/admin/yuvalist/${userData?.id}`, {
+                    state: { ...userData },
+                  })
                 }
               >
-                <ImageSrc
-                  style={{
-                    backgroundImage:
-                      `url(${userData?.profile?.url})` ||
-                      `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
-                  }}
-                  className={"m-2"}
-                />
-                <ImageBackdrop className="MuiImageBackdrop-root" />
-              </ImageButton>
-            </Grid>
-            <Grid item xs={8} className={"px-2 flex flex-col justify-center"}>
-              <div className={"text-base font-bold"}>
-                Name:{" "}
-                <span className={"font-normal"}>
-                  {userData?.firstName}{" "}
-                  {
-                    surname.find((item) => item?.id === userData?.lastName)
-                      ?.name
-                  }{" "}
-                </span>
-              </div>
-              <div className={"text-base font-bold"}>
-                DOB:{" "}
-                <span className={"font-normal"}>
-                  {moment(userData?.dob).format("DD/MM/YYYY hh:mm A")}
-                </span>
-              </div>
-              <div className={"text-base font-bold"}>
-                Family ID:{" "}
-                <span className={"font-normal"}>{userData?.familyId}</span>
-              </div>
-              <div className={"flex mt-2 gap-3 w-full"}>
+                View Details
+              </button>
+              {canEditRow(userData) ? (
                 <button
-                  className={"bg-primary text-white p-2 rounded-md w-full"}
-                  onClick={() =>
-                    navigate("/admin/yuvalist/profile", {
-                      state: { ...userData },
-                    })
-                  }
-                >
-                  View Details
-                </button>
-                <button
-                  className={
-                    "border-primary border text-primary p-2 rounded-md"
-                  }
+                  className="border border-primary text-primary h-10 px-3 rounded-lg"
                   onClick={() =>
                     navigate(`/admin/yuvalist/${userData?.id}/edit`, {
-                      state: { ...userData },
+                      state: { data: userData },
                     })
                   }
                 >
                   <ModeEditIcon />
                 </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <Box className="mt-5 pt-2 border-t border-line">
+          <TabContext value={value}>
+            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+              <TabList
+                onChange={handleChange}
+                className={"text-primary"}
+                textColor="text-primary"
+                indicatorColor="inherit"
+                TabIndicatorProps={{
+                  style: {
+                    backgroundColor: "#542b2b",
+                  },
+                }}
+                variant="scrollable"
+                scrollButtons
+                allowScrollButtonsMobile
+              >
+                <Tab
+                  label="Personal Info"
+                  value="1"
+                  className={`font-bold ${
+                    value === "1" ? "text-primary" : "text-gray"
+                  }`}
+                />
+                <Tab
+                  label="Mama Info"
+                  value="2"
+                  className={`font-bold ${
+                    value === "2" ? "text-primary" : "text-gray"
+                  }`}
+                />
+                <Tab
+                  label="Contact Info"
+                  value="4"
+                  className={`font-bold ${
+                    value === "4" ? "text-primary" : "text-gray"
+                  }`}
+                />
+                <Tab
+                  label="Other Info"
+                  value="3"
+                  className={`font-bold ${
+                    value === "3" ? "text-primary" : "text-gray"
+                  }`}
+                />
+              </TabList>
+            </Box>
+            <TabPanel value="1" className="!px-0 !pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                <YuvaDetailItem label="Father name" value={userData?.fatherName} />
+                <YuvaDetailItem label="Mother name" value={userData?.motherName} />
+                <YuvaDetailItem label="Height" value={userData?.height} />
+                <YuvaDetailItem label="Weight" value={userData?.weight} />
+                <YuvaDetailItem
+                  label="City"
+                  value={city.find((item) => item?.id === userData?.city)?.name}
+                />
+                <YuvaDetailItem
+                  label="State"
+                  value={
+                    state?.find((item) => item?.id === userData?.state)?.name
+                  }
+                />
+                <YuvaDetailItem label="Firm" value={userData?.firm} />
+                <YuvaDetailItem
+                  label="Firm address"
+                  value={userData?.firmAddress}
+                />
               </div>
-            </Grid>
-            <Grid item xs={1} className={"flex justify-center"}>
-              <CloseIcon
-                className={"text-primary cursor-pointer"}
-                onClick={() => setUserData(null)}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box className={"my-4"}>
-                <TabContext value={value}>
-                  <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                    <TabList
-                      onChange={handleChange}
-                      className={"text-primary"}
-                      textColor="text-primary"
-                      indicatorColor="inherit"
-                      TabIndicatorProps={{
-                        style: {
-                          backgroundColor: "#542b2b",
-                        },
-                      }}
-                      variant="scrollable"
-                      scrollButtons
-                      allowScrollButtonsMobile
-                    >
-                      <Tab
-                        label="Personal Info"
-                        value="1"
-                        className={`font-bold ${
-                          value === "1" ? "text-primary" : "text-gray"
-                        }`}
-                      />
-                      <Tab
-                        label="Mama Info"
-                        value="2"
-                        className={`font-bold ${
-                          value === "2" ? "text-primary" : "text-gray"
-                        }`}
-                      />
-                      <Tab
-                        label="Contact Info"
-                        value="4"
-                        className={`font-bold ${
-                          value === "4" ? "text-primary" : "text-gray"
-                        }`}
-                      />
-                      <Tab
-                        label="Other Info"
-                        value="3"
-                        className={`font-bold ${
-                          value === "3" ? "text-primary" : "text-gray"
-                        }`}
-                      />
-                    </TabList>
-                  </Box>
-                  <TabPanel value="1">
-                    <Grid spacing={2} container>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Father Name:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.fatherName}
-                          </span>
-                        </div>
-                        <div className={"text-base font-bold"}>
-                          Height:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.height}
-                          </span>
-                        </div>
-                        <div className={"text-base font-bold"}>
-                          City:{" "}
-                          <span className={"font-normal"}>
-                            {
-                              city.find((item) => item?.id === userData?.city)
-                                ?.name
-                            }
-                          </span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Mother Name:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.motherName}
-                          </span>
-                        </div>
-                        <div className={"text-base font-bold"}>
-                          Weight:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.weight}
-                          </span>
-                        </div>
-                        <div className={"text-base font-bold"}>
-                          State:{" "}
-                          <span className={"font-normal"}>
-                            {
-                              state?.find(
-                                (item) => item?.id === userData?.state
-                              )?.name
-                            }
-                          </span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Divider />
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Firm:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.firm}
-                          </span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold ellipsis"}>
-                          Firm Address:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.firmAddress}
-                          </span>
-                        </div>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                  <TabPanel value="2">
-                    <Grid container spacing={1}>
-                      <Grid item xs={12}>
-                        <div className={"text-base font-bold"}>
-                          Name:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.mamaInfo?.name}
-                          </span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Divider />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Grid spacing={1} container>
-                          <Grid item xs={12}>
-                            <div className={"text-base font-bold"}>
-                              Address:-
-                            </div>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <div className={"text-base font-bold"}>
-                              Native:
-                              <span className={"font-normal"}>
-                                {userData?.mamaInfo?.native}
-                              </span>
-                            </div>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <div className={"text-base font-bold"}>
-                              City:{" "}
-                              <span className={"font-normal"}>
-                                {userData?.mamaInfo?.city}
-                              </span>
-                            </div>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                  <TabPanel value="3">
-                    <Grid spacing={2} container>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Education:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.education}
-                          </span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Blood Group:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.bloodGroup}
-                          </span>
-                        </div>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                  <TabPanel value="4">
-                    <Grid spacing={2} container>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Name:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.contactInfo?.name}
-                          </span>
-                        </div>
-                        <div className={"text-base font-bold"}>
-                          Relation:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.contactInfo?.relation}
-                          </span>
-                        </div>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={"text-base font-bold"}>
-                          Number:{" "}
-                          <span className={"font-normal"}>
-                            {userData?.contactInfo?.phone}
-                          </span>
-                        </div>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                </TabContext>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Modal>
-      <ConfirmModal
-        open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={async () => {
-          await deleteAPI(deleteTarget.id);
+            </TabPanel>
+            <TabPanel value="2" className="!px-0 !pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                <YuvaDetailItem label="Name" value={userData?.mamaInfo?.name} />
+                <YuvaDetailItem
+                  label="Native"
+                  value={userData?.mamaInfo?.native}
+                />
+                <YuvaDetailItem label="City" value={userData?.mamaInfo?.city} />
+              </div>
+            </TabPanel>
+            <TabPanel value="3" className="!px-0 !pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                <YuvaDetailItem label="Education" value={userData?.education} />
+                <YuvaDetailItem
+                  label="Blood group"
+                  value={userData?.bloodGroup}
+                />
+              </div>
+            </TabPanel>
+            <TabPanel value="4" className="!px-0 !pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                <YuvaDetailItem
+                  label="Name"
+                  value={userData?.contactInfo?.name}
+                />
+                <YuvaDetailItem
+                  label="Relation"
+                  value={userData?.contactInfo?.relation}
+                />
+                <YuvaDetailItem
+                  label="Number"
+                  value={userData?.contactInfo?.phone}
+                />
+              </div>
+            </TabPanel>
+          </TabContext>
+        </Box>
+      </AppModal>
+      <DeleteConfirmFlow
+        open={Boolean(deleteTarget) || bulkDeleteOpen}
+        entity="yuva"
+        ids={deleteTarget ? [deleteTarget.id] : selectedYuvas}
+        name={
+          deleteTarget?.name ||
+          `${selectedYuvas.length} selected item${
+            selectedYuvas.length === 1 ? "" : "s"
+          }`
+        }
+        onClose={() => {
           setDeleteTarget(null);
+          setBulkDeleteOpen(false);
+        }}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget ? deleteTarget.id : selectedYuvas);
+          setDeleteTarget(null);
+          setBulkDeleteOpen(false);
         }}
       />
     </Box>

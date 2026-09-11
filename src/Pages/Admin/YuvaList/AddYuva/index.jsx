@@ -1,20 +1,17 @@
 import Header from "../../../../Component/Header";
 import {
   Box,
-  Button,
   CircularProgress,
   Divider,
   Grid,
-  Modal,
-  Paper,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import CustomInput from "../../../../Component/Common/customInput";
 import CustomAutoComplete from "../../../../Component/Common/customAutoComplete";
 import CustomRadio from "../../../../Component/Common/customRadio";
 import { Form, FormikProvider, useFormik } from "formik";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import { Button as ActionButton, FormModal, PageHeader } from "../../../../Component/UI";
 import RemoveOutlinedIcon from "@mui/icons-material/RemoveOutlined";
 import * as Yup from "yup";
 import axios from "../../../../util/useAxios";
@@ -27,6 +24,12 @@ import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
 import { addYuva, updateYuva } from "../../../../util/yuvaAdminApi";
+import {
+  canEditYuvaRecord,
+  isAdmin,
+  isLocationMasterReadOnly,
+  isSamajManager,
+} from "../../../../util/util";
 import dayjs from "dayjs";
 
 const slugPart = (value) =>
@@ -44,11 +47,40 @@ const buildYuvaPhotoName = (yuva) =>
       : "na"
   }`;
 
+const otherObjectToFields = (other) => {
+  if (!other || typeof other !== "object" || Array.isArray(other)) {
+    return [];
+  }
+  return Object.entries(other)
+    .filter(([, value]) => String(value ?? "").trim() !== "")
+    .map(([title, description]) => ({
+      title: String(title).replace(/_/g, " "),
+      description: String(description ?? ""),
+    }));
+};
+
+const fieldsToOtherObject = (list = [], draft) => {
+  const rows = [...list];
+  const draftTitle = String(draft?.title || "").trim();
+  const draftDescription = String(draft?.description || "").trim();
+  if (draftTitle && draftDescription) {
+    rows.push({ title: draftTitle, description: draftDescription });
+  }
+  return rows.reduce((acc, item) => {
+    const title = String(item?.title || "").trim();
+    const description = String(item?.description || "").trim();
+    if (title && description) {
+      acc[title.replace(/\s+/g, "_")] = description;
+    }
+    return acc;
+  }, {});
+};
+
 const AddYuva = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading, country, state, region, district, city, samaj, surname } =
+  const { loading, country, state, region, district, city, samaj, surname, auth } =
     UseRedux();
   const selectArr = [
     "surname",
@@ -94,6 +126,7 @@ const AddYuva = () => {
   });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
   const [isEdit, setIsEdit] = useState(Boolean(location?.state));
+  const editYuva = location?.state?.data || null;
 
   const getSamajList = (regionId) => {
     axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
@@ -289,7 +322,9 @@ const AddYuva = () => {
       await updateYuva(data?.id, { ...data, updatedAt: new Date() });
       navigate("/admin/yuvalist");
     } catch (e) {
-      // Optionally handle error with notification
+      if (e?.response?.status === 403) {
+        navigate("/admin/yuvalist", { replace: true });
+      }
     } finally {
       dispatch(endLoading());
       setNewFieldList([]);
@@ -345,19 +380,13 @@ const AddYuva = () => {
       YSKno: "",
       localSamaj: "",
     },
-    onSubmit: async (values, { resetForm }) => {
-      let newValue = { ...values };
-      newFieldList?.forEach((item) => {
-        if (item?.title && item?.description) {
-          newValue.other = {
-            ...newValue?.other,
-            [item?.title?.toString().replace(/\s+/g, "_")]: item?.description,
-          };
-        }
-      });
+    onSubmit: async (values) => {
+      const newValue = {
+        ...values,
+        other: fieldsToOtherObject(newFieldList, newField),
+      };
       if (location?.state) {
         updateAPIHandler(newValue);
-        resetForm();
       } else {
         addYuvaListHandler(newValue);
       }
@@ -485,8 +514,12 @@ const AddYuva = () => {
   };
 
   const addFieldHandler = () => {
-    // setFieldValue(`${newField.title}`,newField.description)
-    setNewFieldList((prevState) => [...prevState, newField]);
+    const title = String(newField?.title || "").trim();
+    const description = String(newField?.description || "").trim();
+    if (!title || !description) {
+      return;
+    }
+    setNewFieldList((prevState) => [...prevState, { title, description }]);
     setNewField({ title: "", description: "" });
   };
   const removeFieldHandler = (index) => {
@@ -510,7 +543,10 @@ const AddYuva = () => {
         ...values,
         ...location?.state?.data,
         profileName: location?.state?.data?.profile?.name,
+        other: location?.state?.data?.other || {},
       });
+      setNewFieldList(otherObjectToFields(location?.state?.data?.other));
+      setNewField({ title: "", description: "" });
       selectArr.forEach((data) => {
         selectedValueSetName(data);
       });
@@ -524,18 +560,61 @@ const AddYuva = () => {
     }); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!isEdit) return;
+    const role = auth?.user?.role;
+    if (isAdmin(role)) return;
+    if (!isLocationMasterReadOnly(role)) {
+      navigate("/admin/yuvalist", { replace: true });
+      return;
+    }
+    const listsReady =
+      isSamajManager(role) || Boolean(samaj?.length || city?.length);
+    if (!listsReady) return;
+    if (
+      !canEditYuvaRecord(auth?.user, editYuva, {
+        samaj,
+        city,
+        district,
+        region,
+        state,
+        country,
+      })
+    ) {
+      navigate("/admin/yuvalist", { replace: true });
+    }
+  }, [
+    isEdit,
+    auth?.user,
+    editYuva,
+    samaj,
+    city,
+    district,
+    region,
+    state,
+    country,
+    navigate,
+  ]);
+
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage
-        className={"flex-col justify-center flex items-start bg-white"}
-      >
+      <ContainerPage className={"flex-col justify-center flex items-start pb-6"}>
+        <PageHeader
+          className="w-full"
+          title={isEdit ? "Edit Yuva" : "Add Yuva"}
+          description={
+            isEdit
+              ? "Update this yuva record."
+              : "Create a new yuva record."
+          }
+        />
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2} className={"px-0 py-2 sm:p-4"}>
               {isEdit ? (
               <Grid item xs={12}>
-                <div className={"text-xl font-bold text-gray pb-2"}>PHOTO</div>
+                <div className={"text-sm font-semibold text-primary pb-3"}>Photo</div>
                 <Grid
                   className={"w-fit flex items-center gap-4 cursor-pointer"}
                 >
@@ -590,8 +669,8 @@ const AddYuva = () => {
               </Grid>
               ) : null}
               <Grid item xs={12}>
-                <div className={"text-xl font-bold text-gray pb-2"}>
-                  PERSONAL INFO
+                <div className={"text-sm font-semibold text-primary pb-3"}>
+                  Personal info
                 </div>
                 <Grid container spacing={2}>
                   <CustomInput
@@ -1087,8 +1166,8 @@ const AddYuva = () => {
                 <Divider />
               </Grid>
               <Grid item xs={12}>
-                <div className={"text-xl font-bold text-gray pb-2"}>
-                  MAMAS INFO
+                <div className={"text-sm font-semibold text-primary pb-3"}>
+                  Mama info
                 </div>
                 <Grid container spacing={2}>
                   <CustomInput
@@ -1166,8 +1245,8 @@ const AddYuva = () => {
                 <Divider />
               </Grid>
               <Grid item xs={12}>
-                <div className={"text-xl font-bold text-gray pb-2"}>
-                  CONTACT INFO
+                <div className={"text-sm font-semibold text-primary pb-3"}>
+                  Contact info
                 </div>
                 <Grid container spacing={2}>
                   <CustomInput
@@ -1252,10 +1331,10 @@ const AddYuva = () => {
               <Grid item xs={12}>
                 <div
                   className={
-                    "text-xl font-bold text-gray pb-2 flex flex-row justify-between items-center"
+                    "text-sm font-semibold text-primary pb-3 flex flex-row justify-between items-center"
                   }
                 >
-                  EDUCATION INFO
+                  Education
                 </div>
                 <Grid container spacing={2}>
                   <CustomSelect
@@ -1298,7 +1377,7 @@ const AddYuva = () => {
                 <Divider />
               </Grid>
               <Grid item xs={12}>
-                <div className={"text-xl font-bold text-gray pb-2"}>OTHERS</div>
+                <div className={"text-sm font-semibold text-primary pb-3"}>Other</div>
                 <Grid container spacing={2}>
                   <CustomCheckbox
                     label={"Handicap"}
@@ -1419,54 +1498,29 @@ const AddYuva = () => {
                 </Grid>
               </Grid>
               <Grid item xs={12}>
-                {loading ? (
-                  <CircularProgress color="secondary" />
-                ) : (
-                  <button
-                    className={`bg-[#572a2a] text-white sm:w-[200px] w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold transition-all  ${
-                      isSubmitting ? "cursor-not-allowed" : "cursor-pointer"
-                    }}`}
-                    type={"submit"}
-                    disabled={isSubmitting}
-                  >
-                    {isEdit ? "Update Yuva" : "Add New Yuva"}
-                  </button>
-                )}
+                <ActionButton
+                  type={"submit"}
+                  className="sm:w-[200px]"
+                  disabled={isSubmitting}
+                  loading={loading}
+                >
+                  {isEdit ? "Update Yuva" : "Add New Yuva"}
+                </ActionButton>
               </Grid>
             </Grid>
           </Form>
         </FormikProvider>
       </ContainerPage>
-      <Modal
+      <FormModal
         open={showProfileModal}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{
-          "& .MuiModal-backdrop": {
-            backdropFilter: " blur(2px) !important",
-            background: "#878b9499 !important",
-          },
-        }}
         onClose={goToYuvaList}
-        className="flex justify-center items-center"
+        title="Yuva created successfully"
+        maxWidth="520px"
       >
-        <Paper
-          elevation={10}
-          className="!rounded-2xl p-5 w-3/4 max-w-[520px] outline-none flex flex-col gap-4"
-        >
-          <div className={"flex flex-row justify-between items-start"}>
-            <div>
-              <p className={"text-xl font-bold"}>Yuva created successfully</p>
-              <p className={"text-sm text-gray-600 mt-1"}>
-                Upload a profile photo to finish.
-              </p>
-            </div>
-            <CloseOutlinedIcon
-              className={"cursor-pointer"}
-              onClick={goToYuvaList}
-            />
-          </div>
-          <label htmlFor="created-yuva-upload" className="w-fit mx-auto">
+          <p className={"text-sm text-gray-600 mb-4"}>
+            Upload a profile photo to finish.
+          </p>
+          <label htmlFor="created-yuva-upload" className="w-fit mx-auto block">
             {loading ? (
               <CircularProgress className="text-primary" />
             ) : (
@@ -1492,28 +1546,27 @@ const AddYuva = () => {
               }
             }}
           />
-          <p className={"text-sm text-center break-all text-[#572a2a]"}>
+          <p className={"text-sm text-center break-all text-primary mt-4"}>
             {buildYuvaPhotoName(createdYuva)}
           </p>
-          <div className={"flex gap-3"}>
-            <Button
-              variant="outlined"
-              className={"!border-[#572a2a] !text-[#572a2a] w-full"}
+          <div className={"flex gap-3 mt-4"}>
+            <ActionButton
+              variant="secondary"
+              fullWidth
               onClick={goToYuvaList}
             >
               Skip for now
-            </Button>
-            <Button
-              variant="contained"
-              className={"!bg-[#572a2a] w-full"}
+            </ActionButton>
+            <ActionButton
+              fullWidth
               onClick={uploadCreatedYuvaPhoto}
               disabled={!selectedPhoto || loading}
+              loading={loading}
             >
               Upload Photo
-            </Button>
+            </ActionButton>
           </div>
-        </Paper>
-      </Modal>
+      </FormModal>
     </Box>
   );
 };

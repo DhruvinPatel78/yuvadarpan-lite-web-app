@@ -11,7 +11,7 @@ import {
 
 const PrimaryRadioGroup = styled(RadioGroup)`
   & .MuiSvgIcon-root {
-    color: #572a2a;
+    color: #542b2b;
   }
 `;
 export default function CustomRadio({
@@ -31,7 +31,7 @@ export default function CustomRadio({
       <FormControl>
         <FormLabel
           id={`demo-controlled-radio-buttons-group-${name}`}
-          className={"text-primary"}
+          className={"!text-primary !text-sm !font-semibold"}
         >
           {label}
         </FormLabel>
@@ -45,20 +45,30 @@ export default function CustomRadio({
           onBlur={onBlur}
         >
           {list.map((data, index) => {
+            const selected = value === data.value;
             return (
               <FormControlLabel
                 key={`radio-${index}`}
                 value={data.value}
-                control={<Radio />}
+                control={<Radio size="small" />}
                 label={data.label}
+                sx={{
+                  m: 0,
+                  mr: 1,
+                  mt: 0.25,
+                  pr: 1.25,
+                  pl: 0.25,
+                  borderRadius: "999px",
+                  backgroundColor: selected ? "#f4ebe6" : "transparent",
+                }}
               />
             );
           })}
         </PrimaryRadioGroup>
       </FormControl>
-      {errors && (
+      {errors ? (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
-      )}
+      ) : null}
     </Grid>
   );
 }

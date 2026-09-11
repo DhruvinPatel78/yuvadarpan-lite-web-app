@@ -8,10 +8,8 @@ import {
   FormControl,
   FormControlLabel,
   Grid,
-  Modal,
   Paper,
   Tooltip,
-  Typography,
   useMediaQuery,
 } from "@mui/material";
 import Header from "../../../Component/Header";
@@ -20,7 +18,8 @@ import {
   NotificationSnackbar,
 } from "../../../Component/Common/notification";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
-import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CloseIcon from "@mui/icons-material/Close";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
@@ -29,13 +28,13 @@ import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import moment from "moment";
+import { PageHeader, FilterActions, Button as ActionButton, AppModal, FormModal } from "../../../Component/UI";
 import {
   getSelectedData,
   handleListById,
@@ -55,6 +54,17 @@ import {
 import { getSamajByCity } from "../../../util/samajApi";
 
 const MOBILE_PAGE_SIZE = 20;
+
+function UserDetailItem({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-mutedText">
+        {label}
+      </p>
+      <p className="text-sm text-primary mt-0.5 break-words">{value || "-"}</p>
+    </div>
+  );
+}
 
 function Index() {
   const dispatch = useDispatch();
@@ -121,6 +131,8 @@ function Index() {
   const [selectedRole, setSelectedRole] = useState([]);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [viewUser, setViewUser] = useState(null);
 
   const formik = useFormik({
     initialValues: {
@@ -461,7 +473,7 @@ function Index() {
       field: "familyId",
       headerName: "Family Id",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -469,7 +481,7 @@ function Index() {
       field: "firstName",
       headerName: "First name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -477,7 +489,7 @@ function Index() {
       field: "lastName",
       headerName: "Last name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -488,7 +500,7 @@ function Index() {
       field: "role",
       headerName: "Role",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -496,7 +508,7 @@ function Index() {
       field: "email",
       headerName: "Email",
       flex: 2,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -504,7 +516,7 @@ function Index() {
       field: "allowed",
       headerName: "Allowed",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
@@ -524,7 +536,7 @@ function Index() {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -545,32 +557,38 @@ function Index() {
       field: "action",
       headerName: "Action",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName:
         "items-center justify-center flex px-8 outline-none cursor-pointer",
       filterable: false,
       renderCell: (record) => (
         <div className={"flex gap-2"}>
-          <Tooltip title={"Edit"}>
-            <ModeEditIcon
+          <Tooltip title={"View"}>
+            <VisibilityIcon
               className={"text-primary cursor-pointer"}
-              onClick={() => userInfoModalOpen(record?.row)}
+              onClick={() => setViewUser(record?.row)}
             />
           </Tooltip>
-          <Tooltip title={"Delete"}>
-            <DeleteIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() => setDeleteTarget(record?.row)}
-            />
-          </Tooltip>
+          {canAct ? (
+            <>
+              <Tooltip title={"Edit"}>
+                <ModeEditIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => userInfoModalOpen(record?.row)}
+                />
+              </Tooltip>
+              <Tooltip title={"Delete"}>
+                <DeleteIcon
+                  className={"text-primary cursor-pointer"}
+                  onClick={() => setDeleteTarget(record?.row)}
+                />
+              </Tooltip>
+            </>
+          ) : null}
         </div>
       ),
     },
-  ].filter(
-    (column) =>
-      (canAct || column.field !== "action") &&
-      (!hasOwnListToggle || column.field !== "role")
-  );
+  ].filter((column) => !hasOwnListToggle || column.field !== "role");
 
   const deleteAPI = async (id) => {
     try {
@@ -594,6 +612,16 @@ function Index() {
   const users = userList?.data || [];
   const lookupName = (list, id) =>
     list?.find((item) => item?.id === id)?.name || "-";
+  const formatUserDate = (value) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
+  };
+  const formatRole = (role) =>
+    String(role || "-")
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
 
   const toggleCardSelection = (id) => {
     setSelectedUsers((prev) =>
@@ -609,8 +637,10 @@ function Index() {
       <ContainerPage
         className={" flex-col justify-center flex items-start gap-4"}
       >
-        <div className={"w-full justify-between flex items-center gap-3"}>
-          <p className={"text-3xl font-bold"}>Users</p>
+        <PageHeader
+          className="w-full"
+          title="Users"
+          actions={
           <div className={"flex items-center gap-3"}>
             {hasOwnListToggle ? (
               <FormControlLabel
@@ -626,7 +656,7 @@ function Index() {
                   />
                 }
                 label={
-                  <span className={"font-semibold text-[#572a2a]"}>
+                  <span className={"font-semibold text-primary"}>
                     {isCityManager ||
                     isDistrictManager ||
                     isRegionManager ||
@@ -639,10 +669,8 @@ function Index() {
               />
             ) : null}
             {canAct ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                className={"bg-primary"}
+              <ActionButton
+                icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => {
                   userInfoModalOpen();
                   setUserInfoModel(!userInfoModel);
@@ -650,10 +678,11 @@ function Index() {
                 }}
               >
                 Add User
-              </Button>
+              </ActionButton>
             ) : null}
           </div>
-        </div>
+          }
+        />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
@@ -772,46 +801,36 @@ function Index() {
               xs={12}
               className={"flex justify-center items-center gap-4"}
             >
-              <button
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleUserList()}
-              >
-                Submit
-              </button>
-              {(selectedSearchByText ||
-                selectedSearchBy.name ||
-                // selectedState?.length > 0 ||
-                selectedRegion?.length > 0 ||
-                selectedSurname?.length > 0 ||
-                selectedSamaj?.length > 0 ||
-                selectedRole?.length > 0) && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+              <FilterActions
+                onSubmit={() => handleUserList()}
+                onReset={handleReset}
+                showReset={Boolean(
+                  selectedSearchByText ||
+                    selectedSearchBy.name ||
+                    selectedRegion?.length > 0 ||
+                    selectedSurname?.length > 0 ||
+                    selectedSamaj?.length > 0 ||
+                    selectedRole?.length > 0
+                )}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
         {canAct && selectedUsers.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-[#fff5f4] border border-[#572a2a] rounded-lg"
+              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
             }
           >
-            <span className={"text-[#572a2a] font-semibold"}>
+            <span className={"text-primary font-semibold"}>
               {selectedUsers.length} selected
             </span>
             <Button
               size="small"
               variant="contained"
               startIcon={<DeleteIcon />}
-              className={"!bg-[#572a2a] !text-white"}
-              onClick={() => deleteAPI(selectedUsers)}
+              className={"!bg-primary !text-white"}
+              onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
             </Button>
@@ -829,6 +848,7 @@ function Index() {
             page={page}
             setPage={setPage}
             onDeleteSelected={canAct ? deleteAPI : undefined}
+            deleteEntity="user"
           />
         </div>
         <div className={"md:hidden w-full flex flex-col gap-3"}>
@@ -847,14 +867,14 @@ function Index() {
                 >
                   <div className={"p-3"}>
                     <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-[#572a2a] text-base leading-tight min-w-0 pr-1"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
                         {fullName} {lastName}
                       </p>
                       {canAct ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={() => toggleCardSelection(row.id)}
-                          className={"!text-[#572a2a] !p-0 !m-0 shrink-0"}
+                          className={"!text-primary !p-0 !m-0 shrink-0"}
                         />
                       ) : null}
                     </div>
@@ -898,7 +918,14 @@ function Index() {
                     <div className={"flex border-t border-[#ead9d9]"}>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-[#572a2a] border-r border-[#ead9d9]"}
+                        className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
+                        onClick={() => setViewUser(row)}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                         onClick={() => userInfoModalOpen(row)}
                       >
                         Edit
@@ -911,7 +938,17 @@ function Index() {
                         Delete
                       </button>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className={"flex border-t border-[#ead9d9]"}>
+                      <button
+                        type="button"
+                        className={"flex-1 py-2.5 text-sm font-semibold text-primary"}
+                        onClick={() => setViewUser(row)}
+                      >
+                        View
+                      </button>
+                    </div>
+                  )}
                 </Paper>
               );
             })
@@ -923,43 +960,101 @@ function Index() {
           {hasMore && users.length ? (
             <div ref={loadMoreRef} className={"flex justify-center py-3"}>
               {loadingMore ? (
-                <CircularProgress size={24} className={"!text-[#572a2a]"} />
+                <CircularProgress size={24} className={"!text-primary"} />
               ) : null}
             </div>
           ) : null}
         </div>
       </ContainerPage>
-      <Modal
+      <AppModal
+        open={Boolean(viewUser)}
+        onClose={() => setViewUser(null)}
+        maxWidth="560px"
+        className="p-6 pt-7 max-h-[90vh] overflow-auto"
+      >
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={() => setViewUser(null)}
+          className="absolute top-4 right-4 text-primary p-1 rounded-md hover:bg-muted"
+        >
+          <CloseIcon fontSize="small" />
+        </button>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
+          <img
+            src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+            alt=""
+            className="w-24 h-24 rounded-full object-cover pointer-events-none"
+          />
+          <div className="text-center sm:text-left min-w-0">
+            <h2 className="text-lg font-semibold text-primary leading-snug">
+              {[viewUser?.firstName, viewUser?.middleName]
+                .filter(Boolean)
+                .join(" ")}{" "}
+              {lookupName(surname, viewUser?.lastName)}
+            </h2>
+            <p className="text-sm text-mutedText mt-1">
+              {formatRole(viewUser?.role)}
+            </p>
+            <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
+              Family ID {viewUser?.familyId || "-"}
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mt-6 pt-5 border-t border-line">
+          <UserDetailItem
+            label="Date of birth"
+            value={
+              viewUser?.dob && moment(viewUser.dob).isValid()
+                ? moment(viewUser.dob).format("DD/MM/YYYY hh:mm A")
+                : "-"
+            }
+          />
+          <UserDetailItem label="Email" value={viewUser?.email} />
+          <UserDetailItem label="Mobile" value={viewUser?.mobile} />
+          <UserDetailItem label="Gender" value={viewUser?.gender} />
+          <UserDetailItem label="Language" value={viewUser?.language} />
+          <UserDetailItem
+            label="Region"
+            value={lookupName(region, viewUser?.region)}
+          />
+          <UserDetailItem
+            label="Local Samaj"
+            value={lookupName(samaj, viewUser?.localSamaj)}
+          />
+          <UserDetailItem
+            label="Allowed"
+            value={viewUser?.allowed ? "Yes" : "No"}
+          />
+          <UserDetailItem
+            label="Active"
+            value={viewUser?.active ? "Yes" : "No"}
+          />
+          <UserDetailItem
+            label="Created at"
+            value={formatUserDate(viewUser?.createdAt)}
+          />
+          <UserDetailItem
+            label="Updated at"
+            value={formatUserDate(viewUser?.updatedAt)}
+          />
+        </div>
+      </AppModal>
+      <FormModal
         open={userInfoModel}
         onClose={userInfoModalClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{
-          "& .MuiModal-backdrop": {
-            backdropFilter: " blur(2px) !important",
-            background: "#878b9499 !important",
-          },
-        }}
-        className="flex justify-center items-center m-4"
+        title={`${isAddUser ? "New" : "Update"} User`}
+        maxWidth="980px"
       >
-        <Paper elevation={10} className="!rounded-2xl p-4 w-full max-w-[600px]">
-          <div className={"flex justify-between items-center"}>
-            <Typography className={"font-bold text-2xl"}>
-              {`${isAddUser ? `New` : `Update`} User`}
-            </Typography>
-            <HighlightOffIcon
-              onClick={userInfoModalClose}
-              className={"cursor-pointer"}
-            />
-          </div>
           <FormikProvider value={formik}>
-            <Form
-              className={
-                "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
-              }
-            >
-              <Grid container className={"w-full pt-4"} spacing={2}>
-                <Grid item xs={12}>
+            <Form className="flex flex-col w-full">
+              <Grid container className={"w-full"} spacing={1.5}>
+                <Grid item xs={12} className="!pt-1">
+                  <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
+                    Identity
+                  </p>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"familyId"}
@@ -1032,7 +1127,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"email"}
@@ -1046,7 +1141,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"mobile"}
@@ -1062,7 +1157,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"password"}
@@ -1080,7 +1175,7 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
                       name={"confirmPassword"}
@@ -1100,7 +1195,12 @@ function Index() {
                 </Grid>
                 {isAddUser ? (
                   <>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12}>
+                      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
+                        Location
+                      </p>
+                    </Grid>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={list.country}
@@ -1137,7 +1237,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={stateList}
@@ -1170,7 +1270,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={regionList}
@@ -1200,7 +1300,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={districtList}
@@ -1229,7 +1329,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={cityList}
@@ -1253,7 +1353,7 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={samajList}
@@ -1275,22 +1375,21 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomInput
                           type={"date"}
-                          label={"DOB"}
+                          label={"Date of birth"}
                           placeholder={"Select Your DOB"}
                           name="dob"
                           onChange={handleChange}
                           onBlur={handleBlur}
                           errors={touched.dob && errors.dob && errors.dob}
                           value={values.dob}
-                          focused
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomRadio
                           list={[
@@ -1310,7 +1409,7 @@ function Index() {
                       </FormControl>
                     </Grid>
                     {hasOwnListToggle ? null : (
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
                           list={rolesList(false)}
@@ -1336,36 +1435,45 @@ function Index() {
                 <Grid
                   item
                   xs={12}
-                  className={"flex justify-center items-center"}
+                  className={"flex justify-end items-center !pt-2"}
                 >
                   {loading ? (
                     <CircularProgress color="secondary" />
                   ) : (
-                    <button
-                      className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
-                        hasError ? "opacity-50" : "opacity-100"
-                      }`}
+                    <ActionButton
                       type={"submit"}
                       disabled={hasError}
                     >
                       {isAddUser ? "Add" : "Update"}
-                    </button>
+                    </ActionButton>
                   )}
                 </Grid>
               </Grid>
             </Form>
           </FormikProvider>
-        </Paper>
-      </Modal>
+      </FormModal>
       <NotificationSnackbar notification={notification} />
-      <ConfirmModal
-        open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.firstName)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={async () => {
-          await deleteAPI(deleteTarget.id);
+      <DeleteConfirmFlow
+        open={Boolean(deleteTarget) || bulkDeleteOpen}
+        entity="user"
+        ids={deleteTarget ? [deleteTarget.id] : selectedUsers}
+        name={
+          deleteTarget
+            ? [deleteTarget.firstName, deleteTarget.middleName]
+                .filter(Boolean)
+                .join(" ")
+            : `${selectedUsers.length} selected item${
+                selectedUsers.length === 1 ? "" : "s"
+              }`
+        }
+        onClose={() => {
           setDeleteTarget(null);
+          setBulkDeleteOpen(false);
+        }}
+        onConfirm={async () => {
+          await deleteAPI(deleteTarget ? deleteTarget.id : selectedUsers);
+          setDeleteTarget(null);
+          setBulkDeleteOpen(false);
         }}
       />
     </Box>

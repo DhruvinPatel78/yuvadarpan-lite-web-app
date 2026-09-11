@@ -1,6 +1,7 @@
 import React from "react";
-import { CircularProgress, Grid, Link, Paper } from "@mui/material";
+import { Grid, Link } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
+import { AuthShell, Button } from "../../Component/UI";
 import { useNavigate } from "react-router-dom";
 import {
   NotificationData,
@@ -96,20 +97,17 @@ export default function Index() {
   const { errors, values, touched, handleChange, handleBlur } = formik;
 
   return (
-    <div className="h-screen flex flex-col justify-center items-center">
-      <p className="text-center text-primary text-3xl mb-10 font-extrabold font-WorkBold">
-        YUVADARPAN
-      </p>
-      <Paper
-        elevation={10}
-        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
-      >
+    <>
+    <AuthShell>
         <FormikProvider value={formik}>
           <Form>
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               <Grid item xs={12}>
-                <p className="text-center text-primary font-bold text-2xl">
-                  Sign In
+                <p className="text-center text-primary font-semibold text-[22px] leading-tight">
+                  Sign in
+                </p>
+                <p className="text-center text-sm text-mutedText mt-1.5">
+                  Use your email or mobile number
                 </p>
               </Grid>
               <CustomInput
@@ -136,50 +134,41 @@ export default function Index() {
                 value={values.password}
                 errors={touched.password && errors.password && errors.password}
               />
-              <Grid item xs={12}>
-                <button
-                  className={
-                    "bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold flex justify-center items-center"
-                  }
-                  style={
-                    values.password && values.email
-                      ? { cursor: "pointer", opacity: "unset" }
-                      : { disabled: true, cursor: "not-allowed", opacity: 0.5 }
-                  }
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <CircularProgress color="inherit" size={25} />
-                  ) : (
-                    "Sign In"
-                  )}
-                </button>
-              </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} className="flex justify-end !pt-0">
                 <Link
                   href={"/reset-password"}
-                  className="px-1 !text-[#572a2a] !no-underline font-semibold"
+                  className="!text-sm !text-primary !no-underline font-medium"
                 >
-                  Forgot Password ?
+                  Forgot password?
                 </Link>
               </Grid>
               <Grid item xs={12}>
-                <p className="flex justify-center text-sm sm:text-lg cursor-default">
-                  Create a new account?
+                <Button
+                  type="submit"
+                  fullWidth
+                  disabled={loading || !values.password || !values.email}
+                  loading={loading}
+                >
+                  Sign In
+                </Button>
+              </Grid>
+              <Grid item xs={12}>
+                <p className="flex justify-center text-sm cursor-default text-mutedText">
+                  New here?
                   <span
-                    className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
+                    className="px-1 font-semibold text-primary underline cursor-pointer"
                     onClick={() => (loading ? {} : navigate("/register"))}
                     style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
                   >
-                    Registration
+                    Create an account
                   </span>
                 </p>
               </Grid>
             </Grid>
           </Form>
         </FormikProvider>
-      </Paper>
+    </AuthShell>
       <NotificationSnackbar notification={notification} />
-    </div>
+    </>
   );
 }

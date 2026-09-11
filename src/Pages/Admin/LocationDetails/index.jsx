@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   Box,
-  Button,
-  CircularProgress,
   FormControl,
   Grid,
   IconButton,
-  Modal,
-  Paper,
   Tooltip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -15,8 +11,8 @@ import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Button as ActionButton, FormModal, PageHeader } from "../../../Component/UI";
 import { useDispatch } from "react-redux";
 import Header from "../../../Component/Header";
 import ContainerPage from "../../../Component/Container";
@@ -26,9 +22,7 @@ import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
-import ConfirmModal, {
-  getDeleteDescription,
-} from "../../../Component/Common/ConfirmModal";
+import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 
 const omitMetaFields = (row) => {
   const {
@@ -198,7 +192,7 @@ export default function LocationDetails({ config }) {
       field: "name",
       headerName: "Name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -208,7 +202,7 @@ export default function LocationDetails({ config }) {
             field: config.countField,
             headerName: config.countHeader,
             flex: 1,
-            headerClassName: "bg-[#572a2a] text-white outline-none",
+            headerClassName: "bg-primary text-white outline-none",
             cellClassName:
               "items-center justify-center flex px-8 outline-none",
             filterable: false,
@@ -221,7 +215,7 @@ export default function LocationDetails({ config }) {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -243,7 +237,7 @@ export default function LocationDetails({ config }) {
       headerName: "Action",
       width: 140,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
       sortable: false,
       renderCell: (record) => (
@@ -294,30 +288,31 @@ export default function LocationDetails({ config }) {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div className={"flex w-full items-center justify-between my-2"}>
-          <div className={"flex items-center gap-2"}>
+        <PageHeader
+          className="w-full"
+          leading={
             <Tooltip title="Back">
-              <IconButton onClick={() => navigate(backTo)}>
+              <IconButton onClick={() => navigate(backTo)} aria-label="Back">
                 <ArrowBackIcon className={"text-primary"} />
               </IconButton>
             </Tooltip>
-            <p className={"text-3xl font-bold"}>
-              {parent?.name
-                ? `${parent.name} Details`
-                : `${config.entityLabel} Details`}
-            </p>
-          </div>
-          {canManage ? (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              className={"bg-primary"}
-              onClick={handleAdd}
-            >
-              {config.addButtonLabel}
-            </Button>
-          ) : null}
-        </div>
+          }
+          title={
+            parent?.name
+              ? `${parent.name} Details`
+              : `${config.entityLabel} Details`
+          }
+          actions={
+            canManage ? (
+              <ActionButton
+                icon={<AddIcon sx={{ fontSize: 18 }} />}
+                onClick={handleAdd}
+              >
+                {config.addButtonLabel}
+              </ActionButton>
+            ) : null
+          }
+        />
         <p className={"text-xl font-semibold"}>{config.listTitle}</p>
         <CustomTable
           columns={columns}
@@ -330,34 +325,16 @@ export default function LocationDetails({ config }) {
           page={page}
           setPage={setPage}
           onDeleteSelected={canManage ? handleDelete : undefined}
+          deleteEntity={config.deleteEntity}
         />
       </ContainerPage>
       {formOpen ? (
-        <Modal
+        <FormModal
           open={formOpen}
           onClose={closeFormModal}
-          sx={{
-            "& .MuiModal-backdrop": {
-              backdropFilter: "blur(2px) !important",
-              background: "#878b9499 !important",
-            },
-          }}
-          className="flex justify-center items-center"
+          title={config.childLabel}
         >
-          <Paper
-            elevation={10}
-            className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none"
-          >
-            <div className={"flex flex-row justify-between"}>
-              <span className={"text-2xl font-bold"}>{config.childLabel}</span>
-              <Tooltip title={"Close"}>
-                <CloseIcon
-                  className={"cursor-pointer"}
-                  onClick={closeFormModal}
-                />
-              </Tooltip>
-            </div>
-            <Grid container className={"w-full pt-4"} spacing={2}>
+            <Grid container className={"w-full"} spacing={2}>
               <Grid item xs={12}>
                 <FormControl className={"w-full flex gap-4"}>
                   <CustomInput
@@ -400,29 +377,24 @@ export default function LocationDetails({ config }) {
                 </FormControl>
               </Grid>
               <Grid item xs={12} className={"flex justify-center items-center"}>
-                {loading ? (
-                  <CircularProgress color="secondary" />
-                ) : (
-                  <button
-                    className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold ${
-                      !isFormValid() ? "opacity-50" : "opacity-100"
-                    }`}
-                    type={"button"}
-                    disabled={!isFormValid()}
-                    onClick={handleSave}
-                  >
-                    {editRow ? "UPDATE" : "ADD"}
-                  </button>
-                )}
+                <ActionButton
+                  type={"button"}
+                  fullWidth
+                  disabled={!isFormValid()}
+                  loading={loading}
+                  onClick={handleSave}
+                >
+                  {editRow ? "UPDATE" : "ADD"}
+                </ActionButton>
               </Grid>
             </Grid>
-          </Paper>
-        </Modal>
+        </FormModal>
       ) : null}
-      <ConfirmModal
+      <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        title="Delete confirmation"
-        description={getDeleteDescription(deleteTarget?.name)}
+        entity={config.deleteEntity}
+        ids={deleteTarget ? [deleteTarget.id] : []}
+        name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await handleDelete(deleteTarget.id);

@@ -1,30 +1,45 @@
 import React from "react";
-import { Card, styled, Typography } from "@mui/material";
-const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: 12,
-  boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-  "&:hover": {
-    transform: "translateY(-6px)",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-  },
-}));
+import Card from "../UI/Card";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+
 const CustomCard = ({ title, action }) => {
+  const initial = String(title || "")
+    .trim()
+    .charAt(0)
+    .toUpperCase();
+
   return (
-    <StyledCard
-      className="w-full flex justify-center items-center font-bold min-h-28 cursor-pointer text-2xl uppercase text-[#223354] transition-all duration-300 ease-in-out hover:bg-[#572a2a] hover:text-white"
-      variant="outlined"
+    <Card
+      padded={false}
+      className="group w-full cursor-pointer hover:border-primary hover:shadow-raised transition-all duration-200"
       onClick={action}
+      role="button"
+      tabIndex={0}
       aria-label={`Navigate to ${title}`}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          action?.();
+        }
+      }}
     >
-      <Typography
-        variant="h5"
-        component="h2"
-        sx={{ fontWeight: 700, textAlign: "center" }}
-      >
-        {title}
-      </Typography>
-    </StyledCard>
+      <div className="flex items-center justify-between gap-4 min-h-[108px] px-5 py-5">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <span
+            className="w-12 h-12 rounded-xl bg-muted text-primary font-WorkSemiBold text-lg flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors"
+            aria-hidden
+          >
+            {initial}
+          </span>
+          <h2 className="text-base font-WorkSemiBold text-primary leading-snug">
+            {title}
+          </h2>
+        </div>
+        <span className="w-9 h-9 rounded-full bg-muted text-mutedText flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+          <ChevronRightIcon fontSize="small" />
+        </span>
+      </div>
+    </Card>
   );
 };
 
