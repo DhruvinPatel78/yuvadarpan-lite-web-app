@@ -4,7 +4,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const CustomAccordion = ({
   ExpandIcon = ExpandMoreIcon,
-  headerTitle = "Filter & Search",
+  headerTitle = "Filters",
   children,
 }) => {
   const [expanded, setExpanded] = React.useState(false);
@@ -13,20 +13,21 @@ const CustomAccordion = ({
   };
   return (
     <Accordion
-      className={"w-full rounded"}
+      className="w-full !shadow-none"
       expanded={expanded}
       onChange={handleExpansion}
     >
       <AccordionSummary
-        expandIcon={<ExpandIcon className={"text-primary"} />}
+        expandIcon={<ExpandIcon className="text-primary" />}
         aria-controls="panel1-content"
         id="panel1-header"
-        className={`bg-white font-extrabold text-[18px] text-primary rounded-t border-primary ${expanded ? "rounded-t" : "rounded"}`}
-        sx={{ border: "2px solid" }}
+        className="bg-white font-semibold text-sm sm:text-base text-primary rounded-t-xl min-h-[48px]"
       >
         {headerTitle}
       </AccordionSummary>
-      <AccordionDetails className={"p-4"}>{children}</AccordionDetails>
+      <AccordionDetails className="p-4 sm:p-5 border-t border-line">
+        {children}
+      </AccordionDetails>
     </Accordion>
   );
 };

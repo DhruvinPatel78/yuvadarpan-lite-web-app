@@ -1,15 +1,14 @@
 import React from "react";
+import { AuthShell } from "../../Component/UI";
 
 const ThankYou = () => {
   return (
-    <div className={"h-screen w-screen flex justify-center items-center"}>
-      <div className={"max-w-[90%] sm:w-full sm:max-w-[600px]"}>
-        <p className="text-center text-primary text-4xl mb-10 font-extrabold font-WorkBold">
-          Thank you for your interest your account will be live after
-          verification.
-        </p>
-      </div>
-    </div>
+    <AuthShell showBrand>
+      <p className="text-center text-primary text-base sm:text-lg font-semibold leading-relaxed">
+        Thank you for your interest. Your account will be live after
+        verification.
+      </p>
+    </AuthShell>
   );
 };
 

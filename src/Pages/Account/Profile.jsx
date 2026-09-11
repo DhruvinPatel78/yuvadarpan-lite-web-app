@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Box, CircularProgress, Grid, Paper } from "@mui/material";
+import { Box, CircularProgress, Grid } from "@mui/material";
 import Header from "../../Component/Header";
 import ContainerPage from "../../Component/Container";
 import CustomInput from "../../Component/Common/customInput";
@@ -16,6 +16,13 @@ import {
 } from "../../Component/Common/notification";
 import { getCurrentUser, updateUser } from "../../util/userApi";
 import { persistUpdatedUser } from "./persistUser";
+import { PageHeader, Card, Button } from "../../Component/UI";
+
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const isoDate = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return isoDate ? isoDate[1] : "";
+};
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -31,7 +38,7 @@ export default function Profile() {
       lastName: user?.lastName || "",
       email: user?.email || "",
       mobile: user?.mobile || "",
-      dob: user?.dob || "",
+      dob: toDateInputValue(user?.dob),
       gender: user?.gender || "",
     },
     validationSchema: Yup.object({
@@ -90,17 +97,25 @@ export default function Profile() {
   return (
     <Box>
       <Header />
-      <ContainerPage className={"flex-col justify-center flex items-start gap-3"}>
-        <p className={"text-3xl font-bold"}>Profile</p>
-        <Paper elevation={3} className={"w-full p-6 rounded-2xl"}>
+      <ContainerPage
+        className={"flex-col justify-center flex items-start pb-6"}
+      >
+        <PageHeader
+          title="My profile"
+          description="Keep your personal details accurate and up to date."
+        />
+        <Card className="w-full">
+          <h2 className="text-base font-semibold text-primary mb-5">
+            Personal information
+          </h2>
           <FormikProvider value={formik}>
             <Form>
-              <Grid container spacing={2}>
+              <Grid container spacing={2.5}>
                 <CustomInput
                   type={"text"}
                   xs={12}
                   sm={6}
-                  label={"First Name"}
+                  label={"First name"}
                   name="firstName"
                   value={values.firstName}
                   onChange={handleChange}
@@ -111,7 +126,7 @@ export default function Profile() {
                   type={"text"}
                   xs={12}
                   sm={6}
-                  label={"Middle Name"}
+                  label={"Middle name"}
                   name="middleName"
                   value={values.middleName}
                   onChange={handleChange}
@@ -120,15 +135,18 @@ export default function Profile() {
                 />
                 <CustomAutoComplete
                   list={surnameList}
-                  label={"Last Name"}
-                  placeholder={"Select Last Name"}
+                  label={"Last name"}
+                  placeholder={"Select last name"}
                   xs={12}
                   sm={6}
                   name="lastName"
                   value={lastNameValue}
                   errors={touched.lastName && errors.lastName}
                   onChange={(e, lastName) => {
-                    setFieldValue("lastName", lastName?.value || lastName?.id || "");
+                    setFieldValue(
+                      "lastName",
+                      lastName?.value || lastName?.id || ""
+                    );
                   }}
                 />
                 <CustomInput
@@ -157,12 +175,11 @@ export default function Profile() {
                   type={"date"}
                   xs={12}
                   sm={6}
-                  label={"DOB"}
+                  label={"Date of birth"}
                   name="dob"
                   value={values.dob}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  focused
                 />
                 <CustomRadio
                   list={[
@@ -177,25 +194,23 @@ export default function Profile() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
-                <Grid item xs={12} className={"flex justify-end"}>
+                <Grid
+                  item
+                  xs={12}
+                  className={"flex justify-end pt-2"}
+                >
                   {loading ? (
-                    <CircularProgress color="secondary" />
+                    <CircularProgress color="secondary" size={28} />
                   ) : (
-                    <button
-                      className={`bg-[#572a2a] text-white px-6 py-3 rounded-lg font-bold ${
-                        hasError ? "opacity-50" : "opacity-100"
-                      }`}
-                      type={"submit"}
-                      disabled={hasError}
-                    >
-                      Save Profile
-                    </button>
+                    <Button type="submit" disabled={hasError}>
+                      Save profile
+                    </Button>
                   )}
                 </Grid>
               </Grid>
             </Form>
           </FormikProvider>
-        </Paper>
+        </Card>
       </ContainerPage>
       <NotificationSnackbar notification={notification} />
     </Box>

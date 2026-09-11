@@ -1,6 +1,7 @@
-import { Grid, Paper } from "@mui/material";
+import { Grid } from "@mui/material";
 import React from "react";
 import CustomInput from "../../Component/Common/customInput";
+import { AuthShell, Button } from "../../Component/UI";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   NotificationData,
@@ -70,17 +71,14 @@ export default function Index() {
     formik;
 
   return (
-    <div className="h-screen flex flex-col justify-center items-center">
-      <Paper
-        elevation={10}
-        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
-      >
+    <>
+    <AuthShell>
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <p className="text-center text-primary font-bold text-2xl">
-                  Change Password
+                <p className="text-center text-primary font-semibold text-[22px] leading-tight">
+                  Change password
                 </p>
               </Grid>
               <CustomInput
@@ -110,20 +108,20 @@ export default function Index() {
                 }
               />
               <Grid item xs={12}>
-                <button
-                  className={`bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-semibold ${
-                    isSubmitting ? "cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                <Button
+                  type="submit"
+                  fullWidth
                   disabled={isSubmitting || loading}
+                  loading={isSubmitting || loading}
                 >
                   Change Password
-                </button>
+                </Button>
               </Grid>
             </Grid>
           </Form>
         </FormikProvider>
-      </Paper>
+    </AuthShell>
       <NotificationSnackbar notification={notification} />
-    </div>
+    </>
   );
 }

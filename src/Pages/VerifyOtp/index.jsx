@@ -1,5 +1,6 @@
-import { Button, Grid, Paper } from "@mui/material";
+import { Grid } from "@mui/material";
 import OTPInput from "../../Component/Common/OTPInput";
+import { AuthShell, Button } from "../../Component/UI";
 import { useLocation, useNavigate } from "react-router-dom";
 import React, { useRef, useState } from "react";
 import {
@@ -63,61 +64,51 @@ export default function Index() {
     }
   };
 
-  console.log("otp : ", otp);
-
   return (
-    <div className="h-screen flex flex-col justify-center items-center">
-      <Paper
-        elevation={10}
-        className="p-8 rounded-2xl w-full max-w-[90%] sm:w-full sm:max-w-[500px]"
-      >
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <p className="text-center text-primary font-bold text-2xl">
-              OTP Verification
-            </p>
-          </Grid>
-          <Grid item xs={12}>
-            <p className={"text-center"}>
-              Enter OTP Code sent to{" "}
-              <span className={"text-primary font-bold"}>
-                {location?.state?.email || "test@gmail.com"}
-              </span>
-            </p>
-          </Grid>
-          <Grid item xs={12}>
-            <OTPInput
-              length={6}
-              onComplete={(otp) => setOtp(otp)}
-              ref={otpRef}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <p className="flex justify-center text-sm sm:text-lg cursor-default">
-              Don't receive OTP Code?
-              <span
-                className={`px-1 font-black text-[#572a2a] underline text-sm sm:text-lg cursor-pointer`}
-                onClick={() => resendOTP()}
-              >
-                Resend
-              </span>
-            </p>
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              className={
-                "pointer-events-auto bg-[#572a2a] text-white w-full p-2.5 pl-4 pr-4 normal-case text-base rounded-full font-bold flex justify-center items-center disabled:cursor-not-allowed"
-              }
-              onClick={submitHandler}
-              disabled={otp?.length === 0}
-            >
-              Verify OTP Code
-            </Button>
-          </Grid>
+    <>
+    <AuthShell>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <p className="text-center text-primary font-semibold text-[22px] leading-tight">
+            Verify your email
+          </p>
+          <p className={"text-center text-sm text-mutedText mt-1.5"}>
+            Enter OTP Code sent to{" "}
+            <span className={"text-primary font-semibold"}>
+              {location?.state?.email || "test@gmail.com"}
+            </span>
+          </p>
         </Grid>
-      </Paper>
+        <Grid item xs={12}>
+          <OTPInput
+            length={6}
+            onComplete={(otp) => setOtp(otp)}
+            ref={otpRef}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <p className="flex justify-center text-sm cursor-default text-mutedText">
+            Don't receive OTP Code?
+            <span
+              className={`px-1 font-semibold text-primary underline text-sm cursor-pointer`}
+              onClick={() => resendOTP()}
+            >
+              Resend
+            </span>
+          </p>
+        </Grid>
+        <Grid item xs={12}>
+          <Button
+            fullWidth
+            onClick={submitHandler}
+            disabled={otp?.length === 0}
+          >
+            Verify OTP Code
+          </Button>
+        </Grid>
+      </Grid>
+    </AuthShell>
       <NotificationSnackbar notification={notification} />
-    </div>
+    </>
   );
 }

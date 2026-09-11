@@ -7,7 +7,7 @@ const InfoTextField = styled((props) => (
     overflow: "hidden",
     borderRadius: 5,
     backgroundColor: "#fff !important",
-    border: "2px solid #c3c3c3",
+    border: "1px solid #d2c8c2",
     transition: theme.transitions.create([
       "border-color",
       "background-color",
@@ -18,12 +18,12 @@ const InfoTextField = styled((props) => (
     },
   },
   "& .MuiFormLabel-root": {
-    color: "#657380 !important",
+    color: "#6b6460 !important",
     fontWeight: "600",
     fontSize: "18px",
   },
   "& .MuiInputBase-input-MuiFilledInput-input.Mui-disabled": {
-    color: "#657380",
+    color: "#6b6460",
   },
   "& .Mui-disabled": {
     opacity: 0.5,

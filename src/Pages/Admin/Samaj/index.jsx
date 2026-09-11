@@ -2,13 +2,9 @@ import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Box,
-  Button,
-  CircularProgress,
   FormControl,
   FormControlLabel,
   Grid,
-  Modal,
-  Paper,
   Tooltip,
 } from "@mui/material";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
@@ -22,8 +18,8 @@ import { Form, FormikProvider, useFormik } from "formik";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
+import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
@@ -108,7 +104,7 @@ export default function Index() {
       field: "name",
       headerName: "Name",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
     },
@@ -116,7 +112,7 @@ export default function Index() {
       field: "active",
       headerName: "Active",
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
@@ -134,7 +130,7 @@ export default function Index() {
       headerName: "Action",
       width: 100,
       flex: 1,
-      headerClassName: "bg-[#572a2a] text-white outline-none",
+      headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
       sortable: false,
       renderCell: (record) => (
@@ -345,8 +341,10 @@ export default function Index() {
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
-        <div className={"flex w-full items-center justify-between my-2"}>
-          <p className={"text-3xl font-bold"}>Samaj</p>
+        <PageHeader
+          className="w-full"
+          title="Samaj"
+          actions={
           <div className={"flex items-center gap-3"}>
             {cityManager || districtManager || regionManager || stateManager || countryManager ? (
               <FormControlLabel
@@ -382,17 +380,15 @@ export default function Index() {
                   />
                 }
                 label={
-                  <span className={"font-semibold text-[#572a2a]"}>
+                  <span className={"font-semibold text-primary"}>
                     Your Samaj
                   </span>
                 }
               />
             ) : null}
             {canAct ? (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              className={"bg-primary"}
+            <ActionButton
+              icon={<AddIcon sx={{ fontSize: 18 }} />}
               onClick={() => {
                 setSamajAddEditModel(!samajAddEditModel);
                 setList((pre) => ({
@@ -406,10 +402,11 @@ export default function Index() {
               }}
             >
               Add Samaj
-            </Button>
+            </ActionButton>
             ) : null}
           </div>
-        </div>
+          }
+        />
         <CustomAccordion>
           <Grid spacing={2} container>
             <CustomAutoComplete
@@ -509,22 +506,11 @@ export default function Index() {
               xs={12}
               className={"flex justify-center items-center gap-4"}
             >
-              <button
-                className={"bg-primary text-white p-2 px-4 rounded font-bold"}
-                onClick={() => handleSamajList()}
-              >
-                Submit
-              </button>
-              {(selectedSearchByText || selectedCountry?.length > 0) && (
-                <button
-                  className={
-                    "bg-primary text-white p-2 px-4 rounded font-bold cursor-pointer"
-                  }
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              )}
+              <FilterActions
+                onSubmit={() => handleSamajList()}
+                onReset={handleReset}
+                showReset={Boolean(selectedSearchByText || selectedCountry?.length > 0)}
+              />
             </Grid>
           </Grid>
         </CustomAccordion>
@@ -606,37 +592,18 @@ export default function Index() {
         />
       </ContainerPage>
       {samajAddEditModel ? (
-        <Modal
+        <FormModal
           open={samajAddEditModel}
           onClose={() => samajAddEditModalClose()}
-          sx={{
-            "& .MuiModal-backdrop": {
-              backdropFilter: "blur(2px) !important",
-              background: "#878b9499 !important",
-            },
-          }}
-          className="flex justify-center items-center"
+          title="Samaj"
         >
-          <Paper
-            elevation={10}
-            className="!rounded-2xl p-4 w-3/4 max-w-[600px] outline-none"
-          >
-            <div className={"flex flex-row justify-between"}>
-              <span className={"text-2xl font-bold"}>City</span>
-              <Tooltip title={"Edit"}>
-                <CloseIcon
-                  className={"cursor-pointer"}
-                  onClick={() => samajAddEditModalClose()}
-                />
-              </Tooltip>
-            </div>
             <FormikProvider value={formik}>
               <Form
                 className={
                   "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
                 }
               >
-                <Grid container className={"w-full pt-4"} spacing={2}>
+                <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full flex  gap-4"}>
                       <CustomAutoComplete
@@ -808,25 +775,19 @@ export default function Index() {
                     xs={12}
                     className={"flex justify-center items-center"}
                   >
-                    {loading ? (
-                      <CircularProgress color="secondary" />
-                    ) : (
-                      <button
-                        className={`bg-[#572a2a] text-white w-full p-3 normal-case text-base rounded-lg font-bold transition-all ${
-                          hasError ? "opacity-50" : "opacity-100"
-                        }`}
-                        type={"submit"}
-                        disabled={hasError}
-                      >
-                        {samajModalData ? "UPDATE" : "ADD"}
-                      </button>
-                    )}
+                    <ActionButton
+                      type={"submit"}
+                      fullWidth
+                      disabled={hasError}
+                      loading={loading}
+                    >
+                      {samajModalData ? "UPDATE" : "ADD"}
+                    </ActionButton>
                   </Grid>
                 </Grid>
               </Form>
             </FormikProvider>
-          </Paper>
-        </Modal>
+        </FormModal>
       ) : null}
       <DeleteConfirmFlow
         open={Boolean(deleteTarget)}

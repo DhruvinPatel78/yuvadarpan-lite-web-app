@@ -68,14 +68,14 @@ function CustomTable({
   }, [page, pageSize]);
 
   return (
-    <div className={"w-full"}>
+    <div className={"w-full bg-white rounded-xl border border-line overflow-hidden shadow-card"}>
       {showToolbar ? (
         <div
           className={
-            "flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 bg-[#fff5f4] border border-[#572a2a] border-b-0 rounded-t-lg"
+            "flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 bg-muted border-b border-line"
           }
         >
-          <span className={"text-[#572a2a] font-semibold"}>
+          <span className={"text-primary font-semibold"}>
             {selectedIds.length} selected
           </span>
           <div className={"flex flex-wrap items-center gap-2"}>
@@ -87,8 +87,8 @@ function CustomTable({
                 startIcon={action.icon || null}
                 className={
                   action.variant === "outlined"
-                    ? "!border-[#572a2a] !text-[#572a2a]"
-                    : "!bg-[#572a2a] !text-white"
+                    ? "!border-primary !text-primary"
+                    : "!bg-primary !text-white"
                 }
                 onClick={() => action.onClick(selectedIds)}
               >
@@ -100,7 +100,7 @@ function CustomTable({
                 size="small"
                 variant="contained"
                 startIcon={<DeleteIcon />}
-                className={"!bg-[#572a2a] !text-white"}
+                className={"!bg-primary !text-white"}
                 onClick={() => setBulkDeleteOpen(true)}
               >
                 Delete Selected
@@ -109,7 +109,7 @@ function CustomTable({
             <Button
               size="small"
               variant="outlined"
-              className={"!border-[#572a2a] !text-[#572a2a]"}
+              className={"!border-primary !text-primary"}
               onClick={() => handleSelectionChange([])}
             >
               Clear
@@ -118,7 +118,7 @@ function CustomTable({
         </div>
       ) : null}
       <DataGrid
-        className={`${className} bg-white ${showToolbar ? "!rounded-t-none" : ""}`}
+        className={`${className} bg-white border-0 ${showToolbar ? "!rounded-t-none" : ""}`}
         rows={data?.data || []}
         columns={columns}
         hideFooter
@@ -133,12 +133,17 @@ function CustomTable({
         loading={loading}
         getRowId={(row) => row.id}
         sx={{
+          fontFamily: "WorkRegular, 'Work Sans', sans-serif",
+          "& .MuiDataGrid-columnHeaderTitle": {
+            fontFamily: "WorkSemiBold, 'Work Sans', sans-serif",
+            fontWeight: 600,
+          },
           "& .MuiDataGrid-sortIcon, & .MuiDataGrid-menuIconButton .MuiSvgIcon-root":
             {
               color: "white !important",
             },
           "& .MuiDataGrid-columnHeader": {
-            backgroundColor: "#572a2a",
+            backgroundColor: "#542b2b",
           },
           "& .MuiDataGrid-columnHeaderTitleContainer, & .MuiDataGrid-cell": {
             display: "flex",
@@ -171,21 +176,27 @@ function CustomTable({
             },
           },
           "& .MuiDataGrid-cellCheckbox .MuiCheckbox-root": {
-            color: "#572a2a !important",
+            color: "#542b2b !important",
             "&.Mui-checked, &.MuiCheckbox-indeterminate": {
-              color: "#572a2a !important",
+              color: "#542b2b !important",
             },
+          },
+          "& .MuiDataGrid-row:hover": {
+            backgroundColor: "#f7f3ef",
+          },
+          "& .MuiDataGrid-cell": {
+            borderColor: "#e4ddd4",
           },
           "& .MuiDataGrid-overlay": {
             backdropFilter: "blur(4px)",
           },
           "& .MuiCircularProgress-circle": {
-            stroke: "#572a2a",
+            stroke: "#542b2b",
           },
         }}
       />
       {pagination ? (
-        <div className={"w-full bg-white p-2 flex justify-end"}>
+        <div className={"w-full bg-white p-2 flex justify-end border-t border-line"}>
           <TablePagination
             component="div"
             count={data ? Math.ceil(data?.total) : 0}

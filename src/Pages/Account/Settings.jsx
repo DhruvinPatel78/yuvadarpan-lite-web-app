@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Box, Button, CircularProgress, Grid, Paper } from "@mui/material";
+import { Box, CircularProgress, Grid } from "@mui/material";
 import Header from "../../Component/Header";
 import ContainerPage from "../../Component/Container";
 import CustomInput from "../../Component/Common/customInput";
@@ -18,6 +18,11 @@ import {
   verifyOtp,
   changePasswordWithOtp,
 } from "../../util/authApi";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import { PageHeader, Card, Button } from "../../Component/UI";
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -106,133 +111,155 @@ export default function Settings() {
     formik;
   const hasError = Object.keys(errors)?.length || 0;
 
+  const stepCopy = {
+    send: "Verify your email before choosing a new password.",
+    otp: "Enter the code we sent to your email.",
+    password: "Choose a new password for your account.",
+  };
+
   return (
     <Box>
       <Header />
-      <ContainerPage className={"flex-col justify-center flex items-start gap-3"}>
-        <p className={"text-3xl font-bold"}>Settings</p>
-        <Paper elevation={3} className={"w-full max-w-[560px] p-6 rounded-2xl"}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <p className={"text-xl font-semibold text-[#572a2a]"}>
-                Change Password
+      <ContainerPage className={"flex-col justify-center flex items-start pb-8"}>
+        <PageHeader
+          title="Settings"
+          description="Manage your password and protect your account."
+        />
+        <Card className="w-full">
+          <h2 className="text-base font-semibold text-primary">
+            Change password
+          </h2>
+          <p className="text-sm text-mutedText mt-1 mb-5">{stepCopy[step]}</p>
+          {step === "send" ? (
+            <>
+              <p className="text-sm text-gray-600 bg-muted rounded-lg px-3.5 py-3">
+                Verification code will be sent to{" "}
+                <span className="font-semibold text-primary break-all">
+                  {email || "your registered email"}
+                </span>
               </p>
-            </Grid>
-            {step === "send" ? (
-              <>
-                <Grid item xs={12}>
-                  <p>
-                    An OTP will be sent to your registered email{" "}
-                    <span className={"font-bold text-[#572a2a]"}>{email}</span>
+              <div className="flex justify-end mt-5">
+                {loading ? (
+                  <CircularProgress color="secondary" size={28} />
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={!email}
+                    icon={<MailOutlineIcon sx={{ fontSize: 18 }} />}
+                  >
+                    Send OTP
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : null}
+          {step === "otp" ? (
+            <>
+              <div className="flex items-start gap-2.5 bg-muted rounded-lg px-3.5 py-3">
+                <CheckCircleOutlineIcon
+                  fontSize="small"
+                  className="text-primary mt-0.5 shrink-0"
+                />
+                <div className="text-sm min-w-0">
+                  <p className="font-semibold text-primary">
+                    OTP sent successfully
                   </p>
-                </Grid>
-                <Grid item xs={12} className={"flex justify-end"}>
-                  {loading ? (
-                    <CircularProgress color="secondary" />
-                  ) : (
-                    <Button
-                      variant="contained"
-                      className={"bg-[#572a2a] text-white px-6 py-3 rounded-lg font-bold"}
-                      onClick={handleSendOtp}
-                      disabled={!email}
-                    >
-                      Send OTP
-                    </Button>
-                  )}
-                </Grid>
-              </>
-            ) : null}
-            {step === "otp" ? (
-              <>
-                <Grid item xs={12}>
-                  <p className={"text-center"}>
-                    Enter OTP Code sent to{" "}
-                    <span className={"text-primary font-bold"}>{email}</span>
+                  <p className="text-mutedText mt-0.5">
+                    Check{" "}
+                    <span className="font-medium text-primary break-all">
+                      {email}
+                    </span>{" "}
+                    for your 6-digit code.
                   </p>
-                </Grid>
-                <Grid item xs={12}>
-                  <OTPInput
-                    length={6}
-                    onComplete={(value) => setOtp(value)}
-                    ref={otpRef}
+                </div>
+              </div>
+              <div className="mt-5">
+                <p className="font-semibold text-primary text-sm">
+                  Enter verification code
+                </p>
+                <p className="text-sm text-mutedText mt-0.5 mb-4">
+                  The code expires shortly for your security.
+                </p>
+                <OTPInput
+                  length={6}
+                  onComplete={(value) => setOtp(value)}
+                  ref={otpRef}
+                />
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 mt-6">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4"
+                  onClick={handleSendOtp}
+                >
+                  <RefreshIcon sx={{ fontSize: 18 }} />
+                  Resend code
+                </button>
+                {loading ? (
+                  <CircularProgress color="secondary" size={28} />
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={otp?.length !== 6}
+                    icon={<VerifiedUserOutlinedIcon sx={{ fontSize: 18 }} />}
+                  >
+                    Verify OTP
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : null}
+          {step === "password" ? (
+            <FormikProvider value={formik}>
+              <Form>
+                <Grid container spacing={2}>
+                  <CustomInput
+                    type={"password"}
+                    xs={12}
+                    label={"New password"}
+                    placeholder={"Create your password"}
+                    name="password"
+                    value={values.password}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    errors={touched.password && errors.password}
                   />
+                  <CustomInput
+                    type={"password"}
+                    xs={12}
+                    label={"Confirm password"}
+                    placeholder={"Confirm your password"}
+                    name="confirmPassword"
+                    value={values.confirmPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    errors={
+                      touched.confirmPassword && errors.confirmPassword
+                    }
+                  />
+                  <Grid item xs={12} className={"flex justify-end"}>
+                    {loading ? (
+                      <CircularProgress color="secondary" size={28} />
+                    ) : (
+                      <Button
+                        type="submit"
+                        disabled={hasError || isSubmitting}
+                      >
+                        Change password
+                      </Button>
+                    )}
+                  </Grid>
                 </Grid>
-                <Grid item xs={12}>
-                  <p className="flex justify-center text-sm cursor-default">
-                    Didn't receive OTP Code?
-                    <span
-                      className={"px-1 font-black text-[#572a2a] underline cursor-pointer"}
-                      onClick={handleSendOtp}
-                    >
-                      Resend
-                    </span>
-                  </p>
-                </Grid>
-                <Grid item xs={12} className={"flex justify-end"}>
-                  {loading ? (
-                    <CircularProgress color="secondary" />
-                  ) : (
-                    <Button
-                      variant="contained"
-                      className={"bg-[#572a2a] text-white px-6 py-3 rounded-lg font-bold"}
-                      onClick={handleVerifyOtp}
-                      disabled={otp?.length !== 6}
-                    >
-                      Verify OTP
-                    </Button>
-                  )}
-                </Grid>
-              </>
-            ) : null}
-            {step === "password" ? (
-              <Grid item xs={12}>
-                <FormikProvider value={formik}>
-                  <Form>
-                    <Grid container spacing={2}>
-                      <CustomInput
-                        type={"password"}
-                        xs={12}
-                        label={"New Password"}
-                        placeholder={"Create Your Password"}
-                        name="password"
-                        value={values.password}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={touched.password && errors.password}
-                      />
-                      <CustomInput
-                        type={"password"}
-                        xs={12}
-                        label={"Confirm Password"}
-                        placeholder={"Confirm your Password"}
-                        name="confirmPassword"
-                        value={values.confirmPassword}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={touched.confirmPassword && errors.confirmPassword}
-                      />
-                      <Grid item xs={12} className={"flex justify-end"}>
-                        {loading ? (
-                          <CircularProgress color="secondary" />
-                        ) : (
-                          <button
-                            className={`bg-[#572a2a] text-white px-6 py-3 rounded-lg font-bold ${
-                              hasError ? "opacity-50" : "opacity-100"
-                            }`}
-                            type={"submit"}
-                            disabled={hasError || isSubmitting}
-                          >
-                            Change Password
-                          </button>
-                        )}
-                      </Grid>
-                    </Grid>
-                  </Form>
-                </FormikProvider>
-              </Grid>
-            ) : null}
-          </Grid>
-        </Paper>
+              </Form>
+            </FormikProvider>
+          ) : null}
+        </Card>
+        <p className="text-sm text-mutedText mt-4 w-full leading-relaxed">
+          We use a one-time code to confirm it's really you before your password
+          is changed.
+        </p>
       </ContainerPage>
       <NotificationSnackbar notification={notification} />
     </Box>

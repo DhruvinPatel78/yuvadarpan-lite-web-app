@@ -48,7 +48,7 @@ const OTPInput = forwardRef(({ length = 6, onComplete }, ref) => {
   }));
 
   return (
-    <div className="flex space-x-2 w-full justify-center">
+    <div className="flex gap-1.5 sm:gap-2 w-full justify-center">
       {otp.map((digit, index) => (
         <input
           key={index}
@@ -58,7 +58,10 @@ const OTPInput = forwardRef(({ length = 6, onComplete }, ref) => {
           value={digit}
           onChange={(e) => handleInputChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}
-          className="w-12 h-12 border border-gray-300 bg-[#f6f7ff] rounded text-center focus:outline-none focus:border-2 focus:border-primary"
+          aria-label={`Digit ${index + 1} of ${length}`}
+          inputMode="numeric"
+          autoComplete={index === 0 ? "one-time-code" : "off"}
+          className="w-10 h-10 sm:w-11 sm:h-11 border border-line-strong bg-white rounded-lg text-center text-base font-semibold text-primary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           ref={inputRefs.current[index]}
         />
       ))}
