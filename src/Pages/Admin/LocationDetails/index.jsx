@@ -322,7 +322,7 @@ export default function LocationDetails({ config }) {
           }
         />
         <p className={"text-xl font-semibold break-words"}>{config.listTitle}</p>
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={columns}
           data={tableData}

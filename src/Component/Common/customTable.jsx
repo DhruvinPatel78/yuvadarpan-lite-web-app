@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button, TablePagination } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -7,6 +7,36 @@ import { endLoading, startLoading } from "../../store/authSlice";
 import { UseRedux } from "../useRedux";
 import ConfirmModal from "./ConfirmModal";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
+
+const ACTION_COL_WIDTH = 156;
+
+function normalizeTableColumns(columns = []) {
+  return columns.map((col) => {
+    const cellClassName = String(col.cellClassName || "")
+      .replace(/\bpx-\d+\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (col.field === "action") {
+      const rest = { ...col };
+      delete rest.flex;
+      return {
+        ...rest,
+        width: ACTION_COL_WIDTH,
+        minWidth: ACTION_COL_WIDTH,
+        maxWidth: ACTION_COL_WIDTH,
+        sortable: false,
+        cellClassName: `${cellClassName} !px-1`.trim(),
+      };
+    }
+
+    return {
+      ...col,
+      minWidth: col.minWidth || col.width || 120,
+      cellClassName: `${cellClassName} px-2`.trim(),
+    };
+  });
+}
 
 function CustomTable({
   columns,
@@ -33,6 +63,17 @@ function CustomTable({
     Boolean(onDeleteSelected || bulkActions.length || type === "pendingList");
   const showToolbar =
     selectedIds.length > 0 && (onDeleteSelected || bulkActions.length > 0);
+  const normalizedColumns = useMemo(
+    () => normalizeTableColumns(columns),
+    [columns]
+  );
+  const tableMinWidth = useMemo(() => {
+    const columnsWidth = normalizedColumns.reduce(
+      (sum, col) => sum + (Number(col.minWidth) || 120),
+      0
+    );
+    return columnsWidth + (showCheckboxes ? 58 : 0);
+  }, [normalizedColumns, showCheckboxes]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -68,7 +109,7 @@ function CustomTable({
   }, [page, pageSize]);
 
   return (
-    <div className={"w-full bg-white rounded-xl border border-line overflow-hidden shadow-card"}>
+    <div className={"w-full min-w-0 bg-white rounded-xl border border-line overflow-hidden shadow-card"}>
       {showToolbar ? (
         <div
           className={
@@ -117,10 +158,12 @@ function CustomTable({
           </div>
         </div>
       ) : null}
+      <div className="w-full min-w-0 overflow-x-auto">
       <DataGrid
         className={`${className} bg-white border-0 ${showToolbar ? "!rounded-t-none" : ""}`}
         rows={data?.data || []}
-        columns={columns}
+        columns={normalizedColumns}
+        autoHeight
         hideFooter
         disableColumnFilter
         disableColumnMenu
@@ -132,11 +175,33 @@ function CustomTable({
         onRowSelectionModelChange={handleSelectionChange}
         loading={loading}
         getRowId={(row) => row.id}
+        rowHeight={52}
+        columnHeaderHeight={56}
         sx={{
           fontFamily: "WorkRegular, 'Work Sans', sans-serif",
+          border: 0,
+          width: "100%",
+          minWidth: tableMinWidth,
+          "& .MuiDataGrid-main": {
+            width: "100%",
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            overflowY: "hidden",
+          },
+          "& .MuiDataGrid-columnHeaders, & .MuiDataGrid-columnHeadersInner, & .MuiDataGrid-columnHeaderRow":
+            {
+              backgroundColor: "#542b2b",
+            },
+          "& .MuiDataGrid-filler, & .MuiDataGrid-scrollbarFiller, & .MuiDataGrid-scrollbarFiller--header":
+            {
+              backgroundColor: "#542b2b",
+              border: "none",
+            },
           "& .MuiDataGrid-columnHeaderTitle": {
             fontFamily: "WorkSemiBold, 'Work Sans', sans-serif",
             fontWeight: 600,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           },
           "& .MuiDataGrid-sortIcon, & .MuiDataGrid-menuIconButton .MuiSvgIcon-root":
             {
@@ -145,14 +210,32 @@ function CustomTable({
           "& .MuiDataGrid-columnHeader": {
             backgroundColor: "#542b2b",
           },
-          "& .MuiDataGrid-columnHeaderTitleContainer, & .MuiDataGrid-cell": {
+          "& .MuiDataGrid-columnHeaderTitleContainer": {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
           },
-          "& .MuiDataGrid-columnHeaderCheckbox, & .MuiDataGrid-cellCheckbox": {
-            minWidth: "58px !important",
-            maxWidth: "58px !important",
+          "& .MuiDataGrid-cell": {
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            borderColor: "#e4ddd4",
+            overflow: "hidden",
+            minWidth: 0,
+          },
+          "& .MuiDataGrid-cell[data-field='action']": {
+            overflow: "visible",
+          },
+          "& .MuiDataGrid-cell[data-field='action'] .MuiButton-root": {
+            minWidth: "32px !important",
+            padding: "4px !important",
+          },
+          "& .MuiDataGrid-cellContent": {
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+            width: "100%",
           },
           "& .MuiDataGrid-columnHeaderCheckbox": {
             "& .MuiDataGrid-columnHeaderTitleContainer": {
@@ -184,9 +267,6 @@ function CustomTable({
           "& .MuiDataGrid-row:hover": {
             backgroundColor: "#f7f3ef",
           },
-          "& .MuiDataGrid-cell": {
-            borderColor: "#e4ddd4",
-          },
           "& .MuiDataGrid-overlay": {
             backdropFilter: "blur(4px)",
           },
@@ -195,6 +275,7 @@ function CustomTable({
           },
         }}
       />
+      </div>
       {pagination ? (
         <div className={"w-full bg-white p-2 flex justify-end border-t border-line overflow-x-auto"}>
           <TablePagination

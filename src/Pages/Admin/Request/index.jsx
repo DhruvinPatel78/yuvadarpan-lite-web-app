@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Button, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
+import { Box, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
 import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
@@ -321,40 +321,31 @@ export default function Index() {
     {
       field: "action",
       headerName: "Action",
-      width: 150,
-      flex: 3,
+      width: 156,
+      minWidth: 156,
       headerClassName: "bg-primary text-white outline-none",
-      cellClassName: "items-center flex px-8 outline-none",
+      cellClassName: "outline-none",
       filterable: false,
       sortable: false,
       renderCell: (record) => (
-        <div className={"flex gap-2"}>
+        <div className={"flex gap-2 justify-center items-center shrink-0 px-1"}>
           <Tooltip title={"Details"}>
-            <Button
-              variant="text"
-              className={""}
+            <VisibilityIcon
+              className={"text-primary cursor-pointer"}
               onClick={() => requestInfoModalOpen(record.row)}
-            >
-              <VisibilityIcon />
-            </Button>
+            />
           </Tooltip>
           <Tooltip title={"Accept"}>
-            <Button
-              variant="text"
-              className={"!text-[#34c375]"}
+            <CheckIcon
+              className={"text-[#34c375] cursor-pointer"}
               onClick={() => userActionHandler(record.row, true)}
-            >
-              <CheckIcon />
-            </Button>
+            />
           </Tooltip>
           <Tooltip title={"Reject"}>
-            <Button
-              variant="text"
-              className={"!text-[#ff0000]"}
+            <CloseIcon
+              className={"text-[#ff0000] cursor-pointer"}
               onClick={() => userActionHandler(record.row, false)}
-            >
-              <CloseIcon />
-            </Button>
+            />
           </Tooltip>
         </div>
       ),
@@ -540,7 +531,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
             columns={pendingUsersTableHeader}
             data={userList}
