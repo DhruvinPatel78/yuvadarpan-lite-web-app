@@ -1,5 +1,5 @@
 import Header from "../../../Component/Header";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -63,7 +63,12 @@ const YuvaList = () => {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedYuvas, setSelectedYuvas] = useState([]);
-  const isMobile = useMediaQuery("(max-width:767.95px)");
+  const isMobileMatch = useMediaQuery("(max-width:767.95px)");
+  const [isMobile, setIsMobile] = useState(isMobileMatch);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIsMobile(isMobileMatch), 150);
+    return () => window.clearTimeout(timer);
+  }, [isMobileMatch]);
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -90,10 +95,16 @@ const YuvaList = () => {
     isCountryManager;
   const [ownUserList, setOwnUserList] = useState(false);
   const canAct = !hasOwnListToggle || ownUserList;
-  const locationLists = { samaj, city, district, region, state, country };
-  const canEditRow = (yuva) =>
-    (hasOwnListToggle && ownUserList) ||
-    canEditYuvaRecord(auth?.user, yuva, locationLists);
+  const locationLists = useMemo(
+    () => ({ samaj, city, district, region, state, country }),
+    [samaj, city, district, region, state, country]
+  );
+  const canEditRow = useCallback(
+    (yuva) =>
+      (hasOwnListToggle && ownUserList) ||
+      canEditYuvaRecord(auth?.user, yuva, locationLists),
+    [hasOwnListToggle, ownUserList, auth?.user, locationLists]
+  );
   const [nativeList, setNativeList] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -121,11 +132,12 @@ const YuvaList = () => {
     }
   };
 
-  const yuvaListColumn = [
+  const yuvaListColumn = useMemo(() => [
     {
       field: "familyId",
       headerName: "Family Id",
-      width: 90,
+      width: 100,
+      minWidth: 100,
       headerClassName:
         "bg-primary text-white items-center flex justify-center outline-none",
       cellClassName: "items-center flex justify-center outline-none",
@@ -134,38 +146,46 @@ const YuvaList = () => {
     {
       field: "name",
       headerName: "Name",
-      width: 100,
+      minWidth: 140,
       flex: 2,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <div className={"w-full text-wrap px-2"}>
-          <p className={"text-sm"}>
-            {record.row.firstName} {record.row.middleName}{" "}
-            {surname?.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
+      renderCell: (record) => {
+        const fullName = [
+          record.row.firstName,
+          record.row.middleName,
+          surname?.find((item) => item?.id === record?.row?.lastName)?.name,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          <p className={"w-full min-w-0 truncate text-sm px-2"} title={fullName}>
+            {fullName}
           </p>
-        </div>
-      ),
+        );
+      },
     },
     {
       field: "gender",
       headerName: "Gender",
-      width: 100,
+      width: 90,
+      minWidth: 90,
       headerClassName: "bg-primary text-white outline-none",
-      cellClassName: "items-center flex px-6 outline-none",
+      cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
     },
     {
       field: "dob",
       headerName: "DOB",
-      width: 150,
+      width: 170,
+      minWidth: 170,
       headerClassName: "bg-primary text-white outline-none",
       headerAlign: "center",
       cellClassName: "items-center flex p-0 justify-center outline-none",
       filterable: false,
       renderCell: (record) => (
-        <p className={"w-full text-sm px-2"}>
+        <p className={"w-full min-w-0 truncate text-sm px-2"}>
           {moment(record.row.dob).format("DD/MM/YYYY hh:mm A")}
         </p>
       ),
@@ -173,46 +193,64 @@ const YuvaList = () => {
     {
       field: "firm",
       headerName: "Firm",
-      width: 100,
+      minWidth: 120,
       flex: 2,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <span className="block w-full min-w-0 truncate" title={record.row.firm}>
+          {record.row.firm || ""}
+        </span>
+      ),
     },
     {
       field: "city",
       headerName: "City",
-      width: 100,
+      minWidth: 110,
       flex: 1,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <>{city?.find((item) => item?.id === record?.row?.city)?.name}</>
-      ),
+      renderCell: (record) => {
+        const cityName =
+          city?.find((item) => item?.id === record?.row?.city)?.name || "";
+        return (
+          <span className="block w-full min-w-0 truncate" title={cityName}>
+            {cityName}
+          </span>
+        );
+      },
     },
     {
       field: "native",
       headerName: "Native",
-      width: 100,
+      minWidth: 120,
       flex: 1,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <>{nativeList.find((item) => item?.id === record?.row?.native)?.name}</>
-      ),
+      renderCell: (record) => {
+        const nativeName =
+          nativeList.find((item) => item?.id === record?.row?.native)?.name ||
+          "";
+        return (
+          <span className="block w-full min-w-0 truncate" title={nativeName}>
+            {nativeName}
+          </span>
+        );
+      },
     },
     {
       field: "action",
       headerName: "",
-      width: 100,
-      flex: 1,
+      width: 140,
+      minWidth: 140,
+      sortable: false,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
-      sortable: false,
       renderCell: (record) => (
-        <div className={"flex gap-3 justify-between items-center"}>
+        <div className={"flex gap-2 justify-center items-center shrink-0 px-1"}>
           <Tooltip title={"View"}>
             <VisibilityIcon
               className={"text-primary cursor-pointer"}
@@ -249,7 +287,7 @@ const YuvaList = () => {
         </div>
       ),
     },
-  ];
+  ], [surname, city, nativeList, canEditRow, navigate]);
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
@@ -584,7 +622,7 @@ const YuvaList = () => {
             </Button>
           </div>
         ) : null}
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
             columns={yuvaListColumn}
             className={"mx-0 w-full"}

@@ -10,7 +10,7 @@ export default function PageHeader({
 }) {
   return (
     <div
-      className={`w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 ${className}`}
+      className={`w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-line pb-4 mb-5 ${className}`}
     >
       <div className="min-w-0 flex items-start gap-2">
         {leading ? <div className="shrink-0">{leading}</div> : null}
@@ -28,7 +28,9 @@ export default function PageHeader({
             <span className="min-w-0 break-words">{title}</span>
           </h1>
           {description ? (
-            <p className="text-sm text-mutedText mt-1 break-words">{description}</p>
+            <p className="text-sm text-mutedText mt-1 break-words">
+              {description}
+            </p>
           ) : null}
         </div>
       </div>
