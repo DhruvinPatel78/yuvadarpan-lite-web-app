@@ -1,5 +1,5 @@
 import Header from "../../../Component/Header";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -25,9 +25,6 @@ import { useNavigate } from "react-router-dom";
 import { getYuvaList as fetchYuvaList, deleteYuva, getNativeList as fetchNativeList } from "../../../util/yuvaAdminApi";
 import {
   getSelectedData,
-  ImageBackdrop,
-  ImageButton,
-  ImageSrc,
   listHandler,
   useFilteredIds,
   yuvaFilterList,
@@ -37,6 +34,7 @@ import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
+import LoadableImage from "../../../Component/Common/LoadableImage";
 import { UseRedux } from "../../../Component/useRedux";
 import { formatYuvaDob, canEditYuvaRecord } from "../../../util/util";
 import { PageHeader, FilterActions, Button as ActionButton, AppModal } from "../../../Component/UI";
@@ -65,7 +63,12 @@ const YuvaList = () => {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [selectedYuvas, setSelectedYuvas] = useState([]);
-  const isMobile = useMediaQuery("(max-width:767.95px)");
+  const isMobileMatch = useMediaQuery("(max-width:767.95px)");
+  const [isMobile, setIsMobile] = useState(isMobileMatch);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setIsMobile(isMobileMatch), 150);
+    return () => window.clearTimeout(timer);
+  }, [isMobileMatch]);
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -92,10 +95,16 @@ const YuvaList = () => {
     isCountryManager;
   const [ownUserList, setOwnUserList] = useState(false);
   const canAct = !hasOwnListToggle || ownUserList;
-  const locationLists = { samaj, city, district, region, state, country };
-  const canEditRow = (yuva) =>
-    (hasOwnListToggle && ownUserList) ||
-    canEditYuvaRecord(auth?.user, yuva, locationLists);
+  const locationLists = useMemo(
+    () => ({ samaj, city, district, region, state, country }),
+    [samaj, city, district, region, state, country]
+  );
+  const canEditRow = useCallback(
+    (yuva) =>
+      (hasOwnListToggle && ownUserList) ||
+      canEditYuvaRecord(auth?.user, yuva, locationLists),
+    [hasOwnListToggle, ownUserList, auth?.user, locationLists]
+  );
   const [nativeList, setNativeList] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -123,11 +132,12 @@ const YuvaList = () => {
     }
   };
 
-  const yuvaListColumn = [
+  const yuvaListColumn = useMemo(() => [
     {
       field: "familyId",
       headerName: "Family Id",
-      width: 90,
+      width: 100,
+      minWidth: 100,
       headerClassName:
         "bg-primary text-white items-center flex justify-center outline-none",
       cellClassName: "items-center flex justify-center outline-none",
@@ -136,38 +146,46 @@ const YuvaList = () => {
     {
       field: "name",
       headerName: "Name",
-      width: 100,
+      minWidth: 140,
       flex: 2,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <div className={"w-full text-wrap px-2"}>
-          <p className={"text-sm"}>
-            {record.row.firstName} {record.row.middleName}{" "}
-            {surname?.find((item) => item?.id === record?.row?.lastName)?.name}{" "}
+      renderCell: (record) => {
+        const fullName = [
+          record.row.firstName,
+          record.row.middleName,
+          surname?.find((item) => item?.id === record?.row?.lastName)?.name,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          <p className={"w-full min-w-0 truncate text-sm px-2"} title={fullName}>
+            {fullName}
           </p>
-        </div>
-      ),
+        );
+      },
     },
     {
       field: "gender",
       headerName: "Gender",
-      width: 100,
+      width: 90,
+      minWidth: 90,
       headerClassName: "bg-primary text-white outline-none",
-      cellClassName: "items-center flex px-6 outline-none",
+      cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
     },
     {
       field: "dob",
       headerName: "DOB",
-      width: 150,
+      width: 170,
+      minWidth: 170,
       headerClassName: "bg-primary text-white outline-none",
       headerAlign: "center",
       cellClassName: "items-center flex p-0 justify-center outline-none",
       filterable: false,
       renderCell: (record) => (
-        <p className={"w-full text-sm px-2"}>
+        <p className={"w-full min-w-0 truncate text-sm px-2"}>
           {moment(record.row.dob).format("DD/MM/YYYY hh:mm A")}
         </p>
       ),
@@ -175,46 +193,64 @@ const YuvaList = () => {
     {
       field: "firm",
       headerName: "Firm",
-      width: 100,
+      minWidth: 120,
       flex: 2,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      renderCell: (record) => (
+        <span className="block w-full min-w-0 truncate" title={record.row.firm}>
+          {record.row.firm || ""}
+        </span>
+      ),
     },
     {
       field: "city",
       headerName: "City",
-      width: 100,
+      minWidth: 110,
       flex: 1,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <>{city?.find((item) => item?.id === record?.row?.city)?.name}</>
-      ),
+      renderCell: (record) => {
+        const cityName =
+          city?.find((item) => item?.id === record?.row?.city)?.name || "";
+        return (
+          <span className="block w-full min-w-0 truncate" title={cityName}>
+            {cityName}
+          </span>
+        );
+      },
     },
     {
       field: "native",
       headerName: "Native",
-      width: 100,
+      minWidth: 120,
       flex: 1,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <>{nativeList.find((item) => item?.id === record?.row?.native)?.name}</>
-      ),
+      renderCell: (record) => {
+        const nativeName =
+          nativeList.find((item) => item?.id === record?.row?.native)?.name ||
+          "";
+        return (
+          <span className="block w-full min-w-0 truncate" title={nativeName}>
+            {nativeName}
+          </span>
+        );
+      },
     },
     {
       field: "action",
       headerName: "",
-      width: 100,
-      flex: 1,
+      width: 140,
+      minWidth: 140,
+      sortable: false,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "outline-none",
-      sortable: false,
       renderCell: (record) => (
-        <div className={"flex gap-3 justify-between items-center"}>
+        <div className={"flex gap-2 justify-center items-center shrink-0 px-1"}>
           <Tooltip title={"View"}>
             <VisibilityIcon
               className={"text-primary cursor-pointer"}
@@ -251,7 +287,7 @@ const YuvaList = () => {
         </div>
       ),
     },
-  ];
+  ], [surname, city, nativeList, canEditRow, navigate]);
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
@@ -423,7 +459,7 @@ const YuvaList = () => {
           className="w-full"
           title="Yuvalist"
           actions={
-          <div className={"flex flex-row items-center gap-3"}>
+          <div className={"flex flex-col-reverse md:flex-row md:items-center gap-2 md:gap-3 w-full md:w-auto"}>
             {hasOwnListToggle ? (
               <FormControlLabel
                 labelPlacement="start"
@@ -445,13 +481,14 @@ const YuvaList = () => {
               />
             ) : null}
             <Button
-              className={"text-primary flex items-center justify-center"}
+              className={"text-primary flex items-center justify-center max-md:!w-full"}
               onClick={() => navigate("/admin/userDashboard")}
             >
               View User Dashboard
             </Button>
             {canAct ? (
               <ActionButton
+                className="max-md:w-full"
                 icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => navigate("/admin/yuvalist/add")}
               >
@@ -518,7 +555,11 @@ const YuvaList = () => {
             />
             <CustomInput
               type={"text"}
-              placeholder={"Search by first, father or grandfather name"}
+              placeholder={
+                isMobile
+                  ? "Search by name"
+                  : "Search by first, father or grandfather name"
+              }
               name={"firstName"}
               xs={12}
               sm={6}
@@ -564,7 +605,7 @@ const YuvaList = () => {
         {canAct && selectedYuvas.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
+              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
             }
           >
             <span className={"text-primary font-semibold"}>
@@ -574,14 +615,14 @@ const YuvaList = () => {
               size="small"
               variant="contained"
               startIcon={<DeleteIcon />}
-              className={"!bg-primary !text-white"}
+              className={"!bg-primary !text-white max-md:!w-full"}
               onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
             </Button>
           </div>
         ) : null}
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
             columns={yuvaListColumn}
             className={"mx-0 w-full"}
@@ -615,29 +656,29 @@ const YuvaList = () => {
                   className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
                 >
                   <div className={"p-3"}>
-                    <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
+                    <div className={"flex items-start justify-between gap-2"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1 break-words"}>
                         {fullName}
                       </p>
                       {canAct ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={() => toggleCardSelection(row.id)}
-                          className={"!text-primary !p-0 !m-0 shrink-0"}
+                          className={"!text-primary !p-2 !-m-2 shrink-0"}
                         />
                       ) : null}
                     </div>
                     <p className={"text-sm text-gray-600 mt-1"}>
                       Family ID: {row.familyId || "-"}
                     </p>
-                    <p className={"text-sm text-gray-600 capitalize"}>
+                    <p className={"text-sm text-gray-600 capitalize break-words"}>
                       {row.gender || "-"}
                       {row.firm ? ` · ${row.firm}` : ""}
                       {lookupName(nativeList, row.native) !== "-"
                         ? ` · ${lookupName(nativeList, row.native)}`
                         : ""}
                     </p>
-                    <p className={"text-sm text-gray-600"}>
+                    <p className={"text-sm text-gray-600 break-words"}>
                       City: {lookupName(city, row.city)}
                       {" · "}
                       DOB: {formatYuvaDob(row.dob) || "-"}
@@ -646,7 +687,7 @@ const YuvaList = () => {
                   <div className={"flex border-t border-[#ead9d9]"}>
                     <button
                       type="button"
-                      className={`flex-1 py-2.5 text-sm font-semibold text-primary ${
+                      className={`flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary ${
                         canEditRow(row) ? "border-r border-[#ead9d9]" : ""
                       }`}
                       onClick={() => setUserData(row)}
@@ -657,7 +698,7 @@ const YuvaList = () => {
                       <>
                         <button
                           type="button"
-                          className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
+                          className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                           onClick={() =>
                             navigate(`/admin/yuvalist/${row.id}/edit`, {
                               state: { data: row },
@@ -668,7 +709,7 @@ const YuvaList = () => {
                         </button>
                         <button
                           type="button"
-                          className={"flex-1 py-2.5 text-sm font-semibold text-[#ff0000]"}
+                          className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-[#ff0000]"}
                           onClick={() =>
                             setDeleteTarget({
                               id: row.id,
@@ -687,8 +728,9 @@ const YuvaList = () => {
               );
             })
           ) : (
-            <Paper className={"p-6 text-center text-gray-500 rounded-xl"}>
-              No yuva records
+            <Paper className={"p-8 text-center rounded-xl"}>
+              <p className="text-sm font-semibold text-primary">No yuva records</p>
+              <p className="text-sm text-mutedText mt-1">Try a different search or clear filters.</p>
             </Paper>
           )}
           {hasMore && yuvas.length ? (
@@ -704,43 +746,36 @@ const YuvaList = () => {
         open={Boolean(userData)}
         onClose={() => setUserData(null)}
         maxWidth="600px"
-        className="p-6 pt-7 max-h-[90vh] overflow-auto"
+        className="p-4 sm:p-6 pt-7 max-h-[min(90dvh,90vh)] overflow-auto"
       >
         <button
           type="button"
           aria-label="Close"
           onClick={() => setUserData(null)}
-          className="absolute top-4 right-4 text-primary p-1 rounded-md hover:bg-muted"
+          className="absolute top-3 right-3 text-primary p-2 rounded-md hover:bg-muted min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:p-1 md:top-4 md:right-4 flex items-center justify-center"
         >
           <CloseIcon fontSize="small" />
         </button>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
-          <ImageButton
-            focusRipple
-            style={{
-              width: "96px",
-              height: "96px",
-              borderRadius: "150px",
+          <button
+            type="button"
+            className="w-24 h-24 rounded-full overflow-hidden shrink-0 border border-line"
+            onClick={() => {
+              if (userData?.profile?.url) {
+                window.open(userData.profile.url, "_blank");
+              }
             }}
-            onClick={() =>
-              window.open(
-                userData?.profile?.url ||
-                  "https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg",
-                "_blank"
-              )
-            }
           >
-            <ImageSrc
-              style={{
-                backgroundImage:
-                  `url(${userData?.profile?.url})` ||
-                  `url(https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg)`,
-              }}
+            <LoadableImage
+              src={userData?.profile?.url}
+              alt=""
+              className="w-full h-full"
+              eager
+              spinnerSize={24}
             />
-            <ImageBackdrop className="MuiImageBackdrop-root" />
-          </ImageButton>
+          </button>
           <div className="text-center sm:text-left min-w-0 flex-1">
-            <h2 className="text-lg font-semibold text-primary leading-snug">
+            <h2 className="text-lg font-semibold text-primary leading-snug break-words">
               {userData?.firstName}{" "}
               {surname.find((item) => item?.id === userData?.lastName)?.name}{" "}
             </h2>
@@ -750,9 +785,9 @@ const YuvaList = () => {
             <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
               Family ID {userData?.familyId}
             </span>
-            <div className="flex mt-3 gap-2 w-full">
+            <div className="flex mt-3 gap-2 w-full flex-col sm:flex-row">
               <button
-                className="bg-primary text-white h-10 px-4 rounded-lg w-full text-sm font-semibold"
+                className="bg-primary text-white h-11 md:h-10 px-4 rounded-lg w-full text-sm font-semibold"
                 onClick={() =>
                   navigate(`/admin/yuvalist/${userData?.id}`, {
                     state: { ...userData },
@@ -763,7 +798,7 @@ const YuvaList = () => {
               </button>
               {canEditRow(userData) ? (
                 <button
-                  className="border border-primary text-primary h-10 px-3 rounded-lg"
+                  className="border border-primary text-primary h-11 md:h-10 px-3 rounded-lg sm:w-auto w-full flex items-center justify-center"
                   onClick={() =>
                     navigate(`/admin/yuvalist/${userData?.id}/edit`, {
                       state: { data: userData },
@@ -777,6 +812,7 @@ const YuvaList = () => {
           </div>
         </div>
         <Box className="mt-5 pt-2 border-t border-line">
+          <div className="hidden md:block">
           <TabContext value={value}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <TabList
@@ -882,6 +918,79 @@ const YuvaList = () => {
               </div>
             </TabPanel>
           </TabContext>
+          </div>
+          <div className="md:hidden flex flex-col gap-5">
+            <div>
+              <h3 className="text-sm font-WorkSemiBold text-primary mb-3 pb-2 border-b border-line">
+                Personal Info
+              </h3>
+              <div className="grid grid-cols-1 gap-y-4">
+                <YuvaDetailItem label="Father name" value={userData?.fatherName} />
+                <YuvaDetailItem label="Mother name" value={userData?.motherName} />
+                <YuvaDetailItem label="Height" value={userData?.height} />
+                <YuvaDetailItem label="Weight" value={userData?.weight} />
+                <YuvaDetailItem
+                  label="City"
+                  value={city.find((item) => item?.id === userData?.city)?.name}
+                />
+                <YuvaDetailItem
+                  label="State"
+                  value={
+                    state?.find((item) => item?.id === userData?.state)?.name
+                  }
+                />
+                <YuvaDetailItem label="Firm" value={userData?.firm} />
+                <YuvaDetailItem
+                  label="Firm address"
+                  value={userData?.firmAddress}
+                />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-WorkSemiBold text-primary mb-3 pb-2 border-b border-line">
+                Mama Info
+              </h3>
+              <div className="grid grid-cols-1 gap-y-4">
+                <YuvaDetailItem label="Name" value={userData?.mamaInfo?.name} />
+                <YuvaDetailItem
+                  label="Native"
+                  value={userData?.mamaInfo?.native}
+                />
+                <YuvaDetailItem label="City" value={userData?.mamaInfo?.city} />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-WorkSemiBold text-primary mb-3 pb-2 border-b border-line">
+                Contact Info
+              </h3>
+              <div className="grid grid-cols-1 gap-y-4">
+                <YuvaDetailItem
+                  label="Name"
+                  value={userData?.contactInfo?.name}
+                />
+                <YuvaDetailItem
+                  label="Relation"
+                  value={userData?.contactInfo?.relation}
+                />
+                <YuvaDetailItem
+                  label="Number"
+                  value={userData?.contactInfo?.phone}
+                />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-WorkSemiBold text-primary mb-3 pb-2 border-b border-line">
+                Other Info
+              </h3>
+              <div className="grid grid-cols-1 gap-y-4">
+                <YuvaDetailItem label="Education" value={userData?.education} />
+                <YuvaDetailItem
+                  label="Blood group"
+                  value={userData?.bloodGroup}
+                />
+              </div>
+            </div>
+          </div>
         </Box>
       </AppModal>
       <DeleteConfirmFlow

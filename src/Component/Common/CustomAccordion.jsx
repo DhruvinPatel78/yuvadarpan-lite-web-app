@@ -13,19 +13,30 @@ const CustomAccordion = ({
   };
   return (
     <Accordion
-      className="w-full !shadow-none"
+      disableGutters
+      className="w-full !shadow-none border border-solid border-line !rounded-xl overflow-hidden"
       expanded={expanded}
       onChange={handleExpansion}
+      sx={{
+        border: "1px solid #e4ddd4",
+        borderRadius: "12px !important",
+        boxShadow: "none",
+        overflow: "hidden",
+        "&:before": { display: "none" },
+        "&.Mui-expanded": {
+          margin: 0,
+        },
+      }}
     >
       <AccordionSummary
         expandIcon={<ExpandIcon className="text-primary" />}
         aria-controls="panel1-content"
         id="panel1-header"
-        className="bg-white font-semibold text-sm sm:text-base text-primary rounded-t-xl min-h-[48px]"
+        className="bg-white font-semibold text-sm sm:text-base text-primary min-h-[48px] !px-3 sm:!px-4"
       >
         {headerTitle}
       </AccordionSummary>
-      <AccordionDetails className="p-4 sm:p-5 border-t border-line">
+      <AccordionDetails className="p-3 sm:p-5 border-t border-line">
         {children}
       </AccordionDetails>
     </Accordion>

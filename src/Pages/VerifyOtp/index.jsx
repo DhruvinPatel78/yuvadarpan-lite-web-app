@@ -74,7 +74,7 @@ export default function Index() {
           </p>
           <p className={"text-center text-sm text-mutedText mt-1.5"}>
             Enter OTP Code sent to{" "}
-            <span className={"text-primary font-semibold"}>
+            <span className={"text-primary font-semibold break-all"}>
               {location?.state?.email || "test@gmail.com"}
             </span>
           </p>
@@ -87,7 +87,7 @@ export default function Index() {
           />
         </Grid>
         <Grid item xs={12}>
-          <p className="flex justify-center text-sm cursor-default text-mutedText">
+          <p className="flex justify-center flex-wrap text-sm cursor-default text-mutedText">
             Don't receive OTP Code?
             <span
               className={`px-1 font-semibold text-primary underline text-sm cursor-pointer`}

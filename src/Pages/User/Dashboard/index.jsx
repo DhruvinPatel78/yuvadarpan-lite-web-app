@@ -508,18 +508,20 @@ const Home = () => {
   );
 
   const filterActions = (
-    <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-4">
+    <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center justify-end gap-2 md:gap-4">
       <Button
         type="button"
         variant="ghost"
         onClick={handleReset}
         disabled={!showReset}
+        className="max-md:w-full"
       >
         Clear
       </Button>
       <Button
         type="button"
         onClick={handleApplyFilters}
+        className="max-md:w-full"
         icon={<FilterListIcon sx={{ fontSize: 18 }} />}
       >
         Apply filters
@@ -530,12 +532,16 @@ const Home = () => {
   return (
     <div>
       <Header />
-      <Container maxWidth="xl" className={"p-4 pb-6"}>
+      <Container maxWidth="xl" className={"p-3 sm:p-4 pb-6"}>
         <Card padded={false} className="p-2.5 sm:p-3 mb-5">
           <div className="flex items-center gap-2">
             <TextField
               fullWidth
-              placeholder="Search by name, father, mobile, family ID, email"
+              placeholder={
+                isMobile
+                  ? "Search name, mobile, family ID"
+                  : "Search by name, father, mobile, family ID, email"
+              }
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
               InputProps={{

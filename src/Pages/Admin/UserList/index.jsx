@@ -28,6 +28,7 @@ import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
+import LoadableImage from "../../../Component/Common/LoadableImage";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
@@ -641,7 +642,7 @@ function Index() {
           className="w-full"
           title="Users"
           actions={
-          <div className={"flex items-center gap-3"}>
+          <div className={"flex flex-col-reverse md:flex-row md:items-center gap-2 md:gap-3 w-full md:w-auto"}>
             {hasOwnListToggle ? (
               <FormControlLabel
                 labelPlacement="start"
@@ -670,6 +671,7 @@ function Index() {
             ) : null}
             {canAct ? (
               <ActionButton
+                className="max-md:w-full"
                 icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => {
                   userInfoModalOpen();
@@ -819,7 +821,7 @@ function Index() {
         {canAct && selectedUsers.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-muted border border-line rounded-lg"
+              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
             }
           >
             <span className={"text-primary font-semibold"}>
@@ -829,14 +831,14 @@ function Index() {
               size="small"
               variant="contained"
               startIcon={<DeleteIcon />}
-              className={"!bg-primary !text-white"}
+              className={"!bg-primary !text-white max-md:!w-full"}
               onClick={() => setBulkDeleteOpen(true)}
             >
               Delete Selected
             </Button>
           </div>
         ) : null}
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
             columns={usersTableHeader}
             data={userList}
@@ -866,15 +868,15 @@ function Index() {
                   className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
                 >
                   <div className={"p-3"}>
-                    <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
+                    <div className={"flex items-start justify-between gap-2"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1 break-words"}>
                         {fullName} {lastName}
                       </p>
                       {canAct ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={() => toggleCardSelection(row.id)}
-                          className={"!text-primary !p-0 !m-0 shrink-0"}
+                          className={"!text-primary !p-2 !-m-2 shrink-0"}
                         />
                       ) : null}
                     </div>
@@ -889,7 +891,7 @@ function Index() {
                         Role: {row.role || "-"}
                       </p>
                     )}
-                    <div className={"flex items-center gap-4 mt-2"}>
+                    <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"}>
                       <div className={"flex items-center gap-1"}>
                         <span className={"text-sm text-gray-600"}>Allowed</span>
                         <CustomSwitch
@@ -918,21 +920,21 @@ function Index() {
                     <div className={"flex border-t border-[#ead9d9]"}>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
+                        className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                         onClick={() => setViewUser(row)}
                       >
                         View
                       </button>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
+                        className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                         onClick={() => userInfoModalOpen(row)}
                       >
                         Edit
                       </button>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-[#ff0000]"}
+                        className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-[#ff0000]"}
                         onClick={() => setDeleteTarget(row)}
                       >
                         Delete
@@ -942,7 +944,7 @@ function Index() {
                     <div className={"flex border-t border-[#ead9d9]"}>
                       <button
                         type="button"
-                        className={"flex-1 py-2.5 text-sm font-semibold text-primary"}
+                        className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary"}
                         onClick={() => setViewUser(row)}
                       >
                         View
@@ -953,8 +955,9 @@ function Index() {
               );
             })
           ) : (
-            <Paper className={"p-6 text-center text-gray-500 rounded-xl"}>
-              No users
+            <Paper className={"p-8 text-center rounded-xl"}>
+              <p className="text-sm font-semibold text-primary">No users</p>
+              <p className="text-sm text-mutedText mt-1">Try a different search or clear filters.</p>
             </Paper>
           )}
           {hasMore && users.length ? (
@@ -970,24 +973,24 @@ function Index() {
         open={Boolean(viewUser)}
         onClose={() => setViewUser(null)}
         maxWidth="560px"
-        className="p-6 pt-7 max-h-[90vh] overflow-auto"
+        className="p-4 sm:p-6 pt-7 max-h-[min(90dvh,90vh)] overflow-auto"
       >
         <button
           type="button"
           aria-label="Close"
           onClick={() => setViewUser(null)}
-          className="absolute top-4 right-4 text-primary p-1 rounded-md hover:bg-muted"
+          className="absolute top-3 right-3 text-primary p-2 rounded-md hover:bg-muted min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:p-1 md:top-4 md:right-4 flex items-center justify-center"
         >
           <CloseIcon fontSize="small" />
         </button>
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
-          <img
-            src="https://t3.ftcdn.net/jpg/02/43/12/34/360_F_243123463_zTooub557xEWABDLk0jJklDyLSGl2jrr.jpg"
+          <LoadableImage
+            src=""
             alt=""
-            className="w-24 h-24 rounded-full object-cover pointer-events-none"
+            className="w-24 h-24 rounded-full pointer-events-none"
           />
           <div className="text-center sm:text-left min-w-0">
-            <h2 className="text-lg font-semibold text-primary leading-snug">
+            <h2 className="text-lg font-semibold text-primary leading-snug break-words">
               {[viewUser?.firstName, viewUser?.middleName]
                 .filter(Boolean)
                 .join(" ")}{" "}

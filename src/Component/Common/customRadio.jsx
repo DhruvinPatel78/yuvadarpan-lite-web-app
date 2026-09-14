@@ -60,6 +60,12 @@ export default function CustomRadio({
                   pl: 0.25,
                   borderRadius: "999px",
                   backgroundColor: selected ? "#f4ebe6" : "transparent",
+                  "@media (max-width: 767.95px)": {
+                    minHeight: 44,
+                    mr: 1,
+                    pr: 1.5,
+                    pl: 0.5,
+                  },
                 }}
               />
             );

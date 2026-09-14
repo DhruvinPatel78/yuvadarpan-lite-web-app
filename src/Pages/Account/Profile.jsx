@@ -197,7 +197,7 @@ export default function Profile() {
                 <Grid
                   item
                   xs={12}
-                  className={"flex justify-end pt-2"}
+                  className={"flex justify-end max-md:[&>button]:w-full pt-2"}
                 >
                   {loading ? (
                     <CircularProgress color="secondary" size={28} />

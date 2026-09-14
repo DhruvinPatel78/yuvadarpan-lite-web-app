@@ -53,20 +53,31 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="sticky" className={"bg-primary top-0 z-20 shadow-none"}>
+    <>
+    <AppBar position="fixed" className={"bg-primary top-0 !z-[1100] shadow-none"}>
       <Container className="max-w-[1600px]">
-        <Toolbar disableGutters className={"justify-between min-h-[72px]"}>
+        <Toolbar disableGutters className={"justify-between min-h-[56px] md:min-h-[72px] max-md:gap-3"}>
           <YuvadarpanLogo
-            className={"cursor-pointer !w-auto"}
+            className={"app-header-logo cursor-pointer !w-auto min-w-0"}
             maxHeight={46}
             style={{ width: "auto", maxWidth: 320 }}
             onClick={() => navigate("/")}
             ariaLabel="Yuvadarpan home"
           />
           {user?.user ? (
-            <Box sx={{ flexGrow: 0 }}>
+            <Box sx={{ flexGrow: 0, flexShrink: 0 }}>
               <Tooltip title="Open settings">
-                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                <IconButton
+                  onClick={handleOpenUserMenu}
+                  aria-label="Open account menu"
+                  sx={{
+                    p: 0,
+                    "@media (max-width: 767.95px)": {
+                      width: 44,
+                      height: 44,
+                    },
+                  }}
+                >
                   <Avatar
                     sx={{
                       bgcolor: "#fff",
@@ -92,6 +103,9 @@ const Header = () => {
                   "& .MuiPaper-root": {
                     borderRadius: "8px",
                     boxShadow: "0 8px 24px rgba(84,43,43,0.12)",
+                    "@media (max-width: 767.95px)": {
+                      minWidth: 196,
+                    },
                   },
                 }}
                 id="menu-appbar"
@@ -112,6 +126,12 @@ const Header = () => {
                   <MenuItem
                     key={item.label}
                     onClick={() => handleMenuItem(item)}
+                    sx={{
+                      "@media (max-width: 767.95px)": {
+                        minHeight: 48,
+                        py: 1.5,
+                      },
+                    }}
                   >
                     <Typography textAlign="center" className="!text-primary !text-sm !font-WorkSemiBold">
                       {item.label}
@@ -123,9 +143,15 @@ const Header = () => {
           ) : null}
         </Toolbar>
       </Container>
-      <FloatingButton />
-      {loading ? <FullPageLoader /> : null}
     </AppBar>
+    <Toolbar
+      aria-hidden
+      disableGutters
+      className="app-header-spacer min-h-[56px] md:min-h-[72px]"
+    />
+    <FloatingButton />
+    {loading ? <FullPageLoader /> : null}
+    </>
   );
 };
 export default Header;

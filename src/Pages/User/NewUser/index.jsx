@@ -17,7 +17,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 const PdfPaginationBtn = ({ children, disabled, onClick }) => {
   return (
     <button
-      className={`p-2 rounded-full ${
+      className={`min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 p-2 rounded-full flex items-center justify-center ${
         disabled ? `bg-[#542b2b8a] cursor-not-allowed` : `bg-primary`
       } text-white`}
       disabled={disabled}
@@ -80,13 +80,13 @@ export default function NewUser() {
     <div className="h-full w-full overflow-hidden">
       <Header />
       <div>
-        <div className={"flex justify-center p-4 relative z-[1]"}>
+        <div className={"flex justify-center p-4 relative z-[1] w-full max-w-full"}>
           <CustomAutoComplete
             label={"City"}
             list={cityListEn}
             value={city}
             onSelect={handleCityChange}
-            className={"sm:w-84 w-96"}
+            className={"w-full max-w-full md:w-96"}
             placeholder={"Select City"}
             name={"city"}
             xs={12}
@@ -94,13 +94,13 @@ export default function NewUser() {
             md={4}
           />
         </div>
-        <div className={"flex flex-col items-center"}>
+        <div className={"flex flex-col items-center w-full overflow-x-auto"}>
           <Document file={yuvaPDF} onLoadSuccess={onDocumentLoadSuccess}>
-            <Page pageNumber={pageNumber} className={"h-[630px]"} />
+            <Page pageNumber={pageNumber} className={"h-[630px] max-md:!h-auto"} />
           </Document>
           <div
             className={
-              "flex w-full max-w-[600px] justify-between p-4 items-center"
+              "flex w-full max-w-[600px] justify-between p-4 items-center gap-1 max-md:px-2"
             }
           >
             <PdfPaginationBtn
@@ -115,7 +115,7 @@ export default function NewUser() {
             >
               <KeyboardArrowLeftIcon />
             </PdfPaginationBtn>
-            <p className={"flex items-center text-primary font-bold "}>
+            <p className={"flex items-center text-primary font-bold max-md:text-xs text-center px-1 shrink min-w-0"}>
               Page {pageNumber} of {numPages}
             </p>
             <PdfPaginationBtn

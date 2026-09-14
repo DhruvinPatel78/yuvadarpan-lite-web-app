@@ -26,7 +26,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-WorkSemiBold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 ${
+      className={`inline-flex items-center justify-center gap-2 h-11 md:h-10 px-4 rounded-lg text-sm font-WorkSemiBold transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 ${
         fullWidth ? "w-full" : ""
       } ${variants[variant] || variants.primary} ${className}`}
       {...rest}
@@ -40,7 +40,7 @@ export default function Button({
 export function IconBtn({ className = "", children, ...rest }) {
   return (
     <IconButton
-      className={`!w-9 !h-9 !rounded-lg !bg-muted !text-primary hover:!bg-line !border !border-solid !border-line ${className}`}
+      className={`!w-11 !h-11 md:!w-9 md:!h-9 !rounded-lg !bg-muted !text-primary hover:!bg-line !border !border-solid !border-line ${className}`}
       {...rest}
     >
       {children}
@@ -56,12 +56,12 @@ export function FilterActions({
   resetLabel = "Reset",
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button type="button" onClick={onSubmit}>
+    <div className="flex flex-col-reverse md:flex-row md:flex-wrap items-stretch md:items-center gap-2 w-full md:w-auto">
+      <Button type="button" onClick={onSubmit} className="max-md:w-full">
         {submitLabel}
       </Button>
       {showReset ? (
-        <Button type="button" variant="secondary" onClick={onReset}>
+        <Button type="button" variant="secondary" onClick={onReset} className="max-md:w-full">
           {resetLabel}
         </Button>
       ) : null}

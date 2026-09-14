@@ -20,6 +20,9 @@ export const AppTabs = styled((props) => (
     width: "100%",
     backgroundColor: tokens.primary,
   },
+  "@media (max-width: 767.95px)": {
+    minHeight: 48,
+  },
 });
 
 export const AppTab = styled((props) => <Tab disableRipple {...props} />)({
@@ -33,5 +36,10 @@ export const AppTab = styled((props) => <Tab disableRipple {...props} />)({
   color: tokens.mutedText,
   "&.Mui-selected": {
     color: tokens.primary,
+  },
+  "@media (max-width: 767.95px)": {
+    minHeight: 48,
+    paddingLeft: 14,
+    paddingRight: 14,
   },
 });

@@ -11,7 +11,7 @@ const CustomTabPanel = ({ children, value, index, ...other }) => {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 1, width: "100%" }}>{children}</Box>
+        <Box sx={{ p: { xs: 0, md: 1 }, width: "100%" }}>{children}</Box>
       )}
     </div>
   );

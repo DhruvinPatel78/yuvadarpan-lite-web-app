@@ -311,7 +311,8 @@ export default function Index() {
               />
               <CustomInput
                 type={"number"}
-                xs={6}
+                xs={12}
+                sm={6}
                 label={"Family ID"}
                 placeholder={"Enter Your Family Id"}
                 name="familyId"
@@ -322,7 +323,8 @@ export default function Index() {
               />
               <CustomInput
                 type={"date"}
-                xs={6}
+                xs={12}
+                sm={6}
                 label={"Date of birth"}
                 placeholder={"Select Your DOB"}
                 name="dob"

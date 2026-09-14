@@ -287,7 +287,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={countryListColumn}
           data={countryData}

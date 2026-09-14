@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Button, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
+import { Box, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
 import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
@@ -321,40 +321,31 @@ export default function Index() {
     {
       field: "action",
       headerName: "Action",
-      width: 150,
-      flex: 3,
+      width: 156,
+      minWidth: 156,
       headerClassName: "bg-primary text-white outline-none",
-      cellClassName: "items-center flex px-8 outline-none",
+      cellClassName: "outline-none",
       filterable: false,
       sortable: false,
       renderCell: (record) => (
-        <div className={"flex gap-2"}>
+        <div className={"flex gap-2 justify-center items-center shrink-0 px-1"}>
           <Tooltip title={"Details"}>
-            <Button
-              variant="text"
-              className={""}
+            <VisibilityIcon
+              className={"text-primary cursor-pointer"}
               onClick={() => requestInfoModalOpen(record.row)}
-            >
-              <VisibilityIcon />
-            </Button>
+            />
           </Tooltip>
           <Tooltip title={"Accept"}>
-            <Button
-              variant="text"
-              className={"!text-[#34c375]"}
+            <CheckIcon
+              className={"text-[#34c375] cursor-pointer"}
               onClick={() => userActionHandler(record.row, true)}
-            >
-              <CheckIcon />
-            </Button>
+            />
           </Tooltip>
           <Tooltip title={"Reject"}>
-            <Button
-              variant="text"
-              className={"!text-[#ff0000]"}
+            <CloseIcon
+              className={"text-[#ff0000] cursor-pointer"}
               onClick={() => userActionHandler(record.row, false)}
-            >
-              <CloseIcon />
-            </Button>
+            />
           </Tooltip>
         </div>
       ),
@@ -381,7 +372,7 @@ export default function Index() {
           className="w-full"
           title="Pending Requests"
           actions={
-          <div className="flex flex-row gap-3 sm:w-auto w-full">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-3 w-full md:w-auto">
             <Tooltip title={"Accept all selected"}>
               <ActionButton
                 className="w-full"
@@ -540,7 +531,7 @@ export default function Index() {
             </Grid>
           </Grid>
         </CustomAccordion>
-        <div className={"hidden md:block w-full"}>
+        <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
             columns={pendingUsersTableHeader}
             data={userList}
@@ -582,14 +573,14 @@ export default function Index() {
                   className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
                 >
                   <div className={"p-3"}>
-                    <div className={"flex items-center justify-between gap-2"}>
-                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1"}>
+                    <div className={"flex items-start justify-between gap-2"}>
+                      <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1 break-words"}>
                         {fullName} {lastName}
                       </p>
                       <Checkbox
                         checked={isSelected}
                         onChange={() => toggleCardSelection(row.id)}
-                        className={"!text-primary !p-0 !m-0 shrink-0"}
+                        className={"!text-primary !p-2 !-m-2 shrink-0"}
                       />
                     </div>
                     <p className={"text-sm text-gray-600 mt-1"}>
@@ -598,7 +589,7 @@ export default function Index() {
                     <p className={"text-sm text-gray-600 break-all"}>
                       {row.email || "-"}
                     </p>
-                    <p className={"text-sm text-gray-600 capitalize"}>
+                    <p className={"text-sm text-gray-600 capitalize break-words"}>
                       {row.gender || "-"} · {lookupName(region, row.region)} ·{" "}
                       {lookupName(samaj, row.localSamaj)}
                     </p>
@@ -606,21 +597,21 @@ export default function Index() {
                   <div className={"flex border-t border-[#ead9d9]"}>
                     <button
                       type="button"
-                      className={"flex-1 py-2.5 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
+                      className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-primary border-r border-[#ead9d9]"}
                       onClick={() => requestInfoModalOpen(row)}
                     >
                       View
                     </button>
                     <button
                       type="button"
-                      className={"flex-1 py-2.5 text-sm font-semibold text-[#34c375] border-r border-[#ead9d9]"}
+                      className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-[#34c375] border-r border-[#ead9d9]"}
                       onClick={() => userActionHandler(row, true)}
                     >
                       Accept
                     </button>
                     <button
                       type="button"
-                      className={"flex-1 py-2.5 text-sm font-semibold text-[#ff0000]"}
+                      className={"flex-1 min-h-[44px] py-2.5 px-1 text-sm font-semibold text-[#ff0000]"}
                       onClick={() => userActionHandler(row, false)}
                     >
                       Reject
@@ -630,8 +621,9 @@ export default function Index() {
               );
             })
           ) : (
-            <Paper className={"p-6 text-center text-gray-500 rounded-xl"}>
-              No pending requests
+            <Paper className={"p-8 text-center rounded-xl"}>
+              <p className="text-sm font-semibold text-primary">No pending requests</p>
+              <p className="text-sm text-mutedText mt-1">New requests will appear here.</p>
             </Paper>
           )}
           {hasMore && requests.length ? (
