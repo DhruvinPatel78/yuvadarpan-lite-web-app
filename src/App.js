@@ -34,6 +34,7 @@ import NotFound from "./Pages/NotFound";
 import PrivateRoute from "./util/PrivateRoute";
 import PublicRoute from "./util/PublicRoute";
 import Home from "./Pages/User/Dashboard";
+import Shortlisted from "./Pages/User/Shortlist";
 import ResetPassword from "./Pages/RestPassword";
 import VerifyOtp from "./Pages/VerifyOtp";
 import ChangePassword from "./Pages/ChangePassword";
@@ -74,6 +75,11 @@ function App() {
           path="profile"
           exact
           element={<PrivateRoute Component={AccountProfile} />}
+        />
+        <Route
+          path="shortlisted"
+          exact
+          element={<PrivateRoute Component={Shortlisted} userOnly />}
         />
         <Route
           path="settings"

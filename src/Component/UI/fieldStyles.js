@@ -42,6 +42,14 @@ export const fieldControlCss = `
     caret-color: #542b2b;
     transition: background-color 9999s ease-out 0s;
   }
+  & input[type="number"]::-webkit-outer-spin-button,
+  & input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  & input[type="number"] {
+    -moz-appearance: textfield;
+  }
   & input[type="date"] {
     color-scheme: light;
     min-height: 24px;

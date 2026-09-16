@@ -48,7 +48,7 @@ export default function NewUser() {
     } catch (error) {
       // Optionally handle error with notification
     } finally {
-      setTimeout(() => dispatch(endLoading()), 2000);
+      dispatch(endLoading());
     }
   };
   useEffect(() => {

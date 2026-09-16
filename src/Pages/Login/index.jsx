@@ -57,29 +57,24 @@ export default function Index() {
           localStorage.setItem("user", JSON.stringify(res?.data));
           localStorage.setItem("token", res?.token);
           setNotification({ message: "Login Success", type: "success" });
-          setTimeout(() => {
-            dispatch(endLoading());
-            dispatch(getAllCityData);
-            dispatch(getAllStateData);
-            dispatch(getAllRegionData);
-            dispatch(getAllDistrictData);
-            dispatch(getAllSamajData);
-            dispatch(getAllSurnameData);
-            if (res.data?.role !== "USER") {
-              dispatch(getAllCountryData);
-              dispatch(getAllRoleData);
-            }
-            dispatch(login({ ...res?.data, token: res?.token }));
-          }, 1000);
+          dispatch(getAllCityData);
+          dispatch(getAllStateData);
+          dispatch(getAllRegionData);
+          dispatch(getAllDistrictData);
+          dispatch(getAllSamajData);
+          dispatch(getAllSurnameData);
+          if (res.data?.role !== "USER") {
+            dispatch(getAllCountryData);
+            dispatch(getAllRoleData);
+          }
+          dispatch(login({ ...res?.data, token: res?.token }));
           resetForm();
         } catch (err) {
-          setTimeout(() => {
-            dispatch(endLoading());
-            setNotification({
-              message: err?.response?.data?.message || "Login failed.",
-              type: err?.response?.status === 403 ? "warning" : "error",
-            });
-          }, 1000);
+          dispatch(endLoading());
+          setNotification({
+            message: err?.response?.data?.message || "Login failed.",
+            type: err?.response?.status === 403 ? "warning" : "error",
+          });
         }
       } else {
         setNotification({

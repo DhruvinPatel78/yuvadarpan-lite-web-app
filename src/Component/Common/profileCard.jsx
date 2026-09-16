@@ -1,6 +1,8 @@
 import React from "react";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 import LoadableImage from "./LoadableImage";
 
 const ProfileCard = ({
@@ -14,6 +16,8 @@ const ProfileCard = ({
   firm,
   surname,
   onClick,
+  shortlisted = false,
+  onToggleShortlist,
 }) => {
   const fullName = [name, mother, father, surname]
     .filter((part) => part && String(part).trim())
@@ -37,7 +41,7 @@ const ProfileCard = ({
           : undefined
       }
     >
-      <div className="aspect-[5/4] bg-muted overflow-hidden">
+      <div className="aspect-[5/4] bg-muted overflow-hidden relative">
         <LoadableImage
           src={imgSrc}
           alt={fullName}
@@ -45,6 +49,25 @@ const ProfileCard = ({
           imgClassName="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           spinnerSize={30}
         />
+        {onToggleShortlist ? (
+          <button
+            type="button"
+            aria-label={shortlisted ? "Remove from shortlist" : "Add to shortlist"}
+            aria-pressed={shortlisted}
+            className="absolute top-2 right-2 z-10 w-11 h-11 rounded-full bg-white/95 text-primary border border-line shadow-card flex items-center justify-center"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onToggleShortlist();
+            }}
+          >
+            {shortlisted ? (
+              <BookmarkIcon fontSize="small" />
+            ) : (
+              <BookmarkBorderIcon fontSize="small" />
+            )}
+          </button>
+        ) : null}
       </div>
       <div className="px-3.5 pt-3.5 pb-3.5 flex flex-col flex-1 min-w-0">
         <h2 className="text-[15px] font-semibold text-primary leading-snug line-clamp-2">

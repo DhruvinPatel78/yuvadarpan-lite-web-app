@@ -13,7 +13,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import TuneIcon from "@mui/icons-material/Tune";
-import { formatYuvaDob, toCamelCase } from "../../../util/util";
+import { formatYuvaDob, isRegularUser, toCamelCase } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
@@ -22,6 +22,11 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { getYuvaList as fetchYuvaList } from "../../../util/yuvaApi";
+import {
+  addYuvaToShortlist,
+  getShortlistIds,
+  removeYuvaFromShortlist,
+} from "../../../util/shortlistApi";
 import { getNativeList } from "../../../util/yuvaAdminApi";
 import CustomInput from "../../../Component/Common/customInput";
 import {
@@ -72,9 +77,10 @@ const sanitizeAgeInput = (raw) => {
 };
 
 const Home = () => {
-  const { surname, city, state, region, district, samaj } = UseRedux();
+  const { surname, city, state, region, district, samaj, auth } = UseRedux();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const canShortlist = isRegularUser(auth?.user?.role);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const [yuvaList, setYuvaList] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -100,6 +106,7 @@ const Home = () => {
   const [cityListByDistrict, setCityListByDistrict] = useState(city);
   const [samajListByParent, setSamajListByParent] = useState(samaj);
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
+  const [shortlistedIds, setShortlistedIds] = useState([]);
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredStateIds = useFilteredIds(selectedState, "id");
@@ -173,9 +180,7 @@ const Home = () => {
         setLoadingMore(false);
         loadingMoreLock.current = false;
       } else {
-        setTimeout(() => {
-          dispatch(endLoading());
-        }, 400);
+        dispatch(endLoading());
       }
     }
   };
@@ -190,7 +195,36 @@ const Home = () => {
     getNativeList()
       .then((data) => setNativeList(Array.isArray(data) ? data : []))
       .catch(() => setNativeList([]));
-  }, []);
+    if (canShortlist) {
+      getShortlistIds()
+        .then((ids) => setShortlistedIds((ids || []).map(String)))
+        .catch(() => setShortlistedIds([]));
+    }
+  }, [canShortlist]);
+
+  const yuvaRecordId = (yuva) => String(yuva?.id || yuva?._id || "");
+
+  const handleToggleShortlist = async (event, yuva) => {
+    event?.stopPropagation?.();
+    if (!canShortlist) return;
+    const yuvaId = yuvaRecordId(yuva);
+    if (!yuvaId) return;
+    const already = shortlistedIds.includes(yuvaId);
+    setShortlistedIds((prev) =>
+      already ? prev.filter((id) => id !== yuvaId) : [...prev, yuvaId]
+    );
+    try {
+      if (already) {
+        await removeYuvaFromShortlist(yuvaId);
+      } else {
+        await addYuvaToShortlist(yuvaId);
+      }
+    } catch (e) {
+      setShortlistedIds((prev) =>
+        already ? [...prev, yuvaId] : prev.filter((id) => id !== yuvaId)
+      );
+    }
+  };
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -481,6 +515,8 @@ const Home = () => {
         label="Min age"
         placeholder="From"
         name="minAge"
+        min={0}
+        max={120}
         {...fieldSize}
         value={minAge}
         onChange={(event) => {
@@ -495,6 +531,8 @@ const Home = () => {
         label="Max age"
         placeholder="To"
         name="maxAge"
+        min={0}
+        max={120}
         {...fieldSize}
         value={maxAge}
         onChange={(event) => {
@@ -533,6 +571,17 @@ const Home = () => {
     <div>
       <Header />
       <Container maxWidth="xl" className={"p-3 sm:p-4 pb-6"}>
+        {canShortlist ? (
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <p className="text-lg font-WorkSemiBold text-primary">Yuva directory</p>
+            <Button
+              variant="secondary"
+              onClick={() => navigate("/shortlisted")}
+            >
+              Your Shortlisted
+            </Button>
+          </div>
+        ) : null}
         <Card padded={false} className="p-2.5 sm:p-3 mb-5">
           <div className="flex items-center gap-2">
             <TextField
@@ -617,6 +666,12 @@ const Home = () => {
               surname={toCamelCase(
                 surname.find((i) => i?.id === data?.lastName)?.name
               )}
+              shortlisted={shortlistedIds.includes(String(data?.id || data?._id))}
+              onToggleShortlist={
+                canShortlist
+                  ? () => handleToggleShortlist(null, data)
+                  : undefined
+              }
               onClick={() =>
                 navigate(`/admin/yuvalist/${data?.id}`, {
                   state: { ...data },
