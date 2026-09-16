@@ -2,9 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button, TablePagination } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useDispatch } from "react-redux";
-import { endLoading, startLoading } from "../../store/authSlice";
-import { UseRedux } from "../useRedux";
 import ConfirmModal from "./ConfirmModal";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
 
@@ -54,8 +51,6 @@ function CustomTable({
   bulkActions = [],
   deleteEntity,
 }) {
-  const { loading } = UseRedux();
-  const dispatch = useDispatch();
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const showCheckboxes =
@@ -94,13 +89,6 @@ function CustomTable({
     onRowSelectionModelChange?.([]);
     setBulkDeleteOpen(false);
   };
-
-  useEffect(() => {
-    dispatch(startLoading());
-    setTimeout(() => {
-      dispatch(endLoading());
-    }, 2000);
-  }, [data?.data, page, pageSize]);
 
   useEffect(() => {
     setSelectedIds([]);
@@ -173,7 +161,6 @@ function CustomTable({
         checkboxSelection={showCheckboxes}
         rowSelectionModel={selectedIds}
         onRowSelectionModelChange={handleSelectionChange}
-        loading={loading}
         getRowId={(row) => row.id}
         rowHeight={52}
         columnHeaderHeight={56}

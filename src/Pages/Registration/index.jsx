@@ -134,7 +134,7 @@ export default function Index() {
         )
         .required("Required"),
       mobile: Yup.string()
-        .matches("^(\\+\\d{1,3}[- ]?)?\\d{10}$", "Phone Number must be correct")
+        .matches(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number")
         .required("Required"),
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string().required("Required"),
@@ -234,13 +234,18 @@ export default function Index() {
                 value={values.email}
               />
               <CustomInput
-                type={"number"}
+                type={"tel"}
                 xs={12}
                 md={6}
                 label={"Mobile"}
-                placeholder={"Enter Your Mobile"}
+                placeholder={"Enter 10-digit mobile"}
                 name="mobile"
-                onChange={handleChange}
+                onChange={(event) => {
+                  const digits = String(event.target.value || "")
+                    .replace(/\D/g, "")
+                    .slice(0, 10);
+                  setFieldValue("mobile", digits);
+                }}
                 onBlur={handleBlur}
                 errors={touched.mobile && errors.mobile && errors.mobile}
                 value={values.mobile}
@@ -310,13 +315,19 @@ export default function Index() {
                 onBlur={handleBlur}
               />
               <CustomInput
-                type={"number"}
+                type={"text"}
                 xs={12}
                 sm={6}
                 label={"Family ID"}
                 placeholder={"Enter Your Family Id"}
                 name="familyId"
-                onChange={handleChange}
+                inputProps={{ inputMode: "numeric", maxLength: 10 }}
+                onChange={(event) => {
+                  const digits = String(event.target.value || "")
+                    .replace(/\D/g, "")
+                    .slice(0, 10);
+                  setFieldValue("familyId", digits);
+                }}
                 onBlur={handleBlur}
                 errors={touched.familyId && errors.familyId && errors.familyId}
                 value={values.familyId}

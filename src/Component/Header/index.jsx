@@ -17,9 +17,11 @@ import FloatingButton from "../Common/FloatingButton";
 import { UseRedux } from "../useRedux";
 import FullPageLoader from "../Common/FullPageLoader";
 import { YuvadarpanLogo } from "../Icons";
+import { isRegularUser } from "../../util/util";
 
 const menuItems = [
   { label: "Profile", path: "/profile" },
+  { label: "Your Shortlisted", path: "/shortlisted", userOnly: true },
   { label: "Settings", path: "/settings" },
   { label: "Logout", action: "logout" },
 ];
@@ -122,7 +124,9 @@ const Header = () => {
                 open={Boolean(anchorElUser)}
                 onClose={handleCloseUserMenu}
               >
-                {menuItems.map((item) => (
+                {menuItems
+                  .filter((item) => !item.userOnly || isRegularUser(user?.user?.role))
+                  .map((item) => (
                   <MenuItem
                     key={item.label}
                     onClick={() => handleMenuItem(item)}

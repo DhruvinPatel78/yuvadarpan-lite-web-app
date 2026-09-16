@@ -53,6 +53,7 @@ const CustomInput = ({
         label={label}
         placeholder={placeholder}
         name={name}
+        autoComplete={type === "tel" ? "tel" : undefined}
         onChange={onChange}
         value={
           isDate && value
@@ -89,18 +90,21 @@ const CustomInput = ({
         onBlur={onBlur}
         disabled={disabled}
         error={Boolean(errors)}
-        {...(isDate
-          ? {
-              inputProps: {
-                max: max || localToday(),
-                min,
-                ...inputProps,
-              },
-            }
-          : {})}
-        {...(type === "number"
-          ? { inputProps: { min: 0, max: 120, inputMode: "numeric", ...inputProps } }
-          : {})}
+        inputProps={{
+          ...(type === "number" ? { inputMode: "numeric" } : {}),
+          ...(type === "tel"
+            ? {
+                inputMode: "numeric",
+                maxLength: 10,
+                autoComplete: "tel",
+                pattern: "[0-9]*",
+              }
+            : {}),
+          ...(isDate ? { max: max || localToday(), min } : {}),
+          ...(!isDate && min != null ? { min } : {}),
+          ...(!isDate && max != null ? { max } : {}),
+          ...inputProps,
+        }}
       />
       {errors ? (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
