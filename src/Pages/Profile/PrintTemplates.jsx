@@ -1,5 +1,6 @@
 import React from "react";
 import moment from "moment/moment";
+import { getUserImageSrc } from "../../util/defaultUserImage";
 
 export const getLookupName = (list, id, fallback = "") =>
   list?.find(
@@ -96,7 +97,7 @@ const buildPrintModel = (data, lists) => {
 
   return {
     fullName,
-    photo: data?.profile?.url,
+    photo: getUserImageSrc(data?.profile?.url),
     phone: data?.contactInfo?.phone,
     email: isFemale ? "" : data?.email,
     personal: [
@@ -191,13 +192,11 @@ const TemplateTwo = ({ model }) => {
       <h1 className="yuva-biodata-title">Bio-Data</h1>
       <div className="yuva-biodata-body">
         <div className="yuva-biodata-left">
-          {model.photo ? (
-            <img
-              src={model.photo}
-              alt={model.fullName}
-              className="yuva-biodata-photo"
-            />
-          ) : null}
+          <img
+            src={model.photo}
+            alt={model.fullName || "Profile"}
+            className="yuva-biodata-photo"
+          />
           {model.fullName ? (
             <h2 className="yuva-biodata-name">{model.fullName}</h2>
           ) : null}

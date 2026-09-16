@@ -1,6 +1,10 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import {
+  DEFAULT_USER_IMAGE,
+  getUserImageSrc,
+} from "../../util/defaultUserImage";
 
 const LoadableImage = ({
   src,
@@ -12,24 +16,31 @@ const LoadableImage = ({
   spinnerSize = 28,
 }) => {
   const imgRef = useRef(null);
-  const [currentSrc, setCurrentSrc] = useState(src);
-  const [status, setStatus] = useState(src ? "loading" : "empty");
+  const requestedSrc = typeof src === "string" ? src.trim() : src || "";
+  const [currentSrc, setCurrentSrc] = useState(requestedSrc);
+  const [failedOriginal, setFailedOriginal] = useState(false);
+  const [status, setStatus] = useState(requestedSrc ? "loading" : "loaded");
+  const displaySrc = failedOriginal
+    ? DEFAULT_USER_IMAGE
+    : getUserImageSrc(requestedSrc);
+  const isDefault = displaySrc === DEFAULT_USER_IMAGE;
 
-  if (src !== currentSrc) {
-    setCurrentSrc(src);
-    setStatus(src ? "loading" : "empty");
+  if (requestedSrc !== currentSrc) {
+    setCurrentSrc(requestedSrc);
+    setFailedOriginal(false);
+    setStatus(requestedSrc ? "loading" : "loaded");
   }
 
   useLayoutEffect(() => {
     const node = imgRef.current;
-    if (src && node && node.complete && node.naturalWidth > 0) {
+    if (displaySrc && node && node.complete && node.naturalWidth > 0) {
       setStatus("loaded");
     }
-  }, [src]);
+  }, [displaySrc]);
 
   const loaded = status === "loaded";
-  const showSpinner = Boolean(src) && status === "loading";
-  const showFallback = !src || status === "error" || status === "empty";
+  const showSpinner = Boolean(requestedSrc) && !failedOriginal && status === "loading";
+  const showFallback = status === "error" && isDefault;
 
   return (
     <div className={`relative overflow-hidden bg-[#f3ece9] ${className}`}>
@@ -54,22 +65,31 @@ const LoadableImage = ({
           <PersonOutlineIcon sx={{ width: "46%", height: "46%" }} />
         </div>
       ) : null}
-      {src && status !== "error" ? (
+      {displaySrc && status !== "error" ? (
         <img
           ref={imgRef}
-          src={src}
+          src={displaySrc}
           alt={alt}
           onLoad={(event) => {
             if (event.currentTarget.naturalWidth > 0) {
               setStatus("loaded");
             }
           }}
-          onError={() => setStatus("error")}
-          loading={eager ? "eager" : "lazy"}
+          onError={() => {
+            if (!isDefault) {
+              setFailedOriginal(true);
+              setStatus("loading");
+              return;
+            }
+            setStatus("error");
+          }}
+          loading={eager || isDefault ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={eager ? "high" : "auto"}
           className={`${imgClassName} ${
-            loaded ? "scale-100 blur-0 opacity-100" : "scale-110 blur-xl opacity-80"
+            loaded || isDefault
+              ? "scale-100 blur-0 opacity-100"
+              : "scale-110 blur-xl opacity-80"
           } origin-center transition-[filter,transform,opacity] duration-500 ease-out`}
           style={{ objectFit: fit }}
         />

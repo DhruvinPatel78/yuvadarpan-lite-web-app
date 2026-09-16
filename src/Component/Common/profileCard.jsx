@@ -26,7 +26,7 @@ const ProfileCard = ({
 
   return (
     <div
-      className="group w-full min-w-0 h-full rounded-xl overflow-hidden bg-white border border-line shadow-card hover:border-primary transition-colors duration-200 cursor-pointer flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group w-full min-w-0 h-full rounded-xl overflow-hidden bg-white border-2 border-solid border-line-strong md:border md:border-line shadow-card hover:border-primary transition-colors duration-200 cursor-pointer flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}

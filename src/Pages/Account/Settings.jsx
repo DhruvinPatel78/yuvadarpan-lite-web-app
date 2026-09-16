@@ -35,8 +35,13 @@ export default function Settings() {
   const otpRef = useRef();
 
   const showError = (err, fallback) => {
+    const apiMessage = err?.response?.data?.message;
+    const message =
+      apiMessage === "otp-email-failed"
+        ? "Could not send the OTP email. Please try again."
+        : apiMessage || fallback;
     setNotification({
-      message: err?.response?.data?.message || fallback,
+      message,
       type: "error",
     });
   };

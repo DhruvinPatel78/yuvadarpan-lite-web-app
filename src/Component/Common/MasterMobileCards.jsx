@@ -69,7 +69,7 @@ const MasterMobileCards = ({
             <Card
               key={id}
               padded={false}
-              className={"overflow-hidden"}
+              className={"overflow-hidden !border-2 !border-solid !border-line-strong"}
             >
               <div className={"p-3.5"}>
                 <div className={"flex items-start justify-between gap-2"}>

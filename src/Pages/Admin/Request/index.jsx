@@ -570,7 +570,7 @@ export default function Index() {
                 <Paper
                   key={row.id}
                   elevation={2}
-                  className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
+                  className={"rounded-xl overflow-hidden !border-2 !border-solid !border-[#d7d0c8]"}
                 >
                   <div className={"p-3"}>
                     <div className={"flex items-start justify-between gap-2"}>
