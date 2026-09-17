@@ -25,8 +25,10 @@ import {
   State,
   StateDetails,
   AddYuva,
+  BulkAddYuva,
   AdminDashboard,
 } from "./Pages/Admin";
+import Gotra from "./Pages/Admin/Gotra";
 
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/Dashboard";
@@ -113,6 +115,11 @@ function App() {
               element={<PrivateRoute Component={AddYuva} />}
             />
             <Route
+              path="bulk-add"
+              exact
+              element={<PrivateRoute Component={BulkAddYuva} />}
+            />
+            <Route
               path=":id"
               exact
               element={<PrivateRoute Component={Profile} />}
@@ -178,6 +185,11 @@ function App() {
             path="surname"
             exact
             element={<PrivateRoute Component={Surname} />}
+          />
+          <Route
+            path="gotra"
+            exact
+            element={<PrivateRoute Component={Gotra} />}
           />
           <Route
             path="native"

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
-import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
+import { Button as ActionButton, FilterActions, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../../../Component/Common/customTable";
@@ -16,12 +16,15 @@ import CloseIcon from "@mui/icons-material/Close";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
-import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import {
   getSelectedData,
+  gotraOptionList,
   handleListById,
+  filterFieldCols,
+  lastNameIdsForGotraFilter,
   listHandler,
   requestFilterList,
+  surnamesForGotra,
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
@@ -32,6 +35,7 @@ import {
   approveRejectUser,
   approveRejectMany,
 } from "../../../util/requestApi";
+import { getGotraAllList } from "../../../util/gotraApi";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -57,6 +61,8 @@ export default function Index() {
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
+  const [gotraList, setGotraList] = useState([]);
+  const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
@@ -66,6 +72,7 @@ export default function Index() {
     id: "",
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [regionListByState, setRegionListByState] = useState(region);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const dispatch = useDispatch();
@@ -102,10 +109,16 @@ export default function Index() {
     }
   };
 
+  const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
+  const surnameFilterList = useMemo(
+    () => listHandler(surnamesForGotra(surname, selectedGotra)),
+    [surname, selectedGotra]
+  );
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredStateIds = useFilteredIds(selectedState, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
+  const filterCols = filterFieldCols(3);
 
   const handleRequestList = async (isRest = false, options = {}) => {
     const append = Boolean(options.append);
@@ -126,7 +139,13 @@ export default function Index() {
       const params = {
         page: pageNum,
         limit,
-        lastName: isRest ? [] : filteredSurnameIds,
+        lastName: isRest
+          ? []
+          : lastNameIdsForGotraFilter(
+              surname,
+              selectedGotra,
+              filteredSurnameIds
+            ),
         state: isRest ? [] : filteredStateIds,
         region: isRest ? [] : filteredRegionIds,
         samaj: isRest ? [] : filteredSamajIds,
@@ -166,6 +185,12 @@ export default function Index() {
     handleRequestList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, isMobile]);
+
+  useEffect(() => {
+    getGotraAllList()
+      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
+      .catch(() => setGotraList([]));
+  }, []);
 
   const loadMoreRequests = () => {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
@@ -207,6 +232,7 @@ export default function Index() {
       label: "",
       id: "",
     });
+    setSelectedGotra([]);
     setSelectedSurname([]);
     setSelectedState([]);
     setSelectedRegion([]);
@@ -397,140 +423,146 @@ export default function Index() {
           </div>
           }
         />
-        <CustomAccordion>
-          <Grid spacing={2} container>
-            <CustomAutoComplete
-              list={listHandler(surname)}
-              multiple={true}
-              label={"Surname"}
-              placeholder={"Select Your Last Name"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSurname}
-              name="surname"
-              onChange={(e, lastName) => {
-                if (lastName) {
-                  setSelectedSurname((pre) =>
-                    getSelectedData(pre, lastName, e)
-                  );
-                }
-              }}
-            />
-            {hideLocationFilters ? null : (
-              <>
-            <CustomAutoComplete
-              list={listHandler(state)}
-              multiple={true}
-              label={"State"}
-              placeholder={"Select Your State"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              name="state"
-              value={selectedState}
-              onChange={async (e, state) => {
-                if (state) {
-                  const Data = await handleListById("region", state);
-                  setRegionListByState(Data);
-                  setSelectedState((pre) => getSelectedData(pre, state, e));
-                }
-              }}
-            />
-            <CustomAutoComplete
-              list={listHandler(regionListByState)}
-              multiple={true}
-              label={"Region"}
-              placeholder={"Select Your Region"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              name="region"
-              value={selectedRegion}
-              onChange={async (e, region) => {
-                if (region) {
-                  const data = await handleListById("samaj", region);
-                  setSamajListByRegion(data);
-                  setSelectedRegion((pre) => getSelectedData(pre, region, e));
-                }
-              }}
-            />
-            <CustomAutoComplete
-              list={listHandler(samajListByRegion)}
-              multiple={true}
-              label={"Samaj"}
-              placeholder={"Select Your Samaj"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              name="samaj"
-              value={selectedSamaj}
-              onChange={(e, samaj) => {
-                if (samaj) {
-                  setSelectedSamaj((pre) => getSelectedData(pre, samaj, e));
-                }
-              }}
-            />
-              </>
-            )}
-            <CustomAutoComplete
-              list={requestFilterList}
-              label={"Search By"}
-              placeholder={"Select Your Search By"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              name="search"
-              value={selectedSearchBy.label}
-              onChange={(e, search) => {
-                setSelectedSearchBy({
-                  label: search.label,
-                  id: search.value,
-                });
-              }}
-            />
-            <CustomInput
-              type={"text"}
-              placeholder={"Enter Search Text"}
-              name={"firstName"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSearchByText}
-              onChange={(e) => {
-                setSelectedSearchByText(e.target.value);
-                if (e.target.value === "") {
-                  handleRequestList(true);
-                }
-              }}
-              disabled={!selectedSearchBy.id}
-            />
-            <Grid
-              item
-              xs={12}
-              className={"flex justify-center items-center gap-4"}
-            >
-              <FilterActions
-                onSubmit={() => handleRequestList()}
-                onReset={handleReset}
-                showReset={Boolean(
-                  selectedSearchByText ||
-                    selectedSearchBy.name ||
-                    selectedState?.length > 0 ||
-                    selectedRegion?.length > 0 ||
-                    selectedSurname?.length > 0 ||
-                    selectedSamaj?.length > 0
-                )}
+        <MasterFilterBar
+          searchPlaceholder="Search"
+          searchValue={selectedSearchByText}
+          onSearchChange={(e) => {
+            setSelectedSearchByText(e.target.value);
+            if (e.target.value === "") {
+              handleRequestList(true);
+            }
+          }}
+          searchDisabled={!selectedSearchBy.id}
+          filterCount={
+            Number(Boolean(selectedSearchByText.trim())) +
+            Number(Boolean(selectedSearchBy.id)) +
+            Number(Boolean(selectedGotra?.length > 0)) +
+            Number(Boolean(selectedSurname?.length > 0)) +
+            Number(Boolean(selectedState?.length > 0)) +
+            Number(Boolean(selectedRegion?.length > 0)) +
+            Number(Boolean(selectedSamaj?.length > 0))
+          }
+          isFilterOpen={isFilterOpen}
+          onFilterClick={() => setIsFilterOpen((open) => !open)}
+          extraFilters={
+            <Grid spacing={2} container>
+              <CustomAutoComplete
+                list={gotraOptions}
+                multiple={true}
+                label={"Gotra"}
+                placeholder={"Select Your Gotra"}
+                {...filterCols}
+                value={selectedGotra}
+                name="gotra"
+                onChange={(e, gotra) => {
+                  if (gotra) {
+                    setSelectedGotra((pre) => getSelectedData(pre, gotra, e));
+                    setSelectedSurname([]);
+                  }
+                }}
               />
+              <CustomAutoComplete
+                list={surnameFilterList}
+                multiple={true}
+                label={"Surname"}
+                placeholder={"Select Your Last Name"}
+                {...filterCols}
+                value={selectedSurname}
+                name="surname"
+                onChange={(e, lastName) => {
+                  if (lastName) {
+                    setSelectedSurname((pre) =>
+                      getSelectedData(pre, lastName, e)
+                    );
+                  }
+                }}
+              />
+              {hideLocationFilters ? null : (
+                <>
+              <CustomAutoComplete
+                list={listHandler(state)}
+                multiple={true}
+                label={"State"}
+                placeholder={"Select Your State"}
+                {...filterCols}
+                name="state"
+                value={selectedState}
+                onChange={async (e, state) => {
+                  if (state) {
+                    const Data = await handleListById("region", state);
+                    setRegionListByState(Data);
+                    setSelectedState((pre) => getSelectedData(pre, state, e));
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(regionListByState)}
+                multiple={true}
+                label={"Region"}
+                placeholder={"Select Your Region"}
+                {...filterCols}
+                name="region"
+                value={selectedRegion}
+                onChange={async (e, region) => {
+                  if (region) {
+                    const data = await handleListById("samaj", region);
+                    setSamajListByRegion(data);
+                    setSelectedRegion((pre) => getSelectedData(pre, region, e));
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(samajListByRegion)}
+                multiple={true}
+                label={"Samaj"}
+                placeholder={"Select Your Samaj"}
+                {...filterCols}
+                name="samaj"
+                value={selectedSamaj}
+                onChange={(e, samaj) => {
+                  if (samaj) {
+                    setSelectedSamaj((pre) => getSelectedData(pre, samaj, e));
+                  }
+                }}
+              />
+                </>
+              )}
+              <CustomAutoComplete
+                list={requestFilterList}
+                label={"Search By"}
+                placeholder={"Select Your Search By"}
+                {...filterCols}
+                name="search"
+                value={selectedSearchBy.label}
+                onChange={(e, search) => {
+                  setSelectedSearchBy({
+                    label: search.label,
+                    id: search.value,
+                  });
+                }}
+              />
+              <Grid
+                item
+                xs={12}
+                className={"flex justify-center items-center gap-4"}
+              >
+                <FilterActions
+                  onSubmit={() => handleRequestList()}
+                  onReset={handleReset}
+                  showReset={Boolean(
+                    selectedSearchByText ||
+                      selectedSearchBy.name ||
+                      selectedGotra?.length > 0 ||
+                      selectedState?.length > 0 ||
+                      selectedRegion?.length > 0 ||
+                      selectedSurname?.length > 0 ||
+                      selectedSamaj?.length > 0
+                  )}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </CustomAccordion>
+          }
+        />
         <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
             columns={pendingUsersTableHeader}

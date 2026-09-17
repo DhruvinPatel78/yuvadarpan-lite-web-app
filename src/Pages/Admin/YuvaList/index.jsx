@@ -19,25 +19,39 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { getYuvaList as fetchYuvaList, deleteYuva, getNativeList as fetchNativeList } from "../../../util/yuvaAdminApi";
 import {
   getSelectedData,
+  gotraOptionList,
+  filterFieldCols,
+  lastNameIdsForGotraFilter,
   listHandler,
+  surnamesForGotra,
   useFilteredIds,
   yuvaFilterList,
 } from "../../../Component/constant";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-import CustomInput from "../../../Component/Common/customInput";
-import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import LoadableImage from "../../../Component/Common/LoadableImage";
 import { UseRedux } from "../../../Component/useRedux";
 import { formatYuvaDob, canEditYuvaRecord } from "../../../util/util";
-import { PageHeader, FilterActions, Button as ActionButton, AppModal } from "../../../Component/UI";
+import { PageHeader, FilterActions, MasterFilterBar, Button as ActionButton, AppModal } from "../../../Component/UI";
+import {
+  getAllCityData,
+  getAllCountryData,
+  getAllDistrictData,
+  getAllRegionData,
+  getAllSamajData,
+  getAllStateData,
+  getAllSurnameData,
+} from "../../../util/getAPICall";
+import { getGotraAllList } from "../../../util/gotraApi";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -54,6 +68,7 @@ function YuvaDetailItem({ label, value }) {
 
 const YuvaList = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [yuvaList, setYuvaList] = useState(null);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
@@ -106,6 +121,8 @@ const YuvaList = () => {
     [hasOwnListToggle, ownUserList, auth?.user, locationLists]
   );
   const [nativeList, setNativeList] = useState([]);
+  const [gotraList, setGotraList] = useState([]);
+  const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
@@ -113,18 +130,31 @@ const YuvaList = () => {
     id: "",
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
   useEffect(() => {
     getNativeList();
+    if (!surname?.length) dispatch(getAllSurnameData);
+    if (!country?.length) dispatch(getAllCountryData);
+    if (!state?.length) dispatch(getAllStateData);
+    if (!region?.length) dispatch(getAllRegionData);
+    if (!district?.length) dispatch(getAllDistrictData);
+    if (!city?.length) dispatch(getAllCityData);
+    if (!samaj?.length) dispatch(getAllSamajData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    getGotraAllList()
+      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
+      .catch(() => setGotraList([]));
   }, []);
 
   const getNativeList = async () => {
     try {
       const data = await fetchNativeList();
-      setNativeList(data.map((d) => ({ ...d, label: d.name, value: d.id })));
+      const rows = Array.isArray(data) ? data : data?.data || [];
+      setNativeList(rows.map((d) => ({ ...d, label: d.name, value: d.id })));
     } catch (e) {
       // Optionally handle error with notification
     }
@@ -287,8 +317,14 @@ const YuvaList = () => {
     },
   ], [surname, city, nativeList, canEditRow, navigate]);
 
+  const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
+  const surnameFilterList = useMemo(
+    () => listHandler(surnamesForGotra(surname, selectedGotra)),
+    [surname, selectedGotra]
+  );
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
+  const filterCols = filterFieldCols(4);
 
   const handleRequestList = async (isRest = false, options = {}) => {
     const append = Boolean(options.append);
@@ -318,7 +354,13 @@ const YuvaList = () => {
       const params = {
         page: pageNum,
         limit,
-        lastName: isRest ? [] : filteredSurnameIds,
+        lastName: isRest
+          ? []
+          : lastNameIdsForGotraFilter(
+              surname,
+              selectedGotra,
+              filteredSurnameIds
+            ),
         native: isRest ? [] : filteredNativeIds,
         ...text,
       };
@@ -442,6 +484,7 @@ const YuvaList = () => {
       label: "",
       id: "",
     });
+    setSelectedGotra([]);
     setSelectedSurname([]);
     setSelectedNative([]);
     handleRequestList(true);
@@ -485,121 +528,140 @@ const YuvaList = () => {
               View User Dashboard
             </Button>
             {canAct ? (
-              <ActionButton
-                className="max-md:w-full"
-                icon={<AddIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate("/admin/yuvalist/add")}
-              >
-                Yuva
-              </ActionButton>
+              <>
+                <ActionButton
+                  variant="secondary"
+                  className="max-md:w-full"
+                  icon={<GroupAddIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => navigate("/admin/yuvalist/bulk-add")}
+                >
+                  Bulk Add Yuva
+                </ActionButton>
+                <ActionButton
+                  className="max-md:w-full"
+                  icon={<AddIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => navigate("/admin/yuvalist/add")}
+                >
+                  Yuva
+                </ActionButton>
+              </>
             ) : null}
           </div>
           }
         />
-        <CustomAccordion>
-          <Grid spacing={2} container>
-            <CustomAutoComplete
-              list={listHandler(surname)}
-              multiple={true}
-              label={"Surname"}
-              placeholder={"Select Your Surname"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSurname}
-              name="surname"
-              onChange={(e, lastName) => {
-                if (lastName) {
-                  setSelectedSurname((pre) =>
-                    getSelectedData(pre, lastName, e)
-                  );
-                }
-              }}
-            />
-            <CustomAutoComplete
-              list={listHandler(region)}
-              multiple={true}
-              label={"Native"}
-              placeholder={"Select Your Native"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              name="native"
-              value={selectedNative}
-              onChange={(e, native) => {
-                if (native) {
-                  setSelectedNative((pre) => getSelectedData(pre, native, e));
-                }
-              }}
-            />
-            <CustomAutoComplete
-              list={yuvaFilterList}
-              label={"Search By"}
-              placeholder={"Select Your Search By"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              name="search"
-              value={selectedSearchBy.name}
-              onChange={(e, search) => {
-                setSelectedSearchBy({
-                  name: search.label,
-                  id: search.value,
-                });
-              }}
-            />
-            <CustomInput
-              type={"text"}
-              placeholder={
-                isMobile
-                  ? "Search by name"
-                  : "Search by first, father or grandfather name"
-              }
-              name={"firstName"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSearchByText}
-              onChange={(e) => {
-                setSelectedSearchByText(e.target.value);
-                if (e.target.value === "") {
-                  handleRequestList(true);
-                }
-              }}
-            />
-
-            <Grid
-              item
-              xs={12}
-              className={"flex justify-center items-center gap-4"}
-            >
-              <FilterActions
-                onSubmit={() => {
-                  if (isMobile) {
-                    handleRequestList();
-                    return;
-                  }
-                  if (page !== 0) {
-                    setPage(0);
-                  } else {
-                    handleRequestList();
+        <MasterFilterBar
+          searchPlaceholder={
+            isMobile
+              ? "Search by name"
+              : "Search by first, father or grandfather name"
+          }
+          searchValue={selectedSearchByText}
+          onSearchChange={(e) => {
+            setSelectedSearchByText(e.target.value);
+            if (e.target.value === "") {
+              handleRequestList(true);
+            }
+          }}
+          filterCount={
+            Number(Boolean(selectedSearchByText.trim())) +
+            Number(Boolean(selectedSearchBy.name || selectedSearchBy.id)) +
+            Number(Boolean(selectedGotra?.length > 0)) +
+            Number(Boolean(selectedSurname?.length > 0)) +
+            Number(Boolean(selectedNative?.length > 0))
+          }
+          isFilterOpen={isFilterOpen}
+          onFilterClick={() => setIsFilterOpen((open) => !open)}
+          extraFilters={
+            <Grid spacing={2} container>
+              <CustomAutoComplete
+                list={gotraOptions}
+                multiple={true}
+                label={"Gotra"}
+                placeholder={"Select Your Gotra"}
+                {...filterCols}
+                value={selectedGotra}
+                name="gotra"
+                onChange={(e, gotra) => {
+                  if (gotra) {
+                    setSelectedGotra((pre) => getSelectedData(pre, gotra, e));
+                    setSelectedSurname([]);
                   }
                 }}
-                onReset={handleReset}
-                showReset={Boolean(
-                  selectedSearchByText ||
-                    selectedSearchBy.name ||
-                    selectedNative?.length > 0 ||
-                    selectedSurname?.length > 0
-                )}
               />
+              <CustomAutoComplete
+                list={surnameFilterList}
+                multiple={true}
+                label={"Surname"}
+                placeholder={"Select Your Surname"}
+                {...filterCols}
+                value={selectedSurname}
+                name="surname"
+                onChange={(e, lastName) => {
+                  if (lastName) {
+                    setSelectedSurname((pre) =>
+                      getSelectedData(pre, lastName, e)
+                    );
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(nativeList)}
+                multiple={true}
+                label={"Native"}
+                placeholder={"Select Your Native"}
+                {...filterCols}
+                name="native"
+                value={selectedNative}
+                onChange={(e, native) => {
+                  if (native) {
+                    setSelectedNative((pre) => getSelectedData(pre, native, e));
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={yuvaFilterList}
+                label={"Search By"}
+                placeholder={"Select Your Search By"}
+                {...filterCols}
+                name="search"
+                value={selectedSearchBy.name}
+                onChange={(e, search) => {
+                  setSelectedSearchBy({
+                    name: search.label,
+                    id: search.value,
+                  });
+                }}
+              />
+              <Grid
+                item
+                xs={12}
+                className={"flex justify-center items-center gap-4"}
+              >
+                <FilterActions
+                  onSubmit={() => {
+                    if (isMobile) {
+                      handleRequestList();
+                      return;
+                    }
+                    if (page !== 0) {
+                      setPage(0);
+                    } else {
+                      handleRequestList();
+                    }
+                  }}
+                  onReset={handleReset}
+                  showReset={Boolean(
+                    selectedSearchByText ||
+                      selectedSearchBy.name ||
+                      selectedGotra?.length > 0 ||
+                      selectedNative?.length > 0 ||
+                      selectedSurname?.length > 0
+                  )}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </CustomAccordion>
+          }
+        />
         {canAct && selectedYuvas.length > 0 ? (
           <div
             className={
