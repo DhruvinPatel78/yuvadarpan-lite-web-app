@@ -91,7 +91,7 @@ export default function Index() {
       } else {
         handleRequestList();
       }
-      setNotification({ type: "success", message: "Success !" });
+      setNotification({ type: "success", message: "Updated." });
     } catch (e) {
       setNotification({
         type: "error",
@@ -234,7 +234,7 @@ export default function Index() {
       } else {
         handleRequestList();
       }
-      setNotification({ type: "success", message: "Success !" });
+      setNotification({ type: "success", message: "Updated." });
     } catch (e) {
       setNotification({
         type: "error",

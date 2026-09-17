@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Alert } from "@mui/lab";
 import { Snackbar } from "@mui/material";
+import { formatAppMessage } from "../../util/appMessage";
 
 const NotificationData = () => {
   const [notification, setNotification] = useState({ type: "", message: "" });
@@ -38,11 +39,10 @@ const NotificationSnackbar = ({ notification }) => {
           borderRadius: "12px",
         }}
       >
-        {notification?.message === ""
-          ? notification?.type === "error"
-            ? "Something went wrong !"
-            : "Success !"
-          : notification?.message}
+        {formatAppMessage(
+          notification?.message,
+          notification?.type === "error" ? "Something went wrong." : "Done."
+        )}
       </Alert>
     </Snackbar>
   );

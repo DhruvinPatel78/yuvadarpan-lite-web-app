@@ -476,7 +476,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct"
+            "Enter a valid phone number"
           )
           .required("Contact Phone Number Is Required"),
       }),
