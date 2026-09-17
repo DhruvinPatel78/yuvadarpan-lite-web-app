@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
-  Autocomplete,
   Badge,
   Collapse,
   Container,
@@ -40,10 +39,13 @@ import {
   getAllSurnameData,
 } from "../../../util/getAPICall";
 import {
-  getSelectedData,
   filterFieldCols,
+  getSelectedData,
+  gotraOptionList,
   handleListById,
+  lastNameIdsForGotraFilter,
   listHandler,
+  surnamesForGotra,
   useFilteredIds,
 } from "../../../Component/constant";
 import { Button, Card } from "../../../Component/UI";
@@ -61,38 +63,14 @@ const searchFieldSx = {
   },
 };
 
-const gotraKeys = (gotra) =>
-  [gotra?.name, gotra?.label, gotra?.id, gotra?.value, gotra?._id]
-    .filter(Boolean)
-    .map((item) => String(item).trim().toLowerCase());
-
-const surnameMatchesGotra = (row, gotra) => {
-  if (!gotra) return true;
-  const raw = String(row?.gotra || "").trim().toLowerCase();
-  return Boolean(raw) && gotraKeys(gotra).includes(raw);
-};
-
-const resolveSurnameIds = (surnameList, gotra, query) => {
-  const q = String(query || "").trim().toLowerCase();
-  if (!gotra && !q) return null;
-  const ids = (Array.isArray(surnameList) ? surnameList : [])
-    .filter((row) => surnameMatchesGotra(row, gotra))
-    .filter((row) =>
-      q ? String(row?.name || "").toLowerCase().includes(q) : true
-    )
-    .map((row) => row.id || row._id)
-    .filter(Boolean)
-    .map(String);
-  return ids.length ? ids : ["__none__"];
-};
-
 const GENDER_OPTIONS = [
   { id: "male", name: "Male", label: "Male", value: "male" },
   { id: "female", name: "Female", label: "Female", value: "female" },
 ];
 
 const emptyAppliedFilters = {
-  keyword: "",
+  gotra: [],
+  lastNameIds: [],
   stateIds: [],
   regionIds: [],
   districtIds: [],
@@ -122,16 +100,16 @@ const Home = () => {
   const canShortlist = isRegularUser(auth?.user?.role);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const [yuvaList, setYuvaList] = useState([]);
-  const [surnameSearch, setSurnameSearch] = useState("");
   const [keywordSearch, setKeywordSearch] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [listPage, setListPage] = useState(1);
   const loadingMoreLock = useRef(false);
-  const [debouncedSurnameSearch, setDebouncedSurnameSearch] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [gotraList, setGotraList] = useState([]);
-  const [selectedGotra, setSelectedGotra] = useState(null);
+  const [selectedGotra, setSelectedGotra] = useState([]);
+  const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState([]);
@@ -149,6 +127,7 @@ const Home = () => {
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
   const [shortlistedIds, setShortlistedIds] = useState([]);
 
+  const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredStateIds = useFilteredIds(selectedState, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
   const filteredDistrictIds = useFilteredIds(selectedDistrict, "id");
@@ -156,20 +135,10 @@ const Home = () => {
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
   const filteredGenders = useFilteredIds(selectedGender, "id");
-  const gotraOptions = useMemo(
-    () =>
-      (Array.isArray(gotraList) ? gotraList : [])
-        .filter((item) => item?.active !== false)
-        .map((item) => ({
-          ...item,
-          label: item.name,
-          value: item.id,
-        })),
-    [gotraList]
-  );
-  const liveSurnameIds = useMemo(
-    () => resolveSurnameIds(surname, selectedGotra, debouncedSurnameSearch),
-    [surname, selectedGotra, debouncedSurnameSearch]
+  const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
+  const surnameFilterList = useMemo(
+    () => listHandler(surnamesForGotra(surname, selectedGotra)),
+    [surname, selectedGotra]
   );
 
   const loadYuvas = async ({ pageNum = 1, append = false } = {}) => {
@@ -187,11 +156,11 @@ const Home = () => {
         page: pageNum,
         limit: PAGE_SIZE,
       };
-      if (appliedFilters.keyword) {
-        params.search = appliedFilters.keyword;
+      if (debouncedKeyword) {
+        params.search = debouncedKeyword;
       }
-      if (liveSurnameIds) {
-        params.lastName = liveSurnameIds;
+      if (appliedFilters.lastNameIds.length) {
+        params.lastName = appliedFilters.lastNameIds;
       }
       if (appliedFilters.stateIds.length) {
         params.state = appliedFilters.stateIds;
@@ -286,10 +255,10 @@ const Home = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setDebouncedSurnameSearch(surnameSearch.trim());
+      setDebouncedKeyword(keywordSearch.trim());
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timeoutId);
-  }, [surnameSearch]);
+  }, [keywordSearch]);
 
   useEffect(() => {
     if (selectedState.length === 0) {
@@ -314,9 +283,8 @@ const Home = () => {
 
   const loadMoreRef = useRef(null);
   const appliedFilterCount = [
-    Boolean(selectedGotra),
-    Boolean(debouncedSurnameSearch),
-    Boolean(appliedFilters.keyword),
+    (appliedFilters.gotra || []).some((item) => item?.name !== "All"),
+    appliedFilters.lastNameIds.length,
     appliedFilters.stateIds.length,
     appliedFilters.regionIds.length,
     appliedFilters.districtIds.length,
@@ -331,11 +299,11 @@ const Home = () => {
   useEffect(() => {
     loadYuvas({ pageNum: 1, append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSurnameSearch, selectedGotra, liveSurnameIds, appliedFilters]);
+  }, [debouncedKeyword, appliedFilters]);
 
   const handleLoadMore = useCallback(() => {
     loadYuvas({ pageNum: listPage + 1, append: true });
-  }, [listPage, hasMore, loadingMore, debouncedSurnameSearch, selectedGotra, liveSurnameIds, appliedFilters]);
+  }, [listPage, hasMore, loadingMore, debouncedKeyword, appliedFilters]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -368,7 +336,12 @@ const Home = () => {
       setMaxAge(nextMaxAge);
     }
     setAppliedFilters({
-      keyword: keywordSearch.trim(),
+      gotra: selectedGotra,
+      lastNameIds: lastNameIdsForGotraFilter(
+        surname,
+        selectedGotra,
+        filteredSurnameIds
+      ),
       stateIds: filteredStateIds,
       regionIds: filteredRegionIds,
       districtIds: filteredDistrictIds,
@@ -385,10 +358,10 @@ const Home = () => {
   };
 
   const handleReset = () => {
-    setSelectedGotra(null);
-    setSurnameSearch("");
-    setDebouncedSurnameSearch("");
+    setSelectedGotra([]);
+    setSelectedSurname([]);
     setKeywordSearch("");
+    setDebouncedKeyword("");
     setSelectedState([]);
     setSelectedRegion([]);
     setSelectedDistrict([]);
@@ -405,14 +378,14 @@ const Home = () => {
     setAppliedFilters(emptyAppliedFilters);
   };
 
-  const fieldSize = filterFieldCols(10);
+  const fieldSize = { ...filterFieldCols(3), sm: 6, md: 3, lg: 3 };
   const showReset =
     selectedState?.length > 0 ||
     selectedRegion?.length > 0 ||
     selectedDistrict?.length > 0 ||
     selectedCity?.length > 0 ||
-    selectedGotra ||
-    surnameSearch ||
+    selectedGotra?.length > 0 ||
+    selectedSurname?.length > 0 ||
     keywordSearch ||
     selectedSamaj?.length > 0 ||
     selectedNative?.length > 0 ||
@@ -423,14 +396,34 @@ const Home = () => {
 
   const filterFields = (
     <>
-      <CustomInput
-        type="text"
-        label="Search"
-        placeholder="Name, father, mobile, family ID, email"
-        name="keyword"
+      <CustomAutoComplete
+        list={gotraOptions}
+        multiple={true}
+        label={"Gotra"}
+        placeholder={"Select Your Gotra"}
         {...fieldSize}
-        value={keywordSearch}
-        onChange={(event) => setKeywordSearch(event.target.value)}
+        name="gotra"
+        value={selectedGotra}
+        onChange={(e, gotra) => {
+          if (gotra) {
+            setSelectedGotra((pre) => getSelectedData(pre, gotra, e));
+            setSelectedSurname([]);
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={surnameFilterList}
+        multiple={true}
+        label={"Surname"}
+        placeholder={"Select Your Surname"}
+        {...fieldSize}
+        name="surname"
+        value={selectedSurname}
+        onChange={(e, lastName) => {
+          if (lastName) {
+            setSelectedSurname((pre) => getSelectedData(pre, lastName, e));
+          }
+        }}
       />
       <CustomAutoComplete
         list={listHandler(state)}
@@ -640,36 +633,13 @@ const Home = () => {
             </Button>
           </div>
         ) : null}
-        <Card padded={false} className="p-2.5 sm:p-3 mb-5">
+        <Card padded={false} className="p-2.5 sm:p-3 mb-5" key="directory-filters">
           <div className="flex items-center gap-2 w-full min-w-0">
-            <div className="w-[132px] sm:w-[180px] md:w-[220px] shrink-0">
-              <Autocomplete
-                fullWidth
-                options={gotraOptions}
-                value={selectedGotra}
-                onChange={(_, value) => setSelectedGotra(value)}
-                getOptionLabel={(option) =>
-                  option?.label || option?.name || ""
-                }
-                isOptionEqualToValue={(option, selected) =>
-                  String(option?.id || option?.value) ===
-                  String(selected?.id || selected?.value)
-                }
-                disablePortal
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Gotra"
-                    sx={searchFieldSx}
-                  />
-                )}
-              />
-            </div>
             <TextField
               className="flex-1 min-w-0"
-              placeholder="Search surname"
-              value={surnameSearch}
-              onChange={(event) => setSurnameSearch(event.target.value)}
+              placeholder="Search by name, father, mobile, family ID, email"
+              value={keywordSearch}
+              onChange={(event) => setKeywordSearch(event.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
