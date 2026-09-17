@@ -101,14 +101,14 @@ export default function CustomAutoComplete({
             name={name}
             label={label}
             value={value}
-            error={errors}
+            error={Boolean(errors)}
             onBlur={onBlur}
+            required={false}
           />
         )}
         onSelect={onSelect}
         onChange={onChange}
         onBlur={onBlur}
-        required
         disableClearable={true}
         limitTags={limitTags}
       />

@@ -152,10 +152,20 @@ const AddYuva = () => {
   const [isEdit, setIsEdit] = useState(Boolean(location?.state));
   const editYuva = location?.state?.data || null;
 
-  const getSamajList = (regionId) => {
-    axios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
-      setSamajList(res.data);
-    });
+  const getSamajList = (cityId) => {
+    if (!cityId) {
+      setSamajList([]);
+      return;
+    }
+    axios
+      .get(`/samaj/list/${cityId}`)
+      .then((res) => {
+        setSamajList(setLableValueInList(res.data));
+      })
+      .catch(function (error) {
+        console.error(error);
+        setSamajList([]);
+      });
   };
 
   const addLabelValueInList = (field) => {
@@ -172,12 +182,16 @@ const AddYuva = () => {
   };
 
   const setLableValueInList = (data) => {
-    const list = data.map((data) => ({
-      ...data,
-      label: data.name,
-      value: data.id,
+    const source = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.data)
+        ? data.data
+        : [];
+    return source.map((item) => ({
+      ...item,
+      label: item.name,
+      value: item.id,
     }));
-    return list;
   };
 
   const formatLabelValue = (res, field) => {
@@ -316,11 +330,10 @@ const AddYuva = () => {
         });
         break;
       case "samaj":
+        getSamajList(location?.state?.data?.city);
         samaj.forEach((data) => {
           if (location?.state?.data?.localSamaj === data.id) {
-            // setFieldValue("localSamaj", data.name);
             setSelectedSamaj(data.name);
-            getSamajList(location?.state?.data?.region);
           }
         });
         break;
@@ -623,10 +636,26 @@ const AddYuva = () => {
 
   useEffect(() => {
     getList("native");
+    getList("surname");
+    getList("country");
     selectArr.forEach((data) => {
       addLabelValueInList(data);
     }); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (surname?.length) {
+      addLabelValueInList("surname");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surname]);
+
+  useEffect(() => {
+    if (country?.length) {
+      addLabelValueInList("country");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -1000,7 +1029,6 @@ const AddYuva = () => {
                       setSelectedRegion(region.name);
                       setIsLocation((pre) => ({ ...pre, region: true }));
                       getListById("district", region.id);
-                      getSamajList(region.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.state}
@@ -1040,6 +1068,9 @@ const AddYuva = () => {
                       setFieldValue("city", city.id);
                       setSelectedCity(city.name);
                       setIsLocation((pre) => ({ ...pre, city: true }));
+                      setFieldValue("localSamaj", "");
+                      setSelectedSamaj(null);
+                      getSamajList(city.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.district}
@@ -1435,14 +1466,17 @@ const AddYuva = () => {
                     value={values?.contactInfo?.relation}
                     errors={
                       (touched?.contactInfo?.relation || submitCount > 0) &&
-                      errors?.contactInfo?.relation &&
+                      !values?.contactInfo?.relation &&
                       errors?.contactInfo?.relation
                     }
                     onBlur={() =>
-                      setFieldTouched("contactInfo.relation", true)
+                      setFieldTouched("contactInfo.relation", true, false)
                     }
                     onChange={(e) =>
-                      setFieldValue("contactInfo.relation", e?.target?.value)
+                      setFieldValue(
+                        "contactInfo.relation",
+                        e?.target?.value || ""
+                      )
                     }
                   />
                 </Grid>
@@ -1514,7 +1548,7 @@ const AddYuva = () => {
                   ) : null}
                 </Grid>
               </FormSection>
-              <FormSection title="Handicap detail">
+              <FormSection title="Handicap Info">
                 <Grid container spacing={2}>
                   <CustomCheckbox
                     label={"Handicap"}
@@ -1559,7 +1593,7 @@ const AddYuva = () => {
                   />
                 </Grid>
               </FormSection>
-              <FormSection title="Other">
+              <FormSection title="Other Info">
                 <Grid container spacing={2}>
                   {newFieldList?.map((item, index) => {
                     return (

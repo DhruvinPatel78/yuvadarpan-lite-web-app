@@ -25,6 +25,7 @@ import {
   State,
   StateDetails,
   AddYuva,
+  BulkAddYuva,
   AdminDashboard,
 } from "./Pages/Admin";
 
@@ -111,6 +112,11 @@ function App() {
               path="add"
               exact
               element={<PrivateRoute Component={AddYuva} />}
+            />
+            <Route
+              path="bulk-add"
+              exact
+              element={<PrivateRoute Component={BulkAddYuva} />}
             />
             <Route
               path=":id"
