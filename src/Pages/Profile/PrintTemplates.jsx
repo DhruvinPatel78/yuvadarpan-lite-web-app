@@ -119,6 +119,10 @@ const buildPrintModel = (data, lists) => {
       { label: "Phone", value: data?.contactInfo?.phone },
       ...(isFemale ? [] : [{ label: "Email", value: data?.email }]),
       { label: "Name", value: data?.contactInfo?.name },
+      {
+        label: "Last Name",
+        value: getLookupName(surname, data?.contactInfo?.lastName),
+      },
       { label: "Relation", value: data?.contactInfo?.relation },
       { label: "Address", value: data?.address },
     ],
@@ -129,10 +133,26 @@ const buildPrintModel = (data, lists) => {
     ],
     mama: [
       { label: "Name", value: data?.mamaInfo?.name },
-      { label: "Native", value: data?.mamaInfo?.native },
+      {
+        label: "Last Name",
+        value: getLookupName(surname, data?.mamaInfo?.lastName),
+      },
+      {
+        label: "Native",
+        value: getLookupName(nativeList, data?.mamaInfo?.native),
+      },
       { label: "City", value: data?.mamaInfo?.city },
     ],
-    education: [{ label: "Education", value: data?.education }],
+    education: [
+      {
+        label: "Education",
+        value: data?.education?.education || data?.education,
+      },
+      {
+        label: "Field of Study",
+        value: data?.education?.fieldOfStudy || data?.fieldOfStudy,
+      },
+    ],
     career: [
       { label: "Activity", value: data?.activity },
       { label: "Firm", value: data?.firm },

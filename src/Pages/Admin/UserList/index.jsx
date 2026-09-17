@@ -301,7 +301,7 @@ function Index() {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
       return;
     }
-    if (!(userList?.data?.length)) {
+    if (!userList?.data?.length) {
       return;
     }
     loadingMoreLock.current = true;
@@ -827,7 +827,7 @@ function Index() {
         {canAct && selectedUsers.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
+              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-white border border-line rounded-lg"
             }
           >
             <span className={"text-primary font-semibold"}>
@@ -1074,9 +1074,7 @@ function Index() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       errors={
-                        touched?.familyId &&
-                        errors?.familyId &&
-                        errors?.familyId
+                        touched?.familyId && errors?.familyId && errors?.familyId
                       }
                     />
                   </FormControl>
@@ -1160,9 +1158,7 @@ function Index() {
                       variant="outlined"
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      errors={
-                        touched?.mobile && errors?.mobile && errors?.mobile
-                      }
+                      errors={touched?.mobile && errors?.mobile && errors?.mobile}
                     />
                   </FormControl>
                 </Grid>
@@ -1177,9 +1173,7 @@ function Index() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       errors={
-                        touched?.password &&
-                        errors?.password &&
-                        errors?.password
+                        touched?.password && errors?.password && errors?.password
                       }
                     />
                   </FormControl>
@@ -1218,9 +1212,7 @@ function Index() {
                           name={"country"}
                           value={selectedCountryName}
                           errors={
-                            touched?.country &&
-                            errors?.country &&
-                            errors?.country
+                            touched?.country && errors?.country && errors?.country
                           }
                           onChange={(e, selectedCountry) => {
                             setFieldValue("country", selectedCountry?.id);
@@ -1347,9 +1339,7 @@ function Index() {
                           name={"city"}
                           value={selectedCityName}
                           disabled={!selectedDistrictName}
-                          errors={
-                            touched?.city && errors?.city && errors?.city
-                          }
+                          errors={touched?.city && errors?.city && errors?.city}
                           onChange={(e, city) => {
                             setFieldValue("city", city?.id);
                             setFieldValue("localSamaj", "");

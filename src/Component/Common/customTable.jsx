@@ -100,12 +100,10 @@ function CustomTable({
     <div className={"w-full min-w-0 bg-white rounded-xl border border-line overflow-hidden shadow-card"}>
       {showToolbar ? (
         <div
-          className={
-            "flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 bg-muted border-b border-line"
-          }
+          className={"flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-2.5 bg-white border-b border-line"}
         >
           <span className={"text-primary font-semibold"}>
-            {selectedIds.length} selected
+            {selectedIds.length} Selected
           </span>
           <div className={"flex flex-wrap items-center gap-2"}>
             {bulkActions.map((action) => (
