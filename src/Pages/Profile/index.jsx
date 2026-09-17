@@ -328,11 +328,22 @@ const ProfilePage = () => {
   ];
   const mamaFields = [
     { label: "Mama Name", value: data?.mamaInfo?.name },
-    { label: "Mama Native", value: data?.mamaInfo?.native },
+    {
+      label: "Mama Last Name",
+      value: lookupValue(surname, data?.mamaInfo?.lastName),
+    },
+    {
+      label: "Mama Native",
+      value: lookupValue(nativeList, data?.mamaInfo?.native),
+    },
     { label: "Mama City", value: data?.mamaInfo?.city },
   ];
   const contactFields = [
     { label: "Contact Person Name", value: data?.contactInfo?.name },
+    {
+      label: "Last Name",
+      value: lookupValue(surname, data?.contactInfo?.lastName),
+    },
     { label: "Contact Person Phone", value: data?.contactInfo?.phone },
     { label: "Relation", value: titleCase(data?.contactInfo?.relation) },
     ...(String(data?.gender).toLowerCase() === "female"
@@ -342,7 +353,14 @@ const ProfilePage = () => {
   ];
   const additionalFields = extraOtherFields(data?.other);
   const otherFields = [
-    { label: "Highest Education", value: titleCase(data?.education) },
+    {
+      label: "Highest Education",
+      value: titleCase(data?.education?.education || data?.education),
+    },
+    {
+      label: "Field of Study",
+      value: data?.education?.fieldOfStudy || data?.fieldOfStudy,
+    },
     { label: "Blood Group", value: data?.bloodGroup },
     ...(data?.handicap === true
       ? [

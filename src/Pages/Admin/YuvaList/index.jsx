@@ -124,9 +124,7 @@ const YuvaList = () => {
   const getNativeList = async () => {
     try {
       const data = await fetchNativeList();
-      setNativeList(
-        data.map((d) => ({ ...d, label: d.name, value: d.id }))
-      );
+      setNativeList(data.map((d) => ({ ...d, label: d.name, value: d.id })));
     } catch (e) {
       // Optionally handle error with notification
     }
@@ -379,7 +377,7 @@ const YuvaList = () => {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
       return;
     }
-    if (!(yuvaList?.data?.length)) {
+    if (!yuvaList?.data?.length) {
       return;
     }
     loadingMoreLock.current = true;
@@ -605,11 +603,11 @@ const YuvaList = () => {
         {canAct && selectedYuvas.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
+              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-white border border-line rounded-lg"
             }
           >
             <span className={"text-primary font-semibold"}>
-              {selectedYuvas.length} selected
+              {selectedYuvas.length} Selected
             </span>
             <Button
               size="small"
@@ -886,15 +884,38 @@ const YuvaList = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                 <YuvaDetailItem label="Name" value={userData?.mamaInfo?.name} />
                 <YuvaDetailItem
+                  label="Last name"
+                  value={
+                    surname.find(
+                      (item) => item?.id === userData?.mamaInfo?.lastName
+                    )?.name
+                  }
+                />
+                <YuvaDetailItem
                   label="Native"
-                  value={userData?.mamaInfo?.native}
+                  value={
+                    nativeList.find(
+                      (item) => item?.id === userData?.mamaInfo?.native
+                    )?.name
+                  }
                 />
                 <YuvaDetailItem label="City" value={userData?.mamaInfo?.city} />
               </div>
             </TabPanel>
             <TabPanel value="3" className="!px-0 !pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <YuvaDetailItem label="Education" value={userData?.education} />
+                <YuvaDetailItem
+                  label="Education"
+                  value={
+                    userData?.education?.education || userData?.education
+                  }
+                />
+                <YuvaDetailItem
+                  label="Field of study"
+                  value={
+                    userData?.education?.fieldOfStudy || userData?.fieldOfStudy
+                  }
+                />
                 <YuvaDetailItem
                   label="Blood group"
                   value={userData?.bloodGroup}
@@ -906,6 +927,14 @@ const YuvaList = () => {
                 <YuvaDetailItem
                   label="Name"
                   value={userData?.contactInfo?.name}
+                />
+                <YuvaDetailItem
+                  label="Last name"
+                  value={
+                    surname.find(
+                      (item) => item?.id === userData?.contactInfo?.lastName
+                    )?.name
+                  }
                 />
                 <YuvaDetailItem
                   label="Relation"
@@ -953,8 +982,20 @@ const YuvaList = () => {
               <div className="grid grid-cols-1 gap-y-4">
                 <YuvaDetailItem label="Name" value={userData?.mamaInfo?.name} />
                 <YuvaDetailItem
+                  label="Last name"
+                  value={
+                    surname.find(
+                      (item) => item?.id === userData?.mamaInfo?.lastName
+                    )?.name
+                  }
+                />
+                <YuvaDetailItem
                   label="Native"
-                  value={userData?.mamaInfo?.native}
+                  value={
+                    nativeList.find(
+                      (item) => item?.id === userData?.mamaInfo?.native
+                    )?.name
+                  }
                 />
                 <YuvaDetailItem label="City" value={userData?.mamaInfo?.city} />
               </div>
@@ -967,6 +1008,14 @@ const YuvaList = () => {
                 <YuvaDetailItem
                   label="Name"
                   value={userData?.contactInfo?.name}
+                />
+                <YuvaDetailItem
+                  label="Last name"
+                  value={
+                    surname.find(
+                      (item) => item?.id === userData?.contactInfo?.lastName
+                    )?.name
+                  }
                 />
                 <YuvaDetailItem
                   label="Relation"
@@ -983,7 +1032,18 @@ const YuvaList = () => {
                 Other Info
               </h3>
               <div className="grid grid-cols-1 gap-y-4">
-                <YuvaDetailItem label="Education" value={userData?.education} />
+                <YuvaDetailItem
+                  label="Education"
+                  value={
+                    userData?.education?.education || userData?.education
+                  }
+                />
+                <YuvaDetailItem
+                  label="Field of study"
+                  value={
+                    userData?.education?.fieldOfStudy || userData?.fieldOfStudy
+                  }
+                />
                 <YuvaDetailItem
                   label="Blood group"
                   value={userData?.bloodGroup}

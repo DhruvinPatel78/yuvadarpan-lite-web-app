@@ -14,14 +14,14 @@ const CustomAccordion = ({
   return (
     <Accordion
       disableGutters
-      className="w-full !shadow-none border border-solid border-line !rounded-xl overflow-hidden"
+      className="w-full !shadow-none border border-solid border-line !rounded-xl overflow-visible"
       expanded={expanded}
       onChange={handleExpansion}
       sx={{
         border: "1px solid #e4ddd4",
         borderRadius: "12px !important",
         boxShadow: "none",
-        overflow: "hidden",
+        overflow: "visible",
         "&:before": { display: "none" },
         "&.Mui-expanded": {
           margin: 0,

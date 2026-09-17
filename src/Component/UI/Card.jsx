@@ -9,7 +9,7 @@ export default function Card({
 }) {
   return (
     <div
-      className={`bg-white rounded-xl border border-line shadow-card overflow-hidden ${className}`}
+      className={`bg-white rounded-xl border border-line shadow-card overflow-visible ${className}`}
       {...rest}
     >
       {header}

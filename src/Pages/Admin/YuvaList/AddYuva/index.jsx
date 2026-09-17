@@ -72,6 +72,14 @@ const FormSection = ({ title, children, action = null }) => (
   </Card>
 );
 
+const higherEducation = [
+  "Diploma",
+  "Graduate",
+  "Post Graduate",
+  "PHD",
+  "OTHER",
+];
+
 const fieldsToOtherObject = (list = [], draft) => {
   const rows = [...list];
   const draftTitle = String(draft?.title || "").trim();
@@ -126,6 +134,9 @@ const AddYuva = () => {
   const [selectedCity, setSelectedCity] = useState(null);
   const [nativeList, setNativeList] = useState([]);
   const [selectedNative, setSelectedNative] = useState(null);
+  const [selectedMamaLastName, setSelectedMamaLastName] = useState(null);
+  const [selectedMamaNative, setSelectedMamaNative] = useState(null);
+  const [selectedContactLastName, setSelectedContactLastName] = useState(null);
   const [newField, setNewField] = useState({
     title: "",
     description: "",
@@ -227,6 +238,12 @@ const AddYuva = () => {
             // setFieldValue("lastName", data.name);
             setSelectedLastName(data.name);
           }
+          if (location?.state?.data?.mamaInfo?.lastName === data.id) {
+            setSelectedMamaLastName(data.name);
+          }
+          if (location?.state?.data?.contactInfo?.lastName === data.id) {
+            setSelectedContactLastName(data.name);
+          }
         });
         break;
       case "native":
@@ -235,6 +252,14 @@ const AddYuva = () => {
           .then((res) => {
             // setFieldValue("native", res.data[0].name);
             setSelectedNative(res.data[0].name);
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+        axios
+          .get(`/${field}/getInfo/${location?.state?.data?.mamaInfo?.native}`)
+          .then((res) => {
+            setSelectedMamaNative(res.data[0].name);
           })
           .catch(function (error) {
             console.log(error);
@@ -364,17 +389,22 @@ const AddYuva = () => {
       district: "",
       city: "",
       native: "",
-      education: "",
+      education: {
+        education: "",
+        fieldOfStudy: "",
+      },
       bloodGroup: "",
       height: "",
       weight: "",
       contactInfo: {
         name: "",
+        lastName: "",
         phone: "",
         relation: "",
       },
       mamaInfo: {
         name: "",
+        lastName: "",
         city: "",
         native: "",
       },
@@ -410,11 +440,17 @@ const AddYuva = () => {
       fatherName: Yup.string().required("Father Name Is Required"),
       grandFatherName: Yup.string().required("Grand Father Name Is Required"),
       gender: Yup.string().required("Gender Is Required"),
-      pob: Yup.string().required("Birth Place Is Required"),
+      pob: Yup.string(),
       ...(location?.state
         ? { profileName: Yup.string().required("Profile Photo Is Required") }
         : {}),
-      dob: Yup.date().required("Date Of Birth Is Required"),
+      dob: Yup.mixed()
+        .nullable()
+        .test(
+          "dob",
+          "Date Of Birth Is Required",
+          (value) => Boolean(value) && dayjs(value).isValid()
+        ),
       height: Yup.string().required("Height Is Required"),
       weight: Yup.string().required("Weight Is Required"),
       firm: Yup.string().required("Firm Is Required"),
@@ -425,9 +461,17 @@ const AddYuva = () => {
       district: Yup.string().required("District Is Required"),
       city: Yup.string().required("City Is Required"),
       native: Yup.string().required("Native Is Required"),
-      education: Yup.string().required("Education Is Required"),
+      education: Yup.object({
+        education: Yup.string().required("Education Is Required"),
+        fieldOfStudy: Yup.string().when("education", {
+          is: (value) => higherEducation.includes(value),
+          then: (schema) => schema.required("Field of Study Is Required"),
+          otherwise: (schema) => schema.notRequired(),
+        }),
+      }),
       contactInfo: Yup.object({
         name: Yup.string().required("Contact Name Is Required"),
+        lastName: Yup.string().required("Contact Last Name Is Required"),
         relation: Yup.string().required("Contact Relation Is Required"),
         phone: Yup.string()
           .matches(
@@ -438,6 +482,7 @@ const AddYuva = () => {
       }),
       mamaInfo: Yup.object({
         name: Yup.string().required("Mama Name Is Required"),
+        lastName: Yup.string().required("Mama Last Name Is Required"),
         native: Yup.string().required("Mama Native Is Required"),
         city: Yup.string().required("Mama City Is Required"),
       }),
@@ -450,16 +495,17 @@ const AddYuva = () => {
         .required("Family ID IsRequired"),
       activity: Yup.string().required("Activity Is Required"),
       abroadStudy: Yup.string().required("AbroadStudy Required"),
-      email: Yup.string()
-        .matches(
-          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
-        )
-        .required("Email Is Required"),
+      email: Yup.string().matches(
+        "^$|^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+        "Invalid email address format"
+      ),
       martialStatus: Yup.string().required("Martial Status Is Required"),
-      // handicap: Yup.string().required("Required"),
-      // handicapDetails: Yup.string().required("Required"),
-      YSKno: Yup.string().required("YSKno Is Required"),
+      handicapDetails: Yup.string().when("handicap", {
+        is: true,
+        then: (schema) => schema.required("Handicap Details Is Required"),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+      YSKno: Yup.string(),
       localSamaj: Yup.string().required("Local Samaj Required"),
     }),
   });
@@ -473,6 +519,7 @@ const AddYuva = () => {
     handleChange,
     handleBlur,
     setFieldTouched,
+    submitCount,
   } = formik;
 
   const imageUploadHandler = (file) => {
@@ -557,6 +604,14 @@ const AddYuva = () => {
         ...location?.state?.data,
         profileName: location?.state?.data?.profile?.name,
         other: location?.state?.data?.other || {},
+        education:
+          location?.state?.data?.education &&
+          typeof location?.state?.data?.education === "object"
+            ? location.state.data.education
+            : {
+                education: location?.state?.data?.education || "",
+                fieldOfStudy: location?.state?.data?.fieldOfStudy || "",
+              },
       });
       setNewFieldList(otherObjectToFields(location?.state?.data?.other));
       setNewField({ title: "", description: "" });
@@ -612,85 +667,88 @@ const AddYuva = () => {
   return (
     <Box>
       <Header backBtn={true} btnAction="/dashboard" />
-      <ContainerPage className={"flex-col justify-center flex items-start pb-6"}>
+      <ContainerPage
+        className={"flex-col justify-center flex items-start pb-6"}
+      >
         <PageHeader
           className="w-full"
           title={isEdit ? "Edit Yuva" : "Add Yuva"}
           description={
-            isEdit
-              ? "Update this yuva record."
-              : "Create a new yuva record."
+            isEdit ? "Update this yuva record." : "Create a new yuva record."
           }
         />
         <FormikProvider value={formik}>
           <Form>
             <div className="w-full flex flex-col gap-4 md:gap-5">
               {isEdit ? (
-              <Card className="w-full">
-                <h2 className="text-base font-WorkSemiBold text-primary mb-5 pb-3 border-b border-line">
-                  Photo
-                </h2>
-                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5">
-                  {loading ? (
-                    <CircularProgress
-                      className={
-                        "w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border border-primary cursor-pointer text-primary"
-                      }
-                    />
-                  ) : (
-                    <label htmlFor="upload-button" className="relative shrink-0 cursor-pointer group">
-                      <LoadableImage
-                        src={values?.profile?.url}
-                        alt={values?.profile?.name || "profile"}
-                        className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border ${
-                          touched?.profileName && errors?.profileName
-                            ? "border-red-600"
-                            : "border-line"
-                        } group-hover:border-primary`}
-                        eager
-                        spinnerSize={32}
+                <Card className="w-full">
+                  <h2 className="text-base font-WorkSemiBold text-primary mb-5 pb-3 border-b border-line">
+                    Photo
+                  </h2>
+                  <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5">
+                    {loading ? (
+                      <CircularProgress
+                        className={
+                          "w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border border-primary cursor-pointer text-primary"
+                        }
                       />
-                      <span className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center shadow-card">
-                        <PhotoCameraOutlinedIcon sx={{ fontSize: 18 }} />
-                      </span>
-                    </label>
-                  )}
-                  <div className="text-center sm:text-left min-w-0">
-                    <p className="text-sm font-semibold text-primary">
-                      Profile photo
-                    </p>
-                    <p className="text-sm text-mutedText mt-1">
-                      Click the photo to upload a new image.
-                    </p>
-                    <label
-                      htmlFor="upload-button"
-                      className="inline-flex mt-3 text-sm font-semibold text-primary underline underline-offset-4 cursor-pointer"
-                    >
-                      Change photo
-                    </label>
+                    ) : (
+                      <label
+                        htmlFor="upload-button"
+                        className="relative shrink-0 cursor-pointer group"
+                      >
+                        <LoadableImage
+                          src={values?.profile?.url}
+                          alt={values?.profile?.name || "profile"}
+                          className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border ${
+                            touched?.profileName && errors?.profileName
+                              ? "border-red-600"
+                              : "border-line"
+                          } group-hover:border-primary`}
+                          eager
+                          spinnerSize={32}
+                        />
+                        <span className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center shadow-card">
+                          <PhotoCameraOutlinedIcon sx={{ fontSize: 18 }} />
+                        </span>
+                      </label>
+                    )}
+                    <div className="text-center sm:text-left min-w-0">
+                      <p className="text-sm font-semibold text-primary">
+                        Profile photo
+                      </p>
+                      <p className="text-sm text-mutedText mt-1">
+                        Click the photo to upload a new image.
+                      </p>
+                      <label
+                        htmlFor="upload-button"
+                        className="inline-flex mt-3 text-sm font-semibold text-primary underline underline-offset-4 cursor-pointer"
+                      >
+                        Change photo
+                      </label>
+                    </div>
+                    <input
+                      type="file"
+                      id="upload-button"
+                      style={{ display: "none" }}
+                      name="profileName"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          imageUploadHandler(file);
+                        }
+                        setFieldTouched("profileName", true);
+                      }}
+                      onClick={() => setFieldTouched("profileName", true)}
+                    />
                   </div>
-                  <input
-                    type="file"
-                    id="upload-button"
-                    style={{ display: "none" }}
-                    name="profileName"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        imageUploadHandler(file);
-                      }
-                      setFieldTouched("profileName", true);
-                    }}
-                    onClick={() => setFieldTouched("profileName", true)}
-                  />
-                </div>
-                {touched?.profileName && errors?.profileName && (
-                  <p className={"text-error text-sm transition-all mt-3"}>
-                    {errors?.profileName}
-                  </p>
-                )}
-              </Card>
+                  {touched?.profileName && errors?.profileName && (
+                    <p className={"text-error text-sm transition-all mt-3"}>
+                      {errors?.profileName}
+                    </p>
+                  )}
+                </Card>
               ) : null}
               <FormSection title="Personal info">
                 <Grid container spacing={2}>
@@ -819,10 +877,15 @@ const AddYuva = () => {
                     placeholder="Date and Time of Birth"
                     label={"Date of birth"}
                     value={values?.dob}
-                    errors={touched?.dob && errors?.dob && errors?.dob}
-                    onBlur={handleBlur}
+                    errors={
+                      (touched?.dob || submitCount > 0) &&
+                      errors?.dob &&
+                      errors?.dob
+                    }
+                    onBlur={() => setFieldTouched("dob", true)}
                     onChange={(e) => {
                       setFieldValue("dob", e);
+                      setFieldTouched("dob", true);
                     }}
                   />
                   <CustomInput
@@ -834,6 +897,7 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.pob}
+                    required={false}
                     errors={touched?.pob && errors?.pob && errors?.pob}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -863,6 +927,7 @@ const AddYuva = () => {
                     sm={6}
                     md={4}
                     value={values?.email}
+                    required={false}
                     errors={touched?.email && errors?.email && errors?.email}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -1208,28 +1273,51 @@ const AddYuva = () => {
                       errors?.mamaInfo?.name
                     }
                   />
-                  <CustomInput
-                    type={"text"}
-                    label={"Mama Native"}
-                    placeholder={"Enter Your Native"}
-                    name={"native"}
+                  <CustomAutoComplete
+                    list={lastNameList}
+                    label={"Mama Last Name"}
+                    placeholder={"Select Your Last Name"}
+                    name="lastName"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.mamaInfo?.native}
-                    required={false}
-                    onChange={(e) =>
+                    value={selectedMamaLastName}
+                    errors={
+                      touched?.mamaInfo?.lastName &&
+                      errors?.mamaInfo?.lastName &&
+                      errors?.mamaInfo?.lastName
+                    }
+                    onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        native: e.target.value,
-                      })
-                    }
+                        lastName: lastName.id,
+                      });
+                      setSelectedMamaLastName(lastName.name);
+                    }}
                     onBlur={handleBlur}
+                  />
+                  <CustomAutoComplete
+                    list={nativeList}
+                    label={"Mama Native"}
+                    placeholder={"Select Your Native"}
+                    name="native"
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={selectedMamaNative}
                     errors={
                       touched?.mamaInfo?.native &&
                       errors?.mamaInfo?.native &&
                       errors?.mamaInfo?.native
                     }
+                    onChange={(e, native) => {
+                      setFieldValue("mamaInfo", {
+                        ...values?.mamaInfo,
+                        native: native.id,
+                      });
+                      setSelectedMamaNative(native.name);
+                    }}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
@@ -1262,74 +1350,99 @@ const AddYuva = () => {
                     type={"text"}
                     label={"Contact Person Name"}
                     placeholder={"Enter Your Contact Person Name"}
-                    name={"name"}
+                    name={"contactInfo.name"}
                     xs={12}
                     sm={6}
                     md={4}
+                    required
                     value={values?.contactInfo?.name}
                     errors={
-                      touched?.contactInfo?.name &&
+                      (touched?.contactInfo?.name || submitCount > 0) &&
                       errors?.contactInfo?.name &&
                       errors?.contactInfo?.name
                     }
                     onBlur={handleBlur}
                     onChange={(e) =>
-                      setFieldValue("contactInfo", {
-                        ...values?.contactInfo,
-                        name: e.target.value,
-                      })
+                      setFieldValue("contactInfo.name", e.target.value)
                     }
+                  />
+                  <CustomAutoComplete
+                    list={lastNameList}
+                    label={"Last Name"}
+                    placeholder={"Select Your Last Name"}
+                    name="contactInfo.lastName"
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={selectedContactLastName}
+                    errors={
+                      (touched?.contactInfo?.lastName || submitCount > 0) &&
+                      errors?.contactInfo?.lastName &&
+                      errors?.contactInfo?.lastName
+                    }
+                    onChange={(e, lastName) => {
+                      setFieldValue("contactInfo.lastName", lastName.id);
+                      setSelectedContactLastName(lastName.name);
+                      setFieldTouched("contactInfo.lastName", true);
+                    }}
+                    onBlur={() => setFieldTouched("contactInfo.lastName", true)}
                   />
                   <CustomInput
                     type={"text"}
                     label={"Contact Person Phone"}
                     placeholder={"Enter Your Contact Person Phone"}
-                    name={"phone"}
+                    name={"contactInfo.phone"}
                     xs={12}
                     sm={6}
                     md={4}
+                    required
                     value={values?.contactInfo?.phone}
                     errors={
-                      touched?.contactInfo?.phone &&
+                      (touched?.contactInfo?.phone || submitCount > 0) &&
                       errors?.contactInfo?.phone &&
                       errors?.contactInfo?.phone
                     }
                     onBlur={handleBlur}
                     onChange={(e) =>
-                      setFieldValue("contactInfo", {
-                        ...values?.contactInfo,
-                        phone: e?.target?.value,
-                      })
+                      setFieldValue("contactInfo.phone", e?.target?.value)
                     }
                   />
                   <CustomSelect
                     list={[
+                      "Grandfather",
+                      "Grandmother",
                       "Father",
                       "Mother",
                       "Uncle",
                       "Aunty",
+                      "Brother",
+                      "Sister",
+                      "Fai",
+                      "Fuva",
                       "Mama",
                       "Mami",
-                      "Brother",
+                      "Masa",
+                      "Masi",
+                      "Guardian",
                     ]}
                     label={"Relation"}
                     placeholder={"Enter Your Relation"}
-                    name={"relation"}
+                    name={"contactInfo.relation"}
                     xs={12}
                     sm={6}
                     md={4}
+                    required
                     value={values?.contactInfo?.relation}
                     errors={
-                      touched?.contactInfo?.relation &&
+                      (touched?.contactInfo?.relation || submitCount > 0) &&
                       errors?.contactInfo?.relation &&
                       errors?.contactInfo?.relation
                     }
-                    onBlur={handleBlur}
+                    onBlur={() =>
+                      setFieldTouched("contactInfo.relation", true)
+                    }
                     onChange={(e) =>
-                      setFieldValue("contactInfo", {
-                        ...values?.contactInfo,
-                        relation: e?.target?.value,
-                      })
+                      setFieldValue("contactInfo.relation", e?.target?.value)
                     }
                   />
                 </Grid>
@@ -1354,25 +1467,54 @@ const AddYuva = () => {
                       "Graduate",
                       "Post Graduate",
                       "PHD",
+                      "OTHER"
                     ]}
                     label={"Highest Education"}
                     placeholder={"Select Your Primary Education"}
-                    name={"education"}
+                    name={"education.education"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.education}
+                    required
+                    value={values?.education?.education}
                     errors={
-                      touched?.education &&
-                      errors?.education &&
-                      errors?.education
+                      (touched?.education?.education || submitCount > 0) &&
+                      errors?.education?.education &&
+                      errors?.education?.education
                     }
-                    onBlur={handleBlur}
-                    onChange={(e) => setFieldValue("education", e.target.value)}
+                    onBlur={() => setFieldTouched("education.education", true)}
+                    onChange={(e) => {
+                      const education = e.target.value;
+                      setFieldValue("education.education", education);
+                      setFieldTouched("education.education", true);
+                      if (!higherEducation.includes(education)) {
+                        setFieldValue("education.fieldOfStudy", "");
+                      }
+                    }}
                   />
+                  {higherEducation.includes(values?.education?.education) ? (
+                    <CustomInput
+                      type={"text"}
+                      label={"Field of Study"}
+                      placeholder={"Enter Field of Study"}
+                      name={"education.fieldOfStudy"}
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      required
+                      value={values?.education?.fieldOfStudy}
+                      errors={
+                        (touched?.education?.fieldOfStudy || submitCount > 0) &&
+                        errors?.education?.fieldOfStudy &&
+                        errors?.education?.fieldOfStudy
+                      }
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                  ) : null}
                 </Grid>
               </FormSection>
-              <FormSection title="Other">
+              <FormSection title="Handicap detail">
                 <Grid container spacing={2}>
                   <CustomCheckbox
                     label={"Handicap"}
@@ -1387,6 +1529,9 @@ const AddYuva = () => {
                     className={"flex flex-row"}
                     onChange={(e) => {
                       setFieldValue("handicap", e.target.checked);
+                      if (!e.target.checked) {
+                        setFieldValue("handicapDetails", "");
+                      }
                     }}
                     onBlur={handleBlur}
                   />
@@ -1400,6 +1545,7 @@ const AddYuva = () => {
                     sm={12}
                     md={12}
                     value={values?.handicapDetails}
+                    required={Boolean(values?.handicap)}
                     errors={
                       touched?.handicapDetails &&
                       errors?.handicapDetails &&
@@ -1411,6 +1557,10 @@ const AddYuva = () => {
                     onBlur={handleBlur}
                     disabled={!values.handicap}
                   />
+                </Grid>
+              </FormSection>
+              <FormSection title="Other">
+                <Grid container spacing={2}>
                   {newFieldList?.map((item, index) => {
                     return (
                       <>
