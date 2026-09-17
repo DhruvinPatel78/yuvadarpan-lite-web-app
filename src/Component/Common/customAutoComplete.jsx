@@ -60,7 +60,7 @@ export default function CustomAutoComplete({
           },
         }}
         defaultValue={defaultValue}
-        options={list}
+        options={Array.isArray(list) ? list : []}
         value={
           multiple
             ? value || []
@@ -73,12 +73,21 @@ export default function CustomAutoComplete({
             ? option
             : option?.label || option?.name || ""
         }
-        isOptionEqualToValue={(option, value) => {
-          if (!value) return false;
+        isOptionEqualToValue={(option, selected) => {
+          if (!option || selected == null || selected === "") return false;
+          if (typeof selected === "string") {
+            return (
+              option.label === selected ||
+              option.name === selected ||
+              String(option.id) === selected ||
+              String(option.value) === selected
+            );
+          }
           return (
-            option.label === value.label ||
-            option.id === value.id ||
-            option.label === value
+            String(option.id) === String(selected.id) ||
+            String(option.value) === String(selected.value) ||
+            option.label === selected.label ||
+            option.name === selected.name
           );
         }}
         multiple={multiple}
