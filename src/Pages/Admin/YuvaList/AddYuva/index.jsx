@@ -845,8 +845,8 @@ const AddYuva = () => {
                       touched.lastName && errors.lastName && errors.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("lastName", lastName.id);
-                      setSelectedLastName(lastName.name);
+                      setFieldValue("lastName", lastName?.id || "");
+                      setSelectedLastName(lastName?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -942,8 +942,8 @@ const AddYuva = () => {
                     value={selectedNative}
                     errors={touched.native && errors.native && errors.native}
                     onChange={(e, native) => {
-                      setFieldValue("native", native.id);
-                      setSelectedNative(native.name);
+                      setFieldValue("native", native?.id || "");
+                      setSelectedNative(native?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1321,9 +1321,9 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName: lastName.id,
+                        lastName: lastName?.id || "",
                       });
-                      setSelectedMamaLastName(lastName.name);
+                      setSelectedMamaLastName(lastName?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1344,9 +1344,9 @@ const AddYuva = () => {
                     onChange={(e, native) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        native: native.id,
+                        native: native?.id || "",
                       });
-                      setSelectedMamaNative(native.name);
+                      setSelectedMamaNative(native?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1412,8 +1412,8 @@ const AddYuva = () => {
                       errors?.contactInfo?.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("contactInfo.lastName", lastName.id);
-                      setSelectedContactLastName(lastName.name);
+                      setFieldValue("contactInfo.lastName", lastName?.id || "");
+                      setSelectedContactLastName(lastName?.name || null);
                       setFieldTouched("contactInfo.lastName", true);
                     }}
                     onBlur={() => setFieldTouched("contactInfo.lastName", true)}

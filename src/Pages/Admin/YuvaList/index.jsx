@@ -605,7 +605,7 @@ const YuvaList = () => {
                 }}
               />
               <CustomAutoComplete
-                list={listHandler(region)}
+                list={listHandler(nativeList)}
                 multiple={true}
                 label={"Native"}
                 placeholder={"Select Your Native"}
