@@ -190,16 +190,16 @@ function Index() {
       middleName: Yup.string().required("Required"),
       lastName: Yup.string().required("Required"),
       familyId: Yup.number()
-        .typeError("Must be a number")
+        .typeError("Enter a number")
         .positive()
         .required("Required"),
-      mobile: Yup.number().typeError("Must be a number").required("Required"),
+      mobile: Yup.number().typeError("Enter a number").required("Required"),
       email: Yup.string().email().required("Required"),
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string()
         .required("Required")
         .test({
-          message: "Password not match",
+          message: "Passwords do not match",
           test: function (value) {
             return value === values.password;
           },
@@ -301,7 +301,7 @@ function Index() {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
       return;
     }
-    if (!(userList?.data?.length)) {
+    if (!userList?.data?.length) {
       return;
     }
     loadingMoreLock.current = true;
@@ -369,20 +369,26 @@ function Index() {
   };
 
   const userActionHandler = async (userInfo, action, field) => {
+    const previous = userInfo?.[field];
+    setUserList((prev) => ({
+      ...prev,
+      data: (prev?.data || []).map((item) =>
+        item.id === userInfo.id ? { ...item, [field]: action } : item
+      ),
+    }));
     try {
       await updateUser(userInfo?.id, { [field]: action });
-      if (isMobile) {
-        setUserList((prev) => ({
-          ...prev,
-          data: (prev?.data || []).map((item) =>
-            item.id === userInfo.id ? { ...item, [field]: action } : item
-          ),
-        }));
-      } else {
-        handleUserList();
-      }
     } catch (e) {
-      // Optionally handle error with notification
+      setUserList((prev) => ({
+        ...prev,
+        data: (prev?.data || []).map((item) =>
+          item.id === userInfo.id ? { ...item, [field]: previous } : item
+        ),
+      }));
+      setNotification({
+        type: "error",
+        message: e?.response?.data?.message || "Failed to update user.",
+      });
     }
   };
 
@@ -523,11 +529,11 @@ function Index() {
       renderCell: (record) => (
         <div className={"flex gap-2"}>
           <CustomSwitch
-            checked={record?.row?.allowed}
+            checked={Boolean(record?.row?.allowed)}
             disabled={!canAct}
-            onClick={(e) => {
+            onChange={(event, checked) => {
               if (!canAct) return;
-              userActionHandler(record?.row, !record?.row?.allowed, "allowed");
+              userActionHandler(record?.row, checked, "allowed");
             }}
           />
         </div>
@@ -544,11 +550,11 @@ function Index() {
       renderCell: (record) => (
         <div className={"flex gap-2"}>
           <CustomSwitch
-            checked={record?.row?.active}
+            checked={Boolean(record?.row?.active)}
             disabled={!canAct}
-            onClick={(e) => {
+            onChange={(event, checked) => {
               if (!canAct) return;
-              userActionHandler(record?.row, !record?.row?.active, "active");
+              userActionHandler(record?.row, checked, "active");
             }}
           />
         </div>
@@ -821,7 +827,7 @@ function Index() {
         {canAct && selectedUsers.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
+              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-white border border-line rounded-lg"
             }
           >
             <span className={"text-primary font-semibold"}>
@@ -865,7 +871,7 @@ function Index() {
                 <Paper
                   key={row.id}
                   elevation={2}
-                  className={"rounded-xl overflow-hidden border border-[#ead9d9]"}
+                  className={"rounded-xl overflow-hidden !border-2 !border-solid !border-[#d7d0c8]"}
                 >
                   <div className={"p-3"}>
                     <div className={"flex items-start justify-between gap-2"}>
@@ -895,22 +901,22 @@ function Index() {
                       <div className={"flex items-center gap-1"}>
                         <span className={"text-sm text-gray-600"}>Allowed</span>
                         <CustomSwitch
-                          checked={row.allowed}
+                          checked={Boolean(row.allowed)}
                           disabled={!canAct}
-                          onClick={() => {
+                          onChange={(event, checked) => {
                             if (!canAct) return;
-                            userActionHandler(row, !row.allowed, "allowed");
+                            userActionHandler(row, checked, "allowed");
                           }}
                         />
                       </div>
                       <div className={"flex items-center gap-1"}>
                         <span className={"text-sm text-gray-600"}>Active</span>
                         <CustomSwitch
-                          checked={row.active}
+                          checked={Boolean(row.active)}
                           disabled={!canAct}
-                          onClick={() => {
+                          onChange={(event, checked) => {
                             if (!canAct) return;
-                            userActionHandler(row, !row.active, "active");
+                            userActionHandler(row, checked, "active");
                           }}
                         />
                       </div>
@@ -1068,9 +1074,7 @@ function Index() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       errors={
-                        touched?.familyId &&
-                        errors?.familyId &&
-                        errors?.familyId
+                        touched?.familyId && errors?.familyId && errors?.familyId
                       }
                     />
                   </FormControl>
@@ -1154,9 +1158,7 @@ function Index() {
                       variant="outlined"
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      errors={
-                        touched?.mobile && errors?.mobile && errors?.mobile
-                      }
+                      errors={touched?.mobile && errors?.mobile && errors?.mobile}
                     />
                   </FormControl>
                 </Grid>
@@ -1171,9 +1173,7 @@ function Index() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       errors={
-                        touched?.password &&
-                        errors?.password &&
-                        errors?.password
+                        touched?.password && errors?.password && errors?.password
                       }
                     />
                   </FormControl>
@@ -1212,9 +1212,7 @@ function Index() {
                           name={"country"}
                           value={selectedCountryName}
                           errors={
-                            touched?.country &&
-                            errors?.country &&
-                            errors?.country
+                            touched?.country && errors?.country && errors?.country
                           }
                           onChange={(e, selectedCountry) => {
                             setFieldValue("country", selectedCountry?.id);
@@ -1341,9 +1339,7 @@ function Index() {
                           name={"city"}
                           value={selectedCityName}
                           disabled={!selectedDistrictName}
-                          errors={
-                            touched?.city && errors?.city && errors?.city
-                          }
+                          errors={touched?.city && errors?.city && errors?.city}
                           onChange={(e, city) => {
                             setFieldValue("city", city?.id);
                             setFieldValue("localSamaj", "");

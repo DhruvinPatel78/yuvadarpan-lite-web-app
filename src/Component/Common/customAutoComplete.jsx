@@ -30,7 +30,7 @@ export default function CustomAutoComplete({
   limitTags = 2,
   required = true,
   multiple = false,
-  disablePortal = false,
+  disablePortal = true,
   ...rest
 }) {
   return (
@@ -41,7 +41,8 @@ export default function CustomAutoComplete({
         componentsProps={{
           popper: {
             sx: {
-              zIndex: 2000,
+              zIndex: 20,
+              width: "100%",
               "@media (max-width: 767.95px)": {
                 maxWidth: "calc(100vw - 24px)",
               },
@@ -49,17 +50,13 @@ export default function CustomAutoComplete({
           },
           paper: {
             sx: {
-              "@media (max-width: 767.95px)": {
-                maxHeight: 280,
-              },
+              maxHeight: 280,
             },
           },
         }}
         ListboxProps={{
           sx: {
-            "@media (max-width: 767.95px)": {
-              maxHeight: 240,
-            },
+            maxHeight: 240,
           },
         }}
         defaultValue={defaultValue}

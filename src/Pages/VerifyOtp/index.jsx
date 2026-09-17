@@ -23,7 +23,7 @@ export default function Index() {
     try {
       await verifyOtp(location.state?.email, otp);
       setNotification({
-        message: "OTP Verify Successfully",
+        message: "OTP verified.",
         type: "success",
       });
       setTimeout(() => {
@@ -52,7 +52,7 @@ export default function Index() {
       await resendOtp(email);
       dispatch(endLoading());
       setNotification({
-        message: "OTP Send Successfully",
+        message: "OTP sent.",
         type: "success",
       });
     } catch (err) {

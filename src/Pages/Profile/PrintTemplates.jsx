@@ -1,5 +1,6 @@
 import React from "react";
 import moment from "moment/moment";
+import { getUserImageSrc } from "../../util/defaultUserImage";
 
 export const getLookupName = (list, id, fallback = "") =>
   list?.find(
@@ -96,7 +97,7 @@ const buildPrintModel = (data, lists) => {
 
   return {
     fullName,
-    photo: data?.profile?.url,
+    photo: getUserImageSrc(data?.profile?.url),
     phone: data?.contactInfo?.phone,
     email: isFemale ? "" : data?.email,
     personal: [
@@ -118,6 +119,10 @@ const buildPrintModel = (data, lists) => {
       { label: "Phone", value: data?.contactInfo?.phone },
       ...(isFemale ? [] : [{ label: "Email", value: data?.email }]),
       { label: "Name", value: data?.contactInfo?.name },
+      {
+        label: "Last Name",
+        value: getLookupName(surname, data?.contactInfo?.lastName),
+      },
       { label: "Relation", value: data?.contactInfo?.relation },
       { label: "Address", value: data?.address },
     ],
@@ -128,10 +133,26 @@ const buildPrintModel = (data, lists) => {
     ],
     mama: [
       { label: "Name", value: data?.mamaInfo?.name },
-      { label: "Native", value: data?.mamaInfo?.native },
+      {
+        label: "Last Name",
+        value: getLookupName(surname, data?.mamaInfo?.lastName),
+      },
+      {
+        label: "Native",
+        value: getLookupName(nativeList, data?.mamaInfo?.native),
+      },
       { label: "City", value: data?.mamaInfo?.city },
     ],
-    education: [{ label: "Education", value: data?.education }],
+    education: [
+      {
+        label: "Education",
+        value: data?.education?.education || data?.education,
+      },
+      {
+        label: "Field of Study",
+        value: data?.education?.fieldOfStudy || data?.fieldOfStudy,
+      },
+    ],
     career: [
       { label: "Activity", value: data?.activity },
       { label: "Firm", value: data?.firm },
@@ -191,13 +212,11 @@ const TemplateTwo = ({ model }) => {
       <h1 className="yuva-biodata-title">Bio-Data</h1>
       <div className="yuva-biodata-body">
         <div className="yuva-biodata-left">
-          {model.photo ? (
-            <img
-              src={model.photo}
-              alt={model.fullName}
-              className="yuva-biodata-photo"
-            />
-          ) : null}
+          <img
+            src={model.photo}
+            alt={model.fullName || "Profile"}
+            className="yuva-biodata-photo"
+          />
           {model.fullName ? (
             <h2 className="yuva-biodata-name">{model.fullName}</h2>
           ) : null}

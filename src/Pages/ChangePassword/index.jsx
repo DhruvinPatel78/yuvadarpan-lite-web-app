@@ -60,7 +60,7 @@ export default function Index() {
         }
       } else {
         setNotification({
-          message: `confirm password not matched !`,
+          message: "Passwords do not match.",
           type: "error",
         });
         dispatch(endLoading());

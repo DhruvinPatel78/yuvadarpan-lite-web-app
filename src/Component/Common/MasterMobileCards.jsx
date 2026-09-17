@@ -36,7 +36,7 @@ const MasterMobileCards = ({
       {canSelect && selectedIds.length > 0 ? (
         <div
           className={
-            "w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
+            "w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 px-3 py-2.5 bg-white border border-line rounded-lg"
           }
         >
           <span className={"text-primary font-semibold"}>
@@ -69,7 +69,7 @@ const MasterMobileCards = ({
             <Card
               key={id}
               padded={false}
-              className={"overflow-hidden"}
+              className={"overflow-hidden !border-2 !border-solid !border-line-strong"}
             >
               <div className={"p-3.5"}>
                 <div className={"flex items-start justify-between gap-2"}>
