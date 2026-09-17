@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Box,
@@ -16,19 +16,19 @@ import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
 import AddIcon from "@mui/icons-material/Add";
 import { Form, FormikProvider, useFormik } from "formik";
-import { Button as ActionButton, FilterActions, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
+import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
+import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
   getListById,
   getSelectedData,
   handleListById,
-  filterFieldCols,
   listHandler,
   useFilteredIds,
 } from "../../../Component/constant";
@@ -71,18 +71,11 @@ export default function Index() {
   const [regionModalData, setRegionModalData] = useState(null);
   const [regionAddEditModel, setRegionAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [stateListByCountry, setStateListByCountry] = useState(state);
-  const skipSearchEffect = useRef(true);
-  const filterCols = filterFieldCols(2);
-  const filterCount =
-    Number(Boolean(selectedSearchByText.trim())) +
-    Number(Boolean(selectedCountry?.length > 0)) +
-    Number(Boolean(selectedState?.length > 0));
 
   useEffect(() => {
     handleRegionList();
@@ -288,21 +281,6 @@ export default function Index() {
     handleRegionList(true);
   };
 
-  useEffect(() => {
-    if (skipSearchEffect.current) {
-      skipSearchEffect.current = false;
-      return;
-    }
-    const timeoutId = setTimeout(() => {
-      if (page !== 0) {
-        setPage(0);
-        return;
-      }
-      handleRegionList();
-    }, 400);
-    return () => clearTimeout(timeoutId);
-  }, [selectedSearchByText]);
-
   const toggleCardSelection = (id) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -366,64 +344,76 @@ export default function Index() {
           </div>
           }
         />
-        <MasterFilterBar
-          searchPlaceholder="Search region"
-          searchValue={selectedSearchByText}
-          onSearchChange={(e) => {
-            setSelectedSearchByText(e.target.value);
-            if (e.target.value === "") {
-              handleRegionList(true);
-            }
-          }}
-          filterCount={filterCount}
-          isFilterOpen={isFilterOpen}
-          onFilterClick={() => setIsFilterOpen((open) => !open)}
-          extraFilters={
-            <Grid spacing={2} container>
-              <CustomAutoComplete
-                list={listHandler(country)}
-                multiple={true}
-                label={"Country"}
-                placeholder={"Select Your Country"}
-                {...filterCols}
-                value={selectedCountry}
-                name="country"
-                onChange={async (e, country) => {
-                  if (country) {
-                    const data = await handleListById("state", country);
-                    setStateListByCountry(data);
-                    setSelectedCountry((pre) => getSelectedData(pre, country, e));
-                  }
-                }}
+        <CustomAccordion>
+          <Grid spacing={2} container>
+            <CustomAutoComplete
+              list={listHandler(country)}
+              multiple={true}
+              label={"Country"}
+              placeholder={"Select Your Country"}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              value={selectedCountry}
+              name="country"
+              onChange={async (e, country) => {
+                if (country) {
+                  const data = await handleListById("state", country);
+                  setStateListByCountry(data);
+                  setSelectedCountry((pre) => getSelectedData(pre, country, e));
+                }
+              }}
+            />
+            <CustomAutoComplete
+              list={listHandler(stateListByCountry)}
+              multiple={true}
+              label={"State"}
+              placeholder={"Select Your State"}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              value={selectedState}
+              name="state"
+              onChange={(e, state) => {
+                if (state) {
+                  setSelectedState((pre) => getSelectedData(pre, state, e));
+                }
+              }}
+            />
+            <CustomInput
+              type={"text"}
+              placeholder={"Enter Search Region"}
+              name={"region"}
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              value={selectedSearchByText}
+              onChange={(e) => {
+                setSelectedSearchByText(e.target.value);
+                if (e.target.value === "") {
+                  handleRegionList(true);
+                }
+              }}
+            />
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              className={"flex justify-start items-center gap-4"}
+            >
+              <FilterActions
+                onSubmit={() => handleRegionList()}
+                onReset={handleReset}
+                showReset={Boolean(selectedSearchByText || selectedCountry?.length > 0)}
               />
-              <CustomAutoComplete
-                list={listHandler(stateListByCountry)}
-                multiple={true}
-                label={"State"}
-                placeholder={"Select Your State"}
-                {...filterCols}
-                value={selectedState}
-                name="state"
-                onChange={(e, state) => {
-                  if (state) {
-                    setSelectedState((pre) => getSelectedData(pre, state, e));
-                  }
-                }}
-              />
-              <Grid
-                item
-                xs={12}
-                className={"flex justify-start items-center gap-4"}
-              >
-                <FilterActions
-                  onSubmit={() => handleRegionList()}
-                  onReset={handleReset}
-                  showReset={Boolean(selectedSearchByText || selectedCountry?.length > 0)}
-                />
-              </Grid>
             </Grid>
-          }
-        />
+          </Grid>
+        </CustomAccordion>
         <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={regionListColumn}

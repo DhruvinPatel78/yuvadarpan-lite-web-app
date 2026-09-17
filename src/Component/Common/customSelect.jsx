@@ -32,6 +32,7 @@ export default function CustomSelect({
     const onMouseDown = (event) => {
       if (rootRef.current?.contains(event.target)) return;
       setOpen(false);
+      onBlur?.({ target: { name } });
     };
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
@@ -64,7 +65,10 @@ export default function CustomSelect({
           onBlur={onBlur}
           open={open}
           onOpen={() => setOpen(true)}
-          onClose={() => setOpen(false)}
+          onClose={() => {
+            setOpen(false);
+            onBlur?.({ target: { name } });
+          }}
           MenuProps={{
             disablePortal: true,
             disableScrollLock: true,
@@ -98,7 +102,7 @@ export default function CustomSelect({
         >
           <MenuItem value="">SELECT</MenuItem>
           {list.map((data) => (
-            <MenuItem key={data} value={data}>
+            <MenuItem value={data}>
               <Typography className={"uppercase"}>{data}</Typography>
             </MenuItem>
           ))}

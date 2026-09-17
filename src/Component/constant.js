@@ -62,58 +62,6 @@ export const listHandler = (data) => {
   return data?.length > 0 ? [allOptions, ...setLabelValueInList(data)] : [];
 };
 
-export const filterFieldCols = (count) =>
-  Number(count) % 2 === 0
-    ? { xs: 12, sm: 6, md: 6, lg: 6 }
-    : { xs: 12, sm: 4, md: 4, lg: 4 };
-
-const gotraKeys = (gotra) =>
-  [gotra?.name, gotra?.label, gotra?.id, gotra?.value, gotra?._id]
-    .filter(Boolean)
-    .map((item) => String(item).trim().toLowerCase());
-
-export const surnameMatchesGotra = (row, gotra) => {
-  if (!gotra) return true;
-  const raw = String(row?.gotra || "").trim().toLowerCase();
-  return Boolean(raw) && gotraKeys(gotra).includes(raw);
-};
-
-const selectedGotras = (gotra) =>
-  (Array.isArray(gotra) ? gotra : gotra ? [gotra] : []).filter(
-    (item) => item && item.name !== "All"
-  );
-
-export const surnamesForGotra = (surnameList, gotra) => {
-  const rows = Array.isArray(surnameList) ? surnameList : [];
-  const picked = selectedGotras(gotra);
-  if (!picked.length) return rows;
-  return rows.filter((row) =>
-    picked.some((item) => surnameMatchesGotra(row, item))
-  );
-};
-
-export const gotraOptionList = (gotraList) =>
-  listHandler(
-    (Array.isArray(gotraList) ? gotraList : []).filter(
-      (item) => item?.active !== false
-    )
-  );
-
-export const lastNameIdsForGotraFilter = (
-  surnameList,
-  gotra,
-  selectedSurnameIds = []
-) => {
-  if (selectedSurnameIds?.length) return selectedSurnameIds;
-  const picked = selectedGotras(gotra);
-  if (!picked.length) return [];
-  const ids = surnamesForGotra(surnameList, picked)
-    .map((row) => row.id || row._id)
-    .filter(Boolean)
-    .map(String);
-  return ids.length ? ids : ["__none__"];
-};
-
 export const getSelectedData = (pre, data, e) => {
   return (data.map((item) => item.name).includes("All") &&
     data?.length === 1) ||

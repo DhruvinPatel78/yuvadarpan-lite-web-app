@@ -47,15 +47,6 @@ export const addYuva = async (payload) => {
   }
 };
 
-export const addBulkYuva = async (payload) => {
-  try {
-    const response = await axios.post("/yuvaList/addYuvaList", payload);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const updateYuva = async (id, payload) => {
   try {
     const response = await axios.patch(`/yuvaList/update/${id}`, payload);

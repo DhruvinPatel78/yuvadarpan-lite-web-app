@@ -214,8 +214,8 @@ export default function Index() {
                 md={4}
                 name="lastName"
                 onChange={(e, lastName) => {
-                  setFieldValue("lastName", lastName?.id || "");
-                  setSelectedLastName(lastName?.name || null);
+                  setFieldValue("lastName", lastName.id);
+                  setSelectedLastName(lastName.name);
                 }}
                 onBlur={handleBlur}
                 errors={touched.lastName && errors.lastName && errors.lastName}
