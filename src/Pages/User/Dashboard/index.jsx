@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
-  Autocomplete,
   Badge,
   Collapse,
   Container,
@@ -29,7 +28,6 @@ import {
   removeYuvaFromShortlist,
 } from "../../../util/shortlistApi";
 import { getNativeList } from "../../../util/yuvaAdminApi";
-import { getGotraAllList } from "../../../util/gotraApi";
 import CustomInput from "../../../Component/Common/customInput";
 import {
   getAllCityData,
@@ -41,7 +39,6 @@ import {
 } from "../../../util/getAPICall";
 import {
   getSelectedData,
-  filterFieldCols,
   handleListById,
   listHandler,
   useFilteredIds,
@@ -50,49 +47,13 @@ import { Button, Card } from "../../../Component/UI";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
-const searchFieldSx = {
-  "& .MuiOutlinedInput-root": {
-    backgroundColor: "#fff",
-    borderRadius: "8px",
-    minHeight: 44,
-    "& fieldset": { borderColor: "#d7d7e2" },
-    "&:hover fieldset": { borderColor: "#c8c8d4" },
-    "&.Mui-focused fieldset": { borderColor: "#542b2b" },
-  },
-};
-
-const gotraKeys = (gotra) =>
-  [gotra?.name, gotra?.label, gotra?.id, gotra?.value, gotra?._id]
-    .filter(Boolean)
-    .map((item) => String(item).trim().toLowerCase());
-
-const surnameMatchesGotra = (row, gotra) => {
-  if (!gotra) return true;
-  const raw = String(row?.gotra || "").trim().toLowerCase();
-  return Boolean(raw) && gotraKeys(gotra).includes(raw);
-};
-
-const resolveSurnameIds = (surnameList, gotra, query) => {
-  const q = String(query || "").trim().toLowerCase();
-  if (!gotra && !q) return null;
-  const ids = (Array.isArray(surnameList) ? surnameList : [])
-    .filter((row) => surnameMatchesGotra(row, gotra))
-    .filter((row) =>
-      q ? String(row?.name || "").toLowerCase().includes(q) : true
-    )
-    .map((row) => row.id || row._id)
-    .filter(Boolean)
-    .map(String);
-  return ids.length ? ids : ["__none__"];
-};
-
 const GENDER_OPTIONS = [
   { id: "male", name: "Male", label: "Male", value: "male" },
   { id: "female", name: "Female", label: "Female", value: "female" },
 ];
 
 const emptyAppliedFilters = {
-  keyword: "",
+  surnameIds: [],
   stateIds: [],
   regionIds: [],
   districtIds: [],
@@ -122,16 +83,14 @@ const Home = () => {
   const canShortlist = isRegularUser(auth?.user?.role);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const [yuvaList, setYuvaList] = useState([]);
-  const [surnameSearch, setSurnameSearch] = useState("");
-  const [keywordSearch, setKeywordSearch] = useState("");
+  const [searchText, setSearchText] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [listPage, setListPage] = useState(1);
   const loadingMoreLock = useRef(false);
-  const [debouncedSurnameSearch, setDebouncedSurnameSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [gotraList, setGotraList] = useState([]);
-  const [selectedGotra, setSelectedGotra] = useState(null);
+  const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState([]);
@@ -149,6 +108,7 @@ const Home = () => {
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
   const [shortlistedIds, setShortlistedIds] = useState([]);
 
+  const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredStateIds = useFilteredIds(selectedState, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
   const filteredDistrictIds = useFilteredIds(selectedDistrict, "id");
@@ -156,21 +116,6 @@ const Home = () => {
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
   const filteredGenders = useFilteredIds(selectedGender, "id");
-  const gotraOptions = useMemo(
-    () =>
-      (Array.isArray(gotraList) ? gotraList : [])
-        .filter((item) => item?.active !== false)
-        .map((item) => ({
-          ...item,
-          label: item.name,
-          value: item.id,
-        })),
-    [gotraList]
-  );
-  const liveSurnameIds = useMemo(
-    () => resolveSurnameIds(surname, selectedGotra, debouncedSurnameSearch),
-    [surname, selectedGotra, debouncedSurnameSearch]
-  );
 
   const loadYuvas = async ({ pageNum = 1, append = false } = {}) => {
     if (append) {
@@ -187,11 +132,11 @@ const Home = () => {
         page: pageNum,
         limit: PAGE_SIZE,
       };
-      if (appliedFilters.keyword) {
-        params.search = appliedFilters.keyword;
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
       }
-      if (liveSurnameIds) {
-        params.lastName = liveSurnameIds;
+      if (appliedFilters.surnameIds.length) {
+        params.lastName = appliedFilters.surnameIds;
       }
       if (appliedFilters.stateIds.length) {
         params.state = appliedFilters.stateIds;
@@ -247,9 +192,6 @@ const Home = () => {
     dispatch(getAllDistrictData);
     dispatch(getAllSamajData);
     dispatch(getAllSurnameData);
-    getGotraAllList()
-      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setGotraList([]));
     getNativeList()
       .then((data) => setNativeList(Array.isArray(data) ? data : []))
       .catch(() => setNativeList([]));
@@ -286,10 +228,10 @@ const Home = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setDebouncedSurnameSearch(surnameSearch.trim());
+      setDebouncedSearch(searchText.trim());
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timeoutId);
-  }, [surnameSearch]);
+  }, [searchText]);
 
   useEffect(() => {
     if (selectedState.length === 0) {
@@ -314,9 +256,7 @@ const Home = () => {
 
   const loadMoreRef = useRef(null);
   const appliedFilterCount = [
-    Boolean(selectedGotra),
-    Boolean(debouncedSurnameSearch),
-    Boolean(appliedFilters.keyword),
+    appliedFilters.surnameIds.length,
     appliedFilters.stateIds.length,
     appliedFilters.regionIds.length,
     appliedFilters.districtIds.length,
@@ -331,11 +271,11 @@ const Home = () => {
   useEffect(() => {
     loadYuvas({ pageNum: 1, append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSurnameSearch, selectedGotra, liveSurnameIds, appliedFilters]);
+  }, [debouncedSearch, appliedFilters]);
 
   const handleLoadMore = useCallback(() => {
     loadYuvas({ pageNum: listPage + 1, append: true });
-  }, [listPage, hasMore, loadingMore, debouncedSurnameSearch, selectedGotra, liveSurnameIds, appliedFilters]);
+  }, [listPage, hasMore, loadingMore, debouncedSearch, appliedFilters]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -368,7 +308,7 @@ const Home = () => {
       setMaxAge(nextMaxAge);
     }
     setAppliedFilters({
-      keyword: keywordSearch.trim(),
+      surnameIds: filteredSurnameIds,
       stateIds: filteredStateIds,
       regionIds: filteredRegionIds,
       districtIds: filteredDistrictIds,
@@ -385,10 +325,7 @@ const Home = () => {
   };
 
   const handleReset = () => {
-    setSelectedGotra(null);
-    setSurnameSearch("");
-    setDebouncedSurnameSearch("");
-    setKeywordSearch("");
+    setSelectedSurname([]);
     setSelectedState([]);
     setSelectedRegion([]);
     setSelectedDistrict([]);
@@ -405,15 +342,15 @@ const Home = () => {
     setAppliedFilters(emptyAppliedFilters);
   };
 
-  const fieldSize = filterFieldCols(10);
+  const fieldSize = isMobile
+    ? { xs: 12, sm: 6 }
+    : { xs: 12, sm: 6, md: 4, lg: 3 };
   const showReset =
     selectedState?.length > 0 ||
     selectedRegion?.length > 0 ||
     selectedDistrict?.length > 0 ||
     selectedCity?.length > 0 ||
-    selectedGotra ||
-    surnameSearch ||
-    keywordSearch ||
+    selectedSurname?.length > 0 ||
     selectedSamaj?.length > 0 ||
     selectedNative?.length > 0 ||
     selectedGender?.length > 0 ||
@@ -423,14 +360,19 @@ const Home = () => {
 
   const filterFields = (
     <>
-      <CustomInput
-        type="text"
-        label="Search"
-        placeholder="Name, father, mobile, family ID, email"
-        name="keyword"
+      <CustomAutoComplete
+        list={listHandler(surname)}
+        multiple={true}
+        label={"Surname"}
+        placeholder={"Select Your Last Name"}
         {...fieldSize}
-        value={keywordSearch}
-        onChange={(event) => setKeywordSearch(event.target.value)}
+        value={selectedSurname}
+        name="surname"
+        onChange={(e, lastName) => {
+          if (lastName) {
+            setSelectedSurname((pre) => getSelectedData(pre, lastName, e));
+          }
+        }}
       />
       <CustomAutoComplete
         list={listHandler(state)}
@@ -641,35 +583,16 @@ const Home = () => {
           </div>
         ) : null}
         <Card padded={false} className="p-2.5 sm:p-3 mb-5">
-          <div className="flex items-center gap-2 w-full min-w-0">
-            <div className="w-[132px] sm:w-[180px] md:w-[220px] shrink-0">
-              <Autocomplete
-                fullWidth
-                options={gotraOptions}
-                value={selectedGotra}
-                onChange={(_, value) => setSelectedGotra(value)}
-                getOptionLabel={(option) =>
-                  option?.label || option?.name || ""
-                }
-                isOptionEqualToValue={(option, selected) =>
-                  String(option?.id || option?.value) ===
-                  String(selected?.id || selected?.value)
-                }
-                disablePortal
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Gotra"
-                    sx={searchFieldSx}
-                  />
-                )}
-              />
-            </div>
+          <div className="flex items-center gap-2">
             <TextField
-              className="flex-1 min-w-0"
-              placeholder="Search surname"
-              value={surnameSearch}
-              onChange={(event) => setSurnameSearch(event.target.value)}
+              fullWidth
+              placeholder={
+                isMobile
+                  ? "Search name, mobile, family ID"
+                  : "Search by name, father, mobile, family ID, email"
+              }
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -677,7 +600,16 @@ const Home = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={searchFieldSx}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: "#fff",
+                  borderRadius: "8px",
+                  minHeight: 44,
+                  "& fieldset": { borderColor: "#d7d7e2" },
+                  "&:hover fieldset": { borderColor: "#c8c8d4" },
+                  "&.Mui-focused fieldset": { borderColor: "#542b2b" },
+                },
+              }}
             />
             <Badge
               badgeContent={appliedFilterCount}

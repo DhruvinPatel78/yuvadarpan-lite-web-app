@@ -8,7 +8,6 @@ const LINKED_PATHS = {
   city: "/city/linked",
   samaj: "/samaj/linked",
   surname: "/surname/linked",
-  gotra: "/gotra/linked",
   native: "/native/linked",
   role: "/role/linked",
   user: "/user/linked",

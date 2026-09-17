@@ -87,8 +87,6 @@ const APP_MESSAGES = {
   "Passwords do not match.": "Passwords do not match.",
   "Link copied.": "Link copied.",
   "Could not copy link.": "Could not copy link.",
-  "Add at least one Yuva.": "Add at least one Yuva.",
-  "Could not save Yuva.": "Could not save Yuva.",
   "Enter a valid email or mobile.": "Enter a valid email or mobile.",
 };
 
