@@ -28,6 +28,7 @@ import {
   BulkAddYuva,
   AdminDashboard,
 } from "./Pages/Admin";
+import Gotra from "./Pages/Admin/Gotra";
 
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/Dashboard";
@@ -184,6 +185,11 @@ function App() {
             path="surname"
             exact
             element={<PrivateRoute Component={Surname} />}
+          />
+          <Route
+            path="gotra"
+            exact
+            element={<PrivateRoute Component={Gotra} />}
           />
           <Route
             path="native"

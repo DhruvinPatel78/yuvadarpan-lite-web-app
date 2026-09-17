@@ -10,45 +10,49 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import AddIcon from "@mui/icons-material/Add";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
-import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
+import {
+  Button as ActionButton,
+  FormModal,
+  MasterFilterBar,
+  PageHeader,
+} from "../../../Component/UI";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import {
-  getNativeList,
-  addNative,
-  updateNative,
-  deleteNative,
-} from "../../../util/nativeApi";
+  getGotraList,
+  addGotra,
+  updateGotra,
+  deleteGotra,
+} from "../../../util/gotraApi";
 
-export default function Index() {
+export default function Gotra() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { loading, auth } = UseRedux();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [nativeData, setNativeData] = useState(null);
-  const [nativeModalData, setNativeModalData] = useState(null);
-  const [nativeAddEditModel, setNativeAddEditModel] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [gotraData, setGotraData] = useState(null);
+  const [gotraModalData, setGotraModalData] = useState(null);
+  const [gotraAddEditModel, setGotraAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const skipSearchEffect = useRef(true);
   const filterCount = Number(Boolean(selectedSearchByText.trim()));
 
-  useEffect(() => {
-    handleNativeList();
-  }, [page, rowsPerPage]);
-
-  const nativeListColumn = [
+  const gotraListColumn = [
     {
       field: "name",
       headerName: "Name",
@@ -92,8 +96,8 @@ export default function Index() {
             <ModeEditIcon
               className={"text-primary cursor-pointer"}
               onClick={() => {
-                setNativeModalData(record?.row);
-                setNativeAddEditModel(!nativeAddEditModel);
+                setGotraModalData(record?.row);
+                setGotraAddEditModel(true);
                 setFieldValue("name", record?.row.name);
               }}
             />
@@ -109,12 +113,12 @@ export default function Index() {
     },
   ].filter((column) => canManage || column.field !== "action");
 
-  const userActionHandler = async (nativeInfo, action, field) => {
+  const userActionHandler = async (gotraInfo, action, field) => {
     try {
-      await updateNative(nativeInfo?.id, { ...nativeInfo, [field]: action });
-      handleNativeList();
+      await updateGotra(gotraInfo?.id, { ...gotraInfo, [field]: action });
+      handleGotraList();
     } catch (e) {
-      // Optionally handle error with notification
+      // keep list as-is if the update fails
     }
   };
 
@@ -125,23 +129,22 @@ export default function Index() {
     onSubmit: async (values, { resetForm }) => {
       try {
         dispatch(startLoading());
-        const { confirmPassword, ...rest } = values;
-        if (nativeModalData) {
-          await updateNative(nativeModalData.id, {
-            ...rest,
+        if (gotraModalData) {
+          await updateGotra(gotraModalData.id, {
+            name: values.name,
             updatedAt: new Date(),
           });
         } else {
-          await addNative({ ...rest });
+          await addGotra({ name: String(values.name || "").trim() });
         }
-        nativeAddEditModalClose();
-        handleNativeList();
+        resetForm();
+        gotraAddEditModalClose();
+        handleGotraList();
       } catch (e) {
-        // Optionally handle error with notification
+        // keep modal open if save fails
       } finally {
         dispatch(endLoading());
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -157,43 +160,42 @@ export default function Index() {
     setFieldValue,
   } = formik;
 
-  const nativeAddEditModalClose = () => {
-    setNativeAddEditModel(!nativeAddEditModel);
-    setNativeModalData(null);
-    setFieldValue("name", null);
+  const gotraAddEditModalClose = () => {
+    setGotraAddEditModel(false);
+    setGotraModalData(null);
     resetForm();
   };
 
   const deleteAPI = async (id) => {
     try {
-      await deleteNative(Array.isArray(id) ? id : [id]);
-      handleNativeList();
+      await deleteGotra(Array.isArray(id) ? id : [id]);
+      handleGotraList();
     } catch (e) {
-      // Optionally handle error with notification
+      // keep list as-is if delete fails
     }
   };
 
   const hasError = Object.keys(errors)?.length || 0;
 
-  const handleNativeList = async (isRest = false) => {
+  const handleGotraList = async (isRest = false) => {
     try {
-      const text =
-        selectedSearchByText && !isRest
-          ? {
-              name: selectedSearchByText,
-            }
-          : {};
       const params = {
         page: page + 1,
         limit: rowsPerPage,
-        ...text,
       };
-      const data = await getNativeList(params);
-      setNativeData(data);
+      if (!isRest && selectedSearchByText.trim()) {
+        params.name = selectedSearchByText.trim();
+      }
+      const data = await getGotraList(params);
+      setGotraData(data);
     } catch (e) {
-      // Optionally handle error with notification
+      // keep previous list if fetch fails
     }
   };
+
+  useEffect(() => {
+    handleGotraList();
+  }, [page, rowsPerPage]);
 
   useEffect(() => {
     if (skipSearchEffect.current) {
@@ -205,7 +207,7 @@ export default function Index() {
         setPage(0);
         return;
       }
-      handleNativeList();
+      handleGotraList();
     }, 400);
     return () => clearTimeout(timeoutId);
   }, [selectedSearchByText]);
@@ -218,51 +220,63 @@ export default function Index() {
 
   return (
     <Box>
-      <Header backBtn={true} btnAction="/dashboard" />
+      <Header />
       <ContainerPage
         className={"flex-col justify-center flex items-start gap-3"}
       >
         <PageHeader
           className="w-full"
-          title="Native"
+          title="Gotra"
+          leading={
+            <ActionButton
+              type="button"
+              variant="secondary"
+              className="!min-w-[44px] !px-3"
+              icon={<ArrowBackIcon sx={{ fontSize: 18 }} />}
+              onClick={() => navigate("/admin/surname")}
+            >
+              Back
+            </ActionButton>
+          }
           actions={
             canManage ? (
               <ActionButton
                 icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => {
-                  setNativeAddEditModel(!nativeAddEditModel);
+                  setGotraModalData(null);
+                  setGotraAddEditModel(true);
                 }}
               >
-                Add Native
+                Add Gotra
               </ActionButton>
             ) : null
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search native"
+          searchPlaceholder="Search gotra"
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}
-          onFilterClick={() => handleNativeList()}
+          onFilterClick={() => handleGotraList()}
         />
         <div className={"hidden md:block w-full min-w-0"}>
-        <CustomTable
-          columns={nativeListColumn}
-          data={nativeData}
-          name={"native"}
-          pageSize={rowsPerPage}
-          setPageSize={setRowsPerPage}
-          type={"nativeList"}
-          className={"mx-0 w-full"}
-          page={page}
-          setPage={setPage}
-          onDeleteSelected={canManage ? deleteAPI : undefined}
-          deleteEntity="native"
-        />
+          <CustomTable
+            columns={gotraListColumn}
+            data={gotraData}
+            name={"gotra"}
+            pageSize={rowsPerPage}
+            setPageSize={setRowsPerPage}
+            type={"gotraList"}
+            className={"mx-0 w-full"}
+            page={page}
+            setPage={setPage}
+            onDeleteSelected={canManage ? deleteAPI : undefined}
+            deleteEntity="gotra"
+          />
         </div>
         <MasterMobileCards
-          rows={nativeData?.data || []}
-          emptyText="No natives"
+          rows={gotraData?.data || []}
+          emptyText="No gotras"
           selectedIds={selectedIds}
           onToggleSelect={toggleCardSelection}
           canSelect={canManage}
@@ -271,8 +285,8 @@ export default function Index() {
           onEdit={
             canManage
               ? (row) => {
-                  setNativeModalData(row);
-                  setNativeAddEditModel(true);
+                  setGotraModalData(row);
+                  setGotraAddEditModel(true);
                   setFieldValue("name", row.name);
                 }
               : undefined
@@ -282,60 +296,60 @@ export default function Index() {
           setPage={setPage}
           rowsPerPage={rowsPerPage}
           setRowsPerPage={setRowsPerPage}
-          total={nativeData?.total || 0}
+          total={gotraData?.total || 0}
           onDeleteSelected={canManage ? deleteAPI : undefined}
-          deleteEntity="native"
+          deleteEntity="gotra"
         />
       </ContainerPage>
-      {nativeAddEditModel ? (
+      {gotraAddEditModel ? (
         <FormModal
-          open={nativeAddEditModel}
-          onClose={() => nativeAddEditModalClose()}
-          title="Native"
+          open={gotraAddEditModel}
+          onClose={() => gotraAddEditModalClose()}
+          title="Gotra"
         >
-            <FormikProvider value={formik}>
-              <Form
-                className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
-                }
-              >
-                <Grid container className={"w-full"} spacing={2}>
-                  <Grid item xs={12}>
-                    <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"name"}
-                        id="native"
-                        label="Native"
-                        value={values.name}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={touched?.name && errors?.name && errors?.name}
-                      />
-                    </FormControl>
-                  </Grid>
-                  <Grid
-                    item
-                    xs={12}
-                    className={"flex justify-center items-center"}
-                  >
-                    <ActionButton
-                      type={"submit"}
-                      fullWidth
-                      disabled={hasError}
-                      loading={loading}
-                    >
-                      {nativeModalData ? "UPDATE" : "ADD"}
-                    </ActionButton>
-                  </Grid>
+          <FormikProvider value={formik}>
+            <Form
+              className={
+                "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+              }
+            >
+              <Grid container className={"w-full"} spacing={2}>
+                <Grid item xs={12}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      name={"name"}
+                      id="gotra"
+                      label="Gotra"
+                      value={values.name}
+                      variant="outlined"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={touched?.name && errors?.name && errors?.name}
+                    />
+                  </FormControl>
                 </Grid>
-              </Form>
-            </FormikProvider>
+                <Grid
+                  item
+                  xs={12}
+                  className={"flex justify-center items-center"}
+                >
+                  <ActionButton
+                    type={"submit"}
+                    fullWidth
+                    disabled={hasError}
+                    loading={loading}
+                  >
+                    {gotraModalData ? "UPDATE" : "ADD"}
+                  </ActionButton>
+                </Grid>
+              </Grid>
+            </Form>
+          </FormikProvider>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow
         open={Boolean(deleteTarget)}
-        entity="native"
+        entity="gotra"
         ids={deleteTarget ? [deleteTarget.id] : []}
         name={deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}

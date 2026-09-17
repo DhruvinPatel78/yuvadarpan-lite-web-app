@@ -1,19 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../Component/Header";
-import { Box, Grid, Tooltip } from "@mui/material";
+import { Box, Tooltip } from "@mui/material";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
-import CustomInput from "../../../Component/Common/customInput";
-import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import { getRoleList, updateRole, deleteRole } from "../../../util/roleApi";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { Navigate } from "react-router-dom";
 import { isLocationMasterReadOnly } from "../../../util/util";
-import { PageHeader, FilterActions } from "../../../Component/UI";
+import { MasterFilterBar, PageHeader } from "../../../Component/UI";
 
 export default function Index() {
   const { auth } = UseRedux();
@@ -23,6 +21,8 @@ export default function Index() {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const skipSearchEffect = useRef(true);
+  const filterCount = Number(Boolean(selectedSearchByText.trim()));
 
   const roleListColumn = [
     {
@@ -122,10 +122,16 @@ export default function Index() {
     handleRoleList();
   }, []);
 
-  const handleReset = () => {
-    setSelectedSearchByText("");
-    handleRoleList(true);
-  };
+  useEffect(() => {
+    if (skipSearchEffect.current) {
+      skipSearchEffect.current = false;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      handleRoleList();
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [selectedSearchByText]);
 
   const toggleCardSelection = (id) => {
     setSelectedIds((prev) =>
@@ -144,35 +150,13 @@ export default function Index() {
         className={"flex-col justify-center flex items-start gap-3"}
       >
         <PageHeader className="w-full" title="Roles" />
-        <CustomAccordion>
-          <Grid spacing={2} container>
-            <CustomInput
-              type={"text"}
-              placeholder={"Enter Search Role"}
-              name={"name"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSearchByText}
-              onChange={(e) => setSelectedSearchByText(e.target.value)}
-            />
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              className={"flex justify-start items-center gap-4"}
-            >
-              <FilterActions
-                onSubmit={() => handleRoleList()}
-                onReset={handleReset}
-                showReset={Boolean(selectedSearchByText)}
-              />
-            </Grid>
-          </Grid>
-        </CustomAccordion>
+        <MasterFilterBar
+          searchPlaceholder="Search role"
+          searchValue={selectedSearchByText}
+          onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
+          filterCount={filterCount}
+          onFilterClick={() => handleRoleList()}
+        />
         <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={roleListColumn}
