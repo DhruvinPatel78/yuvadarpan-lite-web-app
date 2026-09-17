@@ -87,7 +87,7 @@ export default function Index() {
           gender: value?.gender,
           fcmToken: fcmToken,
         });
-        setNotification({ type: "success", message: "Success !" });
+        setNotification({ type: "success", message: "Registration received." });
         setTimeout(() => {
           navigate("/thankyou");
         }, 2000);
@@ -100,7 +100,7 @@ export default function Index() {
     } else {
       setNotification({
         type: "error",
-        message: "confirm password not matched !",
+        message: "Passwords do not match.",
       });
     }
   };
@@ -130,18 +130,18 @@ export default function Index() {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format",
+          "Enter a valid email",
         )
         .required("Required"),
       mobile: Yup.string()
-        .matches(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number")
+        .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
         .required("Required"),
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string().required("Required"),
       dob: Yup.date()
         .required("Required")
-        .min(new Date("1950-01-01"), "DOB cannot be before 1950")
-        .max(new Date(), "DOB cannot be in the future"),
+        .min(new Date("1950-01-01"), "Date cannot be before 1950")
+        .max(new Date(), "Date cannot be in the future"),
     }),
     onSubmit: async (values, { resetForm }) => {
       handleSubmit(values);

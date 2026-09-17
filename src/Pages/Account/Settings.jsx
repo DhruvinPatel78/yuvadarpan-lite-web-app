@@ -35,13 +35,8 @@ export default function Settings() {
   const otpRef = useRef();
 
   const showError = (err, fallback) => {
-    const apiMessage = err?.response?.data?.message;
-    const message =
-      apiMessage === "otp-email-failed"
-        ? "Could not send the OTP email. Please try again."
-        : apiMessage || fallback;
     setNotification({
-      message,
+      message: err?.response?.data?.message || fallback,
       type: "error",
     });
   };
@@ -54,7 +49,7 @@ export default function Settings() {
       setOtp("");
       otpRef.current?.resetOtp();
       setNotification({
-        message: "OTP sent to your registered email",
+        message: "OTP sent to your email",
         type: "success",
       });
     } catch (err) {
@@ -70,7 +65,7 @@ export default function Settings() {
       await verifyOtp(email, otp);
       setStep("password");
       setNotification({
-        message: "OTP verified successfully",
+        message: "OTP verified",
         type: "success",
       });
     } catch (err) {
@@ -91,14 +86,14 @@ export default function Settings() {
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string()
         .required("Required")
-        .oneOf([Yup.ref("password")], "Passwords must match"),
+        .oneOf([Yup.ref("password")], "Passwords do not match"),
     }),
     onSubmit: async (values, { resetForm }) => {
       dispatch(startLoading());
       try {
         await changePasswordWithOtp(values.password);
         setNotification({
-          message: "Password updated successfully",
+          message: "Password updated",
           type: "success",
         });
         resetForm();
