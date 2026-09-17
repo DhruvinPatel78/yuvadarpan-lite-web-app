@@ -19,9 +19,11 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { getYuvaList as fetchYuvaList, deleteYuva, getNativeList as fetchNativeList } from "../../../util/yuvaAdminApi";
 import {
   getSelectedData,
@@ -38,6 +40,15 @@ import LoadableImage from "../../../Component/Common/LoadableImage";
 import { UseRedux } from "../../../Component/useRedux";
 import { formatYuvaDob, canEditYuvaRecord } from "../../../util/util";
 import { PageHeader, FilterActions, Button as ActionButton, AppModal } from "../../../Component/UI";
+import {
+  getAllCityData,
+  getAllCountryData,
+  getAllDistrictData,
+  getAllRegionData,
+  getAllSamajData,
+  getAllStateData,
+  getAllSurnameData,
+} from "../../../util/getAPICall";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -54,6 +65,7 @@ function YuvaDetailItem({ label, value }) {
 
 const YuvaList = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [yuvaList, setYuvaList] = useState(null);
   const [userData, setUserData] = useState(null);
   const [value, setValue] = React.useState("1");
@@ -119,12 +131,21 @@ const YuvaList = () => {
   };
   useEffect(() => {
     getNativeList();
+    if (!surname?.length) dispatch(getAllSurnameData);
+    if (!country?.length) dispatch(getAllCountryData);
+    if (!state?.length) dispatch(getAllStateData);
+    if (!region?.length) dispatch(getAllRegionData);
+    if (!district?.length) dispatch(getAllDistrictData);
+    if (!city?.length) dispatch(getAllCityData);
+    if (!samaj?.length) dispatch(getAllSamajData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getNativeList = async () => {
     try {
       const data = await fetchNativeList();
-      setNativeList(data.map((d) => ({ ...d, label: d.name, value: d.id })));
+      const rows = Array.isArray(data) ? data : data?.data || [];
+      setNativeList(rows.map((d) => ({ ...d, label: d.name, value: d.id })));
     } catch (e) {
       // Optionally handle error with notification
     }
@@ -485,13 +506,23 @@ const YuvaList = () => {
               View User Dashboard
             </Button>
             {canAct ? (
-              <ActionButton
-                className="max-md:w-full"
-                icon={<AddIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate("/admin/yuvalist/add")}
-              >
-                Yuva
-              </ActionButton>
+              <>
+                <ActionButton
+                  variant="secondary"
+                  className="max-md:w-full"
+                  icon={<GroupAddIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => navigate("/admin/yuvalist/bulk-add")}
+                >
+                  Bulk Add Yuva
+                </ActionButton>
+                <ActionButton
+                  className="max-md:w-full"
+                  icon={<AddIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => navigate("/admin/yuvalist/add")}
+                >
+                  Yuva
+                </ActionButton>
+              </>
             ) : null}
           </div>
           }

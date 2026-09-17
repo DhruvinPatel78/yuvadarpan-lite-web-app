@@ -3,6 +3,7 @@ import UserList from "./UserList";
 import YuvaList from "./YuvaList";
 import Request from "./Request";
 import AddYuva from "./YuvaList/AddYuva";
+import BulkAddYuva from "./YuvaList/BulkAddYuva";
 import Country from "./Country";
 import {
   CountryDetails,
@@ -26,6 +27,7 @@ export {
   YuvaList,
   Request,
   AddYuva,
+  BulkAddYuva,
   Country,
   CountryDetails,
   State,
