@@ -40,7 +40,7 @@ export default function Index() {
         .required("Required")
         .test(
           "email-or-phone",
-          "Must be a valid email or phone number",
+          "Enter a valid email or mobile.",
           function (value) {
             const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
             const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
@@ -56,7 +56,7 @@ export default function Index() {
           const res = await loginUser(values);
           localStorage.setItem("user", JSON.stringify(res?.data));
           localStorage.setItem("token", res?.token);
-          setNotification({ message: "Login Success", type: "success" });
+          setNotification({ message: "Signed in.", type: "success" });
           dispatch(getAllCityData);
           dispatch(getAllStateData);
           dispatch(getAllRegionData);
@@ -80,7 +80,7 @@ export default function Index() {
         setNotification({
           message:
             !values.email && !values.password
-              ? "Email and Password are required."
+              ? "Email and password are required."
               : !values.email
               ? "Email is required."
               : "Password is required.",

@@ -190,16 +190,16 @@ function Index() {
       middleName: Yup.string().required("Required"),
       lastName: Yup.string().required("Required"),
       familyId: Yup.number()
-        .typeError("Must be a number")
+        .typeError("Enter a number")
         .positive()
         .required("Required"),
-      mobile: Yup.number().typeError("Must be a number").required("Required"),
+      mobile: Yup.number().typeError("Enter a number").required("Required"),
       email: Yup.string().email().required("Required"),
       password: Yup.string().required("Required"),
       confirmPassword: Yup.string()
         .required("Required")
         .test({
-          message: "Password not match",
+          message: "Passwords do not match",
           test: function (value) {
             return value === values.password;
           },

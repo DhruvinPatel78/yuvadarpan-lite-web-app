@@ -45,7 +45,7 @@ export default function Profile() {
       firstName: Yup.string().required("Required"),
       middleName: Yup.string().required("Required"),
       lastName: Yup.string().required("Required"),
-      email: Yup.string().email("Invalid email").required("Required"),
+      email: Yup.string().email("Enter a valid email").required("Required"),
       mobile: Yup.string().required("Required"),
     }),
     onSubmit: async (values) => {

@@ -432,7 +432,7 @@ const AddYuva = () => {
         phone: Yup.string()
           .matches(
             "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Phone Number must be correct"
+            "Enter a valid phone number"
           )
           .required("Contact Phone Number Is Required"),
       }),
@@ -453,7 +453,7 @@ const AddYuva = () => {
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Invalid email address format"
+          "Enter a valid email"
         )
         .required("Email Is Required"),
       martialStatus: Yup.string().required("Martial Status Is Required"),

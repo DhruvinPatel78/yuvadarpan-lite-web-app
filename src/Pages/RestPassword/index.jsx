@@ -29,7 +29,7 @@ export default function Index() {
         .required("Required")
         .test(
           "email-or-phone",
-          "Must be a valid email or phone number",
+          "Enter a valid email or mobile.",
           function (value) {
             const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
             const phoneRegex = /^(\+\d{1,3}[- ]?)?\d{10}$/;
@@ -44,7 +44,7 @@ export default function Index() {
         await sendOtp(email);
         dispatch(endLoading());
         setNotification({
-          message: "OTP Send Successfully",
+          message: "OTP sent.",
           type: "success",
         });
         navigate("/verify-opt", { state: { email: email } });
