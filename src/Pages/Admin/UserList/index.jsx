@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import CustomTable from "../../../Component/Common/customTable";
 import {
   Box,
@@ -32,7 +32,12 @@ import LoadableImage from "../../../Component/Common/LoadableImage";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
+import OTPInput from "../../../Component/Common/OTPInput";
 import DeleteIcon from "@mui/icons-material/Delete";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import moment from "moment";
 import { PageHeader, FilterActions, Button as ActionButton, AppModal, FormModal } from "../../../Component/UI";
@@ -53,6 +58,18 @@ import {
   deleteUser,
 } from "../../../util/userApi";
 import { getSamajByCity } from "../../../util/samajApi";
+import useAxios from "../../../util/useAxios";
+import {
+  sendOtp,
+  verifyOtp,
+  changePassword,
+} from "../../../util/authApi";
+import {
+  getAllSurnameData,
+  getAllRegionData,
+  getAllSamajData,
+  getAllCountryData,
+} from "../../../util/getAPICall";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -67,9 +84,315 @@ function UserDetailItem({ label, value }) {
   );
 }
 
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const isoDate = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDate) return isoDate[1];
+  const parsed = moment(value);
+  return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
+};
+
+const comparableUserValues = (vals) => {
+  const role =
+    typeof vals?.role === "object" && vals?.role
+      ? vals.role.value || vals.role.id || ""
+      : vals?.role || "";
+  return JSON.stringify({
+    familyId: String(vals?.familyId || ""),
+    firstName: String(vals?.firstName || ""),
+    middleName: String(vals?.middleName || ""),
+    lastName: String(vals?.lastName || ""),
+    email: String(vals?.email || ""),
+    mobile: String(vals?.mobile || ""),
+    region: String(vals?.region || ""),
+    localSamaj: String(vals?.localSamaj || ""),
+    dob: toDateInputValue(vals?.dob),
+    gender: String(vals?.gender || "").toLowerCase(),
+    role: String(role),
+  });
+};
+
+const sameId = (left, right) => {
+  if (left == null || right == null || left === "" || right === "") return false;
+  return String(left) === String(right);
+};
+
+const optionKeys = (item) =>
+  [item?.id, item?._id, item?.value].filter((key) => key != null && key !== "");
+
+const asOptions = (items = []) =>
+  (Array.isArray(items) ? items : []).map((item) => ({
+    ...item,
+    label: item?.label || item?.name || "",
+    name: item?.name || item?.label || "",
+    value: item?.value || item?.id || item?._id,
+    id: item?.id || item?._id || item?.value,
+  }));
+
+const findOption = (options, raw) => {
+  if (raw == null || raw === "") return null;
+  const keys =
+    typeof raw === "object"
+      ? optionKeys(raw)
+      : [raw];
+  return (
+    (options || []).find((item) =>
+      [...optionKeys(item), item?.label, item?.name].some((key) =>
+        keys.some((match) => sameId(key, match))
+      )
+    ) || null
+  );
+};
+
+function UserPasswordPanel({
+  email,
+  loading,
+  onCancel,
+  onSuccess,
+  setNotification,
+  dispatch,
+}) {
+  const [step, setStep] = useState("send");
+  const [otp, setOtp] = useState("");
+  const otpRef = useRef();
+
+  const showError = (err, fallback) => {
+    setNotification({
+      message: err?.response?.data?.message || fallback,
+      type: "error",
+    });
+  };
+
+  const handleSendOtp = async () => {
+    dispatch(startLoading());
+    try {
+      await sendOtp(email);
+      setStep("otp");
+      setOtp("");
+      otpRef.current?.resetOtp();
+      setNotification({
+        message: "OTP sent to your email",
+        type: "success",
+      });
+    } catch (err) {
+      showError(err, "Failed to send OTP.");
+    } finally {
+      dispatch(endLoading());
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    dispatch(startLoading());
+    try {
+      await verifyOtp(email, otp);
+      setStep("password");
+      setNotification({
+        message: "OTP verified",
+        type: "success",
+      });
+    } catch (err) {
+      showError(err, "OTP verification failed.");
+      otpRef.current?.resetOtp();
+      setOtp("");
+    } finally {
+      dispatch(endLoading());
+    }
+  };
+
+  const formik = useFormik({
+    initialValues: {
+      password: "",
+      confirmPassword: "",
+    },
+    validationSchema: Yup.object({
+      password: Yup.string().required("Required"),
+      confirmPassword: Yup.string()
+        .required("Required")
+        .oneOf([Yup.ref("password")], "Passwords do not match"),
+    }),
+    onSubmit: async (values, { resetForm }) => {
+      dispatch(startLoading());
+      try {
+        await changePassword(email, values.password);
+        setNotification({
+          message: "Password updated",
+          type: "success",
+        });
+        resetForm();
+        setStep("send");
+        setOtp("");
+        onSuccess?.();
+      } catch (err) {
+        showError(err, "Password update failed.");
+      } finally {
+        dispatch(endLoading());
+      }
+    },
+  });
+
+  const { errors, values, touched, handleChange, handleBlur, isSubmitting } =
+    formik;
+  const hasError = Object.keys(errors)?.length || 0;
+  const stepCopy = {
+    send: "Verify the email before choosing a new password.",
+    otp: "Enter the code we sent to the email.",
+    password: "Choose a new password for this account.",
+  };
+
+  return (
+    <div className="w-full">
+      <h2 className="text-base font-semibold text-primary">Change password</h2>
+      <p className="text-sm text-mutedText mt-1 mb-5">{stepCopy[step]}</p>
+      {step === "send" ? (
+        <>
+          <p className="text-sm text-gray-600 bg-muted rounded-lg px-3.5 py-3">
+            Verification code will be sent to{" "}
+            <span className="font-semibold text-primary break-all">
+              {email || "the registered email"}
+            </span>
+          </p>
+          <div className="flex flex-col-reverse md:flex-row md:items-center justify-end gap-3 mt-5">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
+              onClick={onCancel}
+            >
+              Back
+            </button>
+            {loading ? (
+              <CircularProgress color="secondary" size={28} />
+            ) : (
+              <ActionButton
+                type="button"
+                onClick={handleSendOtp}
+                disabled={!email}
+                className="max-md:w-full"
+                icon={<MailOutlineIcon sx={{ fontSize: 18 }} />}
+              >
+                Send OTP
+              </ActionButton>
+            )}
+          </div>
+        </>
+      ) : null}
+      {step === "otp" ? (
+        <>
+          <div className="flex items-start gap-2.5 bg-muted rounded-lg px-3.5 py-3">
+            <CheckCircleOutlineIcon
+              fontSize="small"
+              className="text-primary mt-0.5 shrink-0"
+            />
+            <div className="text-sm min-w-0">
+              <p className="font-semibold text-primary">OTP sent successfully</p>
+              <p className="text-mutedText mt-0.5">
+                Check{" "}
+                <span className="font-medium text-primary break-all">{email}</span>{" "}
+                for your 6-digit code.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5">
+            <p className="font-semibold text-primary text-sm">
+              Enter verification code
+            </p>
+            <p className="text-sm text-mutedText mt-0.5 mb-4">
+              The code expires shortly for your security.
+            </p>
+            <OTPInput
+              length={6}
+              onComplete={(value) => setOtp(value)}
+              ref={otpRef}
+            />
+          </div>
+          <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-3 mt-6">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
+              onClick={handleSendOtp}
+            >
+              <RefreshIcon sx={{ fontSize: 18 }} />
+              Resend code
+            </button>
+            {loading ? (
+              <CircularProgress color="secondary" size={28} />
+            ) : (
+              <ActionButton
+                type="button"
+                onClick={handleVerifyOtp}
+                disabled={otp?.length !== 6}
+                className="max-md:w-full"
+                icon={<VerifiedUserOutlinedIcon sx={{ fontSize: 18 }} />}
+              >
+                Verify OTP
+              </ActionButton>
+            )}
+          </div>
+        </>
+      ) : null}
+      {step === "password" ? (
+        <FormikProvider value={formik}>
+          <Form>
+            <Grid container spacing={2}>
+              <CustomInput
+                type={"password"}
+                xs={12}
+                label={"New password"}
+                placeholder={"Create your password"}
+                name="password"
+                value={values.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                errors={touched.password && errors.password}
+              />
+              <CustomInput
+                type={"password"}
+                xs={12}
+                label={"Confirm password"}
+                placeholder={"Confirm your password"}
+                name="confirmPassword"
+                value={values.confirmPassword}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                errors={touched.confirmPassword && errors.confirmPassword}
+              />
+              <Grid
+                item
+                xs={12}
+                className={"flex flex-col-reverse md:flex-row md:items-center justify-end gap-3"}
+              >
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
+                  onClick={onCancel}
+                >
+                  Back
+                </button>
+                {loading ? (
+                  <CircularProgress color="secondary" size={28} />
+                ) : (
+                  <ActionButton
+                    type="submit"
+                    disabled={hasError || isSubmitting}
+                    className="max-md:w-full"
+                  >
+                    Change password
+                  </ActionButton>
+                )}
+              </Grid>
+            </Grid>
+          </Form>
+        </FormikProvider>
+      ) : null}
+    </div>
+  );
+}
+
 function Index() {
   const dispatch = useDispatch();
   const { loading, surname, region, samaj, country, auth } = UseRedux();
+  const lastNameOptions = useMemo(() => asOptions(surname), [surname]);
+  const regionOptions = useMemo(() => asOptions(region), [region]);
+  const countryOptions = useMemo(() => asOptions(country), [country]);
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager =
@@ -104,13 +427,11 @@ function Index() {
   const [userInfoModel, setUserInfoModel] = useState(false);
   const [isAddUser, setIsAddUser] = useState(false);
   const [userList, setUserList] = useState(null);
-  const [selectedLastName, setSelectedLastName] = useState(null);
   const [selectedCountryName, setSelectedCountryName] = useState(null);
   const [selectedStateName, setSelectedStateName] = useState(null);
   const [selectedRegionName, setSelectedRegionName] = useState(null);
   const [selectedDistrictName, setSelectedDistrictName] = useState(null);
   const [selectedCityName, setSelectedCityName] = useState(null);
-  const [selectedSamajName, setSelectedSamajName] = useState(null);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
@@ -124,16 +445,63 @@ function Index() {
   const [regionList, setRegionList] = useState([]);
   const [districtList, setDistrictList] = useState([]);
   const [cityList, setCityList] = useState([]);
-  const [list, setList] = useState({
-    country: [],
-    region: [],
-    lastName: [],
-  });
   const [selectedRole, setSelectedRole] = useState([]);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [viewUser, setViewUser] = useState(null);
+  const [modalView, setModalView] = useState("form");
+  const originalUserRef = useRef("");
+  const today = moment().format("YYYY-MM-DD");
+
+  const saveUserRecord = async (formValues) => {
+    try {
+      dispatch(startLoading());
+      const {
+        confirmPassword,
+        password,
+        role,
+        country,
+        state,
+        district,
+        city,
+        ...rest
+      } = formValues;
+      const roleValue =
+        isSamajManager ||
+        isCityManager ||
+        isDistrictManager ||
+        isRegionManager ||
+        isStateManager ||
+        isCountryManager
+          ? "USER"
+          : role?.value ||
+            role?.id ||
+            (typeof role === "string" ? role : "") ||
+            "USER";
+      const payload = {
+        ...rest,
+        role: roleValue,
+        dob: formValues.dob ? moment(formValues.dob).format() : formValues.dob,
+        gender: String(formValues.gender || "").toLowerCase(),
+      };
+      if (isAddUser) {
+        await addUser({ ...payload, password });
+      } else {
+        delete payload.password;
+        await updateUser(payload.id, payload);
+      }
+      return true;
+    } catch (e) {
+      setNotification({
+        type: "error",
+        message: e?.response?.data?.message || "Failed to save user.",
+      });
+      return false;
+    } finally {
+      dispatch(endLoading());
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -157,54 +525,44 @@ function Index() {
       gender: "",
       role: "",
     },
-    onSubmit: async (values, { resetForm }) => {
-      try {
-        dispatch(startLoading());
-        const { confirmPassword, role, country, state, district, city, ...rest } = values;
-        const roleValue =
-          isSamajManager || isCityManager || isDistrictManager || isRegionManager || isStateManager || isCountryManager
-            ? "USER"
-            : role?.value || role?.id || (typeof role === "string" ? role : "") || "USER";
-        if (isAddUser) {
-          await addUser({
-            ...rest,
-            role: roleValue,
-          });
-        } else {
-          await updateUser(rest.id, { ...rest, role: roleValue });
-        }
+    onSubmit: async (formValues, { resetForm }) => {
+      const saved = await saveUserRecord(formValues);
+      if (saved) {
         userInfoModalClose();
         handleUserList();
         resetForm();
-      } catch (e) {
-        setNotification({
-          type: "error",
-          message: e?.response?.data?.message || "Failed to save user.",
-        });
-      } finally {
-        dispatch(endLoading());
       }
     },
-    validationSchema: Yup.object({
-      firstName: Yup.string().required("Required"),
-      middleName: Yup.string().required("Required"),
-      lastName: Yup.string().required("Required"),
-      familyId: Yup.number()
-        .typeError("Enter a number")
-        .positive()
-        .required("Required"),
-      mobile: Yup.number().typeError("Enter a number").required("Required"),
-      email: Yup.string().email().required("Required"),
-      password: Yup.string().required("Required"),
-      confirmPassword: Yup.string()
-        .required("Required")
-        .test({
-          message: "Passwords do not match",
-          test: function (value) {
-            return value === values.password;
-          },
-        }),
-    }),
+    validationSchema: Yup.lazy(() =>
+      Yup.object({
+        firstName: Yup.string().required("Required"),
+        middleName: Yup.string().required("Required"),
+        lastName: Yup.string().required("Required"),
+        familyId: Yup.number()
+          .typeError("Enter a number")
+          .positive()
+          .required("Required"),
+        mobile: Yup.string()
+          .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
+          .required("Required"),
+        email: Yup.string().email("Enter a valid email").required("Required"),
+        region: Yup.string().required("Required"),
+        localSamaj: Yup.string().required("Required"),
+        gender: Yup.string().required("Required"),
+        dob: Yup.date()
+          .required("Required")
+          .min(new Date("1950-01-01"), "Date cannot be before 1950")
+          .max(new Date(), "Date cannot be in the future"),
+        password: isAddUser
+          ? Yup.string().required("Required")
+          : Yup.string(),
+        confirmPassword: isAddUser
+          ? Yup.string()
+              .required("Required")
+              .oneOf([Yup.ref("password")], "Passwords do not match")
+          : Yup.string(),
+      })
+    ),
   });
   const {
     errors,
@@ -215,7 +573,27 @@ function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    validateForm,
+    setTouched,
   } = formik;
+
+  const samajOptions = useMemo(() => {
+    const loaded = asOptions(samajList);
+    if (loaded.length) return loaded;
+    const regionId = values?.region;
+    if (!regionId) return [];
+    const regionDoc = findOption(regionOptions, regionId);
+    const regionKeys = optionKeys(regionDoc).concat(regionId);
+    return asOptions(samaj).filter((item) =>
+      regionKeys.some(
+        (key) => sameId(item.region_id, key) || sameId(item.region, key)
+      )
+    );
+  }, [samajList, samaj, values?.region, regionOptions]);
+
+  const selectedLastNameOption = findOption(lastNameOptions, values?.lastName);
+  const selectedRegionOption = findOption(regionOptions, values?.region);
+  const selectedSamajOption = findOption(samajOptions, values?.localSamaj);
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
@@ -293,6 +671,14 @@ function Index() {
   };
 
   useEffect(() => {
+    if (!surname?.length) dispatch(getAllSurnameData);
+    if (!region?.length) dispatch(getAllRegionData);
+    if (!samaj?.length) dispatch(getAllSamajData);
+    if (!country?.length) dispatch(getAllCountryData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     handleUserList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, ownUserList, isMobile]);
@@ -301,7 +687,7 @@ function Index() {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
       return;
     }
-    if (!userList?.data?.length) {
+    if (!(userList?.data?.length)) {
       return;
     }
     loadingMoreLock.current = true;
@@ -333,38 +719,49 @@ function Index() {
 
   const userInfoModalOpen = (userInfo) => {
     setUserInfoModel(true);
-    setList((pre) => ({
-      ...pre,
-      lastName: surname.map((data) => ({
-        ...data,
-        label: data.name,
-        value: data.id,
-      })),
-      country: country.map((data) => ({
-        ...data,
-        label: data.name,
-        value: data.id,
-      })),
-      region: region.map((data) => ({
-        ...data,
-        label: data.name,
-        value: data.id,
-      })),
-    }));
-    if (isAddUser === false) {
+    setModalView("form");
+    if (isAddUser === false && userInfo) {
+      const roleOption =
+        rolesList(false).find(
+          (item) =>
+            item?.value === userInfo?.role ||
+            item?.id === userInfo?.role ||
+            item?.name === userInfo?.role
+        ) || userInfo?.role || "";
+      const nextValues = {
+        familyId: userInfo?.familyId || "",
+        firstName: userInfo?.firstName || "",
+        middleName: userInfo?.middleName || "",
+        lastName: userInfo?.lastName || "",
+        mobile: String(userInfo?.mobile || ""),
+        email: userInfo?.email || "",
+        password: "",
+        confirmPassword: "",
+        active: userInfo?.active,
+        allowed: userInfo?.allowed,
+        region: userInfo?.region || "",
+        country: userInfo?.country || "",
+        state: userInfo?.state || "",
+        district: userInfo?.district || "",
+        city: userInfo?.city || "",
+        localSamaj: userInfo?.localSamaj || "",
+        dob: toDateInputValue(userInfo?.dob),
+        gender: String(userInfo?.gender || "").toLowerCase(),
+        role: roleOption,
+        id: userInfo?.id,
+      };
       setValues((pre) => ({
         ...pre,
-        ...userInfo,
-        password: "",
-        region: userInfo?.region || "",
-        localSamaj: userInfo?.localSamaj || "",
-        dob: userInfo?.dob || "",
-        gender: userInfo?.gender || "",
-        role: userInfo?.role || "",
+        ...nextValues,
       }));
-      setSelectedLastName(
-        surname.find((item) => item?.id === userInfo?.lastName)?.name
-      );
+      originalUserRef.current = comparableUserValues(nextValues);
+      const regionOption = findOption(regionOptions, userInfo?.region);
+      setSelectedRegionName(regionOption);
+      if (userInfo?.region) {
+        getSamajListByRegion(userInfo.region, regionOption);
+      }
+    } else {
+      originalUserRef.current = "";
     }
   };
 
@@ -395,13 +792,13 @@ function Index() {
   const userInfoModalClose = () => {
     setUserInfoModel(false);
     setIsAddUser(false);
-    setSelectedLastName(null);
+    setModalView("form");
+    originalUserRef.current = "";
     setSelectedCountryName(null);
     setSelectedStateName(null);
     setSelectedRegionName(null);
     setSelectedDistrictName(null);
     setSelectedCityName(null);
-    setSelectedSamajName(null);
     setStateList([]);
     setRegionList([]);
     setDistrictList([]);
@@ -443,6 +840,28 @@ function Index() {
       setCityList(data || []);
     } catch (e) {
       setCityList([]);
+    }
+  };
+
+  const getSamajListByRegion = async (regionId, regionOption) => {
+    const regionDoc = regionOption || findOption(regionOptions, regionId);
+    const regionKeys = optionKeys(regionDoc).concat(regionId).filter(Boolean);
+    const localMatches = asOptions(samaj).filter((item) =>
+      regionKeys.some(
+        (key) => sameId(item.region_id, key) || sameId(item.region, key)
+      )
+    );
+    if (localMatches.length) {
+      setSamajList(localMatches);
+    }
+    try {
+      const response = await useAxios.get(`/samaj/listByRegion/${regionId}`);
+      const fetched = asOptions(response?.data || []);
+      setSamajList(fetched.length ? fetched : localMatches);
+    } catch (e) {
+      if (!localMatches.length) {
+        setSamajList([]);
+      }
     }
   };
 
@@ -637,6 +1056,34 @@ function Index() {
   };
 
   const hasError = Object.keys(errors)?.length || 0;
+  const hasUnsavedUserChanges =
+    !isAddUser &&
+    Boolean(originalUserRef.current) &&
+    comparableUserValues(values) !== originalUserRef.current;
+
+  const handleChangePasswordClick = async () => {
+    if (hasUnsavedUserChanges) {
+      const formErrors = await validateForm();
+      if (Object.keys(formErrors || {}).length) {
+        setTouched(
+          Object.keys(formErrors).reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+          }, {}),
+          true
+        );
+        return;
+      }
+      const saved = await saveUserRecord(values);
+      if (!saved) {
+        return;
+      }
+      originalUserRef.current = comparableUserValues(values);
+      setNotification({ type: "success", message: "Updated." });
+      handleUserList();
+    }
+    setModalView("password");
+  };
 
   return (
     <Box>
@@ -827,7 +1274,7 @@ function Index() {
         {canAct && selectedUsers.length > 0 ? (
           <div
             className={
-              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-white border border-line rounded-lg"
+              "md:hidden w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2.5 bg-muted border border-line rounded-lg"
             }
           >
             <span className={"text-primary font-semibold"}>
@@ -1052,9 +1499,26 @@ function Index() {
       <FormModal
         open={userInfoModel}
         onClose={userInfoModalClose}
-        title={`${isAddUser ? "New" : "Update"} User`}
+        title={
+          modalView === "password"
+            ? "Change password"
+            : `${isAddUser ? "New" : "Update"} User`
+        }
         maxWidth="980px"
       >
+        {modalView === "password" ? (
+          <UserPasswordPanel
+            email={values?.email}
+            loading={loading}
+            dispatch={dispatch}
+            setNotification={setNotification}
+            onCancel={() => setModalView("form")}
+            onSuccess={() => {
+              userInfoModalClose();
+              handleUserList();
+            }}
+          />
+        ) : (
           <FormikProvider value={formik}>
             <Form className="flex flex-col w-full">
               <Grid container className={"w-full"} spacing={1.5}>
@@ -1074,7 +1538,9 @@ function Index() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       errors={
-                        touched?.familyId && errors?.familyId && errors?.familyId
+                        touched?.familyId &&
+                        errors?.familyId &&
+                        errors?.familyId
                       }
                     />
                   </FormControl>
@@ -1118,17 +1584,16 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
-                      list={list.lastName}
+                      list={lastNameOptions}
                       label={"Last Name"}
                       placeholder={"Select Your Last Name"}
                       name="lastName"
-                      value={selectedLastName}
+                      value={selectedLastNameOption}
                       errors={
                         touched.lastName && errors.lastName && errors.lastName
                       }
                       onChange={(e, lastName) => {
-                        setFieldValue("lastName", lastName?.id);
-                        setSelectedLastName(lastName?.name);
+                        setFieldValue("lastName", lastName?.id || lastName?.value || "");
                       }}
                       onBlur={handleBlur}
                     />
@@ -1156,48 +1621,59 @@ function Index() {
                       label="Mobile"
                       value={values?.mobile}
                       variant="outlined"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      errors={touched?.mobile && errors?.mobile && errors?.mobile}
-                    />
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4} md={4}>
-                  <FormControl className={"w-full"}>
-                    <CustomInput
-                      name={"password"}
-                      id="password"
-                      label="Password"
-                      value={values?.password}
-                      variant="outlined"
-                      onChange={handleChange}
+                      onChange={(event) => {
+                        const digits = String(event.target.value || "")
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
+                        setFieldValue("mobile", digits);
+                      }}
                       onBlur={handleBlur}
                       errors={
-                        touched?.password && errors?.password && errors?.password
-                      }
-                    />
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4} md={4}>
-                  <FormControl className={"w-full"}>
-                    <CustomInput
-                      name={"confirmPassword"}
-                      id="confirmPassword"
-                      label="Confirm Password"
-                      value={values?.confirmPassword}
-                      variant="outlined"
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      errors={
-                        touched?.confirmPassword &&
-                        errors?.confirmPassword &&
-                        errors?.confirmPassword
+                        touched?.mobile && errors?.mobile && errors?.mobile
                       }
                     />
                   </FormControl>
                 </Grid>
                 {isAddUser ? (
                   <>
+                    <Grid item xs={12} sm={4} md={4}>
+                      <FormControl className={"w-full"}>
+                        <CustomInput
+                          type={"password"}
+                          name={"password"}
+                          id="password"
+                          label="Password"
+                          value={values?.password}
+                          variant="outlined"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          errors={
+                            touched?.password &&
+                            errors?.password &&
+                            errors?.password
+                          }
+                        />
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} sm={4} md={4}>
+                      <FormControl className={"w-full"}>
+                        <CustomInput
+                          type={"password"}
+                          name={"confirmPassword"}
+                          id="confirmPassword"
+                          label="Confirm Password"
+                          value={values?.confirmPassword}
+                          variant="outlined"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          errors={
+                            touched?.confirmPassword &&
+                            errors?.confirmPassword &&
+                            errors?.confirmPassword
+                          }
+                        />
+                      </FormControl>
+                    </Grid>
                     <Grid item xs={12}>
                       <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
                         Location
@@ -1206,13 +1682,15 @@ function Index() {
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={list.country}
+                          list={countryOptions}
                           label={"Country"}
                           placeholder={"Select Your Country"}
                           name={"country"}
-                          value={selectedCountryName}
+                          value={findOption(countryOptions, values?.country) || selectedCountryName}
                           errors={
-                            touched?.country && errors?.country && errors?.country
+                            touched?.country &&
+                            errors?.country &&
+                            errors?.country
                           }
                           onChange={(e, selectedCountry) => {
                             setFieldValue("country", selectedCountry?.id);
@@ -1226,7 +1704,6 @@ function Index() {
                             setSelectedRegionName(null);
                             setSelectedDistrictName(null);
                             setSelectedCityName(null);
-                            setSelectedSamajName(null);
                             setRegionList([]);
                             setDistrictList([]);
                             setCityList([]);
@@ -1241,11 +1718,11 @@ function Index() {
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={stateList}
+                          list={asOptions(stateList)}
                           label={"State"}
                           placeholder={"Select Your State"}
                           name={"state"}
-                          value={selectedStateName}
+                          value={findOption(asOptions(stateList), values?.state)}
                           disabled={!selectedCountryName}
                           errors={
                             touched?.state && errors?.state && errors?.state
@@ -1260,7 +1737,6 @@ function Index() {
                             setSelectedRegionName(null);
                             setSelectedDistrictName(null);
                             setSelectedCityName(null);
-                            setSelectedSamajName(null);
                             setDistrictList([]);
                             setCityList([]);
                             setSamajList([]);
@@ -1274,27 +1750,26 @@ function Index() {
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={regionList}
+                          list={asOptions(regionList)}
                           label={"Region"}
                           placeholder={"Select Your Region"}
                           name={"region"}
-                          value={selectedRegionName}
+                          value={findOption(asOptions(regionList), values?.region)}
                           disabled={!selectedStateName}
                           errors={
                             touched?.region && errors?.region && errors?.region
                           }
-                          onChange={(e, region) => {
-                            setFieldValue("region", region?.id);
+                          onChange={(e, regionValue) => {
+                            setFieldValue("region", regionValue?.id);
                             setFieldValue("district", "");
                             setFieldValue("city", "");
                             setFieldValue("localSamaj", "");
-                            setSelectedRegionName(region?.name);
+                            setSelectedRegionName(regionValue?.name);
                             setSelectedDistrictName(null);
                             setSelectedCityName(null);
-                            setSelectedSamajName(null);
                             setCityList([]);
                             setSamajList([]);
-                            if (region?.id) getDistrictList(region.id);
+                            if (regionValue?.id) getDistrictList(regionValue.id);
                             else setDistrictList([]);
                           }}
                           onBlur={handleBlur}
@@ -1304,11 +1779,11 @@ function Index() {
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={districtList}
+                          list={asOptions(districtList)}
                           label={"District"}
                           placeholder={"Select Your District"}
                           name={"district"}
-                          value={selectedDistrictName}
+                          value={findOption(asOptions(districtList), values?.district)}
                           disabled={!selectedRegionName}
                           errors={
                             touched?.district &&
@@ -1321,7 +1796,6 @@ function Index() {
                             setFieldValue("localSamaj", "");
                             setSelectedDistrictName(district?.name);
                             setSelectedCityName(null);
-                            setSelectedSamajName(null);
                             setSamajList([]);
                             if (district?.id) getCityList(district.id);
                             else setCityList([]);
@@ -1333,18 +1807,19 @@ function Index() {
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={cityList}
+                          list={asOptions(cityList)}
                           label={"City"}
                           placeholder={"Select Your City"}
                           name={"city"}
-                          value={selectedCityName}
+                          value={findOption(asOptions(cityList), values?.city)}
                           disabled={!selectedDistrictName}
-                          errors={touched?.city && errors?.city && errors?.city}
+                          errors={
+                            touched?.city && errors?.city && errors?.city
+                          }
                           onChange={(e, city) => {
                             setFieldValue("city", city?.id);
                             setFieldValue("localSamaj", "");
                             setSelectedCityName(city?.name);
-                            setSelectedSamajName(null);
                             if (city?.id) getSamajList(city.id);
                             else setSamajList([]);
                           }}
@@ -1355,11 +1830,11 @@ function Index() {
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={samajList}
+                          list={asOptions(samajList)}
                           label={"Local Samaj"}
                           placeholder={"Select Your Samaj"}
                           name={"localSamaj"}
-                          value={selectedSamajName}
+                          value={findOption(asOptions(samajList), values?.localSamaj)}
                           disabled={!selectedCityName}
                           errors={
                             touched?.localSamaj &&
@@ -1368,88 +1843,161 @@ function Index() {
                           }
                           onChange={(e, localSamaj) => {
                             setFieldValue("localSamaj", localSamaj?.id);
-                            setSelectedSamajName(localSamaj?.name);
                           }}
                           onBlur={handleBlur}
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomInput
-                          type={"date"}
-                          label={"Date of birth"}
-                          placeholder={"Select Your DOB"}
-                          name="dob"
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                          errors={touched.dob && errors.dob && errors.dob}
-                          value={values.dob}
-                        />
-                      </FormControl>
+                  </>
+                ) : (
+                  <>
+                    <Grid item xs={12}>
+                      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
+                        Location
+                      </p>
                     </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomRadio
-                          list={[
-                            { label: "Male", value: "male" },
-                            { label: "Female", value: "female" },
-                          ]}
-                          label={"Gender"}
-                          name={"gender"}
-                          value={values?.gender}
-                          errors={
-                            touched?.gender && errors?.gender && errors?.gender
-                          }
-                          className={"flex flex-row"}
-                          onChange={handleChange}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    {hasOwnListToggle ? null : (
                     <Grid item xs={12} sm={4} md={4}>
                       <FormControl className={"w-full"}>
                         <CustomAutoComplete
-                          list={rolesList(false)}
-                          label={"User Role"}
-                          placeholder={"Select Your User Role"}
-                          name={"role"}
-                          value={
-                            typeof values?.role === "object" && values?.role
-                              ? values.role
-                              : null
+                          list={regionOptions}
+                          label={"Region"}
+                          placeholder={"Select Your Region"}
+                          name={"region"}
+                          value={selectedRegionOption}
+                          errors={
+                            touched?.region && errors?.region && errors?.region
                           }
-                          errors={touched?.role && errors?.role && errors?.role}
-                          onChange={(e, role) => {
-                            setFieldValue("role", role);
+                          onChange={(e, regionValue) => {
+                            setFieldValue("region", regionValue?.id || regionValue?.value || "");
+                            setFieldValue("localSamaj", "");
+                            setSelectedRegionName(regionValue || null);
+                            if (regionValue?.id || regionValue?.value) {
+                              getSamajListByRegion(
+                                regionValue.id || regionValue.value,
+                                regionValue
+                              );
+                            } else setSamajList([]);
                           }}
                           onBlur={handleBlur}
                         />
                       </FormControl>
                     </Grid>
-                    )}
+                    <Grid item xs={12} sm={4} md={4}>
+                      <FormControl className={"w-full"}>
+                        <CustomAutoComplete
+                          list={samajOptions}
+                          label={"Local Samaj"}
+                          placeholder={"Select Your Samaj"}
+                          name={"localSamaj"}
+                          value={selectedSamajOption}
+                          disabled={!values?.region}
+                          errors={
+                            touched?.localSamaj &&
+                            errors?.localSamaj &&
+                            errors?.localSamaj
+                          }
+                          onChange={(e, localSamaj) => {
+                            setFieldValue(
+                              "localSamaj",
+                              localSamaj?.id || localSamaj?.value || ""
+                            );
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </FormControl>
+                    </Grid>
                   </>
-                ) : null}
+                )}
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomInput
+                      type={"date"}
+                      label={"Date of birth"}
+                      placeholder={"Select Your DOB"}
+                      name="dob"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      errors={touched.dob && errors.dob && errors.dob}
+                      value={values.dob}
+                      max={today}
+                      min="1950-01-01"
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomRadio
+                      list={[
+                        { label: "Male", value: "male" },
+                        { label: "Female", value: "female" },
+                      ]}
+                      label={"Gender"}
+                      name={"gender"}
+                      value={values?.gender}
+                      errors={
+                        touched?.gender && errors?.gender && errors?.gender
+                      }
+                      className={"flex flex-row"}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                {hasOwnListToggle ? null : (
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={rolesList(false)}
+                      label={"User Role"}
+                      placeholder={"Select Your User Role"}
+                      name={"role"}
+                      value={
+                        typeof values?.role === "object" && values?.role
+                          ? values.role
+                          : null
+                      }
+                      errors={touched?.role && errors?.role && errors?.role}
+                      onChange={(e, role) => {
+                        setFieldValue("role", role);
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                )}
                 <Grid
                   item
                   xs={12}
-                  className={"flex justify-end items-center !pt-2"}
+                  className={"flex flex-col-reverse md:flex-row justify-end items-stretch md:items-center gap-2 !pt-2"}
                 >
                   {loading ? (
                     <CircularProgress color="secondary" />
                   ) : (
-                    <ActionButton
-                      type={"submit"}
-                      disabled={hasError}
-                    >
-                      {isAddUser ? "Add" : "Update"}
-                    </ActionButton>
+                    <>
+                      {isAddUser ? null : (
+                        <ActionButton
+                          type="button"
+                          variant="secondary"
+                          className="max-md:w-full"
+                          onClick={handleChangePasswordClick}
+                        >
+                          Change password
+                        </ActionButton>
+                      )}
+                      <ActionButton
+                        type={"submit"}
+                        disabled={hasError}
+                        className="max-md:w-full"
+                      >
+                        {isAddUser ? "Add" : "Update"}
+                      </ActionButton>
+                    </>
                   )}
                 </Grid>
               </Grid>
             </Form>
           </FormikProvider>
+        )}
       </FormModal>
       <NotificationSnackbar notification={notification} />
       <DeleteConfirmFlow
