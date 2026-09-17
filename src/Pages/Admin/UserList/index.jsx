@@ -369,20 +369,26 @@ function Index() {
   };
 
   const userActionHandler = async (userInfo, action, field) => {
+    const previous = userInfo?.[field];
+    setUserList((prev) => ({
+      ...prev,
+      data: (prev?.data || []).map((item) =>
+        item.id === userInfo.id ? { ...item, [field]: action } : item
+      ),
+    }));
     try {
       await updateUser(userInfo?.id, { [field]: action });
-      if (isMobile) {
-        setUserList((prev) => ({
-          ...prev,
-          data: (prev?.data || []).map((item) =>
-            item.id === userInfo.id ? { ...item, [field]: action } : item
-          ),
-        }));
-      } else {
-        handleUserList();
-      }
     } catch (e) {
-      // Optionally handle error with notification
+      setUserList((prev) => ({
+        ...prev,
+        data: (prev?.data || []).map((item) =>
+          item.id === userInfo.id ? { ...item, [field]: previous } : item
+        ),
+      }));
+      setNotification({
+        type: "error",
+        message: e?.response?.data?.message || "Failed to update user.",
+      });
     }
   };
 
@@ -523,11 +529,11 @@ function Index() {
       renderCell: (record) => (
         <div className={"flex gap-2"}>
           <CustomSwitch
-            checked={record?.row?.allowed}
+            checked={Boolean(record?.row?.allowed)}
             disabled={!canAct}
-            onClick={(e) => {
+            onChange={(event, checked) => {
               if (!canAct) return;
-              userActionHandler(record?.row, !record?.row?.allowed, "allowed");
+              userActionHandler(record?.row, checked, "allowed");
             }}
           />
         </div>
@@ -544,11 +550,11 @@ function Index() {
       renderCell: (record) => (
         <div className={"flex gap-2"}>
           <CustomSwitch
-            checked={record?.row?.active}
+            checked={Boolean(record?.row?.active)}
             disabled={!canAct}
-            onClick={(e) => {
+            onChange={(event, checked) => {
               if (!canAct) return;
-              userActionHandler(record?.row, !record?.row?.active, "active");
+              userActionHandler(record?.row, checked, "active");
             }}
           />
         </div>
@@ -895,22 +901,22 @@ function Index() {
                       <div className={"flex items-center gap-1"}>
                         <span className={"text-sm text-gray-600"}>Allowed</span>
                         <CustomSwitch
-                          checked={row.allowed}
+                          checked={Boolean(row.allowed)}
                           disabled={!canAct}
-                          onClick={() => {
+                          onChange={(event, checked) => {
                             if (!canAct) return;
-                            userActionHandler(row, !row.allowed, "allowed");
+                            userActionHandler(row, checked, "allowed");
                           }}
                         />
                       </div>
                       <div className={"flex items-center gap-1"}>
                         <span className={"text-sm text-gray-600"}>Active</span>
                         <CustomSwitch
-                          checked={row.active}
+                          checked={Boolean(row.active)}
                           disabled={!canAct}
-                          onClick={() => {
+                          onChange={(event, checked) => {
                             if (!canAct) return;
-                            userActionHandler(row, !row.active, "active");
+                            userActionHandler(row, checked, "active");
                           }}
                         />
                       </div>
