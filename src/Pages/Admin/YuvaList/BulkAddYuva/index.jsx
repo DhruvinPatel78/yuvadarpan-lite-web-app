@@ -449,9 +449,8 @@ const BulkAddYuva = () => {
                     value={selectedLastName}
                     errors={showErr(touched.lastName, errors.lastName)}
                     onChange={(e, lastName) => {
-                      if (!lastName) return;
-                      setFieldValue("lastName", lastName.id);
-                      setSelectedLastName(lastName.name);
+                      setFieldValue("lastName", lastName?.id || "");
+                      setSelectedLastName(lastName?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -492,9 +491,8 @@ const BulkAddYuva = () => {
                     value={selectedNative}
                     errors={showErr(touched.native, errors.native)}
                     onChange={(e, native) => {
-                      if (!native) return;
-                      setFieldValue("native", native.id);
-                      setSelectedNative(native.name);
+                      setFieldValue("native", native?.id || "");
+                      setSelectedNative(native?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -722,12 +720,11 @@ const BulkAddYuva = () => {
                       errors?.mamaInfo?.lastName
                     )}
                     onChange={(e, lastName) => {
-                      if (!lastName) return;
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName: lastName.id,
+                        lastName: lastName?.id || "",
                       });
-                      setSelectedMamaLastName(lastName.name);
+                      setSelectedMamaLastName(lastName?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -745,12 +742,11 @@ const BulkAddYuva = () => {
                       errors?.mamaInfo?.native
                     )}
                     onChange={(e, native) => {
-                      if (!native) return;
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        native: native.id,
+                        native: native?.id || "",
                       });
-                      setSelectedMamaNative(native.name);
+                      setSelectedMamaNative(native?.name || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -809,9 +805,8 @@ const BulkAddYuva = () => {
                       errors?.contactInfo?.lastName
                     )}
                     onChange={(e, lastName) => {
-                      if (!lastName) return;
-                      setFieldValue("contactInfo.lastName", lastName.id);
-                      setSelectedContactLastName(lastName.name);
+                      setFieldValue("contactInfo.lastName", lastName?.id || "");
+                      setSelectedContactLastName(lastName?.name || null);
                       setFieldTouched("contactInfo.lastName", true);
                     }}
                     onBlur={() => setFieldTouched("contactInfo.lastName", true)}

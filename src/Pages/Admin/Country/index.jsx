@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Box,
@@ -16,12 +16,11 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
-import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
+import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
@@ -46,6 +45,8 @@ export default function Index() {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const skipSearchEffect = useRef(true);
+  const filterCount = Number(Boolean(selectedSearchByText.trim()));
 
   useEffect(() => {
     handleCountryList();
@@ -222,10 +223,20 @@ export default function Index() {
     }
   };
 
-  const handleReset = () => {
-    setSelectedSearchByText("");
-    handleCountryList(true);
-  };
+  useEffect(() => {
+    if (skipSearchEffect.current) {
+      skipSearchEffect.current = false;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      if (page !== 0) {
+        setPage(0);
+        return;
+      }
+      handleCountryList();
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [selectedSearchByText]);
 
   const toggleCardSelection = (id) => {
     setSelectedIds((prev) =>
@@ -257,36 +268,13 @@ export default function Index() {
             ) : null
           }
         />
-        <CustomAccordion>
-          <Grid spacing={2} container>
-            <CustomInput
-              type={"text"}
-              placeholder={"Enter Search Country Name"}
-              name={"name"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSearchByText}
-              onChange={(e) => setSelectedSearchByText(e.target.value)}
-            />
-
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              className={"flex justify-start items-center"}
-            >
-              <FilterActions
-                onSubmit={() => handleCountryList()}
-                onReset={handleReset}
-                showReset={Boolean(selectedSearchByText)}
-              />
-            </Grid>
-          </Grid>
-        </CustomAccordion>
+        <MasterFilterBar
+          searchPlaceholder="Search country"
+          searchValue={selectedSearchByText}
+          onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
+          filterCount={filterCount}
+          onFilterClick={() => handleCountryList()}
+        />
         <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={countryListColumn}
