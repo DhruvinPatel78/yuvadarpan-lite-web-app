@@ -391,7 +391,11 @@ const ProfilePage = () => {
     },
     {
       label: "Mama Native",
-      value: lookupValue(nativeList, data?.mamaInfo?.native),
+      value: lookupValue(
+        nativeList,
+        data?.mamaInfo?.native,
+        labels.mamaNative
+      ),
     },
     { label: "Mama City", value: data?.mamaInfo?.city },
   ];

@@ -24,6 +24,7 @@ const resolveOption = (list, value) => {
     rows.find(
       (item) =>
         optionIdOf(item) === key ||
+        String(item?.uuid || "") === key ||
         String(item?.name || "") === key ||
         String(item?.label || "") === key
     ) || null
@@ -116,12 +117,14 @@ export default function CustomAutoComplete({
               option.label === selected ||
               option.name === selected ||
               String(option.id) === selected ||
-              String(option.value) === selected
+              String(option.value) === selected ||
+              String(option.uuid || "") === selected
             );
           }
           return (
             String(option.id) === String(selected.id) ||
             String(option.value) === String(selected.value) ||
+            String(option.uuid || "") === String(selected.uuid || selected.id || "") ||
             option.label === selected.label ||
             option.name === selected.name
           );

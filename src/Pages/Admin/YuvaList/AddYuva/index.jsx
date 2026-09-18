@@ -261,23 +261,28 @@ const AddYuva = () => {
         });
         break;
       case "native":
-        axios
-          .get(`/${field}/getInfo/${location?.state?.data?.native}`)
-          .then((res) => {
-            // setFieldValue("native", res.data[0].name);
-            setSelectedNative(res.data[0].name);
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-        axios
-          .get(`/${field}/getInfo/${location?.state?.data?.mamaInfo?.native}`)
-          .then((res) => {
-            setSelectedMamaNative(res.data[0].name);
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
+        if (location?.state?.data?.native) {
+          axios
+            .get(`/${field}/getInfo/${location?.state?.data?.native}`)
+            .then((res) => {
+              const native = Array.isArray(res.data) ? res.data[0] : res.data;
+              if (native?.name) setSelectedNative(native.name);
+            })
+            .catch(function (error) {
+              console.log(error);
+            });
+        }
+        if (location?.state?.data?.mamaInfo?.native) {
+          axios
+            .get(`/${field}/getInfo/${location?.state?.data?.mamaInfo?.native}`)
+            .then((res) => {
+              const native = Array.isArray(res.data) ? res.data[0] : res.data;
+              if (native?.name) setSelectedMamaNative(native.name);
+            })
+            .catch(function (error) {
+              console.log(error);
+            });
+        }
         break;
 
       case "country":
@@ -651,6 +656,29 @@ const AddYuva = () => {
   }, []);
 
   useEffect(() => {
+    if (!nativeList.length) return;
+    const matchName = (id) => {
+      if (!id) return "";
+      const key = String(id);
+      const found = nativeList.find(
+        (item) =>
+          String(item?.id) === key ||
+          String(item?.value) === key ||
+          String(item?._id) === key ||
+          String(item?.uuid) === key
+      );
+      return found?.name || found?.label || "";
+    };
+    const nativeName = matchName(location?.state?.data?.native || values?.native);
+    const mamaName = matchName(
+      location?.state?.data?.mamaInfo?.native || values?.mamaInfo?.native
+    );
+    if (nativeName) setSelectedNative(nativeName);
+    if (mamaName) setSelectedMamaNative(mamaName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nativeList]);
+
+  useEffect(() => {
     if (surname?.length) {
       addLabelValueInList("surname");
     }
@@ -946,11 +974,14 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedNative}
+                    value={values?.native || selectedNative}
                     errors={touched.native && errors.native && errors.native}
                     onChange={(e, native) => {
-                      setFieldValue("native", native?.id || "");
-                      setSelectedNative(native?.name || null);
+                      setFieldValue(
+                        "native",
+                        native?.id || native?.value || native?._id || native?.uuid || ""
+                      );
+                      setSelectedNative(native?.name || native || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1325,11 +1356,11 @@ const AddYuva = () => {
                     list={nativeList}
                     label={"Mama Native"}
                     placeholder={"Select Your Native"}
-                    name="native"
+                    name="mamaInfo.native"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedMamaNative}
+                    value={values?.mamaInfo?.native || selectedMamaNative}
                     errors={
                       touched?.mamaInfo?.native &&
                       errors?.mamaInfo?.native &&
@@ -1338,9 +1369,14 @@ const AddYuva = () => {
                     onChange={(e, native) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        native: native?.id || "",
+                        native:
+                          native?.id ||
+                          native?.value ||
+                          native?._id ||
+                          native?.uuid ||
+                          "",
                       });
-                      setSelectedMamaNative(native?.name || null);
+                      setSelectedMamaNative(native?.name || native || null);
                     }}
                     onBlur={handleBlur}
                   />
