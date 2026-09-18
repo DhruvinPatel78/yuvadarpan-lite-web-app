@@ -49,6 +49,11 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { Button, Card } from "../../../Component/UI";
+import {
+  bloodGroupList,
+  educationList,
+  maritalStatusList,
+} from "../../Admin/YuvaList/BulkAddYuva/formConfig";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -63,10 +68,19 @@ const searchFieldSx = {
   },
 };
 
+const asFilterOptions = (values, labelFor) =>
+  (Array.isArray(values) ? values : []).map((value) => {
+    const label = labelFor ? labelFor(value) : value;
+    return { id: value, name: label, label, value };
+  });
+
 const GENDER_OPTIONS = [
   { id: "male", name: "Male", label: "Male", value: "male" },
   { id: "female", name: "Female", label: "Female", value: "female" },
 ];
+const BLOOD_GROUP_OPTIONS = asFilterOptions(bloodGroupList);
+const MARITAL_STATUS_OPTIONS = asFilterOptions(maritalStatusList, toCamelCase);
+const EDUCATION_OPTIONS = asFilterOptions(educationList);
 
 const emptyAppliedFilters = {
   gotra: [],
@@ -78,6 +92,9 @@ const emptyAppliedFilters = {
   samajIds: [],
   nativeIds: [],
   genders: [],
+  bloodGroups: [],
+  maritalStatuses: [],
+  educations: [],
   minAge: "",
   maxAge: "",
 };
@@ -117,6 +134,9 @@ const Home = () => {
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
   const [selectedGender, setSelectedGender] = useState([]);
+  const [selectedBloodGroup, setSelectedBloodGroup] = useState([]);
+  const [selectedMaritalStatus, setSelectedMaritalStatus] = useState([]);
+  const [selectedEducation, setSelectedEducation] = useState([]);
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [nativeList, setNativeList] = useState([]);
@@ -135,6 +155,9 @@ const Home = () => {
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
   const filteredGenders = useFilteredIds(selectedGender, "id");
+  const filteredBloodGroups = useFilteredIds(selectedBloodGroup, "id");
+  const filteredMaritalStatuses = useFilteredIds(selectedMaritalStatus, "id");
+  const filteredEducations = useFilteredIds(selectedEducation, "id");
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
   const surnameFilterList = useMemo(
     () => listHandler(surnamesForGotra(surname, selectedGotra)),
@@ -182,6 +205,15 @@ const Home = () => {
       }
       if (appliedFilters.genders.length) {
         params.gender = appliedFilters.genders;
+      }
+      if (appliedFilters.bloodGroups?.length) {
+        params.bloodGroup = appliedFilters.bloodGroups;
+      }
+      if (appliedFilters.maritalStatuses?.length) {
+        params.martialStatus = appliedFilters.maritalStatuses;
+      }
+      if (appliedFilters.educations?.length) {
+        params.education = appliedFilters.educations;
       }
       if (appliedFilters.minAge !== "") {
         params.minAge = appliedFilters.minAge;
@@ -292,6 +324,9 @@ const Home = () => {
     appliedFilters.samajIds.length,
     appliedFilters.nativeIds.length,
     appliedFilters.genders.length,
+    appliedFilters.bloodGroups?.length,
+    appliedFilters.maritalStatuses?.length,
+    appliedFilters.educations?.length,
     appliedFilters.minAge !== "",
     appliedFilters.maxAge !== "",
   ].filter(Boolean).length;
@@ -349,6 +384,9 @@ const Home = () => {
       samajIds: filteredSamajIds,
       nativeIds: filteredNativeIds,
       genders: filteredGenders,
+      bloodGroups: filteredBloodGroups,
+      maritalStatuses: filteredMaritalStatuses,
+      educations: filteredEducations,
       minAge: nextMinAge,
       maxAge: nextMaxAge,
     });
@@ -369,6 +407,9 @@ const Home = () => {
     setSelectedSamaj([]);
     setSelectedNative([]);
     setSelectedGender([]);
+    setSelectedBloodGroup([]);
+    setSelectedMaritalStatus([]);
+    setSelectedEducation([]);
     setMinAge("");
     setMaxAge("");
     setRegionListByState(region);
@@ -390,6 +431,9 @@ const Home = () => {
     selectedSamaj?.length > 0 ||
     selectedNative?.length > 0 ||
     selectedGender?.length > 0 ||
+    selectedBloodGroup?.length > 0 ||
+    selectedMaritalStatus?.length > 0 ||
+    selectedEducation?.length > 0 ||
     minAge !== "" ||
     maxAge !== "" ||
     appliedFilterCount > 0;
@@ -558,6 +602,48 @@ const Home = () => {
         onChange={(e, selected) => {
           if (selected) {
             setSelectedGender((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(BLOOD_GROUP_OPTIONS)}
+        multiple={true}
+        label={"Blood group"}
+        placeholder={"Select Blood Group"}
+        {...fieldSize}
+        name="bloodGroup"
+        value={selectedBloodGroup}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedBloodGroup((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(MARITAL_STATUS_OPTIONS)}
+        multiple={true}
+        label={"Marital status"}
+        placeholder={"Select Marital Status"}
+        {...fieldSize}
+        name="martialStatus"
+        value={selectedMaritalStatus}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedMaritalStatus((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(EDUCATION_OPTIONS)}
+        multiple={true}
+        label={"Education"}
+        placeholder={"Select Education"}
+        {...fieldSize}
+        name="education"
+        value={selectedEducation}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedEducation((pre) => getSelectedData(pre, selected, e));
           }
         }}
       />
