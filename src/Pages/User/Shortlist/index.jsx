@@ -137,7 +137,7 @@ const Shortlisted = () => {
               shortlisted
               onToggleShortlist={() => handleRemove(data)}
               onClick={() =>
-                navigate(`/admin/yuvalist/${data?.id}`, {
+                navigate(`/yuva/${data?.id || data?._id}`, {
                   state: { ...data },
                 })
               }

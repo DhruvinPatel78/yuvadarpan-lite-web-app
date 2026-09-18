@@ -2,6 +2,34 @@ import * as React from "react";
 import { Grid, styled, TextField, Autocomplete } from "@mui/material";
 import { fieldControlCss } from "../UI/fieldStyles";
 
+const optionIdOf = (option) => {
+  if (option == null || option === "") return "";
+  if (typeof option !== "object") return String(option);
+  const id = option.id ?? option.value ?? option._id;
+  return id == null ? "" : String(id);
+};
+
+const resolveOption = (list, value) => {
+  if (value == null || value === "") return null;
+  const rows = Array.isArray(list) ? list : [];
+  if (typeof value === "object") {
+    const selectedId = optionIdOf(value);
+    return (
+      rows.find((item) => optionIdOf(item) === selectedId) ||
+      value
+    );
+  }
+  const key = String(value);
+  return (
+    rows.find(
+      (item) =>
+        optionIdOf(item) === key ||
+        String(item?.name || "") === key ||
+        String(item?.label || "") === key
+    ) || null
+  );
+};
+
 const PrimaryAutocomplete = styled(Autocomplete)`
   ${fieldControlCss}
   & .MuiSvgIcon-root {
@@ -75,13 +103,7 @@ export default function CustomAutoComplete({
         }}
         defaultValue={defaultValue}
         options={Array.isArray(list) ? list : []}
-        value={
-          multiple
-            ? value || []
-            : value === "" || value === undefined
-              ? null
-              : value
-        }
+        value={multiple ? value || [] : resolveOption(list, value)}
         getOptionLabel={(option) =>
           typeof option === "string"
             ? option

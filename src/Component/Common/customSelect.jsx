@@ -62,26 +62,6 @@ export default function CustomSelect({
           fullWidth
           required={required}
           onBlur={onBlur}
-          displayEmpty
-          autoFocus={false}
-          renderValue={(selected) => {
-            if (selected === "" || selected == null) {
-              return placeholder || "Select";
-            }
-            const match = (Array.isArray(list) ? list : []).find((data) => {
-              if (data && typeof data === "object") {
-                return (
-                  String(data.value) === String(selected) ||
-                  String(data.id) === String(selected)
-                );
-              }
-              return data === selected;
-            });
-            if (match && typeof match === "object") {
-              return match.label || match.name || selected;
-            }
-            return match ?? selected;
-          }}
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
@@ -116,7 +96,9 @@ export default function CustomSelect({
             }
           }}
         >
-          <MenuItem value="">{placeholder || "SELECT"}</MenuItem>
+          <MenuItem value="">
+            <em>{placeholder || "Select"}</em>
+          </MenuItem>
           {(Array.isArray(list) ? list : []).map((data) => {
             const isObject = data && typeof data === "object";
             const optionValue = isObject

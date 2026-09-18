@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login/index";
@@ -45,9 +45,40 @@ import AccountSettings from "./Pages/Account/Settings";
 import PwaInstallBanner from "./Component/PwaInstall";
 import FullPageLoader from "./Component/Common/FullPageLoader";
 import { UseRedux } from "./Component/useRedux";
+import { useDispatch } from "react-redux";
+import { logout } from "./store/authSlice";
+import { getCurrentUser } from "./util/userApi";
+import { persistUpdatedUser } from "./Pages/Account/persistUser";
 
 function App() {
   const { loading } = UseRedux();
+  const dispatch = useDispatch();
+  const [sessionReady, setSessionReady] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      dispatch(logout());
+      setSessionReady(true);
+      return;
+    }
+    getCurrentUser()
+      .then((data) => {
+        persistUpdatedUser(dispatch, { ...data, token }, data);
+        setSessionReady(true);
+      })
+      .catch(() => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        dispatch(logout());
+        setSessionReady(true);
+      });
+  }, [dispatch]);
+
+  if (!sessionReady) {
+    return null;
+  }
+
   return (
     <>
       <Routes>
@@ -100,7 +131,7 @@ function App() {
         />
 
         {/*Admin Routes*/}
-        <Route path={"admin"}>
+        <Route path={"admin"} element={<PrivateRoute adminOnly />}>
           <Route
             path="dashboard"
             exact

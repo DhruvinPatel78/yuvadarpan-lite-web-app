@@ -484,7 +484,15 @@ const AddYuva = () => {
       }),
       contactInfo: Yup.object({
         name: Yup.string().required("Contact Name Is Required"),
-        lastName: Yup.string().required("Contact Last Name Is Required"),
+        lastName: Yup.string()
+          .transform((value) =>
+            value && typeof value === "object"
+              ? String(value.id ?? value.value ?? value._id ?? "")
+              : value == null
+                ? ""
+                : String(value)
+          )
+          .required("Contact Last Name Is Required"),
         relation: Yup.string().required("Contact Relation Is Required"),
         phone: Yup.string()
           .matches(
@@ -845,8 +853,8 @@ const AddYuva = () => {
                       touched.lastName && errors.lastName && errors.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("lastName", lastName?.id || "");
-                      setSelectedLastName(lastName?.name || null);
+                      setFieldValue("lastName", lastName?.id || lastName?.value || lastName?._id || "");
+                      setSelectedLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1321,9 +1329,10 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName: lastName?.id || "",
+                        lastName:
+                          lastName?.id || lastName?.value || lastName?._id || "",
                       });
-                      setSelectedMamaLastName(lastName?.name || null);
+                      setSelectedMamaLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1405,18 +1414,28 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedContactLastName}
+                    value={
+                      lastNameList.find(
+                        (item) =>
+                          String(item.id) ===
+                            String(values?.contactInfo?.lastName) ||
+                          String(item.value) ===
+                            String(values?.contactInfo?.lastName)
+                      ) || selectedContactLastName
+                    }
                     errors={
                       (touched?.contactInfo?.lastName || submitCount > 0) &&
                       errors?.contactInfo?.lastName &&
                       errors?.contactInfo?.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("contactInfo.lastName", lastName?.id || "");
-                      setSelectedContactLastName(lastName?.name || null);
-                      setFieldTouched("contactInfo.lastName", true);
+                      setFieldValue(
+                        "contactInfo.lastName",
+                        lastName?.id || lastName?.value || lastName?._id || ""
+                      );
+                      setSelectedContactLastName(lastName || null);
                     }}
-                    onBlur={() => setFieldTouched("contactInfo.lastName", true)}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
