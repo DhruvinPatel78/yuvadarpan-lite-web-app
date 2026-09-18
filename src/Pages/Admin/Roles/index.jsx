@@ -12,9 +12,13 @@ import { UseRedux } from "../../../Component/useRedux";
 import { Navigate } from "react-router-dom";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import { MasterFilterBar, PageHeader } from "../../../Component/UI";
+import { endLoading, startLoading } from "../../../store/authSlice";
+import { useDispatch } from "react-redux";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const { auth } = UseRedux();
+  const dispatch = useDispatch();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [roleData, setRoleData] = useState(null);
@@ -90,15 +94,17 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteRole(Array.isArray(id) ? id : [id]);
-      handleRoleList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteRole(Array.isArray(id) ? id : [id]),
+      refresh: () => handleRoleList(false, { skipLoader: true }),
+    });
   };
 
-  const handleRoleList = async (isRest = false) => {
+  const handleRoleList = async (isRest = false, options = {}) => {
+    const skipLoader = Boolean(options.skipLoader);
+    if (!skipLoader) {
+      dispatch(startLoading());
+    }
     try {
       const text =
         selectedSearchByText && !isRest
@@ -115,6 +121,10 @@ export default function Index() {
       setRoleData(data);
     } catch (e) {
       // Optionally handle error with notification
+    } finally {
+      if (!skipLoader) {
+        dispatch(endLoading());
+      }
     }
   };
 

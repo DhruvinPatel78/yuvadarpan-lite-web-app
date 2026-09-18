@@ -43,12 +43,15 @@ import ChangePassword from "./Pages/ChangePassword";
 import AccountProfile from "./Pages/Account/Profile";
 import AccountSettings from "./Pages/Account/Settings";
 import PwaInstallBanner from "./Component/PwaInstall";
+import FullPageLoader from "./Component/Common/FullPageLoader";
+import { UseRedux } from "./Component/useRedux";
 import { useDispatch } from "react-redux";
 import { logout } from "./store/authSlice";
 import { getCurrentUser } from "./util/userApi";
 import { persistUpdatedUser } from "./Pages/Account/persistUser";
 
 function App() {
+  const { loading } = UseRedux();
   const dispatch = useDispatch();
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -258,6 +261,7 @@ function App() {
       </Route>
     </Routes>
       <PwaInstallBanner />
+      {loading ? <FullPageLoader /> : null}
     </>
   );
 }

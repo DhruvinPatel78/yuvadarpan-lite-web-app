@@ -9,6 +9,7 @@ import {
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../store/authSlice";
 import { verifyOtp, resendOtp } from "../../util/authApi";
+import { UseRedux } from "../../Component/useRedux";
 
 export default function Index() {
   const location = useLocation();
@@ -17,6 +18,7 @@ export default function Index() {
   const [submitting, setSubmitting] = useState(false);
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
+  const { loading } = UseRedux();
   const otpRef = useRef();
   const email = location.state?.email || "";
 
@@ -26,20 +28,21 @@ export default function Index() {
   };
 
   const submitHandler = async () => {
+    dispatch(startLoading());
     if (otp.length !== 6 || submitting) return;
     setSubmitting(true);
     try {
-      await verifyOtp(email, otp);
+      await verifyOtp(location.state?.email, otp);
+      dispatch(endLoading());
       setNotification({
         message: "OTP verified.",
         type: "success",
       });
-      setTimeout(() => {
-        navigate("/forget-password", {
-          state: { email },
-        });
-      }, 2000);
+      navigate("/forget-password", {
+        state: { email: location.state?.email },
+      });
     } catch (err) {
+      dispatch(endLoading());
       setNotification({
         message: err?.response?.data?.message || "OTP verification failed.",
         type: "error",
@@ -51,6 +54,7 @@ export default function Index() {
 
   const resendOTP = async () => {
     dispatch(startLoading());
+    const email = location.state?.email;
     handleReset();
     try {
       await resendOtp(email);
@@ -103,8 +107,8 @@ export default function Index() {
           <Button
             fullWidth
             onClick={submitHandler}
-            disabled={otp.length !== 6}
-            loading={submitting}
+            disabled={otp?.length === 0 || loading}
+            loading={loading}
           >
             Verify code
           </Button>

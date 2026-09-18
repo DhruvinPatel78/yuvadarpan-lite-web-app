@@ -20,7 +20,6 @@ import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
@@ -40,6 +39,7 @@ import {
   updateCity,
   deleteCity,
 } from "../../../util/cityApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -226,24 +226,27 @@ export default function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        if (cityModalData) {
-          await updateCity(cityModalData.id, {
-            ...rest,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addCity({ ...rest });
-        }
-        cityAddEditModalClose();
-        handleCityList();
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            if (cityModalData) {
+              await updateCity(cityModalData.id, {
+                ...rest,
+                updatedAt: new Date(),
+              });
+            } else {
+              await addCity({ ...rest });
+            }
+          },
+          refresh: () => handleCityList(),
+          close: () => {
+            resetForm();
+            cityAddEditModalClose();
+          },
+        });
       } catch (e) {
-        // Optionally handle error with notification
-      } finally {
-        dispatch(endLoading());
+        // keep modal open if save fails
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -257,6 +260,7 @@ export default function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const cityAddEditModalClose = () => {
@@ -277,12 +281,10 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteCity(Array.isArray(id) ? id : [id]);
-      handleCityList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteCity(Array.isArray(id) ? id : [id]),
+      refresh: () => handleCityList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -735,7 +737,7 @@ export default function Index() {
                       type={"submit"}
                       fullWidth
                       disabled={hasError}
-                      loading={loading}
+                      loading={loading || isSubmitting}
                     >
                       {cityModalData ? "UPDATE" : "ADD"}
                     </ActionButton>

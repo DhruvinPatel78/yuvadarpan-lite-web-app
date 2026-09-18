@@ -32,6 +32,7 @@ const CustomInput = ({
   min,
   inputProps,
   InputLabelProps,
+  autoFocus = false,
   ...rest
 }) => {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -53,7 +54,9 @@ const CustomInput = ({
         label={label}
         placeholder={placeholder}
         name={name}
-        autoComplete={type === "tel" ? "tel" : undefined}
+        autoComplete={
+          type === "tel" ? "tel" : type === "password" ? "new-password" : "off"
+        }
         onChange={onChange}
         value={
           isDate && value
@@ -86,6 +89,7 @@ const CustomInput = ({
           ),
         }}
         required={required}
+        autoFocus={autoFocus}
         focused={isDate ? undefined : focused}
         onBlur={onBlur}
         disabled={disabled}

@@ -17,7 +17,6 @@ import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
 import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +29,7 @@ import {
   updateCountry,
   deleteCountry,
 } from "../../../util/countryApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -152,24 +152,27 @@ export default function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        if (countryModalData) {
-          await updateCountry(countryModalData.id, {
-            ...rest,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addCountry({ ...rest });
-        }
-        countryAddEditModalClose();
-        handleCountryList();
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            if (countryModalData) {
+              await updateCountry(countryModalData.id, {
+                ...rest,
+                updatedAt: new Date(),
+              });
+            } else {
+              await addCountry({ ...rest });
+            }
+          },
+          refresh: () => handleCountryList(),
+          close: () => {
+            resetForm();
+            countryAddEditModalClose();
+          },
+        });
       } catch (e) {
-        // Optionally handle error with notification
-      } finally {
-        dispatch(endLoading());
+        // keep modal open if save fails
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -183,6 +186,7 @@ export default function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const countryAddEditModalClose = () => {
@@ -193,12 +197,10 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteCountry(Array.isArray(id) ? id : [id]);
-      handleCountryList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteCountry(Array.isArray(id) ? id : [id]),
+      refresh: () => handleCountryList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -364,7 +366,7 @@ export default function Index() {
                       type={"submit"}
                       fullWidth
                       disabled={hasError}
-                      loading={loading}
+                      loading={loading || isSubmitting}
                     >
                       {countryModalData ? "UPDATE" : "ADD"}
                     </ActionButton>
