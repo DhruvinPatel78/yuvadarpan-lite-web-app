@@ -23,6 +23,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { PageHeader, Card, Button } from "../../Component/UI";
+import { PwaInstallCard } from "../../Component/PwaInstall";
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -123,7 +124,7 @@ export default function Settings() {
       <ContainerPage className={"flex-col justify-center flex items-start pb-8"}>
         <PageHeader
           title="Settings"
-          description="Manage your password and protect your account."
+          description="Manage your password, install the app, and protect your account."
         />
         <Card className="w-full">
           <h2 className="text-base font-semibold text-primary">
@@ -257,6 +258,9 @@ export default function Settings() {
             </FormikProvider>
           ) : null}
         </Card>
+        <div className="w-full mt-4">
+          <PwaInstallCard />
+        </div>
         <p className="text-sm text-mutedText mt-4 w-full leading-relaxed">
           We use a one-time code to confirm it's really you before your password
           is changed.
