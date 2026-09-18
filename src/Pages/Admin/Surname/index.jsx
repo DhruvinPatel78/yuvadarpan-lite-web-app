@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
+  Autocomplete,
   Box,
   FormControl,
   Grid,
+  TextField,
   Tooltip,
 } from "@mui/material";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomTable from "../../../Component/Common/customTable";
 import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
@@ -15,11 +18,17 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import CustomInput from "../../../Component/Common/customInput";
-import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
+import {
+  Button as ActionButton,
+  FormModal,
+  MasterFilterBar,
+  PageHeader,
+  searchFieldSx,
+} from "../../../Component/UI";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
-import CustomAccordion from "../../../Component/Common/CustomAccordion";
+import { useNavigate } from "react-router-dom";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly } from "../../../util/util";
@@ -29,9 +38,19 @@ import {
   updateSurname,
   deleteSurname,
 } from "../../../util/surnameApi";
+import { getGotraAllList, addGotra } from "../../../util/gotraApi";
+
+const gotraFilter = createFilterOptions();
+
+const gotraNameOf = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value.trim();
+  return String(value.inputValue || value.name || value.label || "").trim();
+};
 
 export default function Index() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { loading, auth } = UseRedux();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
@@ -40,12 +59,30 @@ export default function Index() {
   const [surnameModalData, setSurnameModalData] = useState(null);
   const [surnameAddEditModel, setSurnameAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [gotraList, setGotraList] = useState([]);
+  const [selectedGotra, setSelectedGotra] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const skipSearchEffect = useRef(true);
+  const gotraOptions = useMemo(
+    () =>
+      (Array.isArray(gotraList) ? gotraList : [])
+        .filter((item) => item?.active !== false)
+        .map((item) => ({
+          ...item,
+          label: item.name,
+          value: item.id,
+        })),
+    [gotraList]
+  );
+  const filterCount =
+    Number(Boolean(selectedSearchByText.trim())) + Number(Boolean(selectedGotra));
 
   useEffect(() => {
-    handleSurnameList();
-  }, [page, rowsPerPage]);
+    getGotraAllList()
+      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
+      .catch(() => setGotraList([]));
+  }, []);
 
   const surnameListColumn = [
     {
@@ -94,8 +131,7 @@ export default function Index() {
                 setSurnameModalData(record?.row);
                 setSurnameAddEditModel(!surnameAddEditModel);
                 setFieldValue("name", record?.row.name);
-                setFieldValue("gotra", record?.row.gotra);
-                setFieldValue("mainBranch", record?.row.mainBranch);
+                setFieldValue("gotra", record?.row.gotra || "");
               }}
             />
           </Tooltip>
@@ -123,31 +159,58 @@ export default function Index() {
     initialValues: {
       name: "",
       gotra: "",
-      mainBranch: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
         dispatch(startLoading());
-        const { confirmPassword, ...rest } = values;
-        if (surnameModalData) {
-          await updateSurname(surnameModalData.id, {
-            ...rest,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addSurname({ ...rest });
+        const gotraName = gotraNameOf(values.gotra);
+        const surnameName = String(values.name || "").trim();
+        const alreadyListed = gotraOptions.some(
+          (item) =>
+            String(item.name || "").trim().toLowerCase() ===
+            gotraName.toLowerCase()
+        );
+        if (gotraName && !alreadyListed) {
+          try {
+            const created = await addGotra({ name: gotraName });
+            setGotraList((prev) => {
+              const rows = Array.isArray(prev) ? prev : [];
+              if (
+                rows.some(
+                  (item) =>
+                    String(item.name || "").trim().toLowerCase() ===
+                    gotraName.toLowerCase()
+                )
+              ) {
+                return rows;
+              }
+              return [...rows, created];
+            });
+          } catch (e) {
+            setGotraList((prev) => [
+              ...(Array.isArray(prev) ? prev : []),
+              { id: `new-${Date.now()}`, name: gotraName, active: true },
+            ]);
+          }
         }
+        const payload = { name: surnameName, gotra: gotraName };
+        if (surnameModalData) {
+          await updateSurname(surnameModalData.id, payload);
+        } else {
+          await addSurname(payload);
+        }
+        resetForm();
         surnameAddEditModalClose();
         handleSurnameList();
       } catch (e) {
-        // Optionally handle error with notification
+        // keep modal open if save fails
       } finally {
         dispatch(endLoading());
       }
-      resetForm();
     },
     validationSchema: Yup.object({
-      name: Yup.string().required("Required"),
+      name: Yup.string().trim().required("Required"),
+      gotra: Yup.string().trim().required("Required"),
     }),
   });
   const {
@@ -161,11 +224,8 @@ export default function Index() {
   } = formik;
 
   const surnameAddEditModalClose = () => {
-    setSurnameAddEditModel(!surnameAddEditModel);
+    setSurnameAddEditModel(false);
     setSurnameModalData(null);
-    setFieldValue("name", null);
-    setFieldValue("gotra", null);
-    setFieldValue("mainBranch", null);
     resetForm();
   };
 
@@ -182,17 +242,16 @@ export default function Index() {
 
   const handleSurnameList = async (isRest = false) => {
     try {
-      const text =
-        selectedSearchByText && !isRest
-          ? {
-              name: selectedSearchByText,
-            }
-          : {};
       const params = {
         page: page + 1,
         limit: rowsPerPage,
-        ...text,
       };
+      if (!isRest && selectedSearchByText.trim()) {
+        params.name = selectedSearchByText.trim();
+      }
+      if (!isRest && selectedGotra) {
+        params.gotra = selectedGotra.name || selectedGotra.label;
+      }
       const data = await getSurnameList(params);
       setSurnameData(data);
     } catch (e) {
@@ -200,10 +259,24 @@ export default function Index() {
     }
   };
 
-  const handleReset = () => {
-    setSelectedSearchByText("");
-    handleSurnameList(true);
-  };
+  useEffect(() => {
+    handleSurnameList();
+  }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    if (skipSearchEffect.current) {
+      skipSearchEffect.current = false;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      if (page !== 0) {
+        setPage(0);
+        return;
+      }
+      handleSurnameList();
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [selectedSearchByText, selectedGotra]);
 
   const toggleCardSelection = (id) => {
     setSelectedIds((prev) =>
@@ -221,48 +294,59 @@ export default function Index() {
           className="w-full"
           title="Surname"
           actions={
-            canManage ? (
+            <div className="flex flex-col-reverse md:flex-row md:items-center gap-2 w-full md:w-auto max-md:[&>button]:w-full">
               <ActionButton
-                icon={<AddIcon sx={{ fontSize: 18 }} />}
-                onClick={() => {
-                  setSurnameAddEditModel(!surnameAddEditModel);
-                }}
+                type="button"
+                variant="secondary"
+                onClick={() => navigate("/admin/gotra")}
               >
-                Add Surname
+                Gotra
               </ActionButton>
-            ) : null
+              {canManage ? (
+                <ActionButton
+                  icon={<AddIcon sx={{ fontSize: 18 }} />}
+                  onClick={() => {
+                    setSurnameModalData(null);
+                    resetForm();
+                    setSurnameAddEditModel(true);
+                  }}
+                >
+                  Add Surname
+                </ActionButton>
+              ) : null}
+            </div>
           }
         />
-        <CustomAccordion>
-          <Grid spacing={2} container>
-            <CustomInput
-              type={"text"}
-              placeholder={"Enter Search Surname"}
-              name={"name"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSearchByText}
-              onChange={(e) => setSelectedSearchByText(e.target.value)}
-            />
-
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              className={"flex justify-start items-center gap-4"}
-            >
-              <FilterActions
-                onSubmit={() => handleSurnameList()}
-                onReset={handleReset}
-                showReset={Boolean(selectedSearchByText)}
+        <MasterFilterBar
+          leading={
+            <div className="w-[132px] sm:w-[180px] md:w-[220px]">
+              <Autocomplete
+                fullWidth
+                options={gotraOptions}
+                value={selectedGotra}
+                onChange={(_, value) => setSelectedGotra(value)}
+                getOptionLabel={(option) => option?.label || option?.name || ""}
+                isOptionEqualToValue={(option, selected) =>
+                  String(option?.id || option?.value) ===
+                  String(selected?.id || selected?.value)
+                }
+                disablePortal
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Gotra"
+                    sx={searchFieldSx}
+                  />
+                )}
               />
-            </Grid>
-          </Grid>
-        </CustomAccordion>
+            </div>
+          }
+          searchPlaceholder="Search surname"
+          searchValue={selectedSearchByText}
+          onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
+          filterCount={filterCount}
+          onFilterClick={() => handleSurnameList()}
+        />
         <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={surnameListColumn}
@@ -285,10 +369,7 @@ export default function Index() {
           onToggleSelect={toggleCardSelection}
           canSelect={canManage}
           getDetails={(row) =>
-            [
-              row.gotra ? `Gotra: ${row.gotra}` : null,
-              row.mainBranch ? `Main Branch: ${row.mainBranch}` : null,
-            ].filter(Boolean)
+            [row.gotra ? `Gotra: ${row.gotra}` : null].filter(Boolean)
           }
           activeDisabled={!canManage}
           onActiveChange={(row, next) => userActionHandler(row, next, "active")}
@@ -298,8 +379,7 @@ export default function Index() {
                   setSurnameModalData(row);
                   setSurnameAddEditModel(true);
                   setFieldValue("name", row.name);
-                  setFieldValue("gotra", row.gotra);
-                  setFieldValue("mainBranch", row.mainBranch);
+                  setFieldValue("gotra", row.gotra || "");
                 }
               : undefined
           }
@@ -328,6 +408,69 @@ export default function Index() {
                 <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full gap-4"}>
+                      <Autocomplete
+                        freeSolo
+                        selectOnFocus
+                        clearOnBlur={false}
+                        handleHomeEndKeys
+                        options={gotraOptions}
+                        value={values.gotra || null}
+                        getOptionLabel={(option) => {
+                          if (typeof option === "string") return option;
+                          if (option?.inputValue) return option.inputValue;
+                          return option?.name || option?.label || "";
+                        }}
+                        isOptionEqualToValue={(option, selected) => {
+                          const left = gotraNameOf(option).toLowerCase();
+                          const right = gotraNameOf(selected).toLowerCase();
+                          return Boolean(left) && left === right;
+                        }}
+                        filterOptions={(options, params) => {
+                          const filtered = gotraFilter(options, params);
+                          const typed = String(params.inputValue || "").trim();
+                          const exists = options.some(
+                            (option) =>
+                              gotraNameOf(option).toLowerCase() ===
+                              typed.toLowerCase()
+                          );
+                          if (typed && !exists) {
+                            filtered.push({
+                              inputValue: typed,
+                              name: typed,
+                              label: typed,
+                            });
+                          }
+                          return filtered;
+                        }}
+                        onChange={(_, newValue) => {
+                          setFieldValue("gotra", gotraNameOf(newValue));
+                        }}
+                        onInputChange={(_, newInput, reason) => {
+                          if (reason === "input") {
+                            setFieldValue("gotra", newInput);
+                          }
+                        }}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.id || option.inputValue || option.name}>
+                            {option.inputValue
+                              ? `Add "${option.inputValue}"`
+                              : option.name || option.label}
+                          </li>
+                        )}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            name="gotra"
+                            label="Gotra"
+                            onBlur={handleBlur}
+                            error={Boolean(touched?.gotra && errors?.gotra)}
+                            helperText={
+                              touched?.gotra && errors?.gotra ? errors.gotra : ""
+                            }
+                            sx={searchFieldSx}
+                          />
+                        )}
+                      />
                       <CustomInput
                         name={"name"}
                         id="surname"
@@ -337,32 +480,6 @@ export default function Index() {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
-                      />
-                      <CustomInput
-                        name={"gotra"}
-                        id="gotra"
-                        label="Gotra"
-                        value={values.gotra}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.gotra && errors?.gotra && errors?.gotra
-                        }
-                      />
-                      <CustomInput
-                        name={"mainBranch"}
-                        id="mainBranch"
-                        label="Main Branch"
-                        value={values.mainBranch}
-                        variant="outlined"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        errors={
-                          touched?.mainBranch &&
-                          errors?.mainBranch &&
-                          errors?.mainBranch
-                        }
                       />
                     </FormControl>
                   </Grid>

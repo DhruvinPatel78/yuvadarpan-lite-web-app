@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Badge,
@@ -28,6 +28,7 @@ import {
   removeYuvaFromShortlist,
 } from "../../../util/shortlistApi";
 import { getNativeList } from "../../../util/yuvaAdminApi";
+import { getGotraAllList } from "../../../util/gotraApi";
 import CustomInput from "../../../Component/Common/customInput";
 import {
   getAllCityData,
@@ -38,22 +39,52 @@ import {
   getAllSurnameData,
 } from "../../../util/getAPICall";
 import {
+  filterFieldCols,
   getSelectedData,
+  gotraOptionList,
   handleListById,
+  lastNameIdsForGotraFilter,
   listHandler,
+  surnamesForGotra,
   useFilteredIds,
 } from "../../../Component/constant";
 import { Button, Card } from "../../../Component/UI";
+import {
+  bloodGroupList,
+  educationList,
+  maritalStatusList,
+} from "../../Admin/YuvaList/BulkAddYuva/formConfig";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
+const searchFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "#fff",
+    borderRadius: "8px",
+    minHeight: 44,
+    "& fieldset": { borderColor: "#d7d7e2" },
+    "&:hover fieldset": { borderColor: "#c8c8d4" },
+    "&.Mui-focused fieldset": { borderColor: "#542b2b" },
+  },
+};
+
+const asFilterOptions = (values, labelFor) =>
+  (Array.isArray(values) ? values : []).map((value) => {
+    const label = labelFor ? labelFor(value) : value;
+    return { id: value, name: label, label, value };
+  });
+
 const GENDER_OPTIONS = [
   { id: "male", name: "Male", label: "Male", value: "male" },
   { id: "female", name: "Female", label: "Female", value: "female" },
 ];
+const BLOOD_GROUP_OPTIONS = asFilterOptions(bloodGroupList);
+const MARITAL_STATUS_OPTIONS = asFilterOptions(maritalStatusList, toCamelCase);
+const EDUCATION_OPTIONS = asFilterOptions(educationList);
 
 const emptyAppliedFilters = {
-  surnameIds: [],
+  gotra: [],
+  lastNameIds: [],
   stateIds: [],
   regionIds: [],
   districtIds: [],
@@ -61,6 +92,9 @@ const emptyAppliedFilters = {
   samajIds: [],
   nativeIds: [],
   genders: [],
+  bloodGroups: [],
+  maritalStatuses: [],
+  educations: [],
   minAge: "",
   maxAge: "",
 };
@@ -83,13 +117,15 @@ const Home = () => {
   const canShortlist = isRegularUser(auth?.user?.role);
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const [yuvaList, setYuvaList] = useState([]);
-  const [searchText, setSearchText] = useState("");
+  const [keywordSearch, setKeywordSearch] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [listPage, setListPage] = useState(1);
   const loadingMoreLock = useRef(false);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [gotraList, setGotraList] = useState([]);
+  const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
@@ -98,6 +134,9 @@ const Home = () => {
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
   const [selectedGender, setSelectedGender] = useState([]);
+  const [selectedBloodGroup, setSelectedBloodGroup] = useState([]);
+  const [selectedMaritalStatus, setSelectedMaritalStatus] = useState([]);
+  const [selectedEducation, setSelectedEducation] = useState([]);
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [nativeList, setNativeList] = useState([]);
@@ -116,6 +155,14 @@ const Home = () => {
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
   const filteredNativeIds = useFilteredIds(selectedNative, "id");
   const filteredGenders = useFilteredIds(selectedGender, "id");
+  const filteredBloodGroups = useFilteredIds(selectedBloodGroup, "id");
+  const filteredMaritalStatuses = useFilteredIds(selectedMaritalStatus, "id");
+  const filteredEducations = useFilteredIds(selectedEducation, "id");
+  const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
+  const surnameFilterList = useMemo(
+    () => listHandler(surnamesForGotra(surname, selectedGotra)),
+    [surname, selectedGotra]
+  );
 
   const loadYuvas = async ({ pageNum = 1, append = false } = {}) => {
     if (append) {
@@ -132,11 +179,11 @@ const Home = () => {
         page: pageNum,
         limit: PAGE_SIZE,
       };
-      if (debouncedSearch) {
-        params.search = debouncedSearch;
+      if (debouncedKeyword) {
+        params.search = debouncedKeyword;
       }
-      if (appliedFilters.surnameIds.length) {
-        params.lastName = appliedFilters.surnameIds;
+      if (appliedFilters.lastNameIds.length) {
+        params.lastName = appliedFilters.lastNameIds;
       }
       if (appliedFilters.stateIds.length) {
         params.state = appliedFilters.stateIds;
@@ -158,6 +205,15 @@ const Home = () => {
       }
       if (appliedFilters.genders.length) {
         params.gender = appliedFilters.genders;
+      }
+      if (appliedFilters.bloodGroups?.length) {
+        params.bloodGroup = appliedFilters.bloodGroups;
+      }
+      if (appliedFilters.maritalStatuses?.length) {
+        params.martialStatus = appliedFilters.maritalStatuses;
+      }
+      if (appliedFilters.educations?.length) {
+        params.education = appliedFilters.educations;
       }
       if (appliedFilters.minAge !== "") {
         params.minAge = appliedFilters.minAge;
@@ -192,6 +248,9 @@ const Home = () => {
     dispatch(getAllDistrictData);
     dispatch(getAllSamajData);
     dispatch(getAllSurnameData);
+    getGotraAllList()
+      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
+      .catch(() => setGotraList([]));
     getNativeList()
       .then((data) => setNativeList(Array.isArray(data) ? data : []))
       .catch(() => setNativeList([]));
@@ -228,10 +287,10 @@ const Home = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setDebouncedSearch(searchText.trim());
+      setDebouncedKeyword(keywordSearch.trim());
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timeoutId);
-  }, [searchText]);
+  }, [keywordSearch]);
 
   useEffect(() => {
     if (selectedState.length === 0) {
@@ -256,7 +315,8 @@ const Home = () => {
 
   const loadMoreRef = useRef(null);
   const appliedFilterCount = [
-    appliedFilters.surnameIds.length,
+    (appliedFilters.gotra || []).some((item) => item?.name !== "All"),
+    appliedFilters.lastNameIds.length,
     appliedFilters.stateIds.length,
     appliedFilters.regionIds.length,
     appliedFilters.districtIds.length,
@@ -264,6 +324,9 @@ const Home = () => {
     appliedFilters.samajIds.length,
     appliedFilters.nativeIds.length,
     appliedFilters.genders.length,
+    appliedFilters.bloodGroups?.length,
+    appliedFilters.maritalStatuses?.length,
+    appliedFilters.educations?.length,
     appliedFilters.minAge !== "",
     appliedFilters.maxAge !== "",
   ].filter(Boolean).length;
@@ -271,11 +334,11 @@ const Home = () => {
   useEffect(() => {
     loadYuvas({ pageNum: 1, append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, appliedFilters]);
+  }, [debouncedKeyword, appliedFilters]);
 
   const handleLoadMore = useCallback(() => {
     loadYuvas({ pageNum: listPage + 1, append: true });
-  }, [listPage, hasMore, loadingMore, debouncedSearch, appliedFilters]);
+  }, [listPage, hasMore, loadingMore, debouncedKeyword, appliedFilters]);
 
   useEffect(() => {
     const sentinel = loadMoreRef.current;
@@ -308,7 +371,12 @@ const Home = () => {
       setMaxAge(nextMaxAge);
     }
     setAppliedFilters({
-      surnameIds: filteredSurnameIds,
+      gotra: selectedGotra,
+      lastNameIds: lastNameIdsForGotraFilter(
+        surname,
+        selectedGotra,
+        filteredSurnameIds
+      ),
       stateIds: filteredStateIds,
       regionIds: filteredRegionIds,
       districtIds: filteredDistrictIds,
@@ -316,6 +384,9 @@ const Home = () => {
       samajIds: filteredSamajIds,
       nativeIds: filteredNativeIds,
       genders: filteredGenders,
+      bloodGroups: filteredBloodGroups,
+      maritalStatuses: filteredMaritalStatuses,
+      educations: filteredEducations,
       minAge: nextMinAge,
       maxAge: nextMaxAge,
     });
@@ -325,7 +396,10 @@ const Home = () => {
   };
 
   const handleReset = () => {
+    setSelectedGotra([]);
     setSelectedSurname([]);
+    setKeywordSearch("");
+    setDebouncedKeyword("");
     setSelectedState([]);
     setSelectedRegion([]);
     setSelectedDistrict([]);
@@ -333,6 +407,9 @@ const Home = () => {
     setSelectedSamaj([]);
     setSelectedNative([]);
     setSelectedGender([]);
+    setSelectedBloodGroup([]);
+    setSelectedMaritalStatus([]);
+    setSelectedEducation([]);
     setMinAge("");
     setMaxAge("");
     setRegionListByState(region);
@@ -342,18 +419,21 @@ const Home = () => {
     setAppliedFilters(emptyAppliedFilters);
   };
 
-  const fieldSize = isMobile
-    ? { xs: 12, sm: 6 }
-    : { xs: 12, sm: 6, md: 4, lg: 3 };
+  const fieldSize = { ...filterFieldCols(3), sm: 6, md: 3, lg: 3 };
   const showReset =
     selectedState?.length > 0 ||
     selectedRegion?.length > 0 ||
     selectedDistrict?.length > 0 ||
     selectedCity?.length > 0 ||
+    selectedGotra?.length > 0 ||
     selectedSurname?.length > 0 ||
+    keywordSearch ||
     selectedSamaj?.length > 0 ||
     selectedNative?.length > 0 ||
     selectedGender?.length > 0 ||
+    selectedBloodGroup?.length > 0 ||
+    selectedMaritalStatus?.length > 0 ||
+    selectedEducation?.length > 0 ||
     minAge !== "" ||
     maxAge !== "" ||
     appliedFilterCount > 0;
@@ -361,13 +441,28 @@ const Home = () => {
   const filterFields = (
     <>
       <CustomAutoComplete
-        list={listHandler(surname)}
+        list={gotraOptions}
+        multiple={true}
+        label={"Gotra"}
+        placeholder={"Select Your Gotra"}
+        {...fieldSize}
+        name="gotra"
+        value={selectedGotra}
+        onChange={(e, gotra) => {
+          if (gotra) {
+            setSelectedGotra((pre) => getSelectedData(pre, gotra, e));
+            setSelectedSurname([]);
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={surnameFilterList}
         multiple={true}
         label={"Surname"}
-        placeholder={"Select Your Last Name"}
+        placeholder={"Select Your Surname"}
         {...fieldSize}
-        value={selectedSurname}
         name="surname"
+        value={selectedSurname}
         onChange={(e, lastName) => {
           if (lastName) {
             setSelectedSurname((pre) => getSelectedData(pre, lastName, e));
@@ -510,6 +605,48 @@ const Home = () => {
           }
         }}
       />
+      <CustomAutoComplete
+        list={listHandler(BLOOD_GROUP_OPTIONS)}
+        multiple={true}
+        label={"Blood group"}
+        placeholder={"Select Blood Group"}
+        {...fieldSize}
+        name="bloodGroup"
+        value={selectedBloodGroup}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedBloodGroup((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(MARITAL_STATUS_OPTIONS)}
+        multiple={true}
+        label={"Marital status"}
+        placeholder={"Select Marital Status"}
+        {...fieldSize}
+        name="martialStatus"
+        value={selectedMaritalStatus}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedMaritalStatus((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(EDUCATION_OPTIONS)}
+        multiple={true}
+        label={"Education"}
+        placeholder={"Select Education"}
+        {...fieldSize}
+        name="education"
+        value={selectedEducation}
+        onChange={(e, selected) => {
+          if (selected) {
+            setSelectedEducation((pre) => getSelectedData(pre, selected, e));
+          }
+        }}
+      />
       <CustomInput
         type="number"
         label="Min age"
@@ -582,17 +719,13 @@ const Home = () => {
             </Button>
           </div>
         ) : null}
-        <Card padded={false} className="p-2.5 sm:p-3 mb-5">
-          <div className="flex items-center gap-2">
+        <Card padded={false} className="p-2.5 sm:p-3 mb-5" key="directory-filters">
+          <div className="flex items-center gap-2 w-full min-w-0">
             <TextField
-              fullWidth
-              placeholder={
-                isMobile
-                  ? "Search name, mobile, family ID"
-                  : "Search by name, father, mobile, family ID, email"
-              }
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              className="flex-1 min-w-0"
+              placeholder="Search by name, father, mobile, family ID, email"
+              value={keywordSearch}
+              onChange={(event) => setKeywordSearch(event.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -600,16 +733,7 @@ const Home = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  minHeight: 44,
-                  "& fieldset": { borderColor: "#d7d7e2" },
-                  "&:hover fieldset": { borderColor: "#c8c8d4" },
-                  "&.Mui-focused fieldset": { borderColor: "#542b2b" },
-                },
-              }}
+              sx={searchFieldSx}
             />
             <Badge
               badgeContent={appliedFilterCount}

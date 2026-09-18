@@ -38,6 +38,10 @@ export default function CustomAutoComplete({
       <PrimaryAutocomplete
         disabled={disabled}
         disablePortal={disablePortal}
+        autoHighlight
+        autoComplete
+        includeInputInList
+        filterSelectedOptions={multiple}
         componentsProps={{
           popper: {
             sx: {
@@ -100,16 +104,16 @@ export default function CustomAutoComplete({
             {...params}
             name={name}
             label={label}
-            value={value}
-            error={errors}
+            placeholder={placeholder}
+            error={Boolean(errors)}
             onBlur={onBlur}
+            required={Boolean(required)}
           />
         )}
         onSelect={onSelect}
         onChange={onChange}
         onBlur={onBlur}
-        required
-        disableClearable={true}
+        disableClearable={multiple}
         limitTags={limitTags}
       />
       {errors && (

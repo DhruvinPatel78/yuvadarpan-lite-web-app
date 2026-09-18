@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
+  Autocomplete,
   Box,
   FormControl,
   FormControlLabel,
   Grid,
+  TextField,
   Tooltip,
 } from "@mui/material";
 import CustomTable from "../../../Component/Common/customTable";
@@ -15,7 +17,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
-import { Button as ActionButton, FormModal, PageHeader, FilterActions } from "../../../Component/UI";
+import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader, searchFieldSx } from "../../../Component/UI";
 import CustomInput from "../../../Component/Common/customInput";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
@@ -23,14 +25,9 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-import CustomAccordion from "../../../Component/Common/CustomAccordion";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
-import {
-  getSelectedData,
-  listHandler,
-  useFilteredIds,
-} from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { getAllCountryData } from "../../../util/getAPICall";
 import { isLocationMasterReadOnly, hideLocationRowActions, isCountryManager } from "../../../util/util";
 import {
   getStateList,
@@ -54,13 +51,30 @@ export default function Index() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [countryList, setCountryList] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [filterCountry, setFilterCountry] = useState(null);
   const [stateData, setStateData] = useState(null);
   const [stateModalData, setStateModalData] = useState(null);
   const [stateAddEditModel, setStateAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
+  const [isFilterOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const skipSearchEffect = useRef(true);
+  const countryOptions = useMemo(
+    () =>
+      (Array.isArray(country) ? country : [])
+        .filter((item) => item?.active !== false)
+        .map((item) => ({
+          ...item,
+          label: item.name,
+          value: item.id,
+        })),
+    [country]
+  );
+  const filterCount =
+    Number(Boolean(selectedSearchByText.trim())) +
+    Number(Boolean(filterCountry));
 
   useEffect(() => {
     handleStateList();
@@ -197,9 +211,9 @@ export default function Index() {
   } = formik;
 
   const stateAddEditModalClose = () => {
-    setStateAddEditModel(!stateAddEditModel);
+    setStateAddEditModel(false);
     setStateModalData(null);
-    setFieldValue("name", null);
+    setSelectedCountry(null);
     resetForm();
   };
 
@@ -213,7 +227,6 @@ export default function Index() {
   };
 
   const hasError = Object.keys(errors)?.length || 0;
-  const filteredCountryIds = useFilteredIds(selectedCountry, "value", "label");
   const handleStateList = async (isRest = false) => {
     try {
       const text =
@@ -222,10 +235,14 @@ export default function Index() {
               name: selectedSearchByText,
             }
           : {};
+      const countryId =
+        !isRest && filterCountry
+          ? filterCountry.id || filterCountry.value
+          : null;
       const params = {
         page: page + 1,
         limit: rowsPerPage,
-        country: isRest ? [] : filteredCountryIds,
+        country: countryId ? [countryId] : [],
         ...text,
       };
       if (countryManager) {
@@ -238,11 +255,25 @@ export default function Index() {
     }
   };
 
-  const handleReset = () => {
-    setSelectedSearchByText("");
-    setSelectedCountry([]);
-    handleStateList(true);
-  };
+  useEffect(() => {
+    if (!country?.length) dispatch(getAllCountryData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (skipSearchEffect.current) {
+      skipSearchEffect.current = false;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      if (page !== 0) {
+        setPage(0);
+        return;
+      }
+      handleStateList();
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [selectedSearchByText, filterCountry]);
 
   const toggleCardSelection = (id) => {
     setSelectedIds((prev) =>
@@ -286,7 +317,10 @@ export default function Index() {
               className="max-md:w-full"
               icon={<AddIcon sx={{ fontSize: 18 }} />}
               onClick={() => {
-                setStateAddEditModel(!stateAddEditModel);
+                setStateModalData(null);
+                setSelectedCountry(null);
+                resetForm();
+                setStateAddEditModel(true);
                 setCountryList(
                   country.map((data) => ({
                     ...data,
@@ -302,57 +336,37 @@ export default function Index() {
           </div>
           }
         />
-        <CustomAccordion>
-          <Grid spacing={2} container>
-            <CustomAutoComplete
-              list={listHandler(country)}
-              multiple={true}
-              label={"Country"}
-              placeholder={"Select Your Country"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedCountry}
-              name="country"
-              onChange={(e, country) => {
-                if (country) {
-                  setSelectedCountry((pre) => getSelectedData(pre, country, e));
+        <MasterFilterBar
+          leading={
+            <div className="w-[132px] sm:w-[180px] md:w-[220px]">
+              <Autocomplete
+                fullWidth
+                options={countryOptions}
+                value={filterCountry}
+                onChange={(_, value) => setFilterCountry(value)}
+                getOptionLabel={(option) => option?.label || option?.name || ""}
+                isOptionEqualToValue={(option, selected) =>
+                  String(option?.id || option?.value) ===
+                  String(selected?.id || selected?.value)
                 }
-              }}
-            />
-            <CustomInput
-              type={"text"}
-              placeholder={"Enter Search State"}
-              name={"state"}
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              value={selectedSearchByText}
-              onChange={(e) => {
-                setSelectedSearchByText(e.target.value);
-                if (e.target.value === "") {
-                  handleStateList(true);
-                }
-              }}
-            />
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              className={"flex justify-start items-center gap-4"}
-            >
-              <FilterActions
-                onSubmit={() => handleStateList()}
-                onReset={handleReset}
-                showReset={Boolean(selectedSearchByText || selectedCountry?.length > 0)}
+                disablePortal
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Country"
+                    sx={searchFieldSx}
+                  />
+                )}
               />
-            </Grid>
-          </Grid>
-        </CustomAccordion>
+            </div>
+          }
+          searchPlaceholder="Search state"
+          searchValue={selectedSearchByText}
+          onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
+          filterCount={filterCount}
+          isFilterOpen={isFilterOpen}
+          onFilterClick={() => handleStateList()}
+        />
         <div className={"hidden md:block w-full min-w-0"}>
         <CustomTable
           columns={stateListColumn}

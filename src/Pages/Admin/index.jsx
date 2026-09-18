@@ -3,6 +3,7 @@ import UserList from "./UserList";
 import YuvaList from "./YuvaList";
 import Request from "./Request";
 import AddYuva from "./YuvaList/AddYuva";
+import BulkAddYuva from "./YuvaList/BulkAddYuva";
 import Country from "./Country";
 import {
   CountryDetails,
@@ -17,6 +18,7 @@ import District from "./District";
 import City from "./City";
 import Samaj from "./Samaj";
 import Surname from "./Surname";
+import Gotra from "./Gotra";
 import Native from "./Native";
 import Roles from "./Roles";
 
@@ -26,6 +28,7 @@ export {
   YuvaList,
   Request,
   AddYuva,
+  BulkAddYuva,
   Country,
   CountryDetails,
   State,
@@ -38,6 +41,7 @@ export {
   CityDetails,
   Samaj,
   Surname,
+  Gotra,
   Native,
   Roles,
 };
