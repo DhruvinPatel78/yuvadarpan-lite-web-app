@@ -357,7 +357,7 @@ const AddYuva = () => {
   const addYuvaListHandler = async (data) => {
     dispatch(startLoading());
     try {
-      const { profile, profileName, ...payload } = data;
+      const { profile, profileName, email, ...payload } = data;
       const created = await addYuva(payload);
       setCreatedYuva(created);
       setShowProfileModal(true);
@@ -370,7 +370,11 @@ const AddYuva = () => {
   const updateAPIHandler = async (data) => {
     dispatch(startLoading());
     try {
-      await updateYuva(data?.id, { ...data, updatedAt: new Date() });
+      const { email, ...rest } = data;
+      await updateYuva(data?.id, {
+        ...rest,
+        updatedAt: new Date(),
+      });
       navigate("/admin/yuvalist");
     } catch (e) {
       if (e?.response?.status === 403) {
@@ -392,7 +396,6 @@ const AddYuva = () => {
       dob: null,
       gender: "male",
       pob: "",
-      email: "",
       firm: "",
       country: "",
       firmAddress: "",
@@ -516,10 +519,6 @@ const AddYuva = () => {
         .required("Family ID IsRequired"),
       activity: Yup.string().required("Activity Is Required"),
       abroadStudy: Yup.string().required("AbroadStudy Required"),
-      email: Yup.string().matches(
-        "^$|^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-        "Invalid email address format"
-      ),
       martialStatus: Yup.string().required("Martial Status Is Required"),
       handicapDetails: Yup.string().when("handicap", {
         is: true,
@@ -953,20 +952,6 @@ const AddYuva = () => {
                       setFieldValue("native", native?.id || "");
                       setSelectedNative(native?.name || null);
                     }}
-                    onBlur={handleBlur}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"Email"}
-                    placeholder={"Enter Your Email"}
-                    name={"email"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.email}
-                    required={false}
-                    errors={touched?.email && errors?.email && errors?.email}
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomInput

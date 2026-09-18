@@ -125,7 +125,6 @@ export const createYuva = () => ({
   gender: "male",
   dob: null,
   pob: "",
-  email: "",
   YSKno: "",
   martialStatus: "",
   height: "",
@@ -180,7 +179,6 @@ export const yuvaHasContent = (yuva) => {
   if (!yuva) return false;
   if (hasText(yuva.firstName)) return true;
   if (hasText(yuva.pob)) return true;
-  if (hasText(yuva.email)) return true;
   if (hasText(yuva.YSKno)) return true;
   if (hasText(yuva.martialStatus)) return true;
   if (hasText(yuva.height)) return true;
@@ -249,10 +247,6 @@ const yuvaSchema = Yup.object({
   }),
   bloodGroup: Yup.string().required("Blood Group Is Required"),
   activity: Yup.string().required("Activity Is Required"),
-  email: Yup.string().matches(
-    "^$|^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-    "Invalid email address format"
-  ),
   martialStatus: Yup.string().required("Martial Status Is Required"),
   handicapDetails: Yup.string().when("handicap", {
     is: true,
@@ -356,6 +350,7 @@ export const buildBulkPayload = (values) => {
   const filled = (values.yuvas || []).filter(yuvaHasContent);
   return filled.map((yuva) => {
     const { key, otherList, otherDraft, ...yuvaFields } = yuva;
+    delete yuvaFields.email;
     return {
       ...family,
       ...yuvaFields,

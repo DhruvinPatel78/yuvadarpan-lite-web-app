@@ -27,6 +27,9 @@ import {
   AddYuva,
   BulkAddYuva,
   AdminDashboard,
+  Logs,
+  LogDetails,
+  UserDetails,
 } from "./Pages/Admin";
 import Gotra from "./Pages/Admin/Gotra";
 
@@ -137,11 +140,22 @@ function App() {
             exact
             element={<PrivateRoute Component={AdminDashboard} />}
           />
-          <Route
-            path="userlist"
-            exact
-            element={<PrivateRoute Component={UserList} />}
-          />
+          <Route path={"userlist"}>
+            <Route index element={<PrivateRoute Component={UserList} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={UserDetails} />}
+            />
+          </Route>
+          <Route path={"logs"}>
+            <Route index element={<PrivateRoute Component={Logs} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={LogDetails} />}
+            />
+          </Route>
 
           <Route path={"yuvalist"}>
             <Route index element={<PrivateRoute Component={YuvaList} />} />

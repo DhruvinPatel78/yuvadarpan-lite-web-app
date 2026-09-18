@@ -11,7 +11,6 @@ import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutl
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import CloseIcon from "@mui/icons-material/Close";
-import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import moment from "moment/moment";
@@ -114,14 +113,35 @@ const DetailFields = ({ fields }) => (
   </Grid>
 );
 
-const SidebarRow = ({ icon, children }) => (
-  <div className="flex items-start gap-3 min-w-0">
+const toTelHref = (phone) => {
+  const digits = String(phone || "").replace(/[^\d+]/g, "");
+  return digits ? `tel:${digits}` : "";
+};
+
+const SidebarRow = ({ icon, children, href, ariaLabel }) => {
+  const iconEl = (
     <span className="w-8 h-8 rounded-lg bg-muted border border-line flex items-center justify-center shrink-0 text-primary">
       {icon}
     </span>
-    <span className="text-sm text-primary break-words pt-1.5">{children}</span>
-  </div>
-);
+  );
+
+  return (
+    <div className="flex items-start gap-3 min-w-0">
+      {href ? (
+        <a
+          href={href}
+          aria-label={ariaLabel}
+          className="shrink-0 rounded-lg cursor-pointer hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {iconEl}
+        </a>
+      ) : (
+        iconEl
+      )}
+      <span className="text-sm text-primary break-words pt-1.5">{children}</span>
+    </div>
+  );
+};
 
 const MobileSection = ({ title, children }) => (
   <section className="py-4 first:pt-0 last:pb-0">
@@ -153,26 +173,26 @@ const AdditionalInfoFields = ({ additionalFields }) =>
                     "text-[11px] font-medium tracking-wide text-gray-400"
                   }
                 >
-                  Title
+                  {item.title}
                 </span>
-                <span
+                {/* <span
                   className={
                     "text-[15px] sm:text-base font-semibold break-words text-primary"
                   }
                 >
                   {item.title}
-                </span>
+                </span> */}
               </div>
             </Grid>
             <Grid item xs={12} sm={6}>
               <div className={"flex flex-col gap-1 min-w-0"}>
-                <span
+                {/* <span
                   className={
                     "text-[11px] font-medium tracking-wide text-gray-400"
                   }
                 >
                   Description
-                </span>
+                </span> */}
                 <span
                   className={
                     "text-[15px] sm:text-base font-semibold break-words text-primary"
@@ -312,7 +332,6 @@ const ProfilePage = () => {
   ]
     .filter((item) => item && item !== "-")
     .join(", ");
-  const showEmail = String(data?.gender).toLowerCase() !== "female";
   const activityLabel = titleCase(data?.activity);
   const personalFields = [
     { label: "Name", value: data?.firstName },
@@ -384,9 +403,6 @@ const ProfilePage = () => {
     },
     { label: "Contact Person Phone", value: data?.contactInfo?.phone },
     { label: "Relation", value: titleCase(data?.contactInfo?.relation) },
-    ...(String(data?.gender).toLowerCase() === "female"
-      ? []
-      : [{ label: "Email", value: data?.email }]),
     { label: "Address", value: data?.address },
   ];
   const additionalFields = extraOtherFields(data?.other);
@@ -609,7 +625,15 @@ const ProfilePage = () => {
                     </p>
                   ) : null}
                   <div className="w-full mt-4 pt-4 border-t border-line flex flex-col gap-3">
-                    <SidebarRow icon={<PhoneOutlinedIcon fontSize="small" />}>
+                    <SidebarRow
+                      icon={<PhoneOutlinedIcon fontSize="small" />}
+                      href={toTelHref(data?.contactInfo?.phone)}
+                      ariaLabel={
+                        data?.contactInfo?.phone
+                          ? `Call ${data.contactInfo.phone}`
+                          : undefined
+                      }
+                    >
                       {[
                         data?.contactInfo?.name,
                         data?.contactInfo?.relation
@@ -620,11 +644,6 @@ const ProfilePage = () => {
                         .filter(Boolean)
                         .join(" ") || "-"}
                     </SidebarRow>
-                    {showEmail ? (
-                      <SidebarRow icon={<EmailOutlinedIcon fontSize="small" />}>
-                        {data?.email || "-"}
-                      </SidebarRow>
-                    ) : null}
                     <SidebarRow
                       icon={<LocationOnOutlinedIcon fontSize="small" />}
                     >
