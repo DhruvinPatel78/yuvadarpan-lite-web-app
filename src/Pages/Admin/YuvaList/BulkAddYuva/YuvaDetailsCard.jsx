@@ -161,24 +161,6 @@ const YuvaDetailsCard = ({
         />
         <CustomInput
           type="text"
-          label="Email"
-          placeholder="Enter Your Email"
-          name={`${prefix}.email`}
-          xs={12}
-          sm={6}
-          md={4}
-          value={yuva?.email}
-          required={false}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          errors={fieldError(
-            yuvaTouched?.email,
-            yuvaErrors?.email,
-            submitCount
-          )}
-        />
-        <CustomInput
-          type="text"
           label="YSK No."
           placeholder="Enter Your YSK No."
           name={`${prefix}.YSKno`}

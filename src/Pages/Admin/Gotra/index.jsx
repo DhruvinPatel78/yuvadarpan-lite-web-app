@@ -258,6 +258,7 @@ export default function Gotra() {
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}
           onFilterClick={() => handleGotraList()}
+          hideFilterBadge={true}
         />
         <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable

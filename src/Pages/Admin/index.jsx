@@ -21,6 +21,9 @@ import Surname from "./Surname";
 import Gotra from "./Gotra";
 import Native from "./Native";
 import Roles from "./Roles";
+import Logs from "./Logs";
+import LogDetails from "./Logs/Details";
+import UserDetails from "./UserList/Details";
 
 export {
   AdminDashboard,
@@ -44,6 +47,9 @@ export {
   Gotra,
   Native,
   Roles,
+  Logs,
+  LogDetails,
+  UserDetails,
 };
 
 // import { Document, Page } from "react-pdf/dist/esm/entry.webpack5";

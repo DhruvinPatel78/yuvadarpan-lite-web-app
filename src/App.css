@@ -52,7 +52,7 @@
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden;
-    background: #f7fbff !important;
+    background: #f4f0ea !important;
   }
 
   .MuiAppBar-root,
@@ -154,9 +154,9 @@
   }
 
   .yuva-print-template-2 {
-    color: #0a3d62;
+    color: #542b2b;
     font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-    background: #f7fbff !important;
+    background: #f4f0ea !important;
     padding: 0;
     box-sizing: border-box;
   }
@@ -171,9 +171,9 @@
     display: flex;
     flex-direction: column;
     padding: 16mm 14mm 14mm;
-    background: #f7fbff !important;
-    border: 3px solid #0a4a7a;
-    box-shadow: inset 0 0 0 6px #f7fbff, inset 0 0 0 8px #0a4a7a;
+    background: #f4f0ea !important;
+    border: 3px solid #542b2b;
+    box-shadow: inset 0 0 0 6px #f4f0ea, inset 0 0 0 8px #542b2b;
   }
 
   .yuva-biodata-corner {
@@ -187,7 +187,7 @@
   .yuva-biodata-corner::after {
     content: "";
     position: absolute;
-    border: 2.5px solid #0a4a7a;
+    border: 2.5px solid #542b2b;
   }
 
   .yuva-biodata-corner.tl {
@@ -287,7 +287,7 @@
     text-align: center;
     font-size: 30px;
     font-weight: 800;
-    color: #0a4a7a;
+    color: #542b2b;
     letter-spacing: 0.4px;
   }
 
@@ -307,7 +307,7 @@
   .yuva-biodata-right {
     width: 62%;
     padding: 4px 8px 0 28px;
-    border-left: 1px solid #0a4a7a;
+    border-left: 1px solid #542b2b;
     min-height: 0;
   }
 
@@ -316,7 +316,7 @@
     width: 148px;
     height: 178px;
     object-fit: cover;
-    border: 3px solid #0a4a7a;
+    border: 3px solid #542b2b;
     border-top-left-radius: 46px;
     border-bottom-right-radius: 46px;
     border-top-right-radius: 0;
@@ -329,7 +329,7 @@
     font-size: 26px;
     line-height: 1.15;
     font-weight: 800;
-    color: #0a4a7a;
+    color: #542b2b;
   }
 
   .yuva-biodata-section {
@@ -340,7 +340,7 @@
     margin: 0 0 10px;
     font-size: 16px;
     font-weight: 800;
-    color: #0a4a7a;
+    color: #542b2b;
   }
 
   .yuva-biodata-section h3.is-caps {
@@ -360,13 +360,13 @@
   }
 
   .yuva-biodata-row span:first-child {
-    color: #16324f;
+    color: #542b2b;
     font-weight: 500;
     flex-shrink: 0;
   }
 
   .yuva-biodata-row span:last-child {
-    color: #0a3d62;
+    color: #542b2b;
     font-weight: 700;
     text-align: right;
     max-width: 62%;

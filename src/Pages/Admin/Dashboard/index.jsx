@@ -5,7 +5,7 @@ import Header from "../../../Component/Header";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContainerPage from "../../../Component/Container";
-import { isRegularUser, isLocationMasterReadOnly } from "../../../util/util";
+import { isAdmin, isRegularUser, isLocationMasterReadOnly } from "../../../util/util";
 import { PageHeader } from "../../../Component/UI";
 
 const dashboardItems = {
@@ -22,6 +22,7 @@ const dashboardItems = {
     { id: 10, title: "Surname", href: "/admin/surname" },
     { id: 11, title: "Native", href: "/admin/native" },
     { id: 12, title: "Roles", href: "/admin/role" },
+    { id: 13, title: "Logs", href: "/admin/logs" },
   ],
 };
 
@@ -37,7 +38,8 @@ export default function Index() {
     dashboardItems[user?.role] || dashboardItems.ADMIN
   ).filter(
     (item) =>
-      !(isLocationMasterReadOnly(user?.role) && item.href === "/admin/role")
+      !(isLocationMasterReadOnly(user?.role) && item.href === "/admin/role") &&
+      !(!isAdmin(user?.role) && item.href === "/admin/logs")
   );
 
   return (

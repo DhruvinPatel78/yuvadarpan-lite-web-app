@@ -200,6 +200,10 @@ function CustomTable({
             justifyContent: "center",
             alignItems: "center",
           },
+          "& .MuiDataGrid-columnHeader.align-left .MuiDataGrid-columnHeaderTitleContainer":
+            {
+              justifyContent: "flex-start",
+            },
           "& .MuiDataGrid-cell": {
             display: "flex",
             justifyContent: "center",
@@ -207,6 +211,10 @@ function CustomTable({
             borderColor: "#e4ddd4",
             overflow: "hidden",
             minWidth: 0,
+          },
+          "& .MuiDataGrid-cell.align-left": {
+            justifyContent: "flex-start",
+            textAlign: "left",
           },
           "& .MuiDataGrid-cell[data-field='action']": {
             overflow: "visible",
