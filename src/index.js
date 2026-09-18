@@ -10,6 +10,7 @@ import { BrowserRouter } from "react-router-dom";
 import { persistor, store } from "./store";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -27,3 +28,9 @@ root.render(
 );
 
 reportWebVitals();
+
+serviceWorkerRegistration.register({
+  onUpdate: (registration) => {
+    registration?.waiting?.postMessage({ type: "SKIP_WAITING" });
+  },
+});

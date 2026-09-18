@@ -16,6 +16,7 @@ import CustomRadio from "../../Component/Common/customRadio";
 import { registerUser } from "../../util/authApi";
 import { messaging } from "../../firebase";
 import { getToken } from "firebase/messaging";
+import getMessagingRegistration from "../../util/getMessagingRegistration";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -57,9 +58,7 @@ export default function Index() {
       const token = await getToken(messaging, {
         vapidKey:
           "BJL8nmbe31A9I8MuiulNUL8Ip-6ZL3rYihhIG7oA_4Q-WBZAU53BENLfw6y94Zz6m9YQQZgrXpeZ-BtXNy_R3i8",
-        serviceWorkerRegistration: await navigator.serviceWorker.register(
-          "/firebase-messaging-sw.js",
-        ),
+        serviceWorkerRegistration: await getMessagingRegistration(),
       });
       return token;
     } catch (err) {
