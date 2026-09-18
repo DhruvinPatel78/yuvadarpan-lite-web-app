@@ -42,10 +42,12 @@ import VerifyOtp from "./Pages/VerifyOtp";
 import ChangePassword from "./Pages/ChangePassword";
 import AccountProfile from "./Pages/Account/Profile";
 import AccountSettings from "./Pages/Account/Settings";
+import PwaInstallBanner from "./Component/PwaInstall";
 
 function App() {
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route path={"/"}>
         {/*Public Routes*/}
         <Route path="login" exact element={<PublicRoute Component={Login} />} />
@@ -224,6 +226,8 @@ function App() {
         <Route path="*" exact={true} element={<NotFound />} />
       </Route>
     </Routes>
+      <PwaInstallBanner />
+    </>
   );
 }
 

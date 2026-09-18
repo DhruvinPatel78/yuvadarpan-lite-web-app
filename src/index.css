@@ -54,6 +54,13 @@ body,
   max-width: 100%;
 }
 
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+}
+
 html {
   overflow-x: hidden;
 }
@@ -203,6 +210,10 @@ body {
     border-radius: 16px 16px 0 0 !important;
     max-height: min(92dvh, calc(100vh - env(safe-area-inset-top, 0px))) !important;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pwa-install-banner {
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
   }
 
   .MuiSnackbar-root {
