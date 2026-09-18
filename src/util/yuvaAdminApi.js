@@ -9,6 +9,15 @@ export const getPublicYuva = async (id) => {
   }
 };
 
+export const getYuvaById = async (id) => {
+  try {
+    const response = await axios.get(`/yuvaList/list/${id}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getYuvaList = async (params) => {
   try {
     const response = await axios.get("/yuvaList/list", { params });

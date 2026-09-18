@@ -1,4 +1,3 @@
-import { Grid } from "@mui/material";
 import OTPInput from "../../Component/Common/OTPInput";
 import { AuthShell, Button } from "../../Component/UI";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,20 +14,29 @@ export default function Index() {
   const location = useLocation();
   const navigate = useNavigate();
   const [otp, setOtp] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
   const otpRef = useRef();
+  const email = location.state?.email || "";
+
+  const handleReset = () => {
+    setOtp("");
+    otpRef.current?.resetOtp();
+  };
 
   const submitHandler = async () => {
+    if (otp.length !== 6 || submitting) return;
+    setSubmitting(true);
     try {
-      await verifyOtp(location.state?.email, otp);
+      await verifyOtp(email, otp);
       setNotification({
         message: "OTP verified.",
         type: "success",
       });
       setTimeout(() => {
         navigate("/forget-password", {
-          state: { email: location.state?.email },
+          state: { email },
         });
       }, 2000);
     } catch (err) {
@@ -37,16 +45,12 @@ export default function Index() {
         type: "error",
       });
       handleReset();
+      setSubmitting(false);
     }
-  };
-
-  const handleReset = () => {
-    otpRef.current?.resetOtp();
   };
 
   const resendOTP = async () => {
     dispatch(startLoading());
-    const email = location.state?.email;
     handleReset();
     try {
       await resendOtp(email);
@@ -66,48 +70,52 @@ export default function Index() {
 
   return (
     <>
-    <AuthShell>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <p className="text-center text-primary font-semibold text-[22px] leading-tight">
-            Verify your email
-          </p>
-          <p className={"text-center text-sm text-mutedText mt-1.5"}>
-            Enter OTP Code sent to{" "}
-            <span className={"text-primary font-semibold break-all"}>
-              {location?.state?.email || "test@gmail.com"}
-            </span>
-          </p>
-        </Grid>
-        <Grid item xs={12}>
+      <AuthShell>
+        <div className="flex flex-col gap-5">
+          <div className="text-center">
+            <p className="text-primary font-semibold text-[22px] leading-tight">
+              Verify your email
+            </p>
+            <p className="text-sm text-mutedText mt-1.5">
+              Enter the 6-digit code we sent to
+            </p>
+            <div className="mt-3 rounded-lg bg-muted px-3 py-2.5">
+              <p className="text-[13px] font-semibold text-primary leading-snug break-all">
+                {email || "your email"}
+              </p>
+            </div>
+          </div>
           <OTPInput
             length={6}
-            onComplete={(otp) => setOtp(otp)}
+            onChange={(value) => setOtp(value)}
             ref={otpRef}
           />
-        </Grid>
-        <Grid item xs={12}>
-          <p className="flex justify-center flex-wrap text-sm cursor-default text-mutedText">
-            Don't receive OTP Code?
-            <span
-              className={`px-1 font-semibold text-primary underline text-sm cursor-pointer`}
-              onClick={() => resendOTP()}
+          <p className="text-center text-sm text-mutedText">
+            Didn't get a code?
+            <button
+              type="button"
+              className="ml-1 font-semibold text-primary underline underline-offset-2"
+              onClick={resendOTP}
             >
               Resend
-            </span>
+            </button>
           </p>
-        </Grid>
-        <Grid item xs={12}>
           <Button
             fullWidth
             onClick={submitHandler}
-            disabled={otp?.length === 0}
+            disabled={otp.length !== 6}
+            loading={submitting}
           >
-            Verify OTP Code
+            Verify code
           </Button>
-        </Grid>
-      </Grid>
-    </AuthShell>
+          <a
+            href="/login"
+            className="text-primary text-sm w-full flex justify-center hover:underline"
+          >
+            Return to sign in
+          </a>
+        </div>
+      </AuthShell>
       <NotificationSnackbar notification={notification} />
     </>
   );

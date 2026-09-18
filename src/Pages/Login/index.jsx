@@ -23,6 +23,7 @@ import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
 import { loginUser } from "../../util/authApi";
+import { getCurrentUser } from "../../util/userApi";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -54,8 +55,9 @@ export default function Index() {
         dispatch(startLoading());
         try {
           const res = await loginUser(values);
-          localStorage.setItem("user", JSON.stringify(res?.data));
           localStorage.setItem("token", res?.token);
+          const me = await getCurrentUser();
+          localStorage.setItem("user", JSON.stringify(me));
           setNotification({ message: "Signed in.", type: "success" });
           dispatch(getAllCityData);
           dispatch(getAllStateData);
@@ -63,11 +65,11 @@ export default function Index() {
           dispatch(getAllDistrictData);
           dispatch(getAllSamajData);
           dispatch(getAllSurnameData);
-          if (res.data?.role !== "USER") {
+          if (me?.role !== "USER") {
             dispatch(getAllCountryData);
             dispatch(getAllRoleData);
           }
-          dispatch(login({ ...res?.data, token: res?.token }));
+          dispatch(login({ ...me, token: res?.token }));
           resetForm();
         } catch (err) {
           dispatch(endLoading());
