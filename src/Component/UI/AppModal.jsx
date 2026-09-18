@@ -8,11 +8,13 @@ export default function AppModal({
   children,
   className = "",
   maxWidth = "480px",
+  disableAutoFocus = false,
 }) {
   return (
     <Modal
       open={open}
       onClose={onClose}
+      disableAutoFocus={disableAutoFocus}
       className="flex justify-center items-end md:items-center p-0 md:p-4"
       sx={{
         "& .MuiModal-backdrop": {
@@ -46,12 +48,14 @@ export function FormModal({
   children,
   maxWidth = "600px",
   className = "",
+  disableAutoFocus = false,
 }) {
   return (
     <AppModal
       open={Boolean(open)}
       onClose={onClose}
       maxWidth={maxWidth}
+      disableAutoFocus={disableAutoFocus}
       className={`max-h-[min(92dvh,92vh)] overflow-y-auto p-4 pb-5 ${className}`}
     >
       <div className="flex items-start justify-between gap-3">

@@ -31,6 +31,13 @@ export default function CustomAutoComplete({
   required = true,
   multiple = false,
   disablePortal = true,
+  open,
+  onOpen,
+  onClose,
+  openOnFocus = false,
+  autoHighlight = true,
+  autoComplete = true,
+  onMouseDown,
   ...rest
 }) {
   return (
@@ -38,8 +45,11 @@ export default function CustomAutoComplete({
       <PrimaryAutocomplete
         disabled={disabled}
         disablePortal={disablePortal}
-        autoHighlight
-        autoComplete
+        autoHighlight={autoHighlight}
+        autoComplete={autoComplete}
+        openOnFocus={openOnFocus}
+        onMouseDown={onMouseDown}
+        {...(open !== undefined ? { open, onOpen, onClose } : { onOpen, onClose })}
         includeInputInList
         filterSelectedOptions={multiple}
         componentsProps={{
@@ -108,6 +118,10 @@ export default function CustomAutoComplete({
             error={Boolean(errors)}
             onBlur={onBlur}
             required={Boolean(required)}
+            inputProps={{
+              ...params.inputProps,
+              autoComplete: "off",
+            }}
           />
         )}
         onSelect={onSelect}

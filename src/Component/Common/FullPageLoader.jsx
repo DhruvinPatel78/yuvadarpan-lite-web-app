@@ -8,7 +8,7 @@ const FullPageLoader = () => {
       aria-busy="true"
       aria-label="Loading YUVADARPAN content"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#f4f0ea]"
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#f4f0ea]"
     >
       <svg
         className="w-[80vw] h-[15vh] max-w-[400px] max-h-[80px]"

@@ -14,6 +14,7 @@ import { isLocationMasterReadOnly } from "../../../util/util";
 import { MasterFilterBar, PageHeader } from "../../../Component/UI";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { useDispatch } from "react-redux";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const { auth } = UseRedux();
@@ -93,16 +94,17 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteRole(Array.isArray(id) ? id : [id]);
-      handleRoleList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteRole(Array.isArray(id) ? id : [id]),
+      refresh: () => handleRoleList(false, { skipLoader: true }),
+    });
   };
 
-  const handleRoleList = async (isRest = false) => {
-    dispatch(startLoading());
+  const handleRoleList = async (isRest = false, options = {}) => {
+    const skipLoader = Boolean(options.skipLoader);
+    if (!skipLoader) {
+      dispatch(startLoading());
+    }
     try {
       const text =
         selectedSearchByText && !isRest
@@ -120,7 +122,9 @@ export default function Index() {
     } catch (e) {
       // Optionally handle error with notification
     } finally {
-      dispatch(endLoading());
+      if (!skipLoader) {
+        dispatch(endLoading());
+      }
     }
   };
 

@@ -15,7 +15,6 @@ import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
 import { useDispatch } from "react-redux";
 import { Form, FormikProvider, useFormik } from "formik";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
@@ -38,6 +37,7 @@ import {
   updateSamaj,
   deleteSamaj,
 } from "../../../util/samajApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -213,24 +213,27 @@ export default function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        if (samajModalData) {
-          await updateSamaj(samajModalData.id, {
-            ...rest,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addSamaj({ ...rest });
-        }
-        samajAddEditModalClose();
-        handleSamajList();
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            if (samajModalData) {
+              await updateSamaj(samajModalData.id, {
+                ...rest,
+                updatedAt: new Date(),
+              });
+            } else {
+              await addSamaj({ ...rest });
+            }
+          },
+          refresh: () => handleSamajList(),
+          close: () => {
+            resetForm();
+            samajAddEditModalClose();
+          },
+        });
       } catch (e) {
-        // Optionally handle error with notification
-      } finally {
-        dispatch(endLoading());
+        // keep modal open if save fails
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -244,6 +247,7 @@ export default function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const samajAddEditModalClose = () => {
@@ -266,12 +270,10 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteSamaj(Array.isArray(id) ? id : [id]);
-      handleSamajList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteSamaj(Array.isArray(id) ? id : [id]),
+      refresh: () => handleSamajList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -789,7 +791,7 @@ export default function Index() {
                       type={"submit"}
                       fullWidth
                       disabled={hasError}
-                      loading={loading}
+                      loading={loading || isSubmitting}
                     >
                       {samajModalData ? "UPDATE" : "ADD"}
                     </ActionButton>

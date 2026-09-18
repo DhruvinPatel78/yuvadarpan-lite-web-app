@@ -21,7 +21,6 @@ import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
@@ -40,6 +39,7 @@ import {
   updateRegion,
   deleteRegion,
 } from "../../../util/regionApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -193,24 +193,27 @@ export default function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        if (regionModalData) {
-          await updateRegion(regionModalData.id, {
-            ...rest,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addRegion({ ...rest });
-        }
-        regionAddEditModalClose();
-        handleRegionList();
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            if (regionModalData) {
+              await updateRegion(regionModalData.id, {
+                ...rest,
+                updatedAt: new Date(),
+              });
+            } else {
+              await addRegion({ ...rest });
+            }
+          },
+          refresh: () => handleRegionList(),
+          close: () => {
+            resetForm();
+            regionAddEditModalClose();
+          },
+        });
       } catch (e) {
-        // Optionally handle error with notification
-      } finally {
-        dispatch(endLoading());
+        // keep modal open if save fails
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -224,6 +227,7 @@ export default function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const regionAddEditModalClose = () => {
@@ -240,12 +244,10 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteRegion(Array.isArray(id) ? id : [id]);
-      handleRegionList();
-    } catch (error) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteRegion(Array.isArray(id) ? id : [id]),
+      refresh: () => handleRegionList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -571,7 +573,7 @@ export default function Index() {
                       type={"submit"}
                       fullWidth
                       disabled={hasError}
-                      loading={loading}
+                      loading={loading || isSubmitting}
                     >
                       {regionModalData ? "UPDATE" : "ADD"}
                     </ActionButton>

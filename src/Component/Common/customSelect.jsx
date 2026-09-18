@@ -55,13 +55,33 @@ export default function CustomSelect({
           labelId={`select-helper-${name}`}
           id={`select-${name}`}
           placeholder={placeholder}
-          value={value}
+          value={value ?? ""}
           label={label}
           name={name}
           onChange={onChange}
           fullWidth
           required={required}
           onBlur={onBlur}
+          displayEmpty
+          autoFocus={false}
+          renderValue={(selected) => {
+            if (selected === "" || selected == null) {
+              return placeholder || "Select";
+            }
+            const match = (Array.isArray(list) ? list : []).find((data) => {
+              if (data && typeof data === "object") {
+                return (
+                  String(data.value) === String(selected) ||
+                  String(data.id) === String(selected)
+                );
+              }
+              return data === selected;
+            });
+            if (match && typeof match === "object") {
+              return match.label || match.name || selected;
+            }
+            return match ?? selected;
+          }}
           open={open}
           onOpen={() => setOpen(true)}
           onClose={() => setOpen(false)}
@@ -96,12 +116,23 @@ export default function CustomSelect({
             }
           }}
         >
-          <MenuItem value="">SELECT</MenuItem>
-          {list.map((data) => (
-            <MenuItem key={data} value={data}>
-              <Typography className={"uppercase"}>{data}</Typography>
-            </MenuItem>
-          ))}
+          <MenuItem value="">{placeholder || "SELECT"}</MenuItem>
+          {(Array.isArray(list) ? list : []).map((data) => {
+            const isObject = data && typeof data === "object";
+            const optionValue = isObject
+              ? String(data.value ?? data.id ?? "")
+              : data;
+            const optionLabel = isObject
+              ? data.label || data.name || optionValue
+              : data;
+            return (
+              <MenuItem key={String(optionValue)} value={optionValue}>
+                <Typography className={isObject ? undefined : "uppercase"}>
+                  {optionLabel}
+                </Typography>
+              </MenuItem>
+            );
+          })}
         </PrimarySelect>
         {errors && (
           <p className={"text-error text-sm transition-all"}>{errors}</p>

@@ -20,10 +20,10 @@ import CustomTable from "../../../Component/Common/customTable";
 import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 const omitMetaFields = (row) => {
   const {
@@ -140,47 +140,45 @@ export default function LocationDetails({ config }) {
   const handleSave = async () => {
     if (!isFormValid()) return;
     try {
-      dispatch(startLoading());
-      if (editRow?.id) {
-        const payload = {
-          ...omitMetaFields(editRow),
-          name: editValues.name.trim(),
-          updatedAt: new Date(),
-        };
-        if (config.hasSamajFields) {
-          payload.label = editValues.label;
-          payload.zipcode = editValues.zipcode;
-        }
-        await config.updateChild(editRow.id, payload);
-      } else {
-        const parentId = parent?.id || id;
-        const payload = {
-          ...(config.getChildPayload?.(parent, parentId) || {}),
-          name: editValues.name.trim(),
-        };
-        if (config.hasSamajFields) {
-          payload.label = editValues.label;
-          payload.zipcode = editValues.zipcode;
-        }
-        await config.addChild(payload);
-      }
-      closeFormModal();
-      await loadChildren();
+      await completeModalMutation(dispatch, {
+        mutate: async () => {
+          if (editRow?.id) {
+            const payload = {
+              ...omitMetaFields(editRow),
+              name: editValues.name.trim(),
+              updatedAt: new Date(),
+            };
+            if (config.hasSamajFields) {
+              payload.label = editValues.label;
+              payload.zipcode = editValues.zipcode;
+            }
+            await config.updateChild(editRow.id, payload);
+          } else {
+            const parentId = parent?.id || id;
+            const payload = {
+              ...(config.getChildPayload?.(parent, parentId) || {}),
+              name: editValues.name.trim(),
+            };
+            if (config.hasSamajFields) {
+              payload.label = editValues.label;
+              payload.zipcode = editValues.zipcode;
+            }
+            await config.addChild(payload);
+          }
+        },
+        refresh: () => loadChildren(),
+        close: () => closeFormModal(),
+      });
     } catch (e) {
-      // Optionally handle error with notification
-    } finally {
-      dispatch(endLoading());
+      // keep modal open if save fails
     }
   };
 
   const handleDelete = async (rowId) => {
-    try {
-      const ids = Array.isArray(rowId) ? rowId : [rowId];
-      await config.deleteChild(ids);
-      await loadChildren();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => config.deleteChild(Array.isArray(rowId) ? rowId : [rowId]),
+      refresh: () => loadChildren(),
+    });
   };
 
   const handleToggleActive = async (row) => {

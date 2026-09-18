@@ -53,6 +53,7 @@ import {
 } from "../../../util/getAPICall";
 import { getGotraAllList } from "../../../util/gotraApi";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -329,6 +330,7 @@ const YuvaList = () => {
 
   const handleRequestList = async (isRest = false, options = {}) => {
     const append = Boolean(options.append);
+    const skipLoader = Boolean(options.skipLoader);
     const limit = isMobile ? MOBILE_PAGE_SIZE : rowsPerPage;
     const pageNum = append ? options.pageNum : isMobile ? 1 : page + 1;
     try {
@@ -352,7 +354,7 @@ const YuvaList = () => {
       } else if (isMobile) {
         setMobilePage(1);
       }
-      if (!append) {
+      if (!append && !skipLoader) {
         dispatch(startLoading());
       }
       const params = {
@@ -410,7 +412,7 @@ const YuvaList = () => {
       if (append) {
         setLoadingMore(false);
         loadingMoreLock.current = false;
-      } else {
+      } else if (!skipLoader) {
         dispatch(endLoading());
       }
     }
@@ -456,22 +458,16 @@ const YuvaList = () => {
   }, [isMobile, hasMore, mobilePage, loadingMore]);
 
   const deleteAPI = async (id) => {
-    try {
-      const ids = Array.isArray(id) ? id : [id];
-      await deleteYuva(ids);
-      if (isMobile) {
-        setYuvaList((prev) => ({
-          ...prev,
-          data: (prev?.data || []).filter((item) => !ids.includes(item.id)),
-          total: Math.max(0, (prev?.total || 0) - ids.length),
-        }));
-        setSelectedYuvas([]);
-      } else {
-        handleRequestList();
-      }
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    const ids = Array.isArray(id) ? id : [id];
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteYuva(ids),
+      refresh: async () => {
+        if (isMobile) {
+          setSelectedYuvas([]);
+        }
+        await handleRequestList(false, { skipLoader: true });
+      },
+    });
   };
 
   const yuvas = yuvaList?.data || [];

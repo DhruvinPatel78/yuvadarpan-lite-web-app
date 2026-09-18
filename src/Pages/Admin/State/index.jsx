@@ -19,7 +19,6 @@ import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader, searchFieldSx } from "../../../Component/UI";
 import CustomInput from "../../../Component/Common/customInput";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -35,6 +34,7 @@ import {
   updateState,
   deleteState,
 } from "../../../util/stateApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -177,24 +177,27 @@ export default function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
         const { confirmPassword, ...rest } = values;
-        if (stateModalData) {
-          await updateState(stateModalData.id, {
-            ...rest,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addState({ ...rest });
-        }
-        stateAddEditModalClose();
-        handleStateList();
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            if (stateModalData) {
+              await updateState(stateModalData.id, {
+                ...rest,
+                updatedAt: new Date(),
+              });
+            } else {
+              await addState({ ...rest });
+            }
+          },
+          refresh: () => handleStateList(),
+          close: () => {
+            resetForm();
+            stateAddEditModalClose();
+          },
+        });
       } catch (e) {
-        // Optionally handle error with notification
-      } finally {
-        dispatch(endLoading());
+        // keep modal open if save fails
       }
-      resetForm();
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Required"),
@@ -208,6 +211,7 @@ export default function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const stateAddEditModalClose = () => {
@@ -218,12 +222,10 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteState(Array.isArray(id) ? id : [id]);
-      handleStateList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteState(Array.isArray(id) ? id : [id]),
+      refresh: () => handleStateList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -481,7 +483,7 @@ export default function Index() {
                       type={"submit"}
                       fullWidth
                       disabled={hasError}
-                      loading={loading}
+                      loading={loading || isSubmitting}
                     >
                       {stateModalData ? "UPDATE" : "ADD"}
                     </ActionButton>
