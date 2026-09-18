@@ -5,6 +5,8 @@ import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import PrintIcon from "@mui/icons-material/Print";
 import ShareIcon from "@mui/icons-material/Share";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 import ModeEditOutlineOutlinedIcon from "@mui/icons-material/ModeEditOutlineOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
@@ -32,12 +34,17 @@ import {
   getAllSurnameData,
 } from "../../util/getAPICall";
 import { getNativeList, getPublicYuva } from "../../util/yuvaAdminApi";
-import { canEditYuvaRecord } from "../../util/util";
+import { canEditYuvaRecord, isRegularUser } from "../../util/util";
+import {
+  addYuvaToShortlist,
+  getShortlistIds,
+  removeYuvaFromShortlist,
+} from "../../util/shortlistApi";
 import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
-import { AppTabs, AppTab, Card, IconBtn } from "../../Component/UI";
+import { AppTabs, AppTab, Button, Card, IconBtn } from "../../Component/UI";
 import LoadableImage from "../../Component/Common/LoadableImage";
 function a11yProps(index) {
   return {
@@ -216,6 +223,10 @@ const ProfilePage = () => {
         country,
       })
   );
+  const canShortlist =
+    Boolean(auth?.loggedIn && auth?.user) &&
+    isRegularUser(auth?.user?.role);
+  const [shortlisted, setShortlisted] = React.useState(false);
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -260,6 +271,26 @@ const ProfilePage = () => {
       .then((list) => setNativeList(list || []))
       .catch(() => {});
   }, []);
+
+  const yuvaRecordIds = React.useMemo(
+    () =>
+      [...new Set([data?.id, data?._id, id].filter(Boolean).map(String))],
+    [data?.id, data?._id, id]
+  );
+
+  React.useEffect(() => {
+    if (!canShortlist || !yuvaRecordIds.length) {
+      setShortlisted(false);
+      return;
+    }
+    getShortlistIds()
+      .then((ids) =>
+        setShortlisted(
+          (ids || []).some((item) => yuvaRecordIds.includes(String(item)))
+        )
+      )
+      .catch(() => setShortlisted(false));
+  }, [canShortlist, yuvaRecordIds]);
 
   const fullName = [
     data?.firstName,
@@ -413,6 +444,27 @@ const ProfilePage = () => {
     window.print();
   };
 
+  const handleToggleShortlist = async () => {
+    if (!canShortlist) return;
+    const yuvaId = String(data?.id || data?._id || id || "");
+    if (!yuvaId) return;
+    const already = shortlisted;
+    setShortlisted(!already);
+    try {
+      if (already) {
+        await removeYuvaFromShortlist(yuvaId);
+        setNotification({ type: "success", message: "Removed." });
+      } else {
+        await addYuvaToShortlist(yuvaId);
+        setShortlisted(true);
+        setNotification({ type: "success", message: "Shortlisted." });
+      }
+    } catch (e) {
+      setShortlisted(already);
+      setNotification({ type: "error", message: "Could not shortlist." });
+    }
+  };
+
   if (loadError) {
     return (
       <Box>
@@ -477,7 +529,7 @@ const ProfilePage = () => {
                 Back to directory
               </button>
             )}
-            <div className="flex gap-2 flex-wrap justify-end shrink-0">
+            <div className="flex gap-2 flex-wrap justify-end shrink-0 items-center">
               {canEdit ? (
                 <IconBtn
                   aria-label="Edit"
@@ -500,7 +552,24 @@ const ProfilePage = () => {
           </div>
           <Grid container spacing={2.5}>
             <Grid item xs={12} md={4} lg={4}>
-              <Card className="md:sticky md:top-24">
+              <Card className="md:sticky md:top-24 relative">
+                {canShortlist ? (
+                  <button
+                    type="button"
+                    aria-label={
+                      shortlisted ? "Remove from shortlist" : "Add to shortlist"
+                    }
+                    aria-pressed={shortlisted}
+                    className="absolute top-3 right-3 z-10 p-0 bg-transparent border-0 shadow-none text-primary cursor-pointer appearance-none"
+                    onClick={handleToggleShortlist}
+                  >
+                    {shortlisted ? (
+                      <BookmarkIcon fontSize="small" />
+                    ) : (
+                      <BookmarkBorderIcon fontSize="small" />
+                    )}
+                  </button>
+                ) : null}
                 <div className="flex flex-col items-center w-full">
                   <button
                     type="button"
