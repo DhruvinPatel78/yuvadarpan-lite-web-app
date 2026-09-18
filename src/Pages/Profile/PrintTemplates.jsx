@@ -2,13 +2,16 @@ import React from "react";
 import moment from "moment/moment";
 import { getUserImageSrc } from "../../util/defaultUserImage";
 
-export const getLookupName = (list, id, fallback = "") =>
-  list?.find(
-    (item) =>
-      item?.id === id ||
-      String(item?.id) === String(id) ||
-      String(item?._id) === String(id)
-  )?.name || fallback || "";
+export const getLookupName = (list, id, fallback = "") => {
+  if (id == null || id === "") return fallback || "";
+  const key = String(id);
+  const found = (list || []).find((item) =>
+    [item?.id, item?.value, item?._id, item?.uuid].some(
+      (value) => value != null && String(value) === key
+    )
+  );
+  return found?.name || found?.label || fallback || "";
+};
 
 export const hasValue = (value) => {
   if (typeof value === "boolean") return true;
