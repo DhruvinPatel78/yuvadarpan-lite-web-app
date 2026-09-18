@@ -1,8 +1,8 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { isRegularUser } from "./util";
 
-const PrivateRoute = ({ Component, userOnly = false }) => {
+const PrivateRoute = ({ Component, userOnly = false, adminOnly = false }) => {
   const { loggedIn, user } = useSelector((state) => state.auth);
 
   if (!loggedIn) {
@@ -11,6 +11,9 @@ const PrivateRoute = ({ Component, userOnly = false }) => {
   if (userOnly && !isRegularUser(user?.role)) {
     return <Navigate to="/" replace />;
   }
-  return <Component />;
+  if (adminOnly && isRegularUser(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+  return Component ? <Component /> : <Outlet />;
 };
 export default PrivateRoute;

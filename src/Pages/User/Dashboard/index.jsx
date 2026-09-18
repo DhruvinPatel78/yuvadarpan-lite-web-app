@@ -797,9 +797,12 @@ const Home = () => {
                   : undefined
               }
               onClick={() =>
-                navigate(`/admin/yuvalist/${data?.id}`, {
-                  state: { ...data },
-                })
+                navigate(
+                  canShortlist
+                    ? `/yuva/${data?.id || data?._id}`
+                    : `/admin/yuvalist/${data?.id || data?._id}`,
+                  { state: { ...data } }
+                )
               }
             />
           ))}

@@ -33,7 +33,7 @@ import {
   getAllStateData,
   getAllSurnameData,
 } from "../../util/getAPICall";
-import { getNativeList, getPublicYuva } from "../../util/yuvaAdminApi";
+import { getNativeList, getPublicYuva, getYuvaById } from "../../util/yuvaAdminApi";
 import { canEditYuvaRecord, isRegularUser } from "../../util/util";
 import {
   addYuvaToShortlist,
@@ -233,7 +233,8 @@ const ProfilePage = () => {
 
   React.useEffect(() => {
     if (!id) return;
-    getPublicYuva(id)
+    const load = auth?.loggedIn ? getYuvaById(id) : getPublicYuva(id);
+    load
       .then((yuva) => {
         setData(yuva);
         setLoadError("");
@@ -243,7 +244,7 @@ const ProfilePage = () => {
           setLoadError("Yuva profile not found");
         }
       });
-  }, [id]);
+  }, [id, auth?.loggedIn]);
 
   React.useEffect(() => {
     if (isPublicView) return;
@@ -408,6 +409,10 @@ const ProfilePage = () => {
       navigate(-1);
       return;
     }
+    if (isPublicView || isRegularUser(auth?.user?.role)) {
+      navigate("/");
+      return;
+    }
     navigate("/admin/yuvalist");
   };
 
@@ -508,7 +513,7 @@ const ProfilePage = () => {
           className={"flex-col justify-center flex items-start h-full pb-6"}
         >
           <div className="w-full flex flex-wrap justify-between items-center gap-3 mb-5">
-            {isPublicView ? (
+            {isPublicView && !auth?.loggedIn ? (
               <button
                 type="button"
                 aria-label="Home"
