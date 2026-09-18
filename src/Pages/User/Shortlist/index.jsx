@@ -11,11 +11,14 @@ import {
   removeYuvaFromShortlist,
 } from "../../../util/shortlistApi";
 import { Button, PageHeader } from "../../../Component/UI";
+import { endLoading, startLoading } from "../../../store/authSlice";
+import { useDispatch } from "react-redux";
 
 const PAGE_SIZE = 12;
 
 const Shortlisted = () => {
   const { surname, city, auth } = UseRedux();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const canShortlist = isRegularUser(auth?.user?.role);
   const [yuvaList, setYuvaList] = useState([]);
@@ -32,6 +35,8 @@ const Shortlisted = () => {
       }
       loadingMoreLock.current = true;
       setLoadingMore(true);
+    } else {
+      dispatch(startLoading());
     }
     try {
       const data = await getShortlistedYuvas({
@@ -51,6 +56,8 @@ const Shortlisted = () => {
       if (append) {
         setLoadingMore(false);
         loadingMoreLock.current = false;
+      } else {
+        dispatch(endLoading());
       }
     }
   };

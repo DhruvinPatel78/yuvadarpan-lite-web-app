@@ -10,6 +10,7 @@ import {
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../store/authSlice";
 import { verifyOtp, resendOtp } from "../../util/authApi";
+import { UseRedux } from "../../Component/useRedux";
 
 export default function Index() {
   const location = useLocation();
@@ -17,21 +18,23 @@ export default function Index() {
   const [otp, setOtp] = useState("");
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
+  const { loading } = UseRedux();
   const otpRef = useRef();
 
   const submitHandler = async () => {
+    dispatch(startLoading());
     try {
       await verifyOtp(location.state?.email, otp);
+      dispatch(endLoading());
       setNotification({
         message: "OTP verified.",
         type: "success",
       });
-      setTimeout(() => {
-        navigate("/forget-password", {
-          state: { email: location.state?.email },
-        });
-      }, 2000);
+      navigate("/forget-password", {
+        state: { email: location.state?.email },
+      });
     } catch (err) {
+      dispatch(endLoading());
       setNotification({
         message: err?.response?.data?.message || "OTP verification failed.",
         type: "error",
@@ -101,7 +104,8 @@ export default function Index() {
           <Button
             fullWidth
             onClick={submitHandler}
-            disabled={otp?.length === 0}
+            disabled={otp?.length === 0 || loading}
+            loading={loading}
           >
             Verify OTP Code
           </Button>

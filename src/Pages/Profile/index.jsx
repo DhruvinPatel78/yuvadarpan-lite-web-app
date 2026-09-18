@@ -35,6 +35,7 @@ import {
 } from "../../util/getAPICall";
 import { getNativeList, getPublicYuva } from "../../util/yuvaAdminApi";
 import { canEditYuvaRecord, isRegularUser } from "../../util/util";
+import { endLoading, startLoading } from "../../store/authSlice";
 import {
   addYuvaToShortlist,
   getShortlistIds,
@@ -233,6 +234,7 @@ const ProfilePage = () => {
 
   React.useEffect(() => {
     if (!id) return;
+    dispatch(startLoading());
     getPublicYuva(id)
       .then((yuva) => {
         setData(yuva);
@@ -242,6 +244,9 @@ const ProfilePage = () => {
         if (!state) {
           setLoadError("Yuva profile not found");
         }
+      })
+      .finally(() => {
+        dispatch(endLoading());
       });
   }, [id]);
 

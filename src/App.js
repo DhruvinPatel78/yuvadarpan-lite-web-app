@@ -43,8 +43,11 @@ import ChangePassword from "./Pages/ChangePassword";
 import AccountProfile from "./Pages/Account/Profile";
 import AccountSettings from "./Pages/Account/Settings";
 import PwaInstallBanner from "./Component/PwaInstall";
+import FullPageLoader from "./Component/Common/FullPageLoader";
+import { UseRedux } from "./Component/useRedux";
 
 function App() {
+  const { loading } = UseRedux();
   return (
     <>
       <Routes>
@@ -227,6 +230,7 @@ function App() {
       </Route>
     </Routes>
       <PwaInstallBanner />
+      {loading ? <FullPageLoader /> : null}
     </>
   );
 }

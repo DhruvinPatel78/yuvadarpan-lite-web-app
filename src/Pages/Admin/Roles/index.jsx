@@ -12,9 +12,12 @@ import { UseRedux } from "../../../Component/useRedux";
 import { Navigate } from "react-router-dom";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import { MasterFilterBar, PageHeader } from "../../../Component/UI";
+import { endLoading, startLoading } from "../../../store/authSlice";
+import { useDispatch } from "react-redux";
 
 export default function Index() {
   const { auth } = UseRedux();
+  const dispatch = useDispatch();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [roleData, setRoleData] = useState(null);
@@ -99,6 +102,7 @@ export default function Index() {
   };
 
   const handleRoleList = async (isRest = false) => {
+    dispatch(startLoading());
     try {
       const text =
         selectedSearchByText && !isRest
@@ -115,6 +119,8 @@ export default function Index() {
       setRoleData(data);
     } catch (e) {
       // Optionally handle error with notification
+    } finally {
+      dispatch(endLoading());
     }
   };
 

@@ -7,6 +7,9 @@ import {
   NotificationSnackbar,
 } from "../../Component/Common/notification";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { endLoading, startLoading } from "../../store/authSlice";
+import { UseRedux } from "../../Component/useRedux";
 import useAxios from "../../util/useAxios";
 import moment from "moment";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -18,8 +21,12 @@ import { messaging } from "../../firebase";
 import { getToken } from "firebase/messaging";
 import getMessagingRegistration from "../../util/getMessagingRegistration";
 
+const FCM_WAIT_MS = 3500;
+
 export default function Index() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading } = UseRedux();
   const { notification, setNotification } = NotificationData();
   const [regionList, setRegionList] = useState([]);
   const [samajList, setSamajList] = useState([]);
@@ -55,51 +62,59 @@ export default function Index() {
 
   const getFcmToken = async () => {
     try {
-      const token = await getToken(messaging, {
-        vapidKey:
-          "BJL8nmbe31A9I8MuiulNUL8Ip-6ZL3rYihhIG7oA_4Q-WBZAU53BENLfw6y94Zz6m9YQQZgrXpeZ-BtXNy_R3i8",
-        serviceWorkerRegistration: await getMessagingRegistration(),
-      });
-      return token;
+      const tokenPromise = (async () =>
+        getToken(messaging, {
+          vapidKey:
+            "BJL8nmbe31A9I8MuiulNUL8Ip-6ZL3rYihhIG7oA_4Q-WBZAU53BENLfw6y94Zz6m9YQQZgrXpeZ-BtXNy_R3i8",
+          serviceWorkerRegistration: await getMessagingRegistration(),
+        }))();
+      return await Promise.race([
+        tokenPromise,
+        new Promise((resolve) => setTimeout(() => resolve(null), FCM_WAIT_MS)),
+      ]);
     } catch (err) {
       console.error("FCM token error:", err);
     }
     return null;
   };
 
-  const handleSubmit = async (value) => {
-    if (value.password === value.confirmPassword) {
-      const fcmToken = await getFcmToken();
-      try {
-        await registerUser({
-          familyId: value?.familyId,
-          firstName: value?.firstName,
-          middleName: value?.middleName,
-          lastName: value?.lastName,
-          email: value?.email,
-          mobile: value?.mobile,
-          password: value?.password,
-          dob: moment(value?.dob).format(),
-          region: value?.region,
-          localSamaj: value?.localSamaj,
-          role: "USER",
-          gender: value?.gender,
-          fcmToken: fcmToken,
-        });
-        setNotification({ type: "success", message: "Registration received." });
-        setTimeout(() => {
-          navigate("/thankyou");
-        }, 2000);
-      } catch (e) {
-        setNotification({
-          type: "error",
-          message: e?.response?.data?.message || "Registration failed.",
-        });
-      }
-    } else {
+  const handleSubmit = async (value, { resetForm }) => {
+    if (value.password !== value.confirmPassword) {
       setNotification({
         type: "error",
         message: "Passwords do not match.",
+      });
+      return;
+    }
+    dispatch(startLoading());
+    try {
+      const fcmToken = await getFcmToken();
+      await registerUser({
+        familyId: value?.familyId,
+        firstName: value?.firstName,
+        middleName: value?.middleName,
+        lastName: value?.lastName,
+        email: value?.email,
+        mobile: value?.mobile,
+        password: value?.password,
+        dob: moment(value?.dob).format(),
+        region: value?.region,
+        localSamaj: value?.localSamaj,
+        role: "USER",
+        gender: value?.gender,
+        fcmToken: fcmToken,
+      });
+      resetForm();
+      setSelectedLastName(null);
+      setSelectedRegion(null);
+      setSelectedSamaj(null);
+      dispatch(endLoading());
+      navigate("/thankyou");
+    } catch (e) {
+      dispatch(endLoading());
+      setNotification({
+        type: "error",
+        message: e?.response?.data?.message || "Registration failed.",
       });
     }
   };
@@ -142,12 +157,8 @@ export default function Index() {
         .min(new Date("1950-01-01"), "Date cannot be before 1950")
         .max(new Date(), "Date cannot be in the future"),
     }),
-    onSubmit: async (values, { resetForm }) => {
-      handleSubmit(values);
-      resetForm();
-      setSelectedLastName(null);
-      setSelectedRegion(null);
-      setSelectedSamaj(null);
+    onSubmit: async (values, helpers) => {
+      await handleSubmit(values, helpers);
     },
   });
   const {
@@ -363,8 +374,8 @@ export default function Index() {
                 <Button
                   type="submit"
                   fullWidth
-                  disabled={isSubmitting}
-                  loading={isSubmitting}
+                  disabled={loading || isSubmitting}
+                  loading={loading || isSubmitting}
                 >
                   Sign Up
                 </Button>

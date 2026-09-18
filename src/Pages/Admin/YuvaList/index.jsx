@@ -52,6 +52,7 @@ import {
   getAllSurnameData,
 } from "../../../util/getAPICall";
 import { getGotraAllList } from "../../../util/gotraApi";
+import { endLoading, startLoading } from "../../../store/authSlice";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -351,6 +352,9 @@ const YuvaList = () => {
       } else if (isMobile) {
         setMobilePage(1);
       }
+      if (!append) {
+        dispatch(startLoading());
+      }
       const params = {
         page: pageNum,
         limit,
@@ -406,6 +410,8 @@ const YuvaList = () => {
       if (append) {
         setLoadingMore(false);
         loadingMoreLock.current = false;
+      } else {
+        dispatch(endLoading());
       }
     }
   };
