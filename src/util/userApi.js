@@ -45,6 +45,11 @@ export const deleteUser = async (ids) => {
   }
 };
 
+export const getUserInfo = async (id) => {
+  const response = await axios.get(`/user/getInfo/${id}`);
+  return response.data;
+};
+
 export const getSamajListByRegion = async (regionId) => {
   try {
     const response = await axios.get(`/samaj/listByRegion/${regionId}`);

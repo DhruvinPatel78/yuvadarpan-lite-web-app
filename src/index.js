@@ -11,18 +11,19 @@ import { persistor, store } from "./store";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+import FullPageLoader from "./Component/Common/FullPageLoader";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <BrowserRouter>
     <Provider store={store}>
-      <PersistGate persistor={persistor}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <PersistGate persistor={persistor} loading={<FullPageLoader />}>
           <App />
-        </ThemeProvider>
-      </PersistGate>
+        </PersistGate>
+      </ThemeProvider>
     </Provider>
   </BrowserRouter>,
 );

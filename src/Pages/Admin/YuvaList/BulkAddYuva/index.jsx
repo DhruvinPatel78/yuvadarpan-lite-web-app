@@ -354,6 +354,14 @@ const BulkAddYuva = () => {
     }
   };
 
+  const scrollToYuvaCard = (index) => {
+    window.setTimeout(() => {
+      document.getElementById(`yuva-card-${index}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  };
   const goToSingleAdd = () => navigate("/admin/yuvalist/add");
   const filledCount = (values.yuvas || []).filter(yuvaHasContent).length;
   const yuvaArrayError =
@@ -449,8 +457,11 @@ const BulkAddYuva = () => {
                     value={selectedLastName}
                     errors={showErr(touched.lastName, errors.lastName)}
                     onChange={(e, lastName) => {
-                      setFieldValue("lastName", lastName?.id || "");
-                      setSelectedLastName(lastName?.name || null);
+                      setFieldValue(
+                        "lastName",
+                        lastName?.id || lastName?.value || lastName?._id || ""
+                      );
+                      setSelectedLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -722,9 +733,10 @@ const BulkAddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName: lastName?.id || "",
+                        lastName:
+                          lastName?.id || lastName?.value || lastName?._id || "",
                       });
-                      setSelectedMamaLastName(lastName?.name || null);
+                      setSelectedMamaLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -799,17 +811,27 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={6}
-                    value={selectedContactLastName}
+                    value={
+                      lastNameList.find(
+                        (item) =>
+                          String(item.id) ===
+                            String(values?.contactInfo?.lastName) ||
+                          String(item.value) ===
+                            String(values?.contactInfo?.lastName)
+                      ) || selectedContactLastName
+                    }
                     errors={showErr(
                       touched?.contactInfo?.lastName,
                       errors?.contactInfo?.lastName
                     )}
                     onChange={(e, lastName) => {
-                      setFieldValue("contactInfo.lastName", lastName?.id || "");
-                      setSelectedContactLastName(lastName?.name || null);
-                      setFieldTouched("contactInfo.lastName", true);
+                      setFieldValue(
+                        "contactInfo.lastName",
+                        lastName?.id || lastName?.value || lastName?._id || ""
+                      );
+                      setSelectedContactLastName(lastName || null);
                     }}
-                    onBlur={() => setFieldTouched("contactInfo.lastName", true)}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type="text"
@@ -892,9 +914,11 @@ const BulkAddYuva = () => {
                           variant="ghost"
                           className="max-md:w-full"
                           onClick={() => {
+                            const nextIndex = (values.yuvas || []).length;
                             for (let i = 0; i < 5; i += 1) {
                               push(createYuva());
                             }
+                            scrollToYuvaCard(nextIndex);
                           }}
                         >
                           Add 5 Yuva
@@ -904,7 +928,11 @@ const BulkAddYuva = () => {
                           variant="secondary"
                           className="max-md:w-full"
                           icon={<AddIcon sx={{ fontSize: 18 }} />}
-                          onClick={() => push(createYuva())}
+                          onClick={() => {
+                            const nextIndex = (values.yuvas || []).length;
+                            push(createYuva());
+                            scrollToYuvaCard(nextIndex);
+                          }}
                         >
                           Add Another Yuva
                         </ActionButton>

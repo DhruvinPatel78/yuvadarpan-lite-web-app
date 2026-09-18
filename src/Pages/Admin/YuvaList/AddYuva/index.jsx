@@ -357,7 +357,7 @@ const AddYuva = () => {
   const addYuvaListHandler = async (data) => {
     dispatch(startLoading());
     try {
-      const { profile, profileName, ...payload } = data;
+      const { profile, profileName, email, ...payload } = data;
       const created = await addYuva(payload);
       setCreatedYuva(created);
       setShowProfileModal(true);
@@ -370,7 +370,11 @@ const AddYuva = () => {
   const updateAPIHandler = async (data) => {
     dispatch(startLoading());
     try {
-      await updateYuva(data?.id, { ...data, updatedAt: new Date() });
+      const { email, ...rest } = data;
+      await updateYuva(data?.id, {
+        ...rest,
+        updatedAt: new Date(),
+      });
       navigate("/admin/yuvalist");
     } catch (e) {
       if (e?.response?.status === 403) {
@@ -392,7 +396,6 @@ const AddYuva = () => {
       dob: null,
       gender: "male",
       pob: "",
-      email: "",
       firm: "",
       country: "",
       firmAddress: "",
@@ -484,7 +487,15 @@ const AddYuva = () => {
       }),
       contactInfo: Yup.object({
         name: Yup.string().required("Contact Name Is Required"),
-        lastName: Yup.string().required("Contact Last Name Is Required"),
+        lastName: Yup.string()
+          .transform((value) =>
+            value && typeof value === "object"
+              ? String(value.id ?? value.value ?? value._id ?? "")
+              : value == null
+                ? ""
+                : String(value)
+          )
+          .required("Contact Last Name Is Required"),
         relation: Yup.string().required("Contact Relation Is Required"),
         phone: Yup.string()
           .matches(
@@ -508,10 +519,6 @@ const AddYuva = () => {
         .required("Family ID IsRequired"),
       activity: Yup.string().required("Activity Is Required"),
       abroadStudy: Yup.string().required("AbroadStudy Required"),
-      email: Yup.string().matches(
-        "^$|^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-        "Invalid email address format"
-      ),
       martialStatus: Yup.string().required("Martial Status Is Required"),
       handicapDetails: Yup.string().when("handicap", {
         is: true,
@@ -845,8 +852,8 @@ const AddYuva = () => {
                       touched.lastName && errors.lastName && errors.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("lastName", lastName?.id || "");
-                      setSelectedLastName(lastName?.name || null);
+                      setFieldValue("lastName", lastName?.id || lastName?.value || lastName?._id || "");
+                      setSelectedLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -945,20 +952,6 @@ const AddYuva = () => {
                       setFieldValue("native", native?.id || "");
                       setSelectedNative(native?.name || null);
                     }}
-                    onBlur={handleBlur}
-                  />
-                  <CustomInput
-                    type={"text"}
-                    label={"Email"}
-                    placeholder={"Enter Your Email"}
-                    name={"email"}
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    value={values?.email}
-                    required={false}
-                    errors={touched?.email && errors?.email && errors?.email}
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomInput
@@ -1321,9 +1314,10 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName: lastName?.id || "",
+                        lastName:
+                          lastName?.id || lastName?.value || lastName?._id || "",
                       });
-                      setSelectedMamaLastName(lastName?.name || null);
+                      setSelectedMamaLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1405,18 +1399,28 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedContactLastName}
+                    value={
+                      lastNameList.find(
+                        (item) =>
+                          String(item.id) ===
+                            String(values?.contactInfo?.lastName) ||
+                          String(item.value) ===
+                            String(values?.contactInfo?.lastName)
+                      ) || selectedContactLastName
+                    }
                     errors={
                       (touched?.contactInfo?.lastName || submitCount > 0) &&
                       errors?.contactInfo?.lastName &&
                       errors?.contactInfo?.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("contactInfo.lastName", lastName?.id || "");
-                      setSelectedContactLastName(lastName?.name || null);
-                      setFieldTouched("contactInfo.lastName", true);
+                      setFieldValue(
+                        "contactInfo.lastName",
+                        lastName?.id || lastName?.value || lastName?._id || ""
+                      );
+                      setSelectedContactLastName(lastName || null);
                     }}
-                    onBlur={() => setFieldTouched("contactInfo.lastName", true)}
+                    onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}

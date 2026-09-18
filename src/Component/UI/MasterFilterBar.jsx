@@ -32,6 +32,7 @@ export default function MasterFilterBar({
   extraFilters,
   isFilterOpen = false,
   className = "",
+  hideFilterBadge = false,
 }) {
   const hasExtra = Boolean(extraFilters);
 
@@ -54,6 +55,7 @@ export default function MasterFilterBar({
           }}
           sx={searchFieldSx}
         />
+        {!hideFilterBadge ?
         <Badge badgeContent={filterCount} color="error" overlap="circular">
           <IconButton
             aria-label="Filter"
@@ -72,6 +74,7 @@ export default function MasterFilterBar({
             <TuneIcon />
           </IconButton>
         </Badge>
+        : null}
       </div>
       {hasExtra ? (
         <Collapse in={isFilterOpen} timeout={280}>

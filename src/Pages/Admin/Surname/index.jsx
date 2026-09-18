@@ -25,7 +25,6 @@ import {
   PageHeader,
   searchFieldSx,
 } from "../../../Component/UI";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -38,6 +37,7 @@ import {
   updateSurname,
   deleteSurname,
 } from "../../../util/surnameApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 import { getGotraAllList, addGotra } from "../../../util/gotraApi";
 
 const gotraFilter = createFilterOptions();
@@ -162,50 +162,53 @@ export default function Index() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
         const gotraName = gotraNameOf(values.gotra);
         const surnameName = String(values.name || "").trim();
-        const alreadyListed = gotraOptions.some(
-          (item) =>
-            String(item.name || "").trim().toLowerCase() ===
-            gotraName.toLowerCase()
-        );
-        if (gotraName && !alreadyListed) {
-          try {
-            const created = await addGotra({ name: gotraName });
-            setGotraList((prev) => {
-              const rows = Array.isArray(prev) ? prev : [];
-              if (
-                rows.some(
-                  (item) =>
-                    String(item.name || "").trim().toLowerCase() ===
-                    gotraName.toLowerCase()
-                )
-              ) {
-                return rows;
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            const alreadyListed = gotraOptions.some(
+              (item) =>
+                String(item.name || "").trim().toLowerCase() ===
+                gotraName.toLowerCase()
+            );
+            if (gotraName && !alreadyListed) {
+              try {
+                const created = await addGotra({ name: gotraName });
+                setGotraList((prev) => {
+                  const rows = Array.isArray(prev) ? prev : [];
+                  if (
+                    rows.some(
+                      (item) =>
+                        String(item.name || "").trim().toLowerCase() ===
+                        gotraName.toLowerCase()
+                    )
+                  ) {
+                    return rows;
+                  }
+                  return [...rows, created];
+                });
+              } catch (e) {
+                setGotraList((prev) => [
+                  ...(Array.isArray(prev) ? prev : []),
+                  { id: `new-${Date.now()}`, name: gotraName, active: true },
+                ]);
               }
-              return [...rows, created];
-            });
-          } catch (e) {
-            setGotraList((prev) => [
-              ...(Array.isArray(prev) ? prev : []),
-              { id: `new-${Date.now()}`, name: gotraName, active: true },
-            ]);
-          }
-        }
-        const payload = { name: surnameName, gotra: gotraName };
-        if (surnameModalData) {
-          await updateSurname(surnameModalData.id, payload);
-        } else {
-          await addSurname(payload);
-        }
-        resetForm();
-        surnameAddEditModalClose();
-        handleSurnameList();
+            }
+            const payload = { name: surnameName, gotra: gotraName };
+            if (surnameModalData) {
+              await updateSurname(surnameModalData.id, payload);
+            } else {
+              await addSurname(payload);
+            }
+          },
+          refresh: () => handleSurnameList(),
+          close: () => {
+            resetForm();
+            surnameAddEditModalClose();
+          },
+        });
       } catch (e) {
         // keep modal open if save fails
-      } finally {
-        dispatch(endLoading());
       }
     },
     validationSchema: Yup.object({
@@ -221,6 +224,7 @@ export default function Index() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const surnameAddEditModalClose = () => {
@@ -230,12 +234,10 @@ export default function Index() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteSurname(Array.isArray(id) ? id : [id]);
-      handleSurnameList();
-    } catch (e) {
-      // Optionally handle error with notification
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteSurname(Array.isArray(id) ? id : [id]),
+      refresh: () => handleSurnameList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -492,7 +494,7 @@ export default function Index() {
                       type={"submit"}
                       fullWidth
                       disabled={hasError}
-                      loading={loading}
+                      loading={loading || isSubmitting}
                     >
                       {surnameModalData ? "UPDATE" : "ADD"}
                     </ActionButton>

@@ -64,7 +64,7 @@ const YuvaDetailsCard = ({
   };
 
   return (
-    <Card className="w-full">
+    <Card id={`yuva-card-${index}`} className="w-full scroll-mt-24">
       <div className="flex items-start justify-between gap-3 mb-5 pb-3 border-b border-line">
         <div className="flex items-start gap-3 min-w-0">
           <span className="w-9 h-9 rounded-full border border-line text-primary text-sm font-WorkSemiBold flex items-center justify-center shrink-0">
@@ -158,24 +158,6 @@ const YuvaDetailsCard = ({
           onChange={handleChange}
           onBlur={handleBlur}
           errors={fieldError(yuvaTouched?.pob, yuvaErrors?.pob, submitCount)}
-        />
-        <CustomInput
-          type="text"
-          label="Email"
-          placeholder="Enter Your Email"
-          name={`${prefix}.email`}
-          xs={12}
-          sm={6}
-          md={4}
-          value={yuva?.email}
-          required={false}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          errors={fieldError(
-            yuvaTouched?.email,
-            yuvaErrors?.email,
-            submitCount
-          )}
         />
         <CustomInput
           type="text"

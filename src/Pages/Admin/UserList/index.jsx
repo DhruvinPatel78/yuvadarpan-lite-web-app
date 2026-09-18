@@ -26,6 +26,7 @@ import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../../store/authSlice";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
 import LoadableImage from "../../../Component/Common/LoadableImage";
@@ -215,7 +216,6 @@ function UserPasswordPanel({
         .oneOf([Yup.ref("password")], "Passwords do not match"),
     }),
     onSubmit: async (values, { resetForm }) => {
-      dispatch(startLoading());
       try {
         await changePassword(email, values.password);
         setNotification({
@@ -225,11 +225,9 @@ function UserPasswordPanel({
         resetForm();
         setStep("send");
         setOtp("");
-        onSuccess?.();
+        await onSuccess?.();
       } catch (err) {
         showError(err, "Password update failed.");
-      } finally {
-        dispatch(endLoading());
       }
     },
   });
@@ -371,17 +369,14 @@ function UserPasswordPanel({
                 >
                   Back
                 </button>
-                {loading ? (
-                  <CircularProgress color="secondary" size={28} />
-                ) : (
-                  <ActionButton
-                    type="submit"
-                    disabled={hasError || isSubmitting}
-                    className="max-md:w-full"
-                  >
-                    Change password
-                  </ActionButton>
-                )}
+                <ActionButton
+                  type="submit"
+                  disabled={hasError || isSubmitting}
+                  loading={loading || isSubmitting}
+                  className="max-md:w-full"
+                >
+                  Update password
+                </ActionButton>
               </Grid>
             </Grid>
           </Form>
@@ -430,6 +425,7 @@ function Index() {
   const { notification, setNotification } = NotificationData();
   const [userInfoModel, setUserInfoModel] = useState(false);
   const [isAddUser, setIsAddUser] = useState(false);
+  const [roleFieldReady, setRoleFieldReady] = useState(false);
   const [userList, setUserList] = useState(null);
   const [selectedCountryName, setSelectedCountryName] = useState(null);
   const [selectedStateName, setSelectedStateName] = useState(null);
@@ -463,7 +459,6 @@ function Index() {
 
   const saveUserRecord = async (formValues) => {
     try {
-      dispatch(startLoading());
       const {
         confirmPassword,
         password,
@@ -505,8 +500,6 @@ function Index() {
         message: e?.response?.data?.message || "Failed to save user.",
       });
       return false;
-    } finally {
-      dispatch(endLoading());
     }
   };
 
@@ -533,11 +526,22 @@ function Index() {
       role: "",
     },
     onSubmit: async (formValues, { resetForm }) => {
-      const saved = await saveUserRecord(formValues);
-      if (saved) {
-        userInfoModalClose();
-        handleUserList();
-        resetForm();
+      try {
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            const saved = await saveUserRecord(formValues);
+            if (!saved) {
+              throw new Error("save-failed");
+            }
+          },
+          refresh: () => handleUserList(),
+          close: () => {
+            userInfoModalClose();
+            resetForm();
+          },
+        });
+      } catch (e) {
+        // keep modal open if save fails
       }
     },
     validationSchema: Yup.lazy(() =>
@@ -582,6 +586,7 @@ function Index() {
     setFieldValue,
     validateForm,
     setTouched,
+    isSubmitting,
   } = formik;
 
   const samajOptions = useMemo(() => {
@@ -784,8 +789,28 @@ function Index() {
       }
     } else {
       originalUserRef.current = "";
+      resetForm();
     }
   };
+
+  useEffect(() => {
+    if (!userInfoModel || modalView !== "form") {
+      setRoleFieldReady(false);
+      return undefined;
+    }
+    const readyTimer = window.setTimeout(() => setRoleFieldReady(true), 100);
+    return () => window.clearTimeout(readyTimer);
+  }, [userInfoModel, modalView]);
+
+  useEffect(() => {
+    if (!userInfoModel || modalView !== "form" || !isAddUser || !roleFieldReady) {
+      return undefined;
+    }
+    const focusTimer = window.setTimeout(() => {
+      document.getElementById("familyId")?.focus();
+    }, 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [userInfoModel, modalView, isAddUser, roleFieldReady]);
 
   const userActionHandler = async (userInfo, action, field) => {
     const previous = userInfo?.[field];
@@ -1040,22 +1065,16 @@ function Index() {
   ].filter((column) => !hasOwnListToggle || column.field !== "role");
 
   const deleteAPI = async (id) => {
-    try {
-      const ids = Array.isArray(id) ? id : [id];
-      await deleteUser(ids);
-      if (isMobile) {
-        setUserList((prev) => ({
-          ...prev,
-          data: (prev?.data || []).filter((item) => !ids.includes(item.id)),
-          total: Math.max(0, (prev?.total || 0) - ids.length),
-        }));
-        setSelectedUsers([]);
-      } else {
-        handleUserList();
-      }
-    } catch (error) {
-      // Optionally handle error with notification
-    }
+    const ids = Array.isArray(id) ? id : [id];
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteUser(ids),
+      refresh: async () => {
+        if (isMobile) {
+          setSelectedUsers([]);
+        }
+        await handleUserList();
+      },
+    });
   };
 
   const users = userList?.data || [];
@@ -1103,7 +1122,12 @@ function Index() {
       }
       originalUserRef.current = comparableUserValues(values);
       setNotification({ type: "success", message: "Updated." });
-      handleUserList();
+      dispatch(startLoading());
+      try {
+        await handleUserList();
+      } finally {
+        dispatch(endLoading());
+      }
     }
     setModalView("password");
   };
@@ -1150,9 +1174,10 @@ function Index() {
                 className="max-md:w-full"
                 icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => {
-                  userInfoModalOpen();
-                  setUserInfoModel(!userInfoModel);
                   setIsAddUser(true);
+                  setModalView("form");
+                  resetForm();
+                  setUserInfoModel(true);
                 }}
               >
                 Add User
@@ -1528,6 +1553,7 @@ function Index() {
       <FormModal
         open={userInfoModel}
         onClose={userInfoModalClose}
+        disableAutoFocus
         title={
           modalView === "password"
             ? "Change password"
@@ -1542,9 +1568,14 @@ function Index() {
             dispatch={dispatch}
             setNotification={setNotification}
             onCancel={() => setModalView("form")}
-            onSuccess={() => {
+            onSuccess={async () => {
+              dispatch(startLoading());
+              try {
+                await handleUserList();
+              } finally {
+                dispatch(endLoading());
+              }
               userInfoModalClose();
-              handleUserList();
             }}
           />
         ) : (
@@ -1564,6 +1595,7 @@ function Index() {
                       label="Family ID"
                       value={values?.familyId}
                       variant="outlined"
+                      autoFocus={isAddUser}
                       onChange={handleChange}
                       onBlur={handleBlur}
                       errors={
@@ -1976,10 +2008,12 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={roleFieldReady ? "user-role-ready" : "user-role-wait"}
+                      disabled={!roleFieldReady}
                       list={rolesList(false)}
                       label={"User Role"}
                       placeholder={"Select Your User Role"}
-                      name={"role"}
+                      name="role"
                       value={
                         typeof values?.role === "object" && values?.role
                           ? values.role
@@ -1999,29 +2033,25 @@ function Index() {
                   xs={12}
                   className={"flex flex-col-reverse md:flex-row justify-end items-stretch md:items-center gap-2 !pt-2"}
                 >
-                  {loading ? (
-                    <CircularProgress color="secondary" />
-                  ) : (
-                    <>
-                      {isAddUser ? null : (
-                        <ActionButton
-                          type="button"
-                          variant="secondary"
-                          className="max-md:w-full"
-                          onClick={handleChangePasswordClick}
-                        >
-                          Change password
-                        </ActionButton>
-                      )}
-                      <ActionButton
-                        type={"submit"}
-                        disabled={hasError}
-                        className="max-md:w-full"
-                      >
-                        {isAddUser ? "Add" : "Update"}
-                      </ActionButton>
-                    </>
+                  {isAddUser ? null : (
+                    <ActionButton
+                      type="button"
+                      variant="secondary"
+                      className="max-md:w-full"
+                      onClick={handleChangePasswordClick}
+                      disabled={isSubmitting}
+                    >
+                      Change password
+                    </ActionButton>
                   )}
+                  <ActionButton
+                    type={"submit"}
+                    disabled={hasError || isSubmitting}
+                    loading={loading || isSubmitting}
+                    className="max-md:w-full"
+                  >
+                    {isAddUser ? "Add" : "Update"}
+                  </ActionButton>
                 </Grid>
               </Grid>
             </Form>

@@ -22,7 +22,6 @@ import {
   MasterFilterBar,
   PageHeader,
 } from "../../../Component/UI";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -35,6 +34,7 @@ import {
   updateGotra,
   deleteGotra,
 } from "../../../util/gotraApi";
+import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Gotra() {
   const dispatch = useDispatch();
@@ -128,22 +128,25 @@ export default function Gotra() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        dispatch(startLoading());
-        if (gotraModalData) {
-          await updateGotra(gotraModalData.id, {
-            name: values.name,
-            updatedAt: new Date(),
-          });
-        } else {
-          await addGotra({ name: String(values.name || "").trim() });
-        }
-        resetForm();
-        gotraAddEditModalClose();
-        handleGotraList();
+        await completeModalMutation(dispatch, {
+          mutate: async () => {
+            if (gotraModalData) {
+              await updateGotra(gotraModalData.id, {
+                name: values.name,
+                updatedAt: new Date(),
+              });
+            } else {
+              await addGotra({ name: String(values.name || "").trim() });
+            }
+          },
+          refresh: () => handleGotraList(),
+          close: () => {
+            resetForm();
+            gotraAddEditModalClose();
+          },
+        });
       } catch (e) {
         // keep modal open if save fails
-      } finally {
-        dispatch(endLoading());
       }
     },
     validationSchema: Yup.object({
@@ -158,6 +161,7 @@ export default function Gotra() {
     handleBlur,
     touched,
     setFieldValue,
+    isSubmitting,
   } = formik;
 
   const gotraAddEditModalClose = () => {
@@ -167,12 +171,10 @@ export default function Gotra() {
   };
 
   const deleteAPI = async (id) => {
-    try {
-      await deleteGotra(Array.isArray(id) ? id : [id]);
-      handleGotraList();
-    } catch (e) {
-      // keep list as-is if delete fails
-    }
+    await completeModalMutation(dispatch, {
+      mutate: () => deleteGotra(Array.isArray(id) ? id : [id]),
+      refresh: () => handleGotraList(),
+    });
   };
 
   const hasError = Object.keys(errors)?.length || 0;
@@ -258,6 +260,7 @@ export default function Gotra() {
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}
           onFilterClick={() => handleGotraList()}
+          hideFilterBadge={true}
         />
         <div className={"hidden md:block w-full min-w-0"}>
           <CustomTable
@@ -337,7 +340,7 @@ export default function Gotra() {
                     type={"submit"}
                     fullWidth
                     disabled={hasError}
-                    loading={loading}
+                    loading={loading || isSubmitting}
                   >
                     {gotraModalData ? "UPDATE" : "ADD"}
                   </ActionButton>

@@ -723,7 +723,7 @@ const Home = () => {
           <div className="flex items-center gap-2 w-full min-w-0">
             <TextField
               className="flex-1 min-w-0"
-              placeholder="Search by name, father, mobile, family ID, email"
+              placeholder="Search by name, father, mobile, family ID"
               value={keywordSearch}
               onChange={(event) => setKeywordSearch(event.target.value)}
               InputProps={{
@@ -797,9 +797,12 @@ const Home = () => {
                   : undefined
               }
               onClick={() =>
-                navigate(`/admin/yuvalist/${data?.id}`, {
-                  state: { ...data },
-                })
+                navigate(
+                  canShortlist
+                    ? `/yuva/${data?.id || data?._id}`
+                    : `/admin/yuvalist/${data?.id || data?._id}`,
+                  { state: { ...data } }
+                )
               }
             />
           ))}

@@ -55,7 +55,7 @@ export default function CustomSelect({
           labelId={`select-helper-${name}`}
           id={`select-${name}`}
           placeholder={placeholder}
-          value={value}
+          value={value ?? ""}
           label={label}
           name={name}
           onChange={onChange}
@@ -96,12 +96,25 @@ export default function CustomSelect({
             }
           }}
         >
-          <MenuItem value="">SELECT</MenuItem>
-          {list.map((data) => (
-            <MenuItem key={data} value={data}>
-              <Typography className={"uppercase"}>{data}</Typography>
-            </MenuItem>
-          ))}
+          <MenuItem value="">
+            <em>{placeholder || "Select"}</em>
+          </MenuItem>
+          {(Array.isArray(list) ? list : []).map((data) => {
+            const isObject = data && typeof data === "object";
+            const optionValue = isObject
+              ? String(data.value ?? data.id ?? "")
+              : data;
+            const optionLabel = isObject
+              ? data.label || data.name || optionValue
+              : data;
+            return (
+              <MenuItem key={String(optionValue)} value={optionValue}>
+                <Typography className={isObject ? undefined : "uppercase"}>
+                  {optionLabel}
+                </Typography>
+              </MenuItem>
+            );
+          })}
         </PrimarySelect>
         {errors && (
           <p className={"text-error text-sm transition-all"}>{errors}</p>

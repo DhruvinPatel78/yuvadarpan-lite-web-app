@@ -68,8 +68,8 @@ const BiodataSection = ({ title, fields, caps = false }) => {
   return (
     <div className="yuva-biodata-section">
       <h3 className={caps ? "is-caps" : ""}>{title}</h3>
-      {visibleFields.map((field) => (
-        <div className="yuva-biodata-row" key={field.label}>
+      {visibleFields.map((field, index) => (
+        <div className="yuva-biodata-row" key={`${field.label}-${index}`}>
           <span>{field.label}</span>
           <span>{field.value}</span>
         </div>
@@ -90,7 +90,6 @@ const buildPrintModel = (data, lists) => {
     .filter(Boolean)
     .join(" ");
 
-  const isFemale = String(data?.gender || "").toLowerCase() === "female";
   const showHandicap = data?.handicap === true;
 
   const additionalOther = extraOtherFields(data?.other);
@@ -99,7 +98,6 @@ const buildPrintModel = (data, lists) => {
     fullName,
     photo: getUserImageSrc(data?.profile?.url),
     phone: data?.contactInfo?.phone,
-    email: isFemale ? "" : data?.email,
     personal: [
       { label: "Name", value: fullName },
       {
@@ -117,7 +115,6 @@ const buildPrintModel = (data, lists) => {
     ],
     contact: [
       { label: "Phone", value: data?.contactInfo?.phone },
-      ...(isFemale ? [] : [{ label: "Email", value: data?.email }]),
       { label: "Name", value: data?.contactInfo?.name },
       {
         label: "Last Name",
@@ -176,19 +173,10 @@ const buildPrintModel = (data, lists) => {
         : []),
       { label: "Manglik", value: data?.manglik === true ? "Yes" : "" },
     ],
-    additional: additionalOther.flatMap((item, index) => [
-      {
-        label: additionalOther.length > 1 ? `Title ${index + 1}` : "Title",
-        value: item.title,
-      },
-      {
-        label:
-          additionalOther.length > 1
-            ? `Description ${index + 1}`
-            : "Description",
-        value: item.description,
-      },
-    ]),
+    additional: additionalOther.map((item) => ({
+      label: item.title,
+      value: item.description,
+    })),
   };
 };
 
@@ -199,7 +187,7 @@ const TemplateTwo = ({ model }) => {
     { label: "Work Location", value: fieldValue(model.career, "Firm Address") },
   ];
   const contact = model.contact.filter((field) =>
-    ["Phone", "Email", "Address"].includes(field.label)
+    ["Phone", "Address"].includes(field.label)
   );
 
   return (

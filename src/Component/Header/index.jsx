@@ -14,8 +14,6 @@ import {
 import { useState } from "react";
 import useHeader from "./useHeader";
 import FloatingButton from "../Common/FloatingButton";
-import { UseRedux } from "../useRedux";
-import FullPageLoader from "../Common/FullPageLoader";
 import { YuvadarpanLogo } from "../Icons";
 import { isRegularUser } from "../../util/util";
 
@@ -32,7 +30,6 @@ const Header = () => {
     navigate,
     action: { handleLogOut },
   } = useHeader();
-  const { loading } = UseRedux();
   const [anchorElUser, setAnchorElUser] = useState(null);
 
   const handleOpenUserMenu = (event) => {
@@ -154,7 +151,6 @@ const Header = () => {
       className="app-header-spacer min-h-[56px] md:min-h-[72px]"
     />
     <FloatingButton />
-    {loading ? <FullPageLoader /> : null}
     </>
   );
 };

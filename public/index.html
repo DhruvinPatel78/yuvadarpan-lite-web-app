@@ -13,34 +13,72 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Yuvadarpan" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
     <title>Yuvadarpan</title>
+    <style>
+      html, body, #root {
+        margin: 0;
+        min-height: 100%;
+        background: #f4f0ea;
+      }
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f0ea;
+      }
+      #app-splash svg {
+        width: min(80vw, 400px);
+        height: min(15vh, 80px);
+      }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+    <div id="root">
+      <div id="app-splash" role="alert" aria-busy="true" aria-label="Loading YUVADARPAN">
+        <svg viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="splashGradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#542b2b" stop-opacity="0.2" />
+              <stop offset="50%" stop-color="#a36767" stop-opacity="1" />
+              <stop offset="100%" stop-color="#542b2b" stop-opacity="0.2" />
+            </linearGradient>
+            <mask id="splashMask">
+              <text
+                x="50%"
+                y="50%"
+                dominant-baseline="middle"
+                text-anchor="middle"
+                font-size="50"
+                font-weight="700"
+                font-family="'Work Sans', sans-serif"
+                fill="white"
+                letter-spacing="4"
+              >YUVADARPAN</text>
+            </mask>
+          </defs>
+          <rect width="400" height="80" fill="url(#splashGradient)" mask="url(#splashMask)">
+            <animate attributeName="x" values="-400;400" dur="3.5s" repeatCount="indefinite" />
+          </rect>
+          <text
+            x="50%"
+            y="50%"
+            dominant-baseline="middle"
+            text-anchor="middle"
+            font-size="50"
+            font-weight="700"
+            font-family="'Work Sans', sans-serif"
+            fill="none"
+            stroke="#542b2b"
+            stroke-width="1.5"
+            letter-spacing="4"
+          >YUVADARPAN</text>
+        </svg>
+      </div>
+    </div>
   </body>
 </html>
