@@ -8,97 +8,66 @@ import {
   surname,
   country,
   role,
+  gotra,
+  native,
 } from "../store/locationSlice";
 
-export const getAllRegionData = (dispatch) => {
-  axios
-    .get(`/region/get-all-list`)
-    .then((res) => {
-      return dispatch(region(res.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+const inflight = {};
+
+const asRows = (value) =>
+  Array.isArray(value) ? value : Array.isArray(value?.data) ? value.data : [];
+
+export const resetMasterFetches = () => {
+  Object.keys(inflight).forEach((key) => {
+    delete inflight[key];
+  });
 };
-export const getAllCityData = (dispatch) => {
-  axios
-    .get(`/city/get-all-list`)
+
+const fetchAll = (key, path, action) => (dispatch, getState) => {
+  const existing = asRows(getState()?.location?.[key]);
+  if (existing.length) {
+    return Promise.resolve(existing);
+  }
+  if (inflight[key]) {
+    return inflight[key];
+  }
+  inflight[key] = axios
+    .get(`/${path}/get-all-list`)
     .then((res) => {
-      dispatch(city(res.data));
+      const list = asRows(res.data);
+      dispatch(action(list));
+      return list;
     })
-    .catch(function (error) {
+    .catch((error) => {
       console.log(error);
-    });
-};
-export const getAllDistrictData = (dispatch) => {
-  axios
-    .get(`/district/get-all-list`)
-    .then((res) => {
-      return dispatch(district(res.data));
+      return [];
     })
-    .catch(function (error) {
-      console.log(error);
+    .finally(() => {
+      delete inflight[key];
     });
+  return inflight[key];
 };
-export const getAllSamajData = (dispatch) => {
-  axios
-    .get(`/samaj/get-all-list`)
-    .then((res) => {
-      return dispatch(samaj(res.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+
+export const getAllRegionData = fetchAll("region", "region", region);
+export const getAllCityData = fetchAll("city", "city", city);
+export const getAllDistrictData = fetchAll("district", "district", district);
+export const getAllSamajData = fetchAll("samaj", "samaj", samaj);
+export const getAllStateData = fetchAll("state", "state", state);
+export const getAllSurnameData = fetchAll("surname", "surname", surname);
+export const getAllCountryData = fetchAll("country", "country", country);
+export const getAllRoleData = fetchAll("role", "role", role);
+export const getAllGotraData = fetchAll("gotra", "gotra", gotra);
+export const getAllNativeData = fetchAll("native", "native", native);
+
+export const loadLocationMasters = (dispatch) => {
+  dispatch(getAllCountryData);
+  dispatch(getAllStateData);
+  dispatch(getAllRegionData);
+  dispatch(getAllDistrictData);
+  dispatch(getAllCityData);
+  dispatch(getAllSamajData);
+  dispatch(getAllSurnameData);
+  dispatch(getAllGotraData);
+  dispatch(getAllNativeData);
+  dispatch(getAllRoleData);
 };
-export const getAllStateData = (dispatch) => {
-  axios
-    .get(`/state/get-all-list`)
-    .then((res) => {
-      return dispatch(state(res.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-};
-export const getAllSurnameData = (dispatch) => {
-  axios
-    .get(`/surname/get-all-list`)
-    .then((res) => {
-      return dispatch(surname(res.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-};
-export const getAllCountryData = (dispatch) => {
-  axios
-    .get(`/country/get-all-list`)
-    .then((res) => {
-      return dispatch(country(res.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-};
-export const getAllRoleData = (dispatch) => {
-  axios
-    .get(`/role/get-all-list`)
-    .then((res) => {
-      return dispatch(role(res.data));
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-};
-// export const getDataByPagination = ({ field, page, limit }) => {
-//   axios
-//     .get(
-//       `${process.env.REACT_APP_BASE_URL}/${field}/list?page=${page}&limit=${limit}`
-//     )
-//     .then((res) => {
-//       return res.data;
-//     })
-//     .catch(function (error) {
-//       console.log(error);
-//     });
-// };

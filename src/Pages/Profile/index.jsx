@@ -27,13 +27,15 @@ import {
   getAllCityData,
   getAllCountryData,
   getAllDistrictData,
+  getAllNativeData,
   getAllRegionData,
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
 } from "../../util/getAPICall";
-import { getNativeList, getPublicYuva, getYuvaById } from "../../util/yuvaAdminApi";
+import { getPublicYuva, getYuvaById } from "../../util/yuvaAdminApi";
 import { canEditYuvaRecord, isRegularUser } from "../../util/util";
+import { asDisplayText, pickOtherMap, pickYuvaLangText, userLanguage } from "../../util/bhasha";
 import { endLoading, startLoading } from "../../store/authSlice";
 import {
   addYuvaToShortlist,
@@ -73,8 +75,9 @@ const getYuvaShareId = (value) => {
 };
 
 const formatLabel = (value) => {
-  if (!hasValue(value)) return "-";
-  return String(value).replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  const text = asDisplayText(value);
+  if (!text) return "-";
+  return text.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
 };
 
 const titleCase = (value) => {
@@ -83,8 +86,8 @@ const titleCase = (value) => {
   return text.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const lookupValue = (list, id, fallback) => {
-  const name = getLookupName(list, id, fallback);
+const lookupValue = (list, id, fallback, lang = "en") => {
+  const name = getLookupName(list, id, fallback, lang);
   if (hasValue(name)) return name;
   if (hasValue(id) && !/^[a-f0-9]{24}$/i.test(String(id))) return String(id);
   return "-";
@@ -105,7 +108,7 @@ const DetailFields = ({ fields }) => (
               "text-[15px] sm:text-base font-semibold break-words text-primary"
             }
           >
-            {hasValue(field.value) ? field.value : "-"}
+            {hasValue(field.value) ? asDisplayText(field.value) : "-"}
           </span>
         </div>
       </Grid>
@@ -218,7 +221,6 @@ const ProfilePage = () => {
   const [loadError, setLoadError] = React.useState("");
   const [tabValue, setTabValue] = React.useState(0);
   const [photoOpen, setPhotoOpen] = React.useState(false);
-  const [nativeList, setNativeList] = React.useState([]);
   const {
     city,
     state: stateList,
@@ -227,8 +229,10 @@ const ProfilePage = () => {
     region,
     district,
     samaj,
+    native: nativeList,
     auth,
   } = UseRedux();
+  const language = userLanguage(auth?.user);
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
   const photoUrl = data?.profile?.url || "";
@@ -274,30 +278,15 @@ const ProfilePage = () => {
 
   React.useEffect(() => {
     if (isPublicView) return;
-    if (!country?.length) dispatch(getAllCountryData);
-    if (!stateList?.length) dispatch(getAllStateData);
-    if (!region?.length) dispatch(getAllRegionData);
-    if (!district?.length) dispatch(getAllDistrictData);
-    if (!city?.length) dispatch(getAllCityData);
-    if (!samaj?.length) dispatch(getAllSamajData);
-    if (!surname?.length) dispatch(getAllSurnameData);
-  }, [
-    isPublicView,
-    country?.length,
-    stateList?.length,
-    region?.length,
-    district?.length,
-    city?.length,
-    samaj?.length,
-    surname?.length,
-    dispatch,
-  ]);
-
-  React.useEffect(() => {
-    getNativeList()
-      .then((list) => setNativeList(list || []))
-      .catch(() => {});
-  }, []);
+    dispatch(getAllCountryData);
+    dispatch(getAllStateData);
+    dispatch(getAllRegionData);
+    dispatch(getAllDistrictData);
+    dispatch(getAllCityData);
+    dispatch(getAllSamajData);
+    dispatch(getAllSurnameData);
+    dispatch(getAllNativeData);
+  }, [isPublicView, dispatch]);
 
   const yuvaRecordIds = React.useMemo(
     () =>
@@ -319,97 +308,108 @@ const ProfilePage = () => {
       .catch(() => setShortlisted(false));
   }, [canShortlist, yuvaRecordIds]);
 
+  const pick = (field) => pickYuvaLangText(data, field, language);
+  const pickMaster = (list, id, fallback) =>
+    lookupValue(list, id, fallback, language);
   const fullName = [
-    data?.firstName,
-    data?.fatherName,
-    getLookupName(surname, data?.lastName, labels.lastName),
+    pick("firstName"),
+    pick("fatherName"),
+    pickMaster(surname, data?.lastName, labels.lastName),
   ]
     .filter(Boolean)
     .join(" ");
   const locationLabel = [
-    lookupValue(city, data?.city, labels.city),
-    lookupValue(stateList, data?.state, labels.state),
+    pickMaster(city, data?.city, labels.city),
+    pickMaster(stateList, data?.state, labels.state),
   ]
     .filter((item) => item && item !== "-")
     .join(", ");
-  const activityLabel = titleCase(data?.activity);
+  const activityLabel = pick("activity");
   const personalFields = [
-    { label: "Name", value: data?.firstName },
-    { label: "Father Name", value: data?.fatherName },
-    { label: "Grand Father Name", value: data?.grandFatherName },
+    { label: "Name", value: pick("firstName") },
+    { label: "Father Name", value: pick("fatherName") },
+    { label: "Grand Father Name", value: pick("grandFatherName") },
     {
       label: "Last Name",
-      value: lookupValue(surname, data?.lastName, labels.lastName),
+      value: pickMaster(surname, data?.lastName, labels.lastName),
     },
-    { label: "Mother Name", value: data?.motherName },
+    { label: "Mother Name", value: pick("motherName") },
     { label: "Family ID", value: data?.familyId },
-    { label: "Gender", value: titleCase(data?.gender) },
+    { label: "Gender", value: pick("gender") },
     {
       label: "Date of Birth",
       value: data?.dob ? moment(data.dob).format("DD/MM/YYYY hh:mm A") : "-",
     },
-    { label: "Birth Place", value: data?.pob },
+    { label: "Birth Place", value: pick("pob") },
     {
       label: "Native",
-      value: lookupValue(nativeList, data?.native, labels.native),
+      value: pickMaster(nativeList, data?.native, labels.native),
     },
     { label: "YSK No.", value: data?.YSKno },
-    { label: "Marital Status", value: titleCase(data?.martialStatus) },
+    { label: "Marital Status", value: pick("martialStatus") },
     { label: "Height (ft)", value: data?.height },
     { label: "Weight (kg)", value: data?.weight },
     { label: "Activity", value: activityLabel },
-    { label: "Firm", value: data?.firm },
+    { label: "Firm", value: pick("firm") },
     {
       label: "Country",
-      value: lookupValue(country, data?.country, labels.country),
+      value: pickMaster(country, data?.country, labels.country),
     },
     {
       label: "State",
-      value: lookupValue(stateList, data?.state, labels.state),
+      value: pickMaster(stateList, data?.state, labels.state),
     },
     {
       label: "Region",
-      value: lookupValue(region, data?.region, labels.region),
+      value: pickMaster(region, data?.region, labels.region),
     },
     {
       label: "District",
-      value: lookupValue(district, data?.district, labels.district),
+      value: pickMaster(district, data?.district, labels.district),
     },
-    { label: "City", value: lookupValue(city, data?.city, labels.city) },
-    { label: "Firm Address", value: data?.firmAddress },
+    {
+      label: "City",
+      value: pickMaster(city, data?.city, labels.city),
+    },
+    { label: "Firm Address", value: pick("firmAddress") },
     {
       label: "Local Samaj",
-      value: lookupValue(samaj, data?.localSamaj, labels.localSamaj),
+      value: pickMaster(samaj, data?.localSamaj, labels.localSamaj),
     },
-    { label: "Address", value: data?.address },
+    { label: "Address", value: pick("address") },
   ];
   const mamaFields = [
-    { label: "Mama Name", value: data?.mamaInfo?.name },
+    {
+      label: "Mama Name",
+      value: pick("mamaInfo.name"),
+    },
     {
       label: "Mama Last Name",
-      value: lookupValue(surname, data?.mamaInfo?.lastName),
+      value: pickMaster(surname, data?.mamaInfo?.lastName),
     },
     {
       label: "Mama Native",
-      value: lookupValue(
-        nativeList,
-        data?.mamaInfo?.native,
-        labels.mamaNative
-      ),
+      value: pickMaster(nativeList, data?.mamaInfo?.native, labels.mamaNative),
     },
-    { label: "Mama City", value: data?.mamaInfo?.city },
+    {
+      label: "Mama City",
+      value: pick("mamaInfo.city"),
+    },
   ];
   const contactFields = [
-    { label: "Contact Person Name", value: data?.contactInfo?.name },
+    {
+      label: "Contact Person Name",
+      value: pick("contactInfo.name"),
+    },
     {
       label: "Last Name",
-      value: lookupValue(surname, data?.contactInfo?.lastName),
+      value: pickMaster(surname, data?.contactInfo?.lastName),
     },
     { label: "Contact Person Phone", value: data?.contactInfo?.phone },
     { label: "Relation", value: titleCase(data?.contactInfo?.relation) },
-    { label: "Address", value: data?.address },
+    { label: "Address", value: pick("address") },
   ];
-  const additionalFields = extraOtherFields(data?.other);
+  const additionalFields = extraOtherFields(pickOtherMap(data, language));
   const otherFields = [
     {
       label: "Highest Education",
@@ -417,13 +417,13 @@ const ProfilePage = () => {
     },
     {
       label: "Field of Study",
-      value: data?.education?.fieldOfStudy || data?.fieldOfStudy,
+      value: data?.education?.fieldOfStudy || data?.fieldOfStudy || "-",
     },
     { label: "Blood Group", value: data?.bloodGroup },
     ...(data?.handicap === true
       ? [
           { label: "Handicap", value: "Yes" },
-          { label: "Handicap Details", value: data?.handicapDetails },
+          { label: "Handicap Details", value: pick("handicapDetails") },
         ]
       : []),
   ];
@@ -639,7 +639,7 @@ const ProfilePage = () => {
                       }
                     >
                       {[
-                        data?.contactInfo?.name,
+                        pick("contactInfo.name"),
                         data?.contactInfo?.relation
                           ? `(${titleCase(data.contactInfo.relation)})`
                           : "",
@@ -654,7 +654,7 @@ const ProfilePage = () => {
                       {locationLabel || "-"}
                     </SidebarRow>
                     <SidebarRow icon={<WorkOutlineIcon fontSize="small" />}>
-                      {data?.firm || "-"}
+                      {pick("firm") || "-"}
                     </SidebarRow>
                   </div>
                 </div>
@@ -750,7 +750,7 @@ const ProfilePage = () => {
           </IconButton>
           <LoadableImage
             src={photoUrl}
-            alt={`${data?.firstName || "Yuva"} profile`}
+            alt={`${pick("firstName") || "Yuva"} profile`}
             className="max-w-[96vw] max-h-[92vh] w-[min(96vw,720px)] h-[min(92vh,720px)] bg-transparent"
             imgClassName="w-full h-full object-contain"
             fit="contain"

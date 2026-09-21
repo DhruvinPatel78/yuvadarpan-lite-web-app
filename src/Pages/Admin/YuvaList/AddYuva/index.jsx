@@ -32,9 +32,17 @@ import {
 } from "../../../../util/util";
 import dayjs from "dayjs";
 import LoadableImage from "../../../../Component/Common/LoadableImage";
+import BilingualInput from "../../../../Component/Common/bilingualInput";
+import LanguageSwitcher from "../../../../Component/LanguageSwitcher";
+import {
+  FormLanguageProvider,
+  useFormLanguage,
+} from "../../../../context/FormLanguageContext";
+import { labeledOptions } from "../../../../i18n/yuvaForm";
+import { flattenYuvaForm, masterNameText, toEnGuPayload, langText } from "../../../../util/bhasha";
 
 const slugPart = (value) =>
-  String(value ?? "")
+  langText(value)
     .trim()
     .replace(/\s+/g, "_")
     .replace(/[^a-zA-Z0-9]/g, "") || "na";
@@ -48,7 +56,7 @@ const buildYuvaPhotoName = (yuva) =>
       : "na"
   }`;
 
-const otherObjectToFields = (other) => {
+const otherObjectToFields = (other, otherGu = {}) => {
   if (!other || typeof other !== "object" || Array.isArray(other)) {
     return [];
   }
@@ -57,6 +65,10 @@ const otherObjectToFields = (other) => {
     .map(([title, description]) => ({
       title: String(title).replace(/_/g, " "),
       description: String(description ?? ""),
+      titleGu: "",
+      descriptionGu: String(
+        otherGu?.[title] ?? otherGu?.[String(title).replace(/_/g, " ")] ?? ""
+      ),
     }));
 };
 
@@ -80,6 +92,30 @@ const higherEducation = [
   "OTHER",
 ];
 
+const fieldsToOtherGuObject = (list = [], draft) => {
+  const rows = [...list];
+  const draftTitle = String(draft?.title || "").trim();
+  const draftDescriptionGu = String(
+    draft?.descriptionGu || draft?.description || ""
+  ).trim();
+  if (draftTitle && draftDescriptionGu) {
+    rows.push({
+      title: draftTitle,
+      descriptionGu: draftDescriptionGu,
+    });
+  }
+  return rows.reduce((acc, item) => {
+    const title = String(item?.title || "").trim();
+    const descriptionGu = String(
+      item?.descriptionGu || item?.description || ""
+    ).trim();
+    if (title && descriptionGu) {
+      acc[title.replace(/\s+/g, "_")] = descriptionGu;
+    }
+    return acc;
+  }, {});
+};
+
 const fieldsToOtherObject = (list = [], draft) => {
   const rows = [...list];
   const draftTitle = String(draft?.title || "").trim();
@@ -101,6 +137,7 @@ const AddYuva = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { language, t } = useFormLanguage();
   const { loading, country, state, region, district, city, samaj, surname, auth } =
     UseRedux();
   const selectArr = [
@@ -140,6 +177,8 @@ const AddYuva = () => {
   const [newField, setNewField] = useState({
     title: "",
     description: "",
+    titleGu: "",
+    descriptionGu: "",
   });
   const [isLocation, setIsLocation] = useState({
     country: false,
@@ -189,7 +228,7 @@ const AddYuva = () => {
         : [];
     return source.map((item) => ({
       ...item,
-      label: item.name,
+      label: masterNameText(item, language) || item.label,
       value: item.id,
     }));
   };
@@ -249,14 +288,13 @@ const AddYuva = () => {
       case "surname":
         surname.forEach((data) => {
           if (location?.state?.data?.lastName === data.id) {
-            // setFieldValue("lastName", data.name);
-            setSelectedLastName(data.name);
+            setSelectedLastName(masterNameText(data));
           }
           if (location?.state?.data?.mamaInfo?.lastName === data.id) {
-            setSelectedMamaLastName(data.name);
+            setSelectedMamaLastName(masterNameText(data));
           }
           if (location?.state?.data?.contactInfo?.lastName === data.id) {
-            setSelectedContactLastName(data.name);
+            setSelectedContactLastName(masterNameText(data));
           }
         });
         break;
@@ -266,7 +304,7 @@ const AddYuva = () => {
             .get(`/${field}/getInfo/${location?.state?.data?.native}`)
             .then((res) => {
               const native = Array.isArray(res.data) ? res.data[0] : res.data;
-              if (native?.name) setSelectedNative(native.name);
+              if (native?.name) setSelectedNative(masterNameText(native));
             })
             .catch(function (error) {
               console.log(error);
@@ -277,7 +315,7 @@ const AddYuva = () => {
             .get(`/${field}/getInfo/${location?.state?.data?.mamaInfo?.native}`)
             .then((res) => {
               const native = Array.isArray(res.data) ? res.data[0] : res.data;
-              if (native?.name) setSelectedMamaNative(native.name);
+              if (native?.name) setSelectedMamaNative(masterNameText(native));
             })
             .catch(function (error) {
               console.log(error);
@@ -289,7 +327,7 @@ const AddYuva = () => {
         country.forEach((data) => {
           if (location?.state?.data?.country === data.id) {
             // setFieldValue("country", data.name);
-            setSelectedCountry(data.name);
+            setSelectedCountry(masterNameText(data));
             setIsLocation((pre) => ({ ...pre, country: true }));
           }
         });
@@ -298,7 +336,7 @@ const AddYuva = () => {
         state.forEach((data) => {
           if (location?.state?.data?.state === data.id) {
             // setFieldValue("state", data.name);
-            setSelectedState(data.name);
+            setSelectedState(masterNameText(data));
             setIsLocation((pre) => ({ ...pre, state: true }));
             getListById("state", location?.state?.data?.country);
           }
@@ -308,7 +346,7 @@ const AddYuva = () => {
         region.forEach((data) => {
           if (location?.state?.data?.region === data.id) {
             // setFieldValue("region", data.name);
-            setSelectedRegion(data.name);
+            setSelectedRegion(masterNameText(data));
             setIsLocation((pre) => ({ ...pre, region: true }));
             getListById("region", location?.state?.data?.state);
           }
@@ -318,7 +356,7 @@ const AddYuva = () => {
         district.forEach((data) => {
           if (location?.state?.data?.district === data.id) {
             // setFieldValue("district", data.name);
-            setSelectedDistrict(data.name);
+            setSelectedDistrict(masterNameText(data));
             setIsLocation((pre) => ({ ...pre, district: true }));
             getListById("district", location?.state?.data?.region);
           }
@@ -328,7 +366,7 @@ const AddYuva = () => {
         city.forEach((data) => {
           if (location?.state?.data?.city === data.id) {
             // setFieldValue("city", data.name);
-            setSelectedCity(data.name);
+            setSelectedCity(masterNameText(data));
             setIsLocation((pre) => ({ ...pre, city: true }));
             getListById("city", location?.state?.data?.district);
           }
@@ -338,7 +376,7 @@ const AddYuva = () => {
         getSamajList(location?.state?.data?.city);
         samaj.forEach((data) => {
           if (location?.state?.data?.localSamaj === data.id) {
-            setSelectedSamaj(data.name);
+            setSelectedSamaj(masterNameText(data));
           }
         });
         break;
@@ -445,12 +483,12 @@ const AddYuva = () => {
       localSamaj: "",
     },
     onSubmit: async (values) => {
-      const newValue = {
-        ...values,
+      const newValue = toEnGuPayload(values, {
         other: fieldsToOtherObject(newFieldList, newField),
-      };
+        otherGu: fieldsToOtherGuObject(newFieldList, newField),
+      });
       if (location?.state) {
-        updateAPIHandler(newValue);
+        updateAPIHandler({ ...newValue, id: values.id });
       } else {
         addYuvaListHandler(newValue);
       }
@@ -503,11 +541,9 @@ const AddYuva = () => {
           .required("Contact Last Name Is Required"),
         relation: Yup.string().required("Contact Relation Is Required"),
         phone: Yup.string()
-          .matches(
-            "^(\\+\\d{1,3}[- ]?)?\\d{10}$",
-            "Enter a valid phone number"
-          )
-          .required("Contact Phone Number Is Required"),
+          .transform((value) => String(value ?? "").replace(/\D/g, ""))
+          .required("Contact Phone Number Is Required")
+          .matches(/^[0-9]{10}$/, "Enter a valid 10-digit phone number"),
       }),
       mamaInfo: Yup.object({
         name: Yup.string().required("Mama Name Is Required"),
@@ -599,13 +635,23 @@ const AddYuva = () => {
   };
 
   const addFieldHandler = () => {
-    const title = String(newField?.title || "").trim();
-    const description = String(newField?.description || "").trim();
+    const title = String(newField?.title || newField?.titleGu || "").trim();
+    const description = String(
+      newField?.description || newField?.descriptionGu || ""
+    ).trim();
     if (!title || !description) {
       return;
     }
-    setNewFieldList((prevState) => [...prevState, { title, description }]);
-    setNewField({ title: "", description: "" });
+    setNewFieldList((prevState) => [
+      ...prevState,
+      {
+        title,
+        description,
+        titleGu: newField?.titleGu || "",
+        descriptionGu: newField?.descriptionGu || "",
+      },
+    ]);
+    setNewField({ title: "", description: "", titleGu: "", descriptionGu: "" });
   };
   const removeFieldHandler = (index) => {
     const filterList = newFieldList.filter((item, i) => i !== index);
@@ -624,11 +670,13 @@ const AddYuva = () => {
   useEffect(() => {
     if (location?.state) {
       setIsEdit(true);
+      const { gu: _ignoredGu, ...record } = location.state.data || {};
+      const flat = flattenYuvaForm(record);
       setValues({
         ...values,
-        ...location?.state?.data,
+        ...flat,
         profileName: location?.state?.data?.profile?.name,
-        other: location?.state?.data?.other || {},
+        other: flat.other || {},
         education:
           location?.state?.data?.education &&
           typeof location?.state?.data?.education === "object"
@@ -638,8 +686,10 @@ const AddYuva = () => {
                 fieldOfStudy: location?.state?.data?.fieldOfStudy || "",
               },
       });
-      setNewFieldList(otherObjectToFields(location?.state?.data?.other));
-      setNewField({ title: "", description: "" });
+      setNewFieldList(
+        otherObjectToFields(flat.other, flat.otherGu)
+      );
+      setNewField({ title: "", description: "", titleGu: "", descriptionGu: "" });
       selectArr.forEach((data) => {
         selectedValueSetName(data);
       });
@@ -667,7 +717,7 @@ const AddYuva = () => {
           String(item?._id) === key ||
           String(item?.uuid) === key
       );
-      return found?.name || found?.label || "";
+      return found?.label || masterNameText(found, language) || "";
     };
     const nativeName = matchName(location?.state?.data?.native || values?.native);
     const mamaName = matchName(
@@ -728,18 +778,75 @@ const AddYuva = () => {
     navigate,
   ]);
 
+  const maritalOptions = labeledOptions(language, "marital", [
+    "single",
+    "engaged",
+    "married",
+    "divorce",
+    "seprated",
+    "widow",
+    "widower",
+  ]);
+  const activityOptions = labeledOptions(language, "activity", [
+    "abroad",
+    "business",
+    "child",
+    "farming",
+    "house hold",
+    "house wife",
+    "job seeker",
+    "job/service",
+    "retired",
+    "self employed",
+    "study",
+  ]);
+  const educationOptions = [
+    "1st std",
+    "2nd std",
+    "3rd std",
+    "4th std",
+    "5th std",
+    "6th std",
+    "7th std",
+    "8th std",
+    "9th std",
+    "10th std (SSC)",
+    "11th std",
+    "12th std (HSC)",
+    "Diploma",
+    "Graduate",
+    "Post Graduate",
+    "PHD",
+    "OTHER",
+  ];
+  const relationOptions = labeledOptions(language, "relation", [
+    "Grandfather",
+    "Grandmother",
+    "Father",
+    "Mother",
+    "Uncle",
+    "Aunty",
+    "Brother",
+    "Sister",
+    "Fai",
+    "Fuva",
+    "Mama",
+    "Mami",
+    "Masa",
+    "Masi",
+    "Guardian",
+  ]);
+
   return (
-    <Box>
+    <Box className={language === "gu" ? "form-lang-gu" : ""}>
       <Header backBtn={true} btnAction="/dashboard" />
       <ContainerPage
         className={"flex-col justify-center flex items-start pb-6"}
       >
         <PageHeader
           className="w-full"
-          title={isEdit ? "Edit Yuva" : "Add Yuva"}
-          description={
-            isEdit ? "Update this yuva record." : "Create a new yuva record."
-          }
+          title={isEdit ? t("editYuva") : t("addYuva")}
+          description={isEdit ? t("editYuvaDesc") : t("addYuvaDesc")}
         />
         <FormikProvider value={formik}>
           <Form>
@@ -747,7 +854,7 @@ const AddYuva = () => {
               {isEdit ? (
                 <Card className="w-full">
                   <h2 className="text-base font-WorkSemiBold text-primary mb-5 pb-3 border-b border-line">
-                    Photo
+                    {t("photo")}
                   </h2>
                   <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5">
                     {loading ? (
@@ -779,16 +886,16 @@ const AddYuva = () => {
                     )}
                     <div className="text-center sm:text-left min-w-0">
                       <p className="text-sm font-semibold text-primary">
-                        Profile photo
+                        {t("profilePhoto")}
                       </p>
                       <p className="text-sm text-mutedText mt-1">
-                        Click the photo to upload a new image.
+                        {t("photoHint")}
                       </p>
                       <label
                         htmlFor="upload-button"
                         className="inline-flex mt-3 text-sm font-semibold text-primary underline underline-offset-4 cursor-pointer"
                       >
-                        Change photo
+                        {t("changePhoto")}
                       </label>
                     </div>
                     <input
@@ -814,98 +921,90 @@ const AddYuva = () => {
                   )}
                 </Card>
               ) : null}
-              <FormSection title="Personal info">
+              <FormSection title={t("personalInfo")}>
                 <Grid container spacing={2}>
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Name"}
-                    placeholder={"Enter Your Name"}
-                    name={"firstName"}
+                    label={t("firstName")}
+                    placeholder={t("firstNamePh")}
+                    enName={"firstName"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.firstName}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
                     errors={
                       touched?.firstName &&
                       errors?.firstName &&
                       errors?.firstName
                     }
+                    onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Father Name"}
-                    placeholder={"Enter Your Father Name"}
-                    name={"fatherName"}
+                    label={t("fatherName")}
+                    placeholder={t("fatherNamePh")}
+                    enName={"fatherName"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.fatherName}
                     errors={
                       touched?.fatherName &&
                       errors?.fatherName &&
                       errors?.fatherName
                     }
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Grand Father Name"}
-                    placeholder={"Enter Your Grand Father Name"}
-                    name={"grandFatherName"}
+                    label={t("grandFatherName")}
+                    placeholder={t("grandFatherNamePh")}
+                    enName={"grandFatherName"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.grandFatherName}
                     errors={
                       touched?.grandFatherName &&
                       errors?.grandFatherName &&
                       errors?.grandFatherName
                     }
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={lastNameList}
-                    label={"Last Name"}
-                    placeholder={"Select Your Last Name"}
+                    label={t("lastName")}
+                    placeholder={t("lastNamePh")}
                     name="lastName"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedLastName}
+                    value={values.lastName}
                     errors={
                       touched.lastName && errors.lastName && errors.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("lastName", lastName?.id || lastName?.value || lastName?._id || "");
-                      setSelectedLastName(lastName || null);
+                      setFieldValue("lastName", lastName?.id || lastName?.value || "");
+                      setSelectedLastName(lastName);
                     }}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Mother Name"}
-                    placeholder={"Enter Your Mother Name"}
-                    name={"motherName"}
+                    label={t("motherName")}
+                    placeholder={t("motherNamePh")}
+                    enName={"motherName"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.motherName}
                     errors={
                       touched?.motherName &&
                       errors?.motherName &&
                       errors?.motherName
                     }
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomInput
                     type={"text"}
-                    label={"Family ID"}
-                    placeholder={"Enter Your Family ID"}
+                    label={t("familyId")}
+                    placeholder={t("familyIdPh")}
                     name={"familyId"}
                     xs={12}
                     sm={6}
@@ -919,10 +1018,10 @@ const AddYuva = () => {
                   />
                   <CustomRadio
                     list={[
-                      { label: "Male", value: "male" },
-                      { label: "Female", value: "female" },
+                      { label: t("male"), value: "male" },
+                      { label: t("female"), value: "female" },
                     ]}
-                    label={"Gender"}
+                    label={t("gender")}
                     name={"gender"}
                     xs={12}
                     sm={6}
@@ -938,8 +1037,8 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    placeholder="Date and Time of Birth"
-                    label={"Date of birth"}
+                    placeholder={t("dobPh")}
+                    label={t("dob")}
                     value={values?.dob}
                     errors={
                       (touched?.dob || submitCount > 0) &&
@@ -952,162 +1051,158 @@ const AddYuva = () => {
                       setFieldTouched("dob", true);
                     }}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Birth Place"}
-                    placeholder={"Enter Your Birth Place"}
-                    name={"pob"}
+                    label={t("pob")}
+                    placeholder={t("pobPh")}
+                    enName={"pob"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.pob}
                     required={false}
                     errors={touched?.pob && errors?.pob && errors?.pob}
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={nativeList}
-                    label={"Native"}
-                    placeholder={"Select Your Native"}
+                    label={t("native")}
+                    placeholder={t("nativePh")}
                     name="native"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.native || selectedNative}
+                    value={values.native}
                     errors={touched.native && errors.native && errors.native}
                     onChange={(e, native) => {
                       setFieldValue(
                         "native",
                         native?.id || native?.value || native?._id || native?.uuid || ""
                       );
-                      setSelectedNative(native?.name || native || null);
+                      setSelectedNative(native || null);
                     }}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Firm"}
-                    placeholder={"Enter Your Firm"}
-                    name={"firm"}
+                    label={t("firm")}
+                    placeholder={t("firmPh")}
+                    enName={"firm"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.firm}
                     errors={touched?.firm && errors?.firm && errors?.firm}
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={countryList}
-                    label={"Country"}
-                    placeholder={"Select Your Country"}
+                    label={t("country")}
+                    placeholder={t("countryPh")}
                     name={"country"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedCountry}
+                    value={values.country}
                     errors={
                       touched?.country && errors?.country && errors?.country
                     }
                     onSelect={handleChange}
                     onChange={(e, country) => {
-                      setFieldValue("country", country.id);
-                      setSelectedCountry(country.name);
-                      setIsLocation((pre) => ({ ...pre, country: true }));
-                      getListById("state", country.id);
+                      setFieldValue("country", country?.id || "");
+                      setSelectedCountry(country || null);
+                      setIsLocation((pre) => ({ ...pre, country: Boolean(country?.id) }));
+                      if (country?.id) getListById("state", country.id);
                     }}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
                     list={stateList}
-                    label={"State"}
-                    placeholder={"Select Your State"}
+                    label={t("state")}
+                    placeholder={t("statePh")}
                     name={"state"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedState}
+                    value={values.state}
                     errors={touched?.state && errors?.state && errors?.state}
                     onChange={(e, state) => {
-                      setFieldValue("state", state.id);
-                      setSelectedState(state.name);
-                      setIsLocation((pre) => ({ ...pre, state: true }));
-                      getListById("region", state.id);
+                      setFieldValue("state", state?.id || "");
+                      setSelectedState(state || null);
+                      setIsLocation((pre) => ({ ...pre, state: Boolean(state?.id) }));
+                      if (state?.id) getListById("region", state.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.country}
                   />
                   <CustomAutoComplete
                     list={regionList}
-                    label={"Region"}
-                    placeholder={"Select Your Region"}
+                    label={t("region")}
+                    placeholder={t("regionPh")}
                     name={"region"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedRegion}
+                    value={values.region}
                     errors={touched?.region && errors?.region && errors?.region}
                     onChange={(e, region) => {
-                      setFieldValue("region", region.id);
-                      setSelectedRegion(region.name);
-                      setIsLocation((pre) => ({ ...pre, region: true }));
-                      getListById("district", region.id);
+                      setFieldValue("region", region?.id || "");
+                      setSelectedRegion(region || null);
+                      setIsLocation((pre) => ({ ...pre, region: Boolean(region?.id) }));
+                      if (region?.id) getListById("district", region.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.state}
                   />
                   <CustomAutoComplete
                     list={districtList}
-                    label={"District"}
-                    placeholder={"Select Your District"}
+                    label={t("district")}
+                    placeholder={t("districtPh")}
                     name={"district"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedDistrict}
+                    value={values.district}
                     errors={
                       touched?.district && errors?.district && errors?.district
                     }
                     onChange={(e, district) => {
-                      setFieldValue("district", district.id);
-                      setSelectedDistrict(district.name);
-                      setIsLocation((pre) => ({ ...pre, district: true }));
-                      getListById("city", district.id);
+                      setFieldValue("district", district?.id || "");
+                      setSelectedDistrict(district || null);
+                      setIsLocation((pre) => ({ ...pre, district: Boolean(district?.id) }));
+                      if (district?.id) getListById("city", district.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.region}
                   />
                   <CustomAutoComplete
                     list={cityList}
-                    label={"City"}
-                    placeholder={"Select Your City"}
+                    label={t("city")}
+                    placeholder={t("cityPh")}
                     name={"city"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedCity}
+                    value={values.city}
                     errors={touched?.city && errors?.city && errors?.city}
                     onChange={(e, city) => {
-                      setFieldValue("city", city.id);
-                      setSelectedCity(city.name);
-                      setIsLocation((pre) => ({ ...pre, city: true }));
+                      setFieldValue("city", city?.id || "");
+                      setSelectedCity(city || null);
+                      setIsLocation((pre) => ({ ...pre, city: Boolean(city?.id) }));
                       setFieldValue("localSamaj", "");
                       setSelectedSamaj(null);
-                      getSamajList(city.id);
+                      if (city?.id) getSamajList(city.id);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.district}
                   />
                   <CustomAutoComplete
                     list={samajList}
-                    label={"Local Samaj"}
-                    placeholder={"Select Your Samaj"}
+                    label={t("localSamaj")}
+                    placeholder={t("localSamajPh")}
                     name={"localSamaj"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedSamaj}
+                    value={values.localSamaj}
                     errors={
                       touched?.localSamaj &&
                       errors?.localSamaj &&
@@ -1115,57 +1210,45 @@ const AddYuva = () => {
                     }
                     disabled={!isLocation.city}
                     onChange={(e, localSamaj) => {
-                      setFieldValue("localSamaj", localSamaj.id);
-                      setSelectedSamaj(localSamaj.name);
+                      setFieldValue("localSamaj", localSamaj?.id || "");
+                      setSelectedSamaj(localSamaj || null);
                     }}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Address"}
-                    placeholder={"Enter Your Address"}
-                    name={"address"}
+                    label={t("address")}
+                    placeholder={t("addressPh")}
+                    enName={"address"}
                     multiline={true}
                     xs={12}
                     sm={6}
                     md={6}
-                    value={values?.address}
                     errors={
                       touched?.address && errors?.address && errors?.address
                     }
-                    onChange={handleChange}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Firm Address"}
-                    placeholder={"Enter Your Firm Address"}
-                    name={"firmAddress"}
+                    label={t("firmAddress")}
+                    placeholder={t("firmAddressPh")}
+                    enName={"firmAddress"}
                     multiline={true}
                     xs={12}
                     sm={6}
                     md={6}
-                    value={values?.firmAddress}
                     errors={
                       touched?.firmAddress &&
                       errors?.firmAddress &&
                       errors?.firmAddress
                     }
                     onBlur={handleBlur}
-                    onChange={handleChange}
                   />
                   <CustomSelect
-                    list={[
-                      "divorce",
-                      "engaged",
-                      "married",
-                      "seprated",
-                      "single",
-                      "widow",
-                      "widower",
-                    ]}
-                    label={"Marital Status"}
-                    placeholder={"Select Marital Status"}
+                    list={maritalOptions}
+                    label={t("maritalStatus")}
+                    placeholder={t("maritalStatusPh")}
                     name={"martialStatus"}
                     xs={12}
                     sm={6}
@@ -1181,8 +1264,8 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"Height (ft)"}
-                    placeholder={"Enter Your Height"}
+                    label={t("height")}
+                    placeholder={t("heightPh")}
                     name={"height"}
                     xs={12}
                     sm={6}
@@ -1194,8 +1277,8 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"Weight (kg)"}
-                    placeholder={"Enter Your Weight"}
+                    label={t("weight")}
+                    placeholder={t("weightPh")}
                     name={"weight"}
                     xs={12}
                     sm={6}
@@ -1206,21 +1289,9 @@ const AddYuva = () => {
                     onBlur={handleBlur}
                   />
                   <CustomSelect
-                    list={[
-                      "abroad",
-                      "business",
-                      "child",
-                      "farming",
-                      "house hold",
-                      "house wife",
-                      "job seeker",
-                      "job/service",
-                      "retired",
-                      "self employed",
-                      "study",
-                    ]}
-                    label={"Activity"}
-                    placeholder={"Enter Your Activity"}
+                    list={activityOptions}
+                    label={t("activity")}
+                    placeholder={t("activityPh")}
                     name={"activity"}
                     xs={12}
                     sm={6}
@@ -1269,8 +1340,8 @@ const AddYuva = () => {
                       "O+",
                       "O-",
                     ]}
-                    label={"Blood Group"}
-                    placeholder={"Enter Your Blood Group"}
+                    label={t("bloodGroup")}
+                    placeholder={t("bloodGroupPh")}
                     name={"bloodGroup"}
                     xs={12}
                     sm={6}
@@ -1287,8 +1358,8 @@ const AddYuva = () => {
                   />
                   <CustomInput
                     type={"text"}
-                    label={"YSK No."}
-                    placeholder={"Enter Your YSK No."}
+                    label={t("yskNo")}
+                    placeholder={t("yskNoPh")}
                     name={"YSKno"}
                     xs={12}
                     sm={6}
@@ -1303,24 +1374,17 @@ const AddYuva = () => {
                   />
                 </Grid>
               </FormSection>
-              <FormSection title="Mama info">
+              <FormSection title={t("mamaInfo")}>
                 <Grid container spacing={2}>
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Mama Name"}
-                    placeholder={"Enter Your Name"}
-                    name={"name"}
+                    label={t("mamaName")}
+                    placeholder={t("mamaNamePh")}
+                    enName={"mamaInfo.name"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.mamaInfo?.name}
                     required={false}
-                    onChange={(e) =>
-                      setFieldValue("mamaInfo", {
-                        ...values?.mamaInfo,
-                        name: e.target.value,
-                      })
-                    }
                     onBlur={handleBlur}
                     errors={
                       touched?.mamaInfo?.name &&
@@ -1330,13 +1394,13 @@ const AddYuva = () => {
                   />
                   <CustomAutoComplete
                     list={lastNameList}
-                    label={"Mama Last Name"}
-                    placeholder={"Select Your Last Name"}
+                    label={t("mamaLastName")}
+                    placeholder={t("mamaLastNamePh")}
                     name="lastName"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedMamaLastName}
+                    value={values?.mamaInfo?.lastName}
                     errors={
                       touched?.mamaInfo?.lastName &&
                       errors?.mamaInfo?.lastName &&
@@ -1345,8 +1409,7 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName:
-                          lastName?.id || lastName?.value || lastName?._id || "",
+                        lastName: lastName?.id || lastName?.value || "",
                       });
                       setSelectedMamaLastName(lastName || null);
                     }}
@@ -1354,13 +1417,13 @@ const AddYuva = () => {
                   />
                   <CustomAutoComplete
                     list={nativeList}
-                    label={"Mama Native"}
-                    placeholder={"Select Your Native"}
+                    label={t("mamaNative")}
+                    placeholder={t("mamaNativePh")}
                     name="mamaInfo.native"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.mamaInfo?.native || selectedMamaNative}
+                    value={values?.mamaInfo?.native}
                     errors={
                       touched?.mamaInfo?.native &&
                       errors?.mamaInfo?.native &&
@@ -1376,74 +1439,55 @@ const AddYuva = () => {
                           native?.uuid ||
                           "",
                       });
-                      setSelectedMamaNative(native?.name || native || null);
+                      setSelectedMamaNative(native || null);
                     }}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Mama City"}
-                    placeholder={"Enter Your City"}
-                    name={"city"}
+                    label={t("mamaCity")}
+                    placeholder={t("mamaCityPh")}
+                    enName={"mamaInfo.city"}
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values?.mamaInfo.city}
                     required={false}
-                    onChange={(e) =>
-                      setFieldValue("mamaInfo", {
-                        ...values?.mamaInfo,
-                        city: e.target.value,
-                      })
-                    }
-                    onBlur={handleBlur}
                     errors={
                       touched?.mamaInfo?.city &&
                       errors?.mamaInfo?.city &&
                       errors?.mamaInfo?.city
                     }
+                    onBlur={handleBlur}
                   />
                 </Grid>
               </FormSection>
-              <FormSection title="Contact info">
+              <FormSection title={t("contactInfo")}>
                 <Grid container spacing={2}>
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Contact Person Name"}
-                    placeholder={"Enter Your Contact Person Name"}
-                    name={"contactInfo.name"}
+                    label={t("contactName")}
+                    placeholder={t("contactNamePh")}
+                    enName={"contactInfo.name"}
                     xs={12}
                     sm={6}
                     md={4}
                     required
-                    value={values?.contactInfo?.name}
                     errors={
                       (touched?.contactInfo?.name || submitCount > 0) &&
                       errors?.contactInfo?.name &&
                       errors?.contactInfo?.name
                     }
                     onBlur={handleBlur}
-                    onChange={(e) =>
-                      setFieldValue("contactInfo.name", e.target.value)
-                    }
                   />
                   <CustomAutoComplete
                     list={lastNameList}
-                    label={"Last Name"}
-                    placeholder={"Select Your Last Name"}
+                    label={t("contactLastName")}
+                    placeholder={t("contactLastNamePh")}
                     name="contactInfo.lastName"
                     xs={12}
                     sm={6}
                     md={4}
-                    value={
-                      lastNameList.find(
-                        (item) =>
-                          String(item.id) ===
-                            String(values?.contactInfo?.lastName) ||
-                          String(item.value) ===
-                            String(values?.contactInfo?.lastName)
-                      ) || selectedContactLastName
-                    }
+                    value={values?.contactInfo?.lastName}
                     errors={
                       (touched?.contactInfo?.lastName || submitCount > 0) &&
                       errors?.contactInfo?.lastName &&
@@ -1452,16 +1496,16 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue(
                         "contactInfo.lastName",
-                        lastName?.id || lastName?.value || lastName?._id || ""
+                        lastName?.id || lastName?.value || ""
                       );
                       setSelectedContactLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
                   <CustomInput
-                    type={"text"}
-                    label={"Contact Person Phone"}
-                    placeholder={"Enter Your Contact Person Phone"}
+                    type={"tel"}
+                    label={t("contactPhone")}
+                    placeholder={t("contactPhonePh")}
                     name={"contactInfo.phone"}
                     xs={12}
                     sm={6}
@@ -1474,30 +1518,21 @@ const AddYuva = () => {
                       errors?.contactInfo?.phone
                     }
                     onBlur={handleBlur}
-                    onChange={(e) =>
-                      setFieldValue("contactInfo.phone", e?.target?.value)
-                    }
+                    inputProps={{
+                      maxLength: 10,
+                      inputMode: "numeric",
+                    }}
+                    onChange={(e) => {
+                      const next = String(e?.target?.value || "")
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+                      setFieldValue("contactInfo.phone", next);
+                    }}
                   />
                   <CustomSelect
-                    list={[
-                      "Grandfather",
-                      "Grandmother",
-                      "Father",
-                      "Mother",
-                      "Uncle",
-                      "Aunty",
-                      "Brother",
-                      "Sister",
-                      "Fai",
-                      "Fuva",
-                      "Mama",
-                      "Mami",
-                      "Masa",
-                      "Masi",
-                      "Guardian",
-                    ]}
-                    label={"Relation"}
-                    placeholder={"Enter Your Relation"}
+                    list={relationOptions}
+                    label={t("relation")}
+                    placeholder={t("relationPh")}
                     name={"contactInfo.relation"}
                     xs={12}
                     sm={6}
@@ -1521,30 +1556,12 @@ const AddYuva = () => {
                   />
                 </Grid>
               </FormSection>
-              <FormSection title="Education">
+              <FormSection title={t("education")}>
                 <Grid container spacing={2}>
                   <CustomSelect
-                    list={[
-                      "1st std",
-                      "2nd std",
-                      "3rd std",
-                      "4th std",
-                      "5th std",
-                      "6th std",
-                      "7th std",
-                      "8th std",
-                      "9th std",
-                      "10th std (SSC)",
-                      "11th std",
-                      "12th std (HSC)",
-                      "Diploma",
-                      "Graduate",
-                      "Post Graduate",
-                      "PHD",
-                      "OTHER"
-                    ]}
-                    label={"Highest Education"}
-                    placeholder={"Select Your Primary Education"}
+                    list={educationOptions}
+                    label={t("highestEducation")}
+                    placeholder={t("highestEducationPh")}
                     name={"education.education"}
                     xs={12}
                     sm={6}
@@ -1556,11 +1573,12 @@ const AddYuva = () => {
                       errors?.education?.education &&
                       errors?.education?.education
                     }
-                    onBlur={() => setFieldTouched("education.education", true)}
+                    onBlur={() =>
+                      setFieldTouched("education.education", true, false)
+                    }
                     onChange={(e) => {
                       const education = e.target.value;
                       setFieldValue("education.education", education);
-                      setFieldTouched("education.education", true);
                       if (!higherEducation.includes(education)) {
                         setFieldValue("education.fieldOfStudy", "");
                       }
@@ -1569,8 +1587,8 @@ const AddYuva = () => {
                   {higherEducation.includes(values?.education?.education) ? (
                     <CustomInput
                       type={"text"}
-                      label={"Field of Study"}
-                      placeholder={"Enter Field of Study"}
+                      label={t("fieldOfStudy")}
+                      placeholder={t("fieldOfStudyPh")}
                       name={"education.fieldOfStudy"}
                       xs={12}
                       sm={6}
@@ -1588,10 +1606,10 @@ const AddYuva = () => {
                   ) : null}
                 </Grid>
               </FormSection>
-              <FormSection title="Handicap Info">
+              <FormSection title={t("handicapInfo")}>
                 <Grid container spacing={2}>
                   <CustomCheckbox
-                    label={"Handicap"}
+                    label={t("handicap")}
                     name={"handicap"}
                     xs={12}
                     sm={12}
@@ -1609,58 +1627,70 @@ const AddYuva = () => {
                     }}
                     onBlur={handleBlur}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Handicap Details"}
-                    placeholder={"Enter Handicap Details"}
-                    name={"handicapDetails"}
+                    label={t("handicapDetails")}
+                    placeholder={t("handicapDetailsPh")}
+                    enName={"handicapDetails"}
                     multiline={true}
                     xs={12}
                     sm={12}
                     md={12}
-                    value={values?.handicapDetails}
                     required={Boolean(values?.handicap)}
                     errors={
                       touched?.handicapDetails &&
                       errors?.handicapDetails &&
                       errors?.handicapDetails
                     }
-                    onChange={(e) => {
-                      setFieldValue("handicapDetails", e.target.value);
-                    }}
                     onBlur={handleBlur}
                     disabled={!values.handicap}
                   />
                 </Grid>
               </FormSection>
-              <FormSection title="Other Info">
+              <FormSection title={t("otherInfo")}>
                 <Grid container spacing={2}>
                   {newFieldList?.map((item, index) => {
                     return (
                       <>
-                        <CustomInput
+                        <BilingualInput
                           type={"text"}
-                          label={"Title"}
-                          placeholder={"Enter Your Title"}
-                          name={item?.title}
+                          label={t("title")}
+                          placeholder={t("titlePh")}
+                          enName={`other-title-${index}`}
+                          standalone
+                          enValue={item?.title}
+                          guValue={item?.titleGu}
                           xs={12}
                           sm={5}
-                          value={item?.title}
-                          onChange={(e) =>
-                            newFieldValueHandler(e, index, "title")
-                          }
+                          onValuesChange={({ en, gu }) => {
+                            const clone = [...newFieldList];
+                            clone[index] = {
+                              ...clone[index],
+                              title: en,
+                              titleGu: gu,
+                            };
+                            setNewFieldList(clone);
+                          }}
                         />
-                        <CustomInput
+                        <BilingualInput
                           type={"text"}
-                          label={"Description"}
-                          placeholder={"Enter Your Description"}
-                          name={item?.description}
+                          label={t("description")}
+                          placeholder={t("descriptionPh")}
+                          enName={`other-description-${index}`}
+                          standalone
+                          enValue={item?.description}
+                          guValue={item?.descriptionGu}
                           xs={12}
                           sm={6}
-                          value={item?.description}
-                          onChange={(e) =>
-                            newFieldValueHandler(e, index, "description")
-                          }
+                          onValuesChange={({ en, gu }) => {
+                            const clone = [...newFieldList];
+                            clone[index] = {
+                              ...clone[index],
+                              description: en,
+                              descriptionGu: gu,
+                            };
+                            setNewFieldList(clone);
+                          }}
                         />
                         <Grid
                           item
@@ -1679,37 +1709,43 @@ const AddYuva = () => {
                       </>
                     );
                   })}
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Title"}
-                    placeholder={"Enter Your Title"}
-                    name={"title"}
+                    label={t("title")}
+                    placeholder={t("titlePh")}
+                    enName={"other-title-draft"}
+                    standalone
+                    enValue={newField?.title}
+                    guValue={newField?.titleGu}
                     xs={12}
                     sm={5}
-                    value={newField?.title}
-                    onChange={(e) =>
+                    required={false}
+                    onValuesChange={({ en, gu }) =>
                       setNewField((pre) => ({
                         ...pre,
-                        title: e?.target?.value,
+                        title: en,
+                        titleGu: gu,
                       }))
                     }
-                    required={false}
                   />
-                  <CustomInput
+                  <BilingualInput
                     type={"text"}
-                    label={"Description"}
-                    placeholder={"Enter Your Description"}
-                    name={"description"}
+                    label={t("description")}
+                    placeholder={t("descriptionPh")}
+                    enName={"other-description-draft"}
+                    standalone
+                    enValue={newField?.description}
+                    guValue={newField?.descriptionGu}
                     xs={12}
                     sm={6}
-                    value={newField?.description}
-                    onChange={(e) => {
+                    required={false}
+                    onValuesChange={({ en, gu }) =>
                       setNewField((pre) => ({
                         ...pre,
-                        description: e.target.value,
-                      }));
-                    }}
-                    required={false}
+                        description: en,
+                        descriptionGu: gu,
+                      }))
+                    }
                   />
                   <Grid
                     item
@@ -1727,14 +1763,14 @@ const AddYuva = () => {
                   </Grid>
                 </Grid>
               </FormSection>
-              <div className="flex flex-col-reverse md:flex-row justify-end gap-2 md:gap-3 pt-1">
+              <div className="flex flex-col-reverse md:flex-row justify-start gap-2 md:gap-3 pt-1">
                 <ActionButton
                   type="button"
                   variant="secondary"
                   className="w-full md:w-auto"
                   onClick={() => navigate("/admin/yuvalist")}
                 >
-                  Cancel
+                  {t("cancel")}
                 </ActionButton>
                 <ActionButton
                   type={"submit"}
@@ -1742,21 +1778,22 @@ const AddYuva = () => {
                   disabled={isSubmitting}
                   loading={loading}
                 >
-                  {isEdit ? "Update Yuva" : "Add New Yuva"}
+                  {isEdit ? t("updateYuva") : t("addNewYuva")}
                 </ActionButton>
               </div>
             </div>
           </Form>
         </FormikProvider>
       </ContainerPage>
+      <LanguageSwitcher />
       <FormModal
         open={showProfileModal}
         onClose={goToYuvaList}
-        title="Yuva created successfully"
+        title={t("createdTitle")}
         maxWidth="520px"
       >
           <p className={"text-sm text-gray-600 mb-4"}>
-            Upload a profile photo to finish.
+            {t("createdHint")}
           </p>
           <label htmlFor="created-yuva-upload" className="w-fit mx-auto block">
             {loading ? (
@@ -1792,7 +1829,7 @@ const AddYuva = () => {
               fullWidth
               onClick={goToYuvaList}
             >
-              Skip for now
+              {t("skip")}
             </ActionButton>
             <ActionButton
               fullWidth
@@ -1800,7 +1837,7 @@ const AddYuva = () => {
               disabled={!selectedPhoto || loading}
               loading={loading}
             >
-              Upload Photo
+              {t("uploadPhoto")}
             </ActionButton>
           </div>
       </FormModal>
@@ -1808,4 +1845,12 @@ const AddYuva = () => {
   );
 };
 
-export default AddYuva;
+const AddYuvaPage = () => {
+  return (
+    <FormLanguageProvider defaultLanguage="en">
+      <AddYuva />
+    </FormLanguageProvider>
+  );
+};
+
+export default AddYuvaPage;

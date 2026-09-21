@@ -4,6 +4,7 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import LoadableImage from "./LoadableImage";
+import { asDisplayText } from "../../util/bhasha";
 
 const ProfileCard = ({
   name,
@@ -20,9 +21,17 @@ const ProfileCard = ({
   onToggleShortlist,
 }) => {
   const fullName = [name, mother, father, surname]
-    .filter((part) => part && String(part).trim())
+    .map((part) => asDisplayText(part))
+    .filter(Boolean)
     .join(" ");
   const bornDate = dob ? String(dob).split(",")[0].trim() : "";
+  const locationText = asDisplayText(location);
+  const firmText = asDisplayText(firm);
+  const ageNum = Number(age);
+  const ageText =
+    Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 120
+      ? `${ageNum} yrs`
+      : "";
 
   return (
     <div
@@ -71,22 +80,22 @@ const ProfileCard = ({
       </div>
       <div className="px-3.5 pt-3.5 pb-3.5 flex flex-col flex-1 min-w-0">
         <h2 className="text-[15px] font-semibold text-primary leading-snug line-clamp-2">
-          {fullName}
+          {fullName || "—"}
         </h2>
         <p className="mt-2 text-sm text-mutedText flex items-start gap-1.5 min-w-0">
           <PlaceOutlinedIcon
             sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}
           />
           <span className="truncate">
-            {location || "—"}
-            {age || age === 0 ? ` · ${age} yrs` : ""}
+            {locationText || "—"}
+            {ageText ? ` · ${ageText}` : ""}
           </span>
         </p>
         <p className="mt-1.5 text-sm text-primary flex items-start gap-1.5 min-w-0">
           <WorkOutlineIcon
             sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}
           />
-          <span className="truncate">{firm || "—"}</span>
+          <span className="truncate">{firmText || "—"}</span>
         </p>
         <div className="mt-auto pt-3 border-t border-line flex items-center justify-between gap-2">
           <span className="text-xs text-mutedText truncate">

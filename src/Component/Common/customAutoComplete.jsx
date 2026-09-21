@@ -1,12 +1,23 @@
 import * as React from "react";
 import { Grid, styled, TextField, Autocomplete } from "@mui/material";
 import { fieldControlCss } from "../UI/fieldStyles";
+import { masterNameText } from "../../util/bhasha";
+import { useFormLanguage } from "../../context/FormLanguageContext";
 
 const optionIdOf = (option) => {
   if (option == null || option === "") return "";
   if (typeof option !== "object") return String(option);
-  const id = option.id ?? option.value ?? option._id;
+  const id = option.uuid ?? option.id ?? option.value ?? option._id;
   return id == null ? "" : String(id);
+};
+
+const optionMatchesQuery = (option, query) => {
+  const q = String(query || "").trim().toLowerCase();
+  if (!q) return true;
+  return (
+    masterNameText(option, "en").toLowerCase().includes(q) ||
+    masterNameText(option, "gu").toLowerCase().includes(q)
+  );
 };
 
 const resolveOption = (list, value) => {
@@ -14,20 +25,16 @@ const resolveOption = (list, value) => {
   const rows = Array.isArray(list) ? list : [];
   if (typeof value === "object") {
     const selectedId = optionIdOf(value);
-    return (
-      rows.find((item) => optionIdOf(item) === selectedId) ||
-      value
-    );
+    return rows.find((item) => optionIdOf(item) === selectedId) || value;
   }
   const key = String(value);
   return (
+    rows.find((item) => optionIdOf(item) === key) ||
     rows.find(
       (item) =>
-        optionIdOf(item) === key ||
-        String(item?.uuid || "") === key ||
-        String(item?.name || "") === key ||
-        String(item?.label || "") === key
-    ) || null
+        masterNameText(item, "en") === key || masterNameText(item, "gu") === key
+    ) ||
+    null
   );
 };
 
@@ -69,9 +76,17 @@ export default function CustomAutoComplete({
   onMouseDown,
   ...rest
 }) {
+  const { language } = useFormLanguage();
+  const optionLabel = (option) => {
+    if (option == null || option === "") return "";
+    if (typeof option === "string") return option;
+    return masterNameText(option, language) || String(option.label || "");
+  };
+
   return (
     <Grid item {...rest}>
       <PrimaryAutocomplete
+        key={`${name}-${language}`}
         disabled={disabled}
         disablePortal={disablePortal}
         autoHighlight={autoHighlight}
@@ -81,6 +96,11 @@ export default function CustomAutoComplete({
         {...(open !== undefined ? { open, onOpen, onClose } : { onOpen, onClose })}
         includeInputInList
         filterSelectedOptions={multiple}
+        filterOptions={(options, state) =>
+          (Array.isArray(options) ? options : []).filter((option) =>
+            optionMatchesQuery(option, state.inputValue)
+          )
+        }
         componentsProps={{
           popper: {
             sx: {
@@ -105,30 +125,13 @@ export default function CustomAutoComplete({
         defaultValue={defaultValue}
         options={Array.isArray(list) ? list : []}
         value={multiple ? value || [] : resolveOption(list, value)}
-        getOptionLabel={(option) =>
-          typeof option === "string"
-            ? option
-            : option?.label || option?.name || ""
+        getOptionLabel={optionLabel}
+        isOptionEqualToValue={(option, selected) =>
+          Boolean(option) &&
+          selected != null &&
+          selected !== "" &&
+          optionIdOf(option) === optionIdOf(selected)
         }
-        isOptionEqualToValue={(option, selected) => {
-          if (!option || selected == null || selected === "") return false;
-          if (typeof selected === "string") {
-            return (
-              option.label === selected ||
-              option.name === selected ||
-              String(option.id) === selected ||
-              String(option.value) === selected ||
-              String(option.uuid || "") === selected
-            );
-          }
-          return (
-            String(option.id) === String(selected.id) ||
-            String(option.value) === String(selected.value) ||
-            String(option.uuid || "") === String(selected.uuid || selected.id || "") ||
-            option.label === selected.label ||
-            option.name === selected.name
-          );
-        }}
         multiple={multiple}
         id={`autoComplete-${name}`}
         label={label}
@@ -143,6 +146,12 @@ export default function CustomAutoComplete({
             error={Boolean(errors)}
             onBlur={onBlur}
             required={Boolean(required)}
+            InputLabelProps={{
+              ...params.InputLabelProps,
+              ...((multiple ? (value || []).length : value != null && value !== "")
+                ? { shrink: true }
+                : null),
+            }}
             inputProps={{
               ...params.inputProps,
               autoComplete: "off",

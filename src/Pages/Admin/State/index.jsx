@@ -18,7 +18,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
 import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader, searchFieldSx } from "../../../Component/UI";
-import CustomInput from "../../../Component/Common/customInput";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +27,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
-import { getAllCountryData } from "../../../util/getAPICall";
+import { toMasterOptions, pickMasterId, resolveMasterId } from "../../../Component/constant";
 import { isLocationMasterReadOnly, hideLocationRowActions, isCountryManager } from "../../../util/util";
 import {
   getStateList,
@@ -35,6 +36,7 @@ import {
   deleteState,
 } from "../../../util/stateApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -50,8 +52,6 @@ export default function Index() {
     (countryManager && !ownCountryList);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [countryList, setCountryList] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState(null);
   const [filterCountry, setFilterCountry] = useState(null);
   const [stateData, setStateData] = useState(null);
   const [stateModalData, setStateModalData] = useState(null);
@@ -61,17 +61,7 @@ export default function Index() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const skipSearchEffect = useRef(true);
-  const countryOptions = useMemo(
-    () =>
-      (Array.isArray(country) ? country : [])
-        .filter((item) => item?.active !== false)
-        .map((item) => ({
-          ...item,
-          label: item.name,
-          value: item.id,
-        })),
-    [country]
-  );
+  const countryOptions = useMemo(() => toMasterOptions(country), [country]);
   const filterCount =
     Number(Boolean(selectedSearchByText.trim())) +
     Number(Boolean(filterCountry));
@@ -141,19 +131,8 @@ export default function Index() {
                   onClick={() => {
                     setStateModalData(record?.row);
                     setStateAddEditModel(!stateAddEditModel);
-                    setCountryList(
-                      country.map((data) => ({
-                        ...data,
-                        label: data.name,
-                        value: data.id,
-                      }))
-                    );
-                    setFieldValue("name", record?.row.name);
-                    setFieldValue("country_id", record?.row.country_id);
-                    setSelectedCountry(
-                      country.find((item) => item?.id === record?.row?.country_id)
-                        ?.name
-                    );
+                    fillMasterName(setFieldValue, record?.row);
+                    setFieldValue("country_id", resolveMasterId(record?.row.country_id, country));
                   }}
                 />
               </Tooltip>
@@ -174,10 +153,11 @@ export default function Index() {
     initialValues: {
       country_id: "",
       name: "",
+      nameGu: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        const { confirmPassword, ...rest } = values;
+        const { confirmPassword, ...rest } = toNameEnGuPayload(values);
         await completeModalMutation(dispatch, {
           mutate: async () => {
             if (stateModalData) {
@@ -217,7 +197,6 @@ export default function Index() {
   const stateAddEditModalClose = () => {
     setStateAddEditModel(false);
     setStateModalData(null);
-    setSelectedCountry(null);
     resetForm();
   };
 
@@ -256,11 +235,6 @@ export default function Index() {
       // Optionally handle error with notification
     }
   };
-
-  useEffect(() => {
-    if (!country?.length) dispatch(getAllCountryData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (skipSearchEffect.current) {
@@ -320,16 +294,8 @@ export default function Index() {
               icon={<AddIcon sx={{ fontSize: 18 }} />}
               onClick={() => {
                 setStateModalData(null);
-                setSelectedCountry(null);
                 resetForm();
                 setStateAddEditModel(true);
-                setCountryList(
-                  country.map((data) => ({
-                    ...data,
-                    label: data.name,
-                    value: data.id,
-                  }))
-                );
               }}
             >
               Add State
@@ -346,7 +312,11 @@ export default function Index() {
                 options={countryOptions}
                 value={filterCountry}
                 onChange={(_, value) => setFilterCountry(value)}
-                getOptionLabel={(option) => option?.label || option?.name || ""}
+                getOptionLabel={(option) =>
+                  option?.label ||
+                  (typeof option?.name === "string" ? option.name : option?.name?.en) ||
+                  ""
+                }
                 isOptionEqualToValue={(option, selected) =>
                   String(option?.id || option?.value) ===
                   String(selected?.id || selected?.value)
@@ -405,18 +375,8 @@ export default function Index() {
               ? (row) => {
                   setStateModalData(row);
                   setStateAddEditModel(true);
-                  setCountryList(
-                    country.map((data) => ({
-                      ...data,
-                      label: data.name,
-                      value: data.id,
-                    }))
-                  );
-                  setFieldValue("name", row.name);
-                  setFieldValue("country_id", row.country_id);
-                  setSelectedCountry(
-                    country.find((item) => item?.id === row?.country_id)?.name
-                  );
+                  fillMasterName(setFieldValue, row);
+                  setFieldValue("country_id", resolveMasterId(row.country_id, country));
                 }
               : undefined
           }
@@ -436,39 +396,38 @@ export default function Index() {
           onClose={() => stateAddEditModalClose()}
           title="State"
         >
+            <MasterLangWrap>
             <FormikProvider value={formik}>
               <Form
                 className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                  "gap-4 flex flex-col w-full pt-1 overflow-visible"
                 }
               >
                 <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full flex  gap-4"}>
                       <CustomAutoComplete
-                        list={countryList}
+                        list={countryOptions}
                         label={"Country"}
                         placeholder={"Select Your Country"}
                         name={"country_id"}
-                        value={selectedCountry}
+                        value={values.country_id}
                         errors={
                           touched?.country && errors?.country && errors?.country
                         }
                         onSelect={handleChange}
-                        onChange={(e, country) => {
-                          setFieldValue("country_id", country.id);
-                          setSelectedCountry(country.name);
+                        onChange={(e, countryItem) => {
+                          if (!countryItem) return;
+                          setFieldValue("country_id", pickMasterId(countryItem));
                         }}
                         onBlur={handleBlur}
                       />
-                      <CustomInput
-                        name={"name"}
+                      <BilingualInput
+                        enName={"name"}
                         id="state"
                         label="State"
-                        value={values.name}
                         variant="outlined"
-                        onChange={handleChange}
-                        disabled={!selectedCountry}
+                        disabled={!values.country_id}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
                       />
@@ -491,6 +450,7 @@ export default function Index() {
                 </Grid>
               </Form>
             </FormikProvider>
+            </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow

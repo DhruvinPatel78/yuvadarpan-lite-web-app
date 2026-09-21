@@ -4,8 +4,13 @@ import { Button, TablePagination } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmModal from "./ConfirmModal";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
+import { masterNameText } from "../../util/bhasha";
 
 const ACTION_COL_WIDTH = 156;
+
+function gridNameText(params) {
+  return masterNameText(params?.row) || "";
+}
 
 function normalizeTableColumns(columns = []) {
   return columns.map((col) => {
@@ -24,6 +29,15 @@ function normalizeTableColumns(columns = []) {
         maxWidth: ACTION_COL_WIDTH,
         sortable: false,
         cellClassName: `${cellClassName} !px-1`.trim(),
+      };
+    }
+
+    if (col.field === "name" && !col.valueGetter && !col.renderCell) {
+      return {
+        ...col,
+        minWidth: col.minWidth || col.width || 120,
+        cellClassName: `${cellClassName} px-2`.trim(),
+        valueGetter: gridNameText,
       };
     }
 

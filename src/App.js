@@ -47,11 +47,13 @@ import AccountProfile from "./Pages/Account/Profile";
 import AccountSettings from "./Pages/Account/Settings";
 import PwaInstallBanner from "./Component/PwaInstall";
 import FullPageLoader from "./Component/Common/FullPageLoader";
+import { FormLanguageProvider } from "./context/FormLanguageContext";
 import { UseRedux } from "./Component/useRedux";
 import { useDispatch } from "react-redux";
 import { logout } from "./store/authSlice";
 import { getCurrentUser } from "./util/userApi";
 import { persistUpdatedUser } from "./Pages/Account/persistUser";
+import { loadLocationMasters } from "./util/getAPICall";
 
 function App() {
   const { loading } = UseRedux();
@@ -68,6 +70,7 @@ function App() {
     getCurrentUser()
       .then((data) => {
         persistUpdatedUser(dispatch, { ...data, token }, data);
+        loadLocationMasters(dispatch);
         setSessionReady(true);
       })
       .catch(() => {
@@ -83,6 +86,7 @@ function App() {
   }
 
   return (
+    <FormLanguageProvider defaultLanguage="en">
     <>
       <Routes>
       <Route path={"/"}>
@@ -277,6 +281,7 @@ function App() {
       <PwaInstallBanner />
       {loading ? <FullPageLoader /> : null}
     </>
+    </FormLanguageProvider>
   );
 }
 

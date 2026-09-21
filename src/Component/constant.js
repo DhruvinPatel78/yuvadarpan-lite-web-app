@@ -1,5 +1,6 @@
 import { ButtonBase, styled } from "@mui/material";
 import axios from "../util/useAxios";
+import { masterNameText } from "../util/bhasha";
 import { useMemo } from "react";
 
 export const ImageButton = styled(ButtonBase)(({ theme }) => ({
@@ -44,10 +45,15 @@ export const ImageBackdrop = styled("span")(({ theme }) => ({
 }));
 
 const setLabelValueInList = (data) => {
-  return data.map((data) => ({
-    ...data,
-    label: data.name,
-    value: data.id,
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+      ? data.data
+      : [];
+  return rows.map((item) => ({
+    ...item,
+    label: masterNameText(item) || item.label || "",
+    value: item.id,
   }));
 };
 
@@ -59,7 +65,98 @@ export const allOptions = {
 };
 
 export const listHandler = (data) => {
-  return data?.length > 0 ? [allOptions, ...setLabelValueInList(data)] : [];
+  const options = setLabelValueInList(data);
+  return options.length > 0 ? [allOptions, ...options] : [];
+};
+
+export const masterKeys = (item) => {
+  if (item == null || item === "") return [];
+  if (typeof item !== "object") return [String(item)];
+  return [
+    item.uuid,
+    item.id,
+    item.value,
+    item._id,
+    item.mongoId,
+    masterNameText(item),
+    item.label,
+  ]
+    .filter((value) => value != null && String(value).trim() !== "")
+    .map(String);
+};
+
+export const pickMasterId = (item) => {
+  if (item == null || item === "") return "";
+  if (typeof item !== "object") return String(item);
+  return String(item.uuid || item.id || item.value || item._id || "").trim();
+};
+
+export const masterLabelOf = (list, id, lang = "en") => {
+  if (id == null || id === "") return "";
+  const key = String(id);
+  const found = (Array.isArray(list) ? list : []).find((row) =>
+    masterKeys(row).includes(key)
+  );
+  return masterNameText(found, lang);
+};
+
+export const resolveMasterId = (value, list = []) => {
+  if (value == null || value === "") return "";
+  const key = pickMasterId(value);
+  const rows = Array.isArray(list) ? list : [];
+  const found = rows.find((row) => masterKeys(row).includes(key));
+  return found ? pickMasterId(found) : key;
+};
+
+export const toMasterOptions = (data) =>
+  setLabelValueInList(data).filter((item) => item?.active !== false);
+
+const collectParentIds = (parents, parentList = []) => {
+  const selected = (Array.isArray(parents) ? parents : parents ? [parents] : []).filter(
+    (item) => item && item.value !== "all" && item.name !== "All" && item !== ""
+  );
+  const ids = new Set();
+  const pool = Array.isArray(parentList) ? parentList : [];
+  selected.forEach((item) => {
+    const keys = masterKeys(item);
+    keys.forEach((key) => ids.add(key));
+    pool.forEach((row) => {
+      const rowKeys = masterKeys(row);
+      if (keys.some((key) => rowKeys.includes(key))) {
+        rowKeys.forEach((key) => ids.add(key));
+      }
+    });
+  });
+  return ids;
+};
+
+export const filterMastersByParents = (
+  list,
+  parentField,
+  parents,
+  { requireParent = false, parentList = [] } = {}
+) => {
+  const selected = (Array.isArray(parents) ? parents : parents ? [parents] : []).filter(
+    (item) => item && item.value !== "all" && item.name !== "All" && item !== ""
+  );
+  const options = toMasterOptions(list);
+  if (!selected.length) return requireParent ? [] : options;
+  const parentIds = collectParentIds(selected, parentList);
+  return options.filter((row) => parentIds.has(String(row?.[parentField] || "")));
+};
+
+export const optionsByParent = (list, parentField, parentId, parentList) => {
+  const resolved = resolveMasterId(parentId, parentList);
+  if (!resolved) return [];
+  const matchedParent = (Array.isArray(parentList) ? parentList : []).find(
+    (row) => masterKeys(row).includes(resolved)
+  );
+  return filterMastersByParents(
+    list,
+    parentField,
+    matchedParent ? [matchedParent] : [{ id: resolved }],
+    { requireParent: true, parentList }
+  );
 };
 
 export const filterFieldCols = (count) =>
@@ -264,7 +361,7 @@ export const getListById = async (field, id) => {
   const response = await axios.get(`/${field}/list/${id}`);
   return response.data.map((data) => ({
     ...data,
-    label: data.name,
+    label: masterNameText(data),
     value: data.id,
   }));
 };

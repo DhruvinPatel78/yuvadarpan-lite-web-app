@@ -4,6 +4,8 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import { Grid, styled, Select, Typography } from "@mui/material";
 import { fieldControlCss } from "../UI/fieldStyles";
+import { masterNameText } from "../../util/bhasha";
+import { useFormLanguage } from "../../context/FormLanguageContext";
 
 const PrimarySelect = styled(Select)`
   ${fieldControlCss}
@@ -24,6 +26,7 @@ export default function CustomSelect({
   required = false,
   ...rest
 }) {
+  const { language } = useFormLanguage();
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef(null);
 
@@ -48,6 +51,7 @@ export default function CustomSelect({
           className={"text-primary"}
           color="primary"
           id={`select-helper-${name}`}
+          {...(value != null && value !== "" ? { shrink: true } : {})}
         >
           {label}
         </InputLabel>
@@ -105,7 +109,7 @@ export default function CustomSelect({
               ? String(data.value ?? data.id ?? "")
               : data;
             const optionLabel = isObject
-              ? data.label || data.name || optionValue
+              ? masterNameText(data, language) || data.label || optionValue
               : data;
             return (
               <MenuItem key={String(optionValue)} value={optionValue}>

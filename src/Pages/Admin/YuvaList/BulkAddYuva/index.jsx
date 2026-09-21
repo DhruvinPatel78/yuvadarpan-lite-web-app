@@ -31,6 +31,7 @@ import {
   relationList,
   yuvaHasContent,
 } from "./formConfig";
+import { langText, masterNameText } from "../../../../util/bhasha";
 
 const FormSection = ({ title, description, children }) => (
   <Card className="w-full">
@@ -101,7 +102,7 @@ const BulkAddYuva = () => {
         : [];
     return source.map((item) => ({
       ...item,
-      label: item.name,
+      label: masterNameText(item) || item.label,
       value: item.id,
     }));
   };
@@ -370,11 +371,19 @@ const BulkAddYuva = () => {
   const currentLastName =
     lastNameList.find(
       (item) => String(item.id) === String(currentYuva.lastName)
-    )?.name || selectedLastName || "";
-  const currentYuvaName = [currentYuva.firstName, currentLastName]
-    .filter(Boolean)
-    .join(" ")
-    .trim() || "This Yuva";
+    )?.label ||
+    masterNameText(
+      lastNameList.find(
+        (item) => String(item.id) === String(currentYuva.lastName)
+      )
+    ) ||
+    selectedLastName ||
+    "";
+  const currentYuvaName =
+    [langText(currentYuva.firstName), currentLastName]
+      .filter(Boolean)
+      .join(" ")
+      .trim() || "This Yuva";
   const isLastPhoto = photoIndex >= createdYuvas.length - 1;
 
   const renderActionButtons = () => (

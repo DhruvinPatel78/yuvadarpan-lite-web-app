@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
+import { langText, masterNameText } from "../../../util/bhasha";
 
 export const ENTITY_PATHS = {
   user: (id) => `/admin/userlist/${id}`,
@@ -72,11 +73,11 @@ export const recordName = (log) => {
     return withoutMiddleName(log.entityLabel, log?.snapshot?.middleName);
   }
   const snap = log?.snapshot || {};
-  const person = [snap.firstName, snap.fatherName]
+  const person = [langText(snap.firstName), langText(snap.fatherName)]
     .filter(Boolean)
     .join(" ")
     .trim();
-  return person || snap.name || snap.label || log?.entityId || "—";
+  return person || masterNameText(snap) || snap.label || log?.entityId || "—";
 };
 
 export function EntityId({ log, children }) {

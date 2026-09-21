@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;600;700&family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap");
 
 @font-face {
   font-family: "WorkThin";
@@ -74,6 +74,14 @@ body {
   color: #542b2b;
   min-height: 100vh;
 }
+.form-lang-gu,
+.form-lang-gu .MuiInputBase-input,
+.form-lang-gu .MuiFormLabel-root,
+.form-lang-gu .MuiFormControlLabel-label,
+.form-lang-gu .MuiSelect-select {
+  font-family: "Noto Sans Gujarati", "Work Sans", "WorkRegular", sans-serif;
+}
+
 .ellipsis {
   text-overflow: ellipsis;
   white-space: nowrap;

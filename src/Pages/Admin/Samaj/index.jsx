@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../../../Component/Header";
 import {
   Box,
@@ -18,15 +18,21 @@ import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import AddIcon from "@mui/icons-material/Add";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-import { Button as ActionButton, FilterActions, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import CustomInput from "../../../Component/Common/customInput";
+import { Button as ActionButton, FilterActions, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import {
-  getListById,
   getSelectedData,
-  handleListById,
   filterFieldCols,
+  filterMastersByParents,
   listHandler,
+  optionsByParent,
+  toMasterOptions,
+  pickMasterId,
+  resolveMasterId,
+  masterLabelOf,
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
@@ -38,6 +44,7 @@ import {
   deleteSamaj,
 } from "../../../util/samajApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -66,20 +73,6 @@ export default function Index() {
             : !samajManager;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [list, setList] = useState({
-    country: [],
-    state: [],
-    region: [],
-    district: [],
-    city: [],
-  });
-  const [selectedValue, setSelectedValue] = useState({
-    country: null,
-    state: null,
-    region: null,
-    district: null,
-    city: null,
-  });
   const [samajData, setSamajData] = useState(null);
   const [samajModalData, setSamajModalData] = useState(null);
   const [samajAddEditModel, setSamajAddEditModel] = useState(false);
@@ -92,9 +85,6 @@ export default function Index() {
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState([]);
   const [selectedCity, setSelectedCity] = useState([]);
-  const [stateListByCountry, setStateListByCountry] = useState(state);
-  const [regionListByState, setRegionListByState] = useState(region);
-  const [districtListByRegion, setDistrictListByRegion] = useState(district);
   const skipSearchEffect = useRef(true);
   const filterCols = filterFieldCols(4);
   const filterCount =
@@ -150,42 +140,14 @@ export default function Index() {
               onClick={() => {
                 setSamajModalData(record?.row);
                 setSamajAddEditModel(!samajAddEditModel);
-                setList((pre) => ({
-                  ...pre,
-                  country: country.map((data) => ({
-                    ...data,
-                    label: data.name,
-                    value: data.id,
-                  })),
-                }));
-                setSelectedValue((pre) => ({
-                  ...pre,
-                  country:
-                    country.find((item) => item?.id === record?.row?.country_id)
-                      ?.name ||
-                    country.find(
-                      (item) => item?.name === record?.row?.country_id
-                    )?.name,
-                  state: state.find(
-                    (item) => item?.id === record?.row?.state_id
-                  )?.name,
-                  region: region.find(
-                    (item) => item?.id === record?.row?.region_id
-                  )?.name,
-                  district: district.find(
-                    (item) => item?.id === record?.row?.district_id
-                  )?.name,
-                  city: city.find((item) => item?.id === record?.row?.city_id)
-                    ?.name,
-                }));
-                setFieldValue("name", record?.row.name);
+                fillMasterName(setFieldValue, record?.row);
                 setFieldValue("label", record?.row.label);
                 setFieldValue("zipcode", record?.row.zipcode);
-                setFieldValue("country_id", record?.row.country_id);
-                setFieldValue("state_id", record?.row.state_id);
-                setFieldValue("region_id", record?.row.region_id);
-                setFieldValue("district_id", record?.row.district_id);
-                setFieldValue("city_id", record?.row.city_id);
+                setFieldValue("country_id", resolveMasterId(record?.row.country_id, country));
+                setFieldValue("state_id", resolveMasterId(record?.row.state_id, state));
+                setFieldValue("region_id", resolveMasterId(record?.row.region_id, region));
+                setFieldValue("district_id", resolveMasterId(record?.row.district_id, district));
+                setFieldValue("city_id", resolveMasterId(record?.row.city_id, city));
               }}
             />
           </Tooltip>
@@ -208,12 +170,13 @@ export default function Index() {
       district_id: "",
       city_id: "",
       name: "",
+      nameGu: "",
       label: "",
       zipcode: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        const { confirmPassword, ...rest } = values;
+        const { confirmPassword, ...rest } = toNameEnGuPayload(values);
         await completeModalMutation(dispatch, {
           mutate: async () => {
             if (samajModalData) {
@@ -249,23 +212,28 @@ export default function Index() {
     setFieldValue,
     isSubmitting,
   } = formik;
+  const countryOptions = useMemo(() => toMasterOptions(country), [country]);
+  const stateOptions = useMemo(
+    () => optionsByParent(state, "country_id", values.country_id, country),
+    [state, values.country_id, country]
+  );
+  const regionOptions = useMemo(
+    () => optionsByParent(region, "state_id", values.state_id, state),
+    [region, values.state_id, state]
+  );
+  const districtOptions = useMemo(
+    () => optionsByParent(district, "region_id", values.region_id, region),
+    [district, values.region_id, region]
+  );
+  const cityOptions = useMemo(
+    () => optionsByParent(city, "district_id", values.district_id, district),
+    [city, values.district_id, district]
+  );
 
   const samajAddEditModalClose = () => {
     setSamajAddEditModel(!samajAddEditModel);
     setSamajModalData(null);
-    setFieldValue("name", null);
-    setFieldValue("country_id", null);
-    setFieldValue("state_id", null);
-    setFieldValue("region_id", null);
-    setFieldValue("district_id", null);
-    setFieldValue("samaj_id", null);
-    setSelectedValue({
-      country: null,
-      state: null,
-      region: null,
-      district: null,
-      samaj: null,
-    });
+    fillMasterName(setFieldValue, {});
     resetForm();
   };
 
@@ -334,9 +302,6 @@ export default function Index() {
     setSelectedRegion([]);
     setSelectedDistrict([]);
     setSelectedCity([]);
-    setStateListByCountry(state);
-    setRegionListByState(region);
-    setDistrictListByRegion(district);
     handleSamajList(true);
   };
 
@@ -418,14 +383,6 @@ export default function Index() {
               icon={<AddIcon sx={{ fontSize: 18 }} />}
               onClick={() => {
                 setSamajAddEditModel(!samajAddEditModel);
-                setList((pre) => ({
-                  ...pre,
-                  country: country.map((data) => ({
-                    ...data,
-                    label: data.name,
-                    value: data.id,
-                  })),
-                }));
               }}
             >
               Add Samaj
@@ -456,59 +413,75 @@ export default function Index() {
                 {...filterCols}
                 value={selectedCountry}
                 name="country"
-                onChange={async (e, country) => {
-                  if (country) {
-                    const data = await handleListById("state", country);
-                    setStateListByCountry(data);
-                    setSelectedCountry((pre) => getSelectedData(pre, country, e));
+                onChange={(e, countryItems) => {
+                  if (countryItems) {
+                    setSelectedCountry((pre) => getSelectedData(pre, countryItems, e));
+                    setSelectedState([]);
+                    setSelectedRegion([]);
+                    setSelectedDistrict([]);
+                    setSelectedCity([]);
                   }
                 }}
               />
               <CustomAutoComplete
-                list={listHandler(stateListByCountry)}
+                list={listHandler(
+                  filterMastersByParents(state, "country_id", selectedCountry, {
+                    parentList: country,
+                  })
+                )}
                 multiple={true}
                 label={"State"}
                 placeholder={"Select Your State"}
                 {...filterCols}
                 value={selectedState}
                 name="state"
-                onChange={async (e, state) => {
-                  if (state) {
-                    const data = await handleListById("region", state);
-                    setRegionListByState(data);
-                    setSelectedState((pre) => getSelectedData(pre, state, e));
+                onChange={(e, stateItems) => {
+                  if (stateItems) {
+                    setSelectedState((pre) => getSelectedData(pre, stateItems, e));
+                    setSelectedRegion([]);
+                    setSelectedDistrict([]);
+                    setSelectedCity([]);
                   }
                 }}
               />
               <CustomAutoComplete
-                list={listHandler(regionListByState)}
+                list={listHandler(
+                  filterMastersByParents(region, "state_id", selectedState, {
+                    parentList: state,
+                  })
+                )}
                 multiple={true}
                 label={"Region"}
                 placeholder={"Select Your Region"}
                 {...filterCols}
                 value={selectedRegion}
                 name="region"
-                onChange={async (e, region) => {
-                  if (region) {
-                    const data = await handleListById("district", region);
-                    setDistrictListByRegion(data);
-                    setSelectedRegion((pre) => getSelectedData(pre, region, e));
+                onChange={(e, regionItems) => {
+                  if (regionItems) {
+                    setSelectedRegion((pre) => getSelectedData(pre, regionItems, e));
+                    setSelectedDistrict([]);
+                    setSelectedCity([]);
                   }
                 }}
               />
               <CustomAutoComplete
-                list={listHandler(districtListByRegion)}
+                list={listHandler(
+                  filterMastersByParents(district, "region_id", selectedRegion, {
+                    parentList: region,
+                  })
+                )}
                 multiple={true}
                 label={"District"}
                 placeholder={"Select Your District"}
                 {...filterCols}
                 value={selectedDistrict}
                 name="district"
-                onChange={(e, district) => {
-                  if (district) {
+                onChange={(e, districtItems) => {
+                  if (districtItems) {
                     setSelectedDistrict((pre) =>
-                      getSelectedData(pre, district, e)
+                      getSelectedData(pre, districtItems, e)
                     );
+                    setSelectedCity([]);
                   }
                 }}
               />
@@ -547,49 +520,27 @@ export default function Index() {
           selectedIds={selectedIds}
           onToggleSelect={toggleCardSelection}
           canSelect={canAct}
-          getDetails={(row) =>
-            [
-              city.find((item) => item?.id === row?.city_id)?.name
-                ? `City: ${city.find((item) => item?.id === row?.city_id)?.name}`
-                : null,
+          getDetails={(row) => {
+            const cityName = masterLabelOf(city, row?.city_id);
+            return [
+              cityName ? `City: ${cityName}` : null,
               row.zipcode ? `Zipcode: ${row.zipcode}` : null,
-            ].filter(Boolean)
-          }
+            ].filter(Boolean);
+          }}
           activeDisabled={!canAct}
           onEdit={
             canAct
               ? (row) => {
                   setSamajModalData(row);
                   setSamajAddEditModel(true);
-                  setList((pre) => ({
-                    ...pre,
-                    country: country.map((data) => ({
-                      ...data,
-                      label: data.name,
-                      value: data.id,
-                    })),
-                  }));
-                  setSelectedValue((pre) => ({
-                    ...pre,
-                    country:
-                      country.find((item) => item?.id === row?.country_id)?.name ||
-                      country.find((item) => item?.name === row?.country_id)?.name,
-                    state: state.find((item) => item?.id === row?.state_id)?.name,
-                    region: region.find((item) => item?.id === row?.region_id)
-                      ?.name,
-                    district: district.find(
-                      (item) => item?.id === row?.district_id
-                    )?.name,
-                    city: city.find((item) => item?.id === row?.city_id)?.name,
-                  }));
-                  setFieldValue("name", row.name);
+                  fillMasterName(setFieldValue, row);
                   setFieldValue("label", row.label);
                   setFieldValue("zipcode", row.zipcode);
-                  setFieldValue("country_id", row.country_id);
-                  setFieldValue("state_id", row.state_id);
-                  setFieldValue("region_id", row.region_id);
-                  setFieldValue("district_id", row.district_id);
-                  setFieldValue("city_id", row.city_id);
+                  setFieldValue("country_id", resolveMasterId(row.country_id, country));
+                  setFieldValue("state_id", resolveMasterId(row.state_id, state));
+                  setFieldValue("region_id", resolveMasterId(row.region_id, region));
+                  setFieldValue("district_id", resolveMasterId(row.district_id, district));
+                  setFieldValue("city_id", resolveMasterId(row.city_id, city));
                 }
               : undefined
           }
@@ -609,148 +560,112 @@ export default function Index() {
           onClose={() => samajAddEditModalClose()}
           title="Samaj"
         >
+            <MasterLangWrap>
             <FormikProvider value={formik}>
               <Form
                 className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                  "gap-4 flex flex-col w-full pt-1 overflow-visible"
                 }
               >
                 <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full flex  gap-4"}>
                       <CustomAutoComplete
-                        list={list.country}
+                        list={countryOptions}
                         label={"Country"}
                         placeholder={"Select Your Country"}
                         name={"country_id"}
-                        value={selectedValue.country}
+                        value={values.country_id}
                         errors={
                           touched?.country && errors?.country && errors?.country
                         }
                         onSelect={handleChange}
-                        onChange={async (e, country) => {
-                          await setFieldValue("country_id", country.id);
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            country: country.name,
-                            state: null,
-                            region: null,
-                            district: null,
-                            city: null,
-                          }));
-                          const data = await getListById("state", country.id);
-                          setList((pre) => ({
-                            ...pre,
-                            state: data,
-                          }));
+                        onChange={(e, countryItem) => {
+                          if (!countryItem) return;
+                          setFieldValue("country_id", pickMasterId(countryItem));
+                          setFieldValue("state_id", "");
+                          setFieldValue("region_id", "");
+                          setFieldValue("district_id", "");
+                          setFieldValue("city_id", "");
                         }}
                         onBlur={handleBlur}
                       />
                       <CustomAutoComplete
-                        list={list.state}
+                        list={stateOptions}
                         label={"State"}
                         placeholder={"Select Your State"}
                         name={"state_id"}
-                        value={selectedValue.state}
+                        value={values.state_id}
                         errors={
                           touched?.state && errors?.state && errors?.state
                         }
-                        onChange={async (e, state) => {
-                          await setFieldValue("state_id", state.id);
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            state: state.name,
-                            region: null,
-                            district: null,
-                            city: null,
-                          }));
-                          const data = await getListById("region", state.id);
-                          setList((pre) => ({
-                            ...pre,
-                            region: data,
-                          }));
+                        onChange={(e, stateItem) => {
+                          if (!stateItem) return;
+                          setFieldValue("state_id", pickMasterId(stateItem));
+                          setFieldValue("region_id", "");
+                          setFieldValue("district_id", "");
+                          setFieldValue("city_id", "");
                         }}
                         onBlur={handleBlur}
-                        disabled={!selectedValue.country}
+                        disabled={!values.country_id}
                       />
                       <CustomAutoComplete
-                        list={list.region}
+                        list={regionOptions}
                         label={"Region"}
                         placeholder={"Select Your Region"}
                         name={"region_id"}
-                        value={selectedValue.region}
+                        value={values.region_id}
                         errors={
                           touched?.region && errors?.region && errors?.region
                         }
-                        onChange={async (e, region) => {
-                          await setFieldValue("region_id", region.id);
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            region: region.name,
-                            district: null,
-                            city: null,
-                          }));
-                          const data = await getListById("district", region.id);
-                          setList((pre) => ({
-                            ...pre,
-                            district: data,
-                          }));
+                        onChange={(e, regionItem) => {
+                          if (!regionItem) return;
+                          setFieldValue("region_id", pickMasterId(regionItem));
+                          setFieldValue("district_id", "");
+                          setFieldValue("city_id", "");
                         }}
                         onBlur={handleBlur}
-                        disabled={!selectedValue.state}
+                        disabled={!values.state_id}
                       />
                       <CustomAutoComplete
-                        list={list.district}
+                        list={districtOptions}
                         label={"District"}
                         placeholder={"Select Your District"}
                         name={"district_id"}
-                        value={selectedValue.district}
+                        value={values.district_id}
                         errors={
                           touched?.district &&
                           errors?.district &&
                           errors?.district
                         }
-                        onChange={async (e, district) => {
-                          await setFieldValue("district_id", district.id);
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            district: district.name,
-                            city: null,
-                          }));
-                          const data = await getListById("city", district.id);
-                          setList((pre) => ({
-                            ...pre,
-                            city: data,
-                          }));
+                        onChange={(e, districtItem) => {
+                          if (!districtItem) return;
+                          setFieldValue("district_id", pickMasterId(districtItem));
+                          setFieldValue("city_id", "");
                         }}
                         onBlur={handleBlur}
-                        disabled={!selectedValue.region}
+                        disabled={!values.region_id}
                       />
                       <CustomAutoComplete
-                        list={list.city}
+                        list={cityOptions}
                         label={"City"}
                         placeholder={"Select Your City"}
                         name={"city_id"}
-                        value={selectedValue.city}
+                        value={values.city_id}
                         errors={touched?.city && errors?.city && errors?.city}
-                        onChange={(e, city) => {
-                          setFieldValue("city_id", city.id);
-                          setSelectedValue((pre) => ({
-                            ...pre,
-                            city: city.name,
-                          }));
+                        onChange={(e, cityItem) => {
+                          if (!cityItem) return;
+                          setFieldValue("city_id", pickMasterId(cityItem));
                         }}
                         onBlur={handleBlur}
-                        disabled={!selectedValue.district}
+                        disabled={!values.district_id}
                       />
-                      <CustomInput
-                        name={"name"}
+                      <BilingualInput
+                        enName={"name"}
                         id="samaj"
                         label="Samaj"
-                        value={values.name}
                         variant="outlined"
-                        onChange={handleChange}
-                        disabled={!selectedValue.city}
+                        disabled={!values.city_id}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
                       />
@@ -761,7 +676,7 @@ export default function Index() {
                         value={values.label}
                         variant="outlined"
                         onChange={handleChange}
-                        disabled={!selectedValue.city}
+                        disabled={!values.city_id}
                         onBlur={handleBlur}
                         errors={
                           touched?.label && errors?.label && errors?.label
@@ -774,7 +689,7 @@ export default function Index() {
                         value={values.zipcode}
                         variant="outlined"
                         onChange={handleChange}
-                        disabled={!selectedValue.city}
+                        disabled={!values.city_id}
                         onBlur={handleBlur}
                         errors={
                           touched?.zipcode && errors?.zipcode && errors?.zipcode
@@ -799,6 +714,7 @@ export default function Index() {
                 </Grid>
               </Form>
             </FormikProvider>
+            </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow
