@@ -15,7 +15,8 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
-import CustomInput from "../../../Component/Common/customInput";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import {
   Button as ActionButton,
   FormModal,
@@ -35,6 +36,7 @@ import {
   deleteGotra,
 } from "../../../util/gotraApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 
 export default function Gotra() {
   const dispatch = useDispatch();
@@ -98,7 +100,7 @@ export default function Gotra() {
               onClick={() => {
                 setGotraModalData(record?.row);
                 setGotraAddEditModel(true);
-                setFieldValue("name", record?.row.name);
+                fillMasterName(setFieldValue, record?.row);
               }}
             />
           </Tooltip>
@@ -125,18 +127,20 @@ export default function Gotra() {
   const formik = useFormik({
     initialValues: {
       name: "",
+      nameGu: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
+        const { confirmPassword, ...rest } = toNameEnGuPayload(values);
         await completeModalMutation(dispatch, {
           mutate: async () => {
             if (gotraModalData) {
               await updateGotra(gotraModalData.id, {
-                name: values.name,
+                ...rest,
                 updatedAt: new Date(),
               });
             } else {
-              await addGotra({ name: String(values.name || "").trim() });
+              await addGotra({ ...rest });
             }
           },
           refresh: () => handleGotraList(),
@@ -155,9 +159,7 @@ export default function Gotra() {
   });
   const {
     errors,
-    values,
     resetForm,
-    handleChange,
     handleBlur,
     touched,
     setFieldValue,
@@ -167,6 +169,7 @@ export default function Gotra() {
   const gotraAddEditModalClose = () => {
     setGotraAddEditModel(false);
     setGotraModalData(null);
+    fillMasterName(setFieldValue, {});
     resetForm();
   };
 
@@ -246,6 +249,7 @@ export default function Gotra() {
                 icon={<AddIcon sx={{ fontSize: 18 }} />}
                 onClick={() => {
                   setGotraModalData(null);
+                  resetForm();
                   setGotraAddEditModel(true);
                 }}
               >
@@ -290,7 +294,7 @@ export default function Gotra() {
               ? (row) => {
                   setGotraModalData(row);
                   setGotraAddEditModel(true);
-                  setFieldValue("name", row.name);
+                  fillMasterName(setFieldValue, row);
                 }
               : undefined
           }
@@ -310,22 +314,21 @@ export default function Gotra() {
           onClose={() => gotraAddEditModalClose()}
           title="Gotra"
         >
+          <MasterLangWrap>
           <FormikProvider value={formik}>
             <Form
               className={
-                "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                "gap-4 flex flex-col w-full pt-1 overflow-visible"
               }
             >
               <Grid container className={"w-full"} spacing={2}>
                 <Grid item xs={12}>
                   <FormControl className={"w-full"}>
-                    <CustomInput
-                      name={"name"}
+                    <BilingualInput
+                      enName={"name"}
                       id="gotra"
                       label="Gotra"
-                      value={values.name}
                       variant="outlined"
-                      onChange={handleChange}
                       onBlur={handleBlur}
                       errors={touched?.name && errors?.name && errors?.name}
                     />
@@ -348,6 +351,7 @@ export default function Gotra() {
               </Grid>
             </Form>
           </FormikProvider>
+          </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow

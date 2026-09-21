@@ -26,6 +26,7 @@ import {
   requestFilterList,
   surnamesForGotra,
   useFilteredIds,
+  masterLabelOf,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 import { useDispatch } from "react-redux";
@@ -35,13 +36,14 @@ import {
   approveRejectUser,
   approveRejectMany,
 } from "../../../util/requestApi";
-import { getGotraAllList } from "../../../util/gotraApi";
+import { getAllGotraData } from "../../../util/getAPICall";
+import { langText } from "../../../util/bhasha";
 
 const MOBILE_PAGE_SIZE = 20;
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { samaj, region, state, surname, auth } = UseRedux();
+  const { samaj, region, state, surname, auth, gotra: gotraList } = UseRedux();
   const isSamajManager = String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager = String(auth?.user?.role || "").toUpperCase() === "CITY_MANAGER";
   const isDistrictManager = String(auth?.user?.role || "").toUpperCase() === "DISTRICT_MANAGER";
@@ -61,7 +63,6 @@ export default function Index() {
   const isMobile = useMediaQuery("(max-width:767.95px)");
   const loadingMoreLock = useRef(false);
   const loadMoreRef = useRef(null);
-  const [gotraList, setGotraList] = useState([]);
   const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
@@ -187,10 +188,8 @@ export default function Index() {
   }, [page, rowsPerPage, isMobile]);
 
   useEffect(() => {
-    getGotraAllList()
-      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setGotraList([]));
-  }, []);
+    dispatch(getAllGotraData);
+  }, [dispatch]);
 
   const loadMoreRequests = () => {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
@@ -298,7 +297,7 @@ export default function Index() {
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
-        <>{surname.find((item) => item?.id === record?.row?.lastName)?.name}</>
+        <>{masterLabelOf(surname, record?.row?.lastName)}</>
       ),
     },
     {
@@ -318,7 +317,7 @@ export default function Index() {
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
-      renderCell: (record) => <>{record?.row?.gender || "-"}</>,
+      renderCell: (record) => <>{langText(record?.row?.gender) || "-"}</>,
     },
     {
       field: "region",
@@ -329,7 +328,7 @@ export default function Index() {
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
-        <>{region.find((item) => item?.id === record?.row?.region)?.name}</>
+        <>{masterLabelOf(region, record?.row?.region)}</>
       ),
     },
     {
@@ -341,7 +340,7 @@ export default function Index() {
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
-        <>{samaj.find((item) => item?.id === record?.row?.localSamaj)?.name}</>
+        <>{masterLabelOf(samaj, record?.row?.localSamaj)}</>
       ),
     },
     {
@@ -379,8 +378,7 @@ export default function Index() {
   ];
 
   const requests = userList?.data || [];
-  const lookupName = (list, id) =>
-    list?.find((item) => item?.id === id)?.name || "-";
+  const lookupName = (list, id) => masterLabelOf(list, id) || "-";
 
   const toggleCardSelection = (id) => {
     setSelectedUsers((prev) =>
@@ -622,7 +620,7 @@ export default function Index() {
                       {row.email || "-"}
                     </p>
                     <p className={"text-sm text-gray-600 capitalize break-words"}>
-                      {row.gender || "-"} · {lookupName(region, row.region)} ·{" "}
+                      {langText(row.gender) || "-"} · {lookupName(region, row.region)} ·{" "}
                       {lookupName(samaj, row.localSamaj)}
                     </p>
                   </div>
@@ -690,10 +688,7 @@ export default function Index() {
             <CustomTextFieldInfo
               grid={4}
               label={"Last Name"}
-              value={
-                surname.find((item) => item?.id === selectedUser?.lastName)
-                  ?.name
-              }
+              value={lookupName(surname, selectedUser?.lastName)}
             />
             <CustomTextFieldInfo
               grid={6}
@@ -708,17 +703,12 @@ export default function Index() {
             <CustomTextFieldInfo
               grid={6}
               label={"Region"}
-              value={
-                region.find((item) => item?.id === selectedUser?.region)?.name
-              }
+              value={lookupName(region, selectedUser?.region)}
             />
             <CustomTextFieldInfo
               grid={6}
               label={"Local Samaj"}
-              value={
-                samaj.find((item) => item?.id === selectedUser?.localSamaj)
-                  ?.name
-              }
+              value={lookupName(samaj, selectedUser?.localSamaj)}
             />
           </Grid>
       </FormModal>

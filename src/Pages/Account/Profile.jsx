@@ -17,6 +17,7 @@ import {
 import { getCurrentUser, updateUser } from "../../util/userApi";
 import { persistUpdatedUser } from "./persistUser";
 import { PageHeader, Card, Button } from "../../Component/UI";
+import PreferredLanguageField from "../../Component/Common/preferredLanguageField";
 
 const toDateInputValue = (value) => {
   if (!value) return "";
@@ -40,6 +41,7 @@ export default function Profile() {
       mobile: user?.mobile || "",
       dob: toDateInputValue(user?.dob),
       gender: user?.gender || "",
+      language: user?.language === "en" ? "en" : "gu",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -47,6 +49,7 @@ export default function Profile() {
       lastName: Yup.string().required("Required"),
       email: Yup.string().email("Enter a valid email").required("Required"),
       mobile: Yup.string().required("Required"),
+      language: Yup.string().oneOf(["en", "gu"]).required("Required"),
     }),
     onSubmit: async (values) => {
       dispatch(startLoading());
@@ -193,6 +196,14 @@ export default function Profile() {
                   className={"flex flex-row"}
                   onChange={handleChange}
                   onBlur={handleBlur}
+                />
+                <PreferredLanguageField
+                  xs={12}
+                  sm={6}
+                  label="Language"
+                  value={values.language}
+                  onChange={(next) => setFieldValue("language", next)}
+                  errors={touched.language && errors.language}
                 />
                 <Grid
                   item

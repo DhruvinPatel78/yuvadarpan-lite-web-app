@@ -15,7 +15,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
-import CustomInput from "../../../Component/Common/customInput";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
@@ -30,6 +31,7 @@ import {
   deleteCountry,
 } from "../../../util/countryApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -120,7 +122,7 @@ export default function Index() {
                   onClick={() => {
                     setCountryModalData(record?.row);
                     setCountryAddEditModel(!countryAddEditModel);
-                    setFieldValue("name", record?.row.name);
+                    fillMasterName(setFieldValue, record?.row);
                   }}
                 />
               </Tooltip>
@@ -149,10 +151,11 @@ export default function Index() {
   const formik = useFormik({
     initialValues: {
       name: "",
+      nameGu: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        const { confirmPassword, ...rest } = values;
+        const { confirmPassword, ...rest } = toNameEnGuPayload(values);
         await completeModalMutation(dispatch, {
           mutate: async () => {
             if (countryModalData) {
@@ -192,7 +195,7 @@ export default function Index() {
   const countryAddEditModalClose = () => {
     setCountryAddEditModel(!countryAddEditModel);
     setCountryModalData(null);
-    setFieldValue("name", null);
+    fillMasterName(setFieldValue, {});
     resetForm();
   };
 
@@ -316,7 +319,7 @@ export default function Index() {
               ? (row) => {
                   setCountryModalData(row);
                   setCountryAddEditModel(true);
-                  setFieldValue("name", row.name);
+                  fillMasterName(setFieldValue, row);
                 }
               : undefined
           }
@@ -336,22 +339,21 @@ export default function Index() {
           onClose={() => countryAddEditModalClose()}
           title="Country"
         >
+            <MasterLangWrap>
             <FormikProvider value={formik}>
               <Form
                 className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                  "gap-4 flex flex-col w-full pt-1 overflow-visible"
                 }
               >
                 <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"name"}
+                      <BilingualInput
+                        enName={"name"}
                         id="country"
                         label="Country"
-                        value={values.name}
                         variant="outlined"
-                        onChange={handleChange}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
                       />
@@ -374,6 +376,7 @@ export default function Index() {
                 </Grid>
               </Form>
             </FormikProvider>
+            </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow

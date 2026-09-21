@@ -17,7 +17,8 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
-import CustomInput from "../../../Component/Common/customInput";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import {
   Button as ActionButton,
   FormModal,
@@ -30,6 +31,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
+import { toMasterOptions } from "../../../Component/constant";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import {
   getSurnameList,
@@ -38,7 +40,9 @@ import {
   deleteSurname,
 } from "../../../util/surnameApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
-import { getGotraAllList, addGotra } from "../../../util/gotraApi";
+import { fillMasterName, masterNameText, toNameEnGuPayload } from "../../../util/bhasha";
+import { addGotra } from "../../../util/gotraApi";
+import { gotra as setGotra } from "../../../store/locationSlice";
 
 const gotraFilter = createFilterOptions();
 
@@ -51,7 +55,7 @@ const gotraNameOf = (value) => {
 export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, auth } = UseRedux();
+  const { loading, auth, gotra } = UseRedux();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -59,30 +63,13 @@ export default function Index() {
   const [surnameModalData, setSurnameModalData] = useState(null);
   const [surnameAddEditModel, setSurnameAddEditModel] = useState(false);
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
-  const [gotraList, setGotraList] = useState([]);
   const [selectedGotra, setSelectedGotra] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const skipSearchEffect = useRef(true);
-  const gotraOptions = useMemo(
-    () =>
-      (Array.isArray(gotraList) ? gotraList : [])
-        .filter((item) => item?.active !== false)
-        .map((item) => ({
-          ...item,
-          label: item.name,
-          value: item.id,
-        })),
-    [gotraList]
-  );
+  const gotraOptions = useMemo(() => toMasterOptions(gotra), [gotra]);
   const filterCount =
     Number(Boolean(selectedSearchByText.trim())) + Number(Boolean(selectedGotra));
-
-  useEffect(() => {
-    getGotraAllList()
-      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setGotraList([]));
-  }, []);
 
   const surnameListColumn = [
     {
@@ -130,7 +117,7 @@ export default function Index() {
               onClick={() => {
                 setSurnameModalData(record?.row);
                 setSurnameAddEditModel(!surnameAddEditModel);
-                setFieldValue("name", record?.row.name);
+                fillMasterName(setFieldValue, record?.row);
                 setFieldValue("gotra", record?.row.gotra || "");
               }}
             />
@@ -158,43 +145,45 @@ export default function Index() {
   const formik = useFormik({
     initialValues: {
       name: "",
+      nameGu: "",
       gotra: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
         const gotraName = gotraNameOf(values.gotra);
-        const surnameName = String(values.name || "").trim();
         await completeModalMutation(dispatch, {
           mutate: async () => {
             const alreadyListed = gotraOptions.some(
               (item) =>
-                String(item.name || "").trim().toLowerCase() ===
+                String(masterNameText(item) || "").trim().toLowerCase() ===
                 gotraName.toLowerCase()
             );
             if (gotraName && !alreadyListed) {
               try {
                 const created = await addGotra({ name: gotraName });
-                setGotraList((prev) => {
-                  const rows = Array.isArray(prev) ? prev : [];
-                  if (
-                    rows.some(
-                      (item) =>
-                        String(item.name || "").trim().toLowerCase() ===
-                        gotraName.toLowerCase()
-                    )
-                  ) {
-                    return rows;
-                  }
-                  return [...rows, created];
-                });
+                const rows = Array.isArray(gotra) ? gotra : [];
+                const exists = rows.some(
+                  (item) =>
+                    String(masterNameText(item) || "").trim().toLowerCase() ===
+                    gotraName.toLowerCase()
+                );
+                if (!exists && created) {
+                  dispatch(setGotra([...rows, created]));
+                }
               } catch (e) {
-                setGotraList((prev) => [
-                  ...(Array.isArray(prev) ? prev : []),
-                  { id: `new-${Date.now()}`, name: gotraName, active: true },
-                ]);
+                dispatch(
+                  setGotra([
+                    ...(Array.isArray(gotra) ? gotra : []),
+                    { id: `new-${Date.now()}`, name: gotraName, active: true },
+                  ])
+                );
               }
             }
-            const payload = { name: surnameName, gotra: gotraName };
+            const named = toNameEnGuPayload(values);
+            const payload = {
+              name: named.name,
+              gotra: gotraName,
+            };
             if (surnameModalData) {
               await updateSurname(surnameModalData.id, payload);
             } else {
@@ -327,7 +316,11 @@ export default function Index() {
                 options={gotraOptions}
                 value={selectedGotra}
                 onChange={(_, value) => setSelectedGotra(value)}
-                getOptionLabel={(option) => option?.label || option?.name || ""}
+                getOptionLabel={(option) =>
+                  option?.label ||
+                  (typeof option?.name === "string" ? option.name : option?.name?.en) ||
+                  ""
+                }
                 isOptionEqualToValue={(option, selected) =>
                   String(option?.id || option?.value) ===
                   String(selected?.id || selected?.value)
@@ -380,7 +373,7 @@ export default function Index() {
               ? (row) => {
                   setSurnameModalData(row);
                   setSurnameAddEditModel(true);
-                  setFieldValue("name", row.name);
+                  fillMasterName(setFieldValue, row);
                   setFieldValue("gotra", row.gotra || "");
                 }
               : undefined
@@ -401,10 +394,11 @@ export default function Index() {
           onClose={() => surnameAddEditModalClose()}
           title="Surname"
         >
+            <MasterLangWrap>
             <FormikProvider value={formik}>
               <Form
                 className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                  "gap-4 flex flex-col w-full pt-1 overflow-visible"
                 }
               >
                 <Grid container className={"w-full"} spacing={2}>
@@ -473,13 +467,11 @@ export default function Index() {
                           />
                         )}
                       />
-                      <CustomInput
-                        name={"name"}
+                      <BilingualInput
+                        enName={"name"}
                         id="surname"
                         label="Surname"
-                        value={values.name}
                         variant="outlined"
-                        onChange={handleChange}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
                       />
@@ -502,6 +494,7 @@ export default function Index() {
                 </Grid>
               </Form>
             </FormikProvider>
+            </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow

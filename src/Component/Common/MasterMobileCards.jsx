@@ -4,6 +4,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CustomSwitch from "./CustomSwitch";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
 import { Button, Card } from "../UI";
+import { masterNameText } from "../../util/bhasha";
 
 const MasterMobileCards = ({
   rows = [],
@@ -11,7 +12,7 @@ const MasterMobileCards = ({
   selectedIds = [],
   onToggleSelect,
   canSelect = false,
-  getTitle = (row) => row?.name || "-",
+  getTitle = (row) => masterNameText(row) || "-",
   getDetails,
   showActive = true,
   activeDisabled = false,

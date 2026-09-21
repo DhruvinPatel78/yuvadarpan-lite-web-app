@@ -64,7 +64,7 @@ const Header = () => {
             ariaLabel="Yuvadarpan home"
           />
           {user?.user ? (
-            <Box sx={{ flexGrow: 0, flexShrink: 0 }}>
+            <Box sx={{ flexGrow: 0, flexShrink: 0 }} className="flex items-center gap-2 md:gap-3">
               <Tooltip title="Open settings">
                 <IconButton
                   onClick={handleOpenUserMenu}

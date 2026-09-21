@@ -1,11 +1,23 @@
 export const fieldControlCss = `
+  overflow: visible;
   & .MuiOutlinedInput-root {
     border-radius: 8px;
     background-color: #fff;
     min-height: 44px;
+    overflow: visible;
     &.Mui-focused fieldset {
       border-color: #542b2b;
     }
+  }
+  & .MuiInputLabel-root {
+    overflow: visible;
+    max-width: calc(100% - 24px);
+  }
+  & .MuiInputLabel-shrink {
+    max-width: calc(133% - 32px);
+  }
+  & .MuiOutlinedInput-notchedOutline legend {
+    padding: 0 6px;
   }
   & .MuiFilledInput-root:after {
     border-color: #542b2b;

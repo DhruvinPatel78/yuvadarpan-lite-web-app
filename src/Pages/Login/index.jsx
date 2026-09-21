@@ -9,16 +9,7 @@ import {
 } from "../../Component/Common/notification";
 import { useDispatch } from "react-redux";
 import { login, startLoading, endLoading } from "../../store/authSlice";
-import {
-  getAllRegionData,
-  getAllCityData,
-  getAllDistrictData,
-  getAllSamajData,
-  getAllStateData,
-  getAllSurnameData,
-  getAllCountryData,
-  getAllRoleData,
-} from "../../util/getAPICall";
+import { loadLocationMasters } from "../../util/getAPICall";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
@@ -59,16 +50,7 @@ export default function Index() {
           const me = await getCurrentUser();
           localStorage.setItem("user", JSON.stringify(me));
           setNotification({ message: "Signed in.", type: "success" });
-          dispatch(getAllCityData);
-          dispatch(getAllStateData);
-          dispatch(getAllRegionData);
-          dispatch(getAllDistrictData);
-          dispatch(getAllSamajData);
-          dispatch(getAllSurnameData);
-          if (me?.role !== "USER") {
-            dispatch(getAllCountryData);
-            dispatch(getAllRoleData);
-          }
+          loadLocationMasters(dispatch);
           dispatch(login({ ...me, token: res?.token }));
           resetForm();
         } catch (err) {

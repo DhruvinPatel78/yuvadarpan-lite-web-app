@@ -33,6 +33,8 @@ const CustomInput = ({
   inputProps,
   InputLabelProps,
   autoFocus = false,
+  inputRef,
+  uncontrolled = false,
   ...rest
 }) => {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -45,11 +47,14 @@ const CustomInput = ({
   };
 
   const isDate = type === "date";
+  const filled =
+    isDate || (value != null && String(value).trim() !== "");
 
   return (
     <Grid item {...rest}>
       <PrimaryTextField
         id={id}
+        inputRef={inputRef}
         type={showPassword ? "text" : type}
         label={label}
         placeholder={placeholder}
@@ -57,18 +62,23 @@ const CustomInput = ({
         autoComplete={
           type === "tel" ? "tel" : type === "password" ? "new-password" : "off"
         }
-        onChange={onChange}
+        onChange={uncontrolled ? undefined : onChange}
+        defaultValue={uncontrolled ? value : undefined}
         value={
-          isDate && value
+          uncontrolled
+            ? undefined
+            : isDate && value
             ? String(value).match(/^(\d{4}-\d{2}-\d{2})/)?.[1] || ""
             : value
         }
         fullWidth
         multiline={multiline}
-        InputLabelProps={
-          isDate ? { shrink: true, ...InputLabelProps } : InputLabelProps
-        }
+        InputLabelProps={{
+          ...InputLabelProps,
+          ...(filled ? { shrink: true } : null),
+        }}
         InputProps={{
+          notched: filled ? true : undefined,
           rows: 5,
           endAdornment: type === "password" && (
             <IconButton

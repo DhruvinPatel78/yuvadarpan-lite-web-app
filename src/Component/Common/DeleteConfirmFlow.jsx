@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ConfirmModal, { getDeleteDescription } from "./ConfirmModal";
 import LinkedRecordsModal from "./LinkedRecordsModal";
 import { getLinkedRecords } from "../../util/linkedApi";
+import { masterNameText } from "../../util/bhasha";
 
 export default function DeleteConfirmFlow({
   open,
@@ -15,6 +16,7 @@ export default function DeleteConfirmFlow({
   const [groups, setGroups] = useState([]);
 
   const idKey = Array.isArray(ids) ? ids.join(",") : String(ids || "");
+  const displayName = masterNameText(name) || name;
 
   useEffect(() => {
     if (!open) {
@@ -61,7 +63,7 @@ export default function DeleteConfirmFlow({
     <>
       <LinkedRecordsModal
         open={open && (step === "loading" || step === "linked")}
-        name={name}
+        name={displayName}
         groups={groups}
         loading={step === "loading"}
         onClose={handleClose}
@@ -70,7 +72,7 @@ export default function DeleteConfirmFlow({
       <ConfirmModal
         open={open && step === "confirm"}
         title="Are you sure?"
-        description={getDeleteDescription(name)}
+        description={getDeleteDescription(displayName)}
         confirmText="Delete"
         cancelText="Cancel"
         onClose={handleClose}
