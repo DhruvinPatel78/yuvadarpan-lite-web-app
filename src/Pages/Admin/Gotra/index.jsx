@@ -144,6 +144,7 @@ export default function Gotra() {
             }
           },
           refresh: () => handleGotraList(),
+          syncMasters: ["gotra"],
           close: () => {
             resetForm();
             gotraAddEditModalClose();
@@ -177,6 +178,7 @@ export default function Gotra() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteGotra(Array.isArray(id) ? id : [id]),
       refresh: () => handleGotraList(),
+      syncMasters: ["gotra"],
     });
   };
 

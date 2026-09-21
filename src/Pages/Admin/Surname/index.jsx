@@ -41,7 +41,7 @@ import {
 } from "../../../util/surnameApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { fillMasterName, masterNameText, toNameEnGuPayload } from "../../../util/bhasha";
-import { addGotra } from "../../../util/gotraApi";
+import { addGotra, getGotraAllList } from "../../../util/gotraApi";
 import { gotra as setGotra } from "../../../store/locationSlice";
 
 const gotraFilter = createFilterOptions();
@@ -49,7 +49,8 @@ const gotraFilter = createFilterOptions();
 const gotraNameOf = (value) => {
   if (!value) return "";
   if (typeof value === "string") return value.trim();
-  return String(value.inputValue || value.name || value.label || "").trim();
+  if (value.inputValue) return String(value.inputValue).trim();
+  return masterNameText(value);
 };
 
 export default function Index() {
@@ -191,6 +192,7 @@ export default function Index() {
             }
           },
           refresh: () => handleSurnameList(),
+          syncMasters: ["surname", "gotra"],
           close: () => {
             resetForm();
             surnameAddEditModalClose();
@@ -226,6 +228,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteSurname(Array.isArray(id) ? id : [id]),
       refresh: () => handleSurnameList(),
+      syncMasters: ["surname"],
     });
   };
 
@@ -241,7 +244,7 @@ export default function Index() {
         params.name = selectedSearchByText.trim();
       }
       if (!isRest && selectedGotra) {
-        params.gotra = selectedGotra.name || selectedGotra.label;
+        params.gotra = gotraNameOf(selectedGotra);
       }
       const data = await getSurnameList(params);
       setSurnameData(data);
@@ -253,6 +256,15 @@ export default function Index() {
   useEffect(() => {
     handleSurnameList();
   }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    getGotraAllList()
+      .then((list) => {
+        const rows = Array.isArray(list) ? list : list?.data || [];
+        dispatch(setGotra(rows));
+      })
+      .catch(() => {});
+  }, [dispatch]);
 
   useEffect(() => {
     if (skipSearchEffect.current) {
@@ -316,11 +328,7 @@ export default function Index() {
                 options={gotraOptions}
                 value={selectedGotra}
                 onChange={(_, value) => setSelectedGotra(value)}
-                getOptionLabel={(option) =>
-                  option?.label ||
-                  (typeof option?.name === "string" ? option.name : option?.name?.en) ||
-                  ""
-                }
+                getOptionLabel={(option) => gotraNameOf(option)}
                 isOptionEqualToValue={(option, selected) =>
                   String(option?.id || option?.value) ===
                   String(selected?.id || selected?.value)
@@ -363,9 +371,10 @@ export default function Index() {
           selectedIds={selectedIds}
           onToggleSelect={toggleCardSelection}
           canSelect={canManage}
-          getDetails={(row) =>
-            [row.gotra ? `Gotra: ${row.gotra}` : null].filter(Boolean)
-          }
+          getDetails={(row) => {
+            const gotraLabel = gotraNameOf(row.gotra);
+            return [gotraLabel ? `Gotra: ${gotraLabel}` : null].filter(Boolean);
+          }}
           activeDisabled={!canManage}
           onActiveChange={(row, next) => userActionHandler(row, next, "active")}
           onEdit={
@@ -411,11 +420,7 @@ export default function Index() {
                         handleHomeEndKeys
                         options={gotraOptions}
                         value={values.gotra || null}
-                        getOptionLabel={(option) => {
-                          if (typeof option === "string") return option;
-                          if (option?.inputValue) return option.inputValue;
-                          return option?.name || option?.label || "";
-                        }}
+                        getOptionLabel={(option) => gotraNameOf(option)}
                         isOptionEqualToValue={(option, selected) => {
                           const left = gotraNameOf(option).toLowerCase();
                           const right = gotraNameOf(selected).toLowerCase();
@@ -446,13 +451,17 @@ export default function Index() {
                             setFieldValue("gotra", newInput);
                           }
                         }}
-                        renderOption={(props, option) => (
-                          <li {...props} key={option.id || option.inputValue || option.name}>
-                            {option.inputValue
-                              ? `Add "${option.inputValue}"`
-                              : option.name || option.label}
-                          </li>
-                        )}
+                        renderOption={(props, option) => {
+                          const label = gotraNameOf(option);
+                          return (
+                            <li
+                              {...props}
+                              key={option.id || option.inputValue || label}
+                            >
+                              {option.inputValue ? `Add "${option.inputValue}"` : label}
+                            </li>
+                          );
+                        }}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -501,7 +510,7 @@ export default function Index() {
         open={Boolean(deleteTarget)}
         entity="surname"
         ids={deleteTarget ? [deleteTarget.id] : []}
-        name={deleteTarget?.name}
+        name={gotraNameOf(deleteTarget) || deleteTarget?.name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={async () => {
           await deleteAPI(deleteTarget.id);

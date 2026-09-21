@@ -204,6 +204,7 @@ export default function Index() {
             }
           },
           refresh: () => handleCityList(),
+          syncMasters: ["city"],
           close: () => {
             resetForm();
             cityAddEditModalClose();
@@ -252,6 +253,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteCity(Array.isArray(id) ? id : [id]),
       refresh: () => handleCityList(),
+      syncMasters: ["city"],
     });
   };
 

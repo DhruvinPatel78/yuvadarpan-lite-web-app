@@ -180,6 +180,7 @@ export default function LocationDetails({ config }) {
           }
         },
         refresh: () => loadChildren(),
+        syncMasters: config.deleteEntity ? [config.deleteEntity] : [],
         close: () => closeFormModal(),
       });
     } catch (e) {
@@ -191,6 +192,7 @@ export default function LocationDetails({ config }) {
     await completeModalMutation(dispatch, {
       mutate: () => config.deleteChild(Array.isArray(rowId) ? rowId : [rowId]),
       refresh: () => loadChildren(),
+      syncMasters: config.deleteEntity ? [config.deleteEntity] : [],
     });
   };
 

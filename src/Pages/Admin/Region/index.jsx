@@ -189,6 +189,7 @@ export default function Index() {
             }
           },
           refresh: () => handleRegionList(),
+          syncMasters: ["region"],
           close: () => {
             resetForm();
             regionAddEditModalClose();
@@ -229,6 +230,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteRegion(Array.isArray(id) ? id : [id]),
       refresh: () => handleRegionList(),
+      syncMasters: ["region"],
     });
   };
 

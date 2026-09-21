@@ -197,6 +197,7 @@ export default function Index() {
             }
           },
           refresh: () => handleDistrictList(),
+          syncMasters: ["district"],
           close: () => {
             resetForm();
             districtAddEditModalClose();
@@ -241,6 +242,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteDistrict(Array.isArray(id) ? id : [id]),
       refresh: () => handleDistrictList(),
+      syncMasters: ["district"],
     });
   };
 
