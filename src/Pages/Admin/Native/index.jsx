@@ -140,6 +140,7 @@ export default function Index() {
             }
           },
           refresh: () => handleNativeList(),
+          syncMasters: ["native"],
           close: () => {
             resetForm();
             nativeAddEditModalClose();
@@ -175,6 +176,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteNative(Array.isArray(id) ? id : [id]),
       refresh: () => handleNativeList(),
+      syncMasters: ["native"],
     });
   };
 
