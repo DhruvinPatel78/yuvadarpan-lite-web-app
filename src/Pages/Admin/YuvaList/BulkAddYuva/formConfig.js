@@ -1,8 +1,9 @@
 import * as Yup from "yup";
 import dayjs from "dayjs";
+import { langText, toEnGuPayload } from "../../../../util/bhasha";
 
 const slugPart = (value) =>
-  String(value ?? "")
+  langText(value)
     .trim()
     .replace(/\s+/g, "_")
     .replace(/[^a-zA-Z0-9]/g, "") || "na";
@@ -115,7 +116,12 @@ export const fieldsToOtherObject = (list = [], draft) => {
   }, {});
 };
 
-const hasText = (value) => String(value ?? "").trim() !== "";
+const hasText = (value) => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return String(value.en || value.gu || "").trim() !== "";
+  }
+  return String(value ?? "").trim() !== "";
+};
 
 let yuvaSeq = 0;
 
@@ -351,11 +357,12 @@ export const buildBulkPayload = (values) => {
   return filled.map((yuva) => {
     const { key, otherList, otherDraft, ...yuvaFields } = yuva;
     delete yuvaFields.email;
-    return {
+    return toEnGuPayload({
       ...family,
       ...yuvaFields,
-      other: fieldsToOtherObject(otherList, otherDraft),
       abroadStudy: yuva.abroadStudy || "no",
-    };
+    }, {
+      other: fieldsToOtherObject(otherList, otherDraft),
+    });
   });
 };

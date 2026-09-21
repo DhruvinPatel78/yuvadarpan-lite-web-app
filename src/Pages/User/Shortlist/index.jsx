@@ -5,7 +5,9 @@ import moment from "moment";
 import { Navigate, useNavigate } from "react-router-dom";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
-import { formatYuvaDob, isRegularUser, toCamelCase } from "../../../util/util";
+import { formatYuvaDob, isRegularUser } from "../../../util/util";
+import { pickYuvaLangText, userLanguage } from "../../../util/bhasha";
+import { masterLabelOf } from "../../../Component/constant";
 import {
   getShortlistedYuvas,
   removeYuvaFromShortlist,
@@ -18,6 +20,7 @@ const PAGE_SIZE = 12;
 
 const Shortlisted = () => {
   const { surname, city, auth } = UseRedux();
+  const language = userLanguage(auth?.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const canShortlist = isRegularUser(auth?.user?.role);
@@ -120,20 +123,18 @@ const Shortlisted = () => {
             <ProfileCard
               key={data?.id}
               imgSrc={data?.profile?.url}
-              name={toCamelCase(data?.firstName)}
-              location={toCamelCase(
-                city.find((i) => i?.id === data?.city)?.name
-              )}
+              name={pickYuvaLangText(data, "firstName", language)}
+              location={masterLabelOf(city, data?.city, language)}
               age={moment().diff(data?.dob, "years")}
               dob={formatYuvaDob(data?.dob)}
-              father={`${toCamelCase(data?.fatherName)} ${toCamelCase(
-                data?.grandFatherName
+              father={`${pickYuvaLangText(data, "fatherName", language)} ${pickYuvaLangText(
+                data,
+                "grandFatherName",
+                language
               )}`}
-              mother={toCamelCase(data?.motherName)}
-              firm={toCamelCase(data?.firm)}
-              surname={toCamelCase(
-                surname.find((i) => i?.id === data?.lastName)?.name
-              )}
+              mother={pickYuvaLangText(data, "motherName", language)}
+              firm={pickYuvaLangText(data, "firm", language)}
+              surname={masterLabelOf(surname, data?.lastName, language)}
               shortlisted
               onToggleShortlist={() => handleRemove(data)}
               onClick={() =>

@@ -27,17 +27,17 @@ import {
   getShortlistIds,
   removeYuvaFromShortlist,
 } from "../../../util/shortlistApi";
-import { getNativeList } from "../../../util/yuvaAdminApi";
-import { getGotraAllList } from "../../../util/gotraApi";
-import CustomInput from "../../../Component/Common/customInput";
 import {
   getAllCityData,
   getAllDistrictData,
+  getAllGotraData,
+  getAllNativeData,
   getAllRegionData,
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
 } from "../../../util/getAPICall";
+import CustomInput from "../../../Component/Common/customInput";
 import {
   filterFieldCols,
   getSelectedData,
@@ -45,6 +45,7 @@ import {
   handleListById,
   lastNameIdsForGotraFilter,
   listHandler,
+  masterLabelOf,
   surnamesForGotra,
   useFilteredIds,
 } from "../../../Component/constant";
@@ -54,6 +55,7 @@ import {
   educationList,
   maritalStatusList,
 } from "../../Admin/YuvaList/BulkAddYuva/formConfig";
+import { pickYuvaLangText, userLanguage } from "../../../util/bhasha";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -111,7 +113,8 @@ const sanitizeAgeInput = (raw) => {
 };
 
 const Home = () => {
-  const { surname, city, state, region, district, samaj, auth } = UseRedux();
+  const { surname, city, state, region, district, samaj, auth, gotra: gotraList, native: nativeList } = UseRedux();
+  const language = userLanguage(auth?.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const canShortlist = isRegularUser(auth?.user?.role);
@@ -124,7 +127,6 @@ const Home = () => {
   const loadingMoreLock = useRef(false);
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [gotraList, setGotraList] = useState([]);
   const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
@@ -139,7 +141,6 @@ const Home = () => {
   const [selectedEducation, setSelectedEducation] = useState([]);
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
-  const [nativeList, setNativeList] = useState([]);
   const [regionListByState, setRegionListByState] = useState(region);
   const [districtListByRegion, setDistrictListByRegion] = useState(district);
   const [cityListByDistrict, setCityListByDistrict] = useState(city);
@@ -248,18 +249,14 @@ const Home = () => {
     dispatch(getAllDistrictData);
     dispatch(getAllSamajData);
     dispatch(getAllSurnameData);
-    getGotraAllList()
-      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setGotraList([]));
-    getNativeList()
-      .then((data) => setNativeList(Array.isArray(data) ? data : []))
-      .catch(() => setNativeList([]));
+    dispatch(getAllGotraData);
+    dispatch(getAllNativeData);
     if (canShortlist) {
       getShortlistIds()
         .then((ids) => setShortlistedIds((ids || []).map(String)))
         .catch(() => setShortlistedIds([]));
     }
-  }, [canShortlist]);
+  }, [canShortlist, dispatch]);
 
   const yuvaRecordId = (yuva) => String(yuva?.id || yuva?._id || "");
 
@@ -776,20 +773,18 @@ const Home = () => {
             <ProfileCard
               key={data?.id}
               imgSrc={data?.profile?.url}
-              name={toCamelCase(data?.firstName)}
-              location={toCamelCase(
-                city.find((i) => i?.id === data?.city)?.name
-              )}
+              name={pickYuvaLangText(data, "firstName", language)}
+              location={masterLabelOf(city, data?.city, language)}
               age={moment().diff(data?.dob, "years")}
               dob={formatYuvaDob(data?.dob)}
-              father={`${toCamelCase(data?.fatherName)} ${toCamelCase(
-                data?.grandFatherName
+              father={`${pickYuvaLangText(data, "fatherName", language)} ${pickYuvaLangText(
+                data,
+                "grandFatherName",
+                language
               )}`}
-              mother={toCamelCase(data?.motherName)}
-              firm={toCamelCase(data?.firm)}
-              surname={toCamelCase(
-                surname.find((i) => i?.id === data?.lastName)?.name
-              )}
+              mother={pickYuvaLangText(data, "motherName", language)}
+              firm={pickYuvaLangText(data, "firm", language)}
+              surname={masterLabelOf(surname, data?.lastName, language)}
               shortlisted={shortlistedIds.includes(String(data?.id || data?._id))}
               onToggleShortlist={
                 canShortlist

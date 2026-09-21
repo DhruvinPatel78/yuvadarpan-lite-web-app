@@ -14,7 +14,8 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContainerPage from "../../../Component/Container";
 import { Form, FormikProvider, useFormik } from "formik";
-import CustomInput from "../../../Component/Common/customInput";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import { Button as ActionButton, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
@@ -28,6 +29,7 @@ import {
   deleteNative,
 } from "../../../util/nativeApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 
 export default function Index() {
   const dispatch = useDispatch();
@@ -94,7 +96,7 @@ export default function Index() {
               onClick={() => {
                 setNativeModalData(record?.row);
                 setNativeAddEditModel(!nativeAddEditModel);
-                setFieldValue("name", record?.row.name);
+                fillMasterName(setFieldValue, record?.row);
               }}
             />
           </Tooltip>
@@ -121,10 +123,11 @@ export default function Index() {
   const formik = useFormik({
     initialValues: {
       name: "",
+      nameGu: "",
     },
     onSubmit: async (values, { resetForm }) => {
       try {
-        const { confirmPassword, ...rest } = values;
+        const { confirmPassword, ...rest } = toNameEnGuPayload(values);
         await completeModalMutation(dispatch, {
           mutate: async () => {
             if (nativeModalData) {
@@ -164,7 +167,7 @@ export default function Index() {
   const nativeAddEditModalClose = () => {
     setNativeAddEditModel(!nativeAddEditModel);
     setNativeModalData(null);
-    setFieldValue("name", null);
+    fillMasterName(setFieldValue, {});
     resetForm();
   };
 
@@ -275,7 +278,7 @@ export default function Index() {
               ? (row) => {
                   setNativeModalData(row);
                   setNativeAddEditModel(true);
-                  setFieldValue("name", row.name);
+                  fillMasterName(setFieldValue, row);
                 }
               : undefined
           }
@@ -295,22 +298,21 @@ export default function Index() {
           onClose={() => nativeAddEditModalClose()}
           title="Native"
         >
+            <MasterLangWrap>
             <FormikProvider value={formik}>
               <Form
                 className={
-                  "gap-4 flex flex-col w-full h-full max-h-[90%] overflow-auto"
+                  "gap-4 flex flex-col w-full pt-1 overflow-visible"
                 }
               >
                 <Grid container className={"w-full"} spacing={2}>
                   <Grid item xs={12}>
                     <FormControl className={"w-full"}>
-                      <CustomInput
-                        name={"name"}
+                      <BilingualInput
+                        enName={"name"}
                         id="native"
                         label="Native"
-                        value={values.name}
                         variant="outlined"
-                        onChange={handleChange}
                         onBlur={handleBlur}
                         errors={touched?.name && errors?.name && errors?.name}
                       />
@@ -333,6 +335,7 @@ export default function Index() {
                 </Grid>
               </Form>
             </FormikProvider>
+            </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow

@@ -24,7 +24,7 @@ import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { getYuvaList as fetchYuvaList, deleteYuva, getNativeList as fetchNativeList } from "../../../util/yuvaAdminApi";
+import { getYuvaList as fetchYuvaList, deleteYuva } from "../../../util/yuvaAdminApi";
 import {
   getSelectedData,
   gotraOptionList,
@@ -34,6 +34,7 @@ import {
   surnamesForGotra,
   useFilteredIds,
   yuvaFilterList,
+  masterLabelOf,
 } from "../../../Component/constant";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
@@ -46,16 +47,26 @@ import {
   getAllCityData,
   getAllCountryData,
   getAllDistrictData,
+  getAllGotraData,
+  getAllNativeData,
   getAllRegionData,
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
 } from "../../../util/getAPICall";
-import { getGotraAllList } from "../../../util/gotraApi";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { masterNameText, pickYuvaLangText } from "../../../util/bhasha";
 
 const MOBILE_PAGE_SIZE = 20;
+
+const yuvaPersonName = (row) =>
+  [
+    pickYuvaLangText(row, "firstName"),
+    pickYuvaLangText(row, "fatherName"),
+  ]
+    .filter(Boolean)
+    .join(" ");
 
 function YuvaDetailItem({ label, value }) {
   return (
@@ -90,7 +101,7 @@ const YuvaList = () => {
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const { surname, city, state, region, district, samaj, country, auth } = UseRedux();
+  const { surname, city, state, region, district, samaj, country, auth, native: nativeList, gotra: gotraList } = UseRedux();
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager =
@@ -117,13 +128,14 @@ const YuvaList = () => {
     [samaj, city, district, region, state, country]
   );
   const canEditRow = useCallback(
-    (yuva) =>
-      (hasOwnListToggle && ownUserList) ||
-      canEditYuvaRecord(auth?.user, yuva, locationLists),
+    (yuva) => {
+      if (hasOwnListToggle) {
+        return Boolean(ownUserList);
+      }
+      return canEditYuvaRecord(auth?.user, yuva, locationLists);
+    },
     [hasOwnListToggle, ownUserList, auth?.user, locationLists]
   );
-  const [nativeList, setNativeList] = useState([]);
-  const [gotraList, setGotraList] = useState([]);
   const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedNative, setSelectedNative] = useState([]);
@@ -138,29 +150,16 @@ const YuvaList = () => {
     setValue(newValue);
   };
   useEffect(() => {
-    getNativeList();
-    if (!surname?.length) dispatch(getAllSurnameData);
-    if (!country?.length) dispatch(getAllCountryData);
-    if (!state?.length) dispatch(getAllStateData);
-    if (!region?.length) dispatch(getAllRegionData);
-    if (!district?.length) dispatch(getAllDistrictData);
-    if (!city?.length) dispatch(getAllCityData);
-    if (!samaj?.length) dispatch(getAllSamajData);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    getGotraAllList()
-      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setGotraList([]));
-  }, []);
-
-  const getNativeList = async () => {
-    try {
-      const data = await fetchNativeList();
-      const rows = Array.isArray(data) ? data : data?.data || [];
-      setNativeList(rows.map((d) => ({ ...d, label: d.name, value: d.id })));
-    } catch (e) {
-      // Optionally handle error with notification
-    }
-  };
+    dispatch(getAllSurnameData);
+    dispatch(getAllCountryData);
+    dispatch(getAllStateData);
+    dispatch(getAllRegionData);
+    dispatch(getAllDistrictData);
+    dispatch(getAllCityData);
+    dispatch(getAllSamajData);
+    dispatch(getAllNativeData);
+    dispatch(getAllGotraData);
+  }, [dispatch]);
 
   const yuvaListColumn = useMemo(() => [
     {
@@ -183,9 +182,9 @@ const YuvaList = () => {
       filterable: false,
       renderCell: (record) => {
         const fullName = [
-          record.row.firstName,
+          pickYuvaLangText(record.row, "firstName"),
           record.row.middleName,
-          surname?.find((item) => item?.id === record?.row?.lastName)?.name,
+          masterLabelOf(surname, record?.row?.lastName),
         ]
           .filter(Boolean)
           .join(" ");
@@ -204,6 +203,7 @@ const YuvaList = () => {
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
+      valueGetter: (params) => pickYuvaLangText(params?.row, "gender"),
     },
     {
       field: "dob",
@@ -229,8 +229,8 @@ const YuvaList = () => {
       cellClassName: "items-center flex px-2 outline-none",
       filterable: false,
       renderCell: (record) => (
-        <span className="block w-full min-w-0 truncate" title={record.row.firm}>
-          {record.row.firm || ""}
+        <span className="block w-full min-w-0 truncate" title={pickYuvaLangText(record.row, "firm")}>
+          {pickYuvaLangText(record.row, "firm") || ""}
         </span>
       ),
     },
@@ -244,7 +244,7 @@ const YuvaList = () => {
       filterable: false,
       renderCell: (record) => {
         const cityName =
-          city?.find((item) => item?.id === record?.row?.city)?.name || "";
+          masterLabelOf(city, record?.row?.city);
         return (
           <span className="block w-full min-w-0 truncate" title={cityName}>
             {cityName}
@@ -262,8 +262,7 @@ const YuvaList = () => {
       filterable: false,
       renderCell: (record) => {
         const nativeName =
-          nativeList.find((item) => item?.id === record?.row?.native)?.name ||
-          "";
+          masterLabelOf(nativeList, record?.row?.native);
         return (
           <span className="block w-full min-w-0 truncate" title={nativeName}>
             {nativeName}
@@ -305,9 +304,7 @@ const YuvaList = () => {
                   onClick={() =>
                     setDeleteTarget({
                       id: record?.id || record?.row?.id,
-                      name: [record?.row?.firstName, record?.row?.fatherName]
-                        .filter(Boolean)
-                        .join(" "),
+                      name: yuvaPersonName(record?.row),
                     })
                   }
                 />
@@ -471,8 +468,7 @@ const YuvaList = () => {
   };
 
   const yuvas = yuvaList?.data || [];
-  const lookupName = (list, id) =>
-    list?.find((item) => item?.id === id)?.name || "-";
+  const lookupName = (list, id) => masterLabelOf(list, id) || "-";
 
   const toggleCardSelection = (id) => {
     setSelectedYuvas((prev) =>
@@ -529,25 +525,21 @@ const YuvaList = () => {
             >
               View User Dashboard
             </Button>
-            {canAct ? (
-              <>
-                <ActionButton
-                  variant="secondary"
-                  className="max-md:w-full"
-                  icon={<GroupAddIcon sx={{ fontSize: 18 }} />}
-                  onClick={() => navigate("/admin/yuvalist/bulk-add")}
-                >
-                  Bulk Add Yuva
-                </ActionButton>
-                <ActionButton
-                  className="max-md:w-full"
-                  icon={<AddIcon sx={{ fontSize: 18 }} />}
-                  onClick={() => navigate("/admin/yuvalist/add")}
-                >
-                  Yuva
-                </ActionButton>
-              </>
-            ) : null}
+            <ActionButton
+              variant="secondary"
+              className="max-md:w-full"
+              icon={<GroupAddIcon sx={{ fontSize: 18 }} />}
+              onClick={() => navigate("/admin/yuvalist/bulk-add")}
+            >
+              Bulk Add Yuva
+            </ActionButton>
+            <ActionButton
+              className="max-md:w-full"
+              icon={<AddIcon sx={{ fontSize: 18 }} />}
+              onClick={() => navigate("/admin/yuvalist/add")}
+            >
+              Yuva
+            </ActionButton>
           </div>
           }
         />
@@ -704,9 +696,9 @@ const YuvaList = () => {
           {yuvas.length ? (
             yuvas.map((row) => {
               const fullName = [
-                row.firstName,
+                pickYuvaLangText(row, "firstName"),
                 row.middleName,
-                surname?.find((item) => item?.id === row.lastName)?.name,
+                masterLabelOf(surname, row.lastName),
               ]
                 .filter(Boolean)
                 .join(" ");
@@ -734,8 +726,10 @@ const YuvaList = () => {
                       Family ID: {row.familyId || "-"}
                     </p>
                     <p className={"text-sm text-gray-600 capitalize break-words"}>
-                      {row.gender || "-"}
-                      {row.firm ? ` · ${row.firm}` : ""}
+                      {pickYuvaLangText(row, "gender") || "-"}
+                      {pickYuvaLangText(row, "firm")
+                        ? ` · ${pickYuvaLangText(row, "firm")}`
+                        : ""}
                       {lookupName(nativeList, row.native) !== "-"
                         ? ` · ${lookupName(nativeList, row.native)}`
                         : ""}
@@ -775,9 +769,7 @@ const YuvaList = () => {
                           onClick={() =>
                             setDeleteTarget({
                               id: row.id,
-                              name: [row.firstName, row.fatherName]
-                                .filter(Boolean)
-                                .join(" "),
+                              name: yuvaPersonName(row),
                             })
                           }
                         >
@@ -838,8 +830,8 @@ const YuvaList = () => {
           </button>
           <div className="text-center sm:text-left min-w-0 flex-1">
             <h2 className="text-lg font-semibold text-primary leading-snug break-words">
-              {userData?.firstName}{" "}
-              {surname.find((item) => item?.id === userData?.lastName)?.name}{" "}
+              {pickYuvaLangText(userData, "firstName")}{" "}
+              {masterLabelOf(surname, userData?.lastName)}{" "}
             </h2>
             <p className="text-sm text-mutedText mt-1">
               {moment(userData?.dob).format("DD/MM/YYYY hh:mm A")}
@@ -923,47 +915,37 @@ const YuvaList = () => {
             </Box>
             <TabPanel value="1" className="!px-0 !pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <YuvaDetailItem label="Father name" value={userData?.fatherName} />
-                <YuvaDetailItem label="Mother name" value={userData?.motherName} />
+                <YuvaDetailItem label="Father name" value={pickYuvaLangText(userData, "fatherName")} />
+                <YuvaDetailItem label="Mother name" value={pickYuvaLangText(userData, "motherName")} />
                 <YuvaDetailItem label="Height" value={userData?.height} />
                 <YuvaDetailItem label="Weight" value={userData?.weight} />
                 <YuvaDetailItem
                   label="City"
-                  value={city.find((item) => item?.id === userData?.city)?.name}
+                  value={lookupName(city, userData?.city)}
                 />
                 <YuvaDetailItem
                   label="State"
-                  value={
-                    state?.find((item) => item?.id === userData?.state)?.name
-                  }
+                  value={lookupName(state, userData?.state)}
                 />
-                <YuvaDetailItem label="Firm" value={userData?.firm} />
+                <YuvaDetailItem label="Firm" value={pickYuvaLangText(userData, "firm")} />
                 <YuvaDetailItem
                   label="Firm address"
-                  value={userData?.firmAddress}
+                  value={pickYuvaLangText(userData, "firmAddress")}
                 />
               </div>
             </TabPanel>
             <TabPanel value="2" className="!px-0 !pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                <YuvaDetailItem label="Name" value={userData?.mamaInfo?.name} />
+                <YuvaDetailItem label="Name" value={pickYuvaLangText(userData, "mamaInfo.name")} />
                 <YuvaDetailItem
                   label="Last name"
-                  value={
-                    surname.find(
-                      (item) => item?.id === userData?.mamaInfo?.lastName
-                    )?.name
-                  }
+                  value={lookupName(surname, userData?.mamaInfo?.lastName)}
                 />
                 <YuvaDetailItem
                   label="Native"
-                  value={
-                    nativeList.find(
-                      (item) => item?.id === userData?.mamaInfo?.native
-                    )?.name
-                  }
+                  value={lookupName(nativeList, userData?.mamaInfo?.native)}
                 />
-                <YuvaDetailItem label="City" value={userData?.mamaInfo?.city} />
+                <YuvaDetailItem label="City" value={pickYuvaLangText(userData, "mamaInfo.city")} />
               </div>
             </TabPanel>
             <TabPanel value="3" className="!px-0 !pt-4">
@@ -990,15 +972,11 @@ const YuvaList = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                 <YuvaDetailItem
                   label="Name"
-                  value={userData?.contactInfo?.name}
+                  value={pickYuvaLangText(userData, "contactInfo.name")}
                 />
                 <YuvaDetailItem
                   label="Last name"
-                  value={
-                    surname.find(
-                      (item) => item?.id === userData?.contactInfo?.lastName
-                    )?.name
-                  }
+                  value={lookupName(surname, userData?.contactInfo?.lastName)}
                 />
                 <YuvaDetailItem
                   label="Relation"
@@ -1018,24 +996,22 @@ const YuvaList = () => {
                 Personal Info
               </h3>
               <div className="grid grid-cols-1 gap-y-4">
-                <YuvaDetailItem label="Father name" value={userData?.fatherName} />
-                <YuvaDetailItem label="Mother name" value={userData?.motherName} />
+                <YuvaDetailItem label="Father name" value={pickYuvaLangText(userData, "fatherName")} />
+                <YuvaDetailItem label="Mother name" value={pickYuvaLangText(userData, "motherName")} />
                 <YuvaDetailItem label="Height" value={userData?.height} />
                 <YuvaDetailItem label="Weight" value={userData?.weight} />
                 <YuvaDetailItem
                   label="City"
-                  value={city.find((item) => item?.id === userData?.city)?.name}
+                  value={lookupName(city, userData?.city)}
                 />
                 <YuvaDetailItem
                   label="State"
-                  value={
-                    state?.find((item) => item?.id === userData?.state)?.name
-                  }
+                  value={lookupName(state, userData?.state)}
                 />
-                <YuvaDetailItem label="Firm" value={userData?.firm} />
+                <YuvaDetailItem label="Firm" value={pickYuvaLangText(userData, "firm")} />
                 <YuvaDetailItem
                   label="Firm address"
-                  value={userData?.firmAddress}
+                  value={pickYuvaLangText(userData, "firmAddress")}
                 />
               </div>
             </div>
@@ -1044,24 +1020,16 @@ const YuvaList = () => {
                 Mama Info
               </h3>
               <div className="grid grid-cols-1 gap-y-4">
-                <YuvaDetailItem label="Name" value={userData?.mamaInfo?.name} />
+                <YuvaDetailItem label="Name" value={pickYuvaLangText(userData, "mamaInfo.name")} />
                 <YuvaDetailItem
                   label="Last name"
-                  value={
-                    surname.find(
-                      (item) => item?.id === userData?.mamaInfo?.lastName
-                    )?.name
-                  }
+                  value={lookupName(surname, userData?.mamaInfo?.lastName)}
                 />
                 <YuvaDetailItem
                   label="Native"
-                  value={
-                    nativeList.find(
-                      (item) => item?.id === userData?.mamaInfo?.native
-                    )?.name
-                  }
+                  value={lookupName(nativeList, userData?.mamaInfo?.native)}
                 />
-                <YuvaDetailItem label="City" value={userData?.mamaInfo?.city} />
+                <YuvaDetailItem label="City" value={pickYuvaLangText(userData, "mamaInfo.city")} />
               </div>
             </div>
             <div>
@@ -1071,15 +1039,11 @@ const YuvaList = () => {
               <div className="grid grid-cols-1 gap-y-4">
                 <YuvaDetailItem
                   label="Name"
-                  value={userData?.contactInfo?.name}
+                  value={pickYuvaLangText(userData, "contactInfo.name")}
                 />
                 <YuvaDetailItem
                   label="Last name"
-                  value={
-                    surname.find(
-                      (item) => item?.id === userData?.contactInfo?.lastName
-                    )?.name
-                  }
+                  value={lookupName(surname, userData?.contactInfo?.lastName)}
                 />
                 <YuvaDetailItem
                   label="Relation"

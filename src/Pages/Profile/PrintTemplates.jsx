@@ -1,8 +1,9 @@
 import React from "react";
 import moment from "moment/moment";
 import { getUserImageSrc } from "../../util/defaultUserImage";
+import { asDisplayText, langText, masterNameText, pickOtherMap } from "../../util/bhasha";
 
-export const getLookupName = (list, id, fallback = "") => {
+export const getLookupName = (list, id, fallback = "", lang = "en") => {
   if (id == null || id === "") return fallback || "";
   const key = String(id);
   const found = (list || []).find((item) =>
@@ -10,12 +11,13 @@ export const getLookupName = (list, id, fallback = "") => {
       (value) => value != null && String(value) === key
     )
   );
-  return found?.name || found?.label || fallback || "";
+  return masterNameText(found, lang) || langText(fallback) || "";
 };
 
 export const hasValue = (value) => {
   if (typeof value === "boolean") return true;
   if (value === 0 || value === "0") return true;
+  if (value && typeof value === "object") return Boolean(langText(value));
   return String(value ?? "").trim() !== "";
 };
 
@@ -26,7 +28,7 @@ export const displayValue = (value, list) => {
     if (name) return name;
     if (/^[a-f0-9]{24}$/i.test(String(value))) return "";
   }
-  return value;
+  return asDisplayText(value);
 };
 
 export const extraOtherFields = (other) => {
@@ -74,7 +76,7 @@ const BiodataSection = ({ title, fields, caps = false }) => {
       {visibleFields.map((field, index) => (
         <div className="yuva-biodata-row" key={`${field.label}-${index}`}>
           <span>{field.label}</span>
-          <span>{field.value}</span>
+          <span>{asDisplayText(field.value)}</span>
         </div>
       ))}
     </div>
@@ -86,8 +88,8 @@ const buildPrintModel = (data, lists) => {
     lists;
   const labels = data?.labels || {};
   const fullName = [
-    data?.firstName,
-    data?.fatherName,
+    langText(data?.firstName),
+    langText(data?.fatherName),
     getLookupName(surname, data?.lastName, labels.lastName),
   ]
     .filter(Boolean)
@@ -95,7 +97,7 @@ const buildPrintModel = (data, lists) => {
 
   const showHandicap = data?.handicap === true;
 
-  const additionalOther = extraOtherFields(data?.other);
+  const additionalOther = extraOtherFields(pickOtherMap(data, "en"));
 
   return {
     fullName,
@@ -107,9 +109,9 @@ const buildPrintModel = (data, lists) => {
         label: "Date of Birth",
         value: data?.dob ? moment(data.dob).format("D MMMM YYYY") : "",
       },
-      { label: "Gender", value: data?.gender },
-      { label: "Marital Status", value: data?.martialStatus },
-      { label: "Place of Birth", value: data?.pob },
+      { label: "Gender", value: langText(data?.gender) },
+      { label: "Marital Status", value: langText(data?.martialStatus) },
+      { label: "Place of Birth", value: langText(data?.pob) },
       { label: "Height", value: data?.height },
       { label: "Weight", value: data?.weight },
       { label: "Blood Group", value: data?.bloodGroup },
@@ -118,21 +120,21 @@ const buildPrintModel = (data, lists) => {
     ],
     contact: [
       { label: "Phone", value: data?.contactInfo?.phone },
-      { label: "Name", value: data?.contactInfo?.name },
+      { label: "Name", value: langText(data?.contactInfo?.name) },
       {
         label: "Last Name",
         value: getLookupName(surname, data?.contactInfo?.lastName),
       },
       { label: "Relation", value: data?.contactInfo?.relation },
-      { label: "Address", value: data?.address },
+      { label: "Address", value: langText(data?.address) },
     ],
     family: [
-      { label: "Father’s Name", value: data?.fatherName },
-      { label: "Grand Father’s Name", value: data?.grandFatherName },
-      { label: "Mother’s Name", value: data?.motherName },
+      { label: "Father’s Name", value: langText(data?.fatherName) },
+      { label: "Grand Father’s Name", value: langText(data?.grandFatherName) },
+      { label: "Mother’s Name", value: langText(data?.motherName) },
     ],
     mama: [
-      { label: "Name", value: data?.mamaInfo?.name },
+      { label: "Name", value: langText(data?.mamaInfo?.name) },
       {
         label: "Last Name",
         value: getLookupName(surname, data?.mamaInfo?.lastName),
@@ -141,7 +143,7 @@ const buildPrintModel = (data, lists) => {
         label: "Native",
         value: getLookupName(nativeList, data?.mamaInfo?.native),
       },
-      { label: "City", value: data?.mamaInfo?.city },
+      { label: "City", value: langText(data?.mamaInfo?.city) },
     ],
     education: [
       {
@@ -154,9 +156,9 @@ const buildPrintModel = (data, lists) => {
       },
     ],
     career: [
-      { label: "Activity", value: data?.activity },
-      { label: "Firm", value: data?.firm },
-      { label: "Firm Address", value: data?.firmAddress },
+      { label: "Activity", value: langText(data?.activity) },
+      { label: "Firm", value: langText(data?.firm) },
+      { label: "Firm Address", value: langText(data?.firmAddress) },
     ],
     location: [
       { label: "Country", value: getLookupName(country, data?.country, labels.country) },
@@ -171,7 +173,7 @@ const buildPrintModel = (data, lists) => {
       ...(showHandicap
         ? [
             { label: "Handicap", value: "Yes" },
-            { label: "Handicap Details", value: data?.handicapDetails },
+            { label: "Handicap Details", value: langText(data?.handicapDetails) },
           ]
         : []),
       { label: "Manglik", value: data?.manglik === true ? "Yes" : "" },

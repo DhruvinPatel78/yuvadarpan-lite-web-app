@@ -3,6 +3,7 @@ import { CircularProgress } from "@mui/material";
 import LinkRoundedIcon from "@mui/icons-material/LinkRounded";
 import AppModal from "../UI/AppModal";
 import { Button } from "../UI";
+import { asDisplayText } from "../../util/bhasha";
 
 export default function LinkedRecordsModal({
   open,
@@ -55,7 +56,7 @@ export default function LinkedRecordsModal({
                 {(group.items || []).map((item) => (
                   <li key={item.id} className="px-3 py-2 text-left">
                     <p className="text-sm font-medium text-primary break-words">
-                      {item.name}
+                      {asDisplayText(item.name)}
                     </p>
                     {item.detail ? (
                       <p className="text-xs text-mutedText break-words">{item.detail}</p>

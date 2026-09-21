@@ -13,6 +13,8 @@ export const UseRedux = () =>
       district: state.location.district,
       country: state.location.country,
       role: state.location.role,
+      gotra: state.location.gotra,
+      native: state.location.native,
     }),
     shallowEqual
   );

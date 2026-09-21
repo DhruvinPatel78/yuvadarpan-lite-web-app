@@ -6,7 +6,6 @@ import {
   Checkbox,
   CircularProgress,
   FormControl,
-  FormControlLabel,
   Grid,
   Paper,
   Tooltip,
@@ -33,6 +32,7 @@ import LoadableImage from "../../../Component/Common/LoadableImage";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
+import PreferredLanguageField from "../../../Component/Common/preferredLanguageField";
 import OTPInput from "../../../Component/Common/OTPInput";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
@@ -53,6 +53,7 @@ import {
   surnamesForGotra,
   useFilteredIds,
   getListById,
+  masterLabelOf,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 import {
@@ -73,8 +74,9 @@ import {
   getAllRegionData,
   getAllSamajData,
   getAllCountryData,
+  getAllGotraData,
 } from "../../../util/getAPICall";
-import { getGotraAllList } from "../../../util/gotraApi";
+import { languageLabel } from "../../../util/bhasha";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -113,6 +115,7 @@ const comparableUserValues = (vals) => {
     localSamaj: String(vals?.localSamaj || ""),
     dob: toDateInputValue(vals?.dob),
     gender: String(vals?.gender || "").toLowerCase(),
+    language: String(vals?.language || "gu"),
     role: String(role),
   });
 };
@@ -388,7 +391,7 @@ function UserPasswordPanel({
 
 function Index() {
   const dispatch = useDispatch();
-  const { loading, surname, region, samaj, country, auth } = UseRedux();
+  const { loading, surname, region, samaj, country, auth, gotra: gotraList } = UseRedux();
   const lastNameOptions = useMemo(() => asOptions(surname), [surname]);
   const regionOptions = useMemo(() => asOptions(region), [region]);
   const countryOptions = useMemo(() => asOptions(country), [country]);
@@ -411,8 +414,7 @@ function Index() {
     isRegionManager ||
     isStateManager ||
     isCountryManager;
-  const [ownUserList, setOwnUserList] = useState(false);
-  const canAct = !hasOwnListToggle || ownUserList;
+  const canAct = true;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [mobilePage, setMobilePage] = useState(1);
@@ -449,7 +451,6 @@ function Index() {
   const [cityList, setCityList] = useState([]);
   const [selectedRole, setSelectedRole] = useState([]);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
-  const [gotraList, setGotraList] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [viewUser, setViewUser] = useState(null);
@@ -486,6 +487,7 @@ function Index() {
         role: roleValue,
         dob: formValues.dob ? moment(formValues.dob).format() : formValues.dob,
         gender: String(formValues.gender || "").toLowerCase(),
+        language: formValues.language === "en" ? "en" : "gu",
       };
       if (isAddUser) {
         await addUser({ ...payload, password });
@@ -523,6 +525,7 @@ function Index() {
       localSamaj: "",
       dob: "",
       gender: "",
+      language: "gu",
       role: "",
     },
     onSubmit: async (formValues, { resetForm }) => {
@@ -649,22 +652,22 @@ function Index() {
         ...text,
       };
       if (isSamajManager) {
-        params.ownSamaj = ownUserList;
+        params.ownSamaj = true;
       }
       if (isCityManager) {
-        params.ownCity = ownUserList;
+        params.ownCity = true;
       }
       if (isDistrictManager) {
-        params.ownDistrict = ownUserList;
+        params.ownDistrict = true;
       }
       if (isRegionManager) {
-        params.ownRegion = ownUserList;
+        params.ownRegion = true;
       }
       if (isStateManager) {
-        params.ownState = ownUserList;
+        params.ownState = true;
       }
       if (isCountryManager) {
-        params.ownCountry = ownUserList;
+        params.ownCountry = true;
       }
       const data = await getUserList(params);
       setUserList((prev) => {
@@ -695,20 +698,17 @@ function Index() {
   };
 
   useEffect(() => {
-    if (!surname?.length) dispatch(getAllSurnameData);
-    if (!region?.length) dispatch(getAllRegionData);
-    if (!samaj?.length) dispatch(getAllSamajData);
-    if (!country?.length) dispatch(getAllCountryData);
-    getGotraAllList()
-      .then((data) => setGotraList(Array.isArray(data) ? data : data?.data || []))
-      .catch(() => setGotraList([]));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    dispatch(getAllSurnameData);
+    dispatch(getAllRegionData);
+    dispatch(getAllSamajData);
+    dispatch(getAllCountryData);
+    dispatch(getAllGotraData);
+  }, [dispatch]);
 
   useEffect(() => {
     handleUserList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowsPerPage, ownUserList, isMobile]);
+  }, [page, rowsPerPage, isMobile]);
 
   const loadMoreUsers = () => {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
@@ -774,6 +774,7 @@ function Index() {
         localSamaj: userInfo?.localSamaj || "",
         dob: toDateInputValue(userInfo?.dob),
         gender: String(userInfo?.gender || "").toLowerCase(),
+        language: userInfo?.language === "en" ? "en" : "gu",
         role: roleOption,
         id: userInfo?.id,
       };
@@ -967,7 +968,7 @@ function Index() {
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
       renderCell: (record) => (
-        <>{surname.find((item) => item?.id === record?.row?.lastName)?.name}</>
+        <>{masterLabelOf(surname, record?.row?.lastName)}</>
       ),
     },
     {
@@ -1078,8 +1079,7 @@ function Index() {
   };
 
   const users = userList?.data || [];
-  const lookupName = (list, id) =>
-    list?.find((item) => item?.id === id)?.name || "-";
+  const lookupName = (list, id) => masterLabelOf(list, id) || "-";
   const formatUserDate = (value) => {
     if (!value) return "-";
     const date = new Date(value);
@@ -1143,32 +1143,6 @@ function Index() {
           title="Users"
           actions={
           <div className={"flex flex-col-reverse md:flex-row md:items-center gap-2 md:gap-3 w-full md:w-auto"}>
-            {hasOwnListToggle ? (
-              <FormControlLabel
-                labelPlacement="start"
-                className={"!mr-0"}
-                control={
-                  <CustomSwitch
-                    checked={ownUserList}
-                    onChange={(e) => {
-                      setOwnUserList(e.target.checked);
-                      setPage(0);
-                    }}
-                  />
-                }
-                label={
-                  <span className={"font-semibold text-primary"}>
-                    {isCityManager ||
-                    isDistrictManager ||
-                    isRegionManager ||
-                    isStateManager ||
-                    isCountryManager
-                      ? "Your Userlist"
-                      : "Your Users"}
-                  </span>
-                }
-              />
-            ) : null}
             {canAct ? (
               <ActionButton
                 className="max-md:w-full"
@@ -1523,7 +1497,7 @@ function Index() {
           <UserDetailItem label="Email" value={viewUser?.email} />
           <UserDetailItem label="Mobile" value={viewUser?.mobile} />
           <UserDetailItem label="Gender" value={viewUser?.gender} />
-          <UserDetailItem label="Language" value={viewUser?.language} />
+          <UserDetailItem label="Language" value={languageLabel(viewUser?.language)} />
           <UserDetailItem
             label="Region"
             value={lookupName(region, viewUser?.region)}
@@ -2004,6 +1978,13 @@ function Index() {
                     />
                   </FormControl>
                 </Grid>
+                <PreferredLanguageField
+                  xs={12}
+                  sm={4}
+                  md={4}
+                  value={values?.language || "gu"}
+                  onChange={(next) => setFieldValue("language", next)}
+                />
                 {hasOwnListToggle ? null : (
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>

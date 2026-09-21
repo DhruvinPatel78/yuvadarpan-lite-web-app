@@ -8,6 +8,7 @@ import { UseRedux } from "../../../Component/useRedux";
 import { Card, PageHeader } from "../../../Component/UI";
 import LoadableImage from "../../../Component/Common/LoadableImage";
 import { getUserInfo } from "../../../util/userApi";
+import { languageLabel } from "../../../util/bhasha";
 import {
   getAllCountryData,
   getAllRegionData,
@@ -57,11 +58,11 @@ export default function UserDetails() {
   const { surname, region, samaj, country } = UseRedux();
 
   useEffect(() => {
-    if (!surname?.length) dispatch(getAllSurnameData);
-    if (!region?.length) dispatch(getAllRegionData);
-    if (!samaj?.length) dispatch(getAllSamajData);
-    if (!country?.length) dispatch(getAllCountryData);
-  }, [surname?.length, region?.length, samaj?.length, country?.length, dispatch]);
+    dispatch(getAllSurnameData);
+    dispatch(getAllRegionData);
+    dispatch(getAllSamajData);
+    dispatch(getAllCountryData);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!id) return;
@@ -116,7 +117,7 @@ export default function UserDetails() {
               <DetailItem label="Email" value={user?.email} />
               <DetailItem label="Mobile" value={user?.mobile} />
               <DetailItem label="Gender" value={user?.gender} />
-              <DetailItem label="Language" value={user?.language} />
+              <DetailItem label="Language" value={languageLabel(user?.language)} />
               <DetailItem label="Region" value={lookupName(region, user?.region)} />
               <DetailItem label="Local samaj" value={lookupName(samaj, user?.localSamaj)} />
               <DetailItem label="Country" value={lookupName(country, user?.country)} />

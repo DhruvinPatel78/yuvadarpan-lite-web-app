@@ -20,10 +20,13 @@ import CustomTable from "../../../Component/Common/customTable";
 import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import CustomSwitch from "../../../Component/Common/CustomSwitch";
 import CustomInput from "../../../Component/Common/customInput";
+import BilingualInput from "../../../Component/Common/bilingualInput";
+import MasterLangWrap from "../../../Component/Common/masterLangWrap";
 import { UseRedux } from "../../../Component/useRedux";
 import { isLocationMasterReadOnly, hideLocationRowActions } from "../../../util/util";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { completeModalMutation } from "../../../util/completeModalMutation";
+import { toNameEnGuPayload, masterNameText } from "../../../util/bhasha";
 
 const omitMetaFields = (row) => {
   const {
@@ -59,6 +62,7 @@ export default function LocationDetails({ config }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editValues, setEditValues] = useState({
     name: "",
+    nameGu: "",
     label: "",
     zipcode: "",
   });
@@ -83,7 +87,7 @@ export default function LocationDetails({ config }) {
 
   useEffect(() => {
     const loadParent = async () => {
-      if (parentFromState?.name) {
+      if (parentFromState && (parentFromState.name || parentFromState.id)) {
         setParent(parentFromState);
         return;
       }
@@ -110,19 +114,26 @@ export default function LocationDetails({ config }) {
   const closeFormModal = () => {
     setEditRow(null);
     setFormOpen(false);
-    setEditValues({ name: "", label: "", zipcode: "" });
+    setEditValues({ name: "", nameGu: "", label: "", zipcode: "" });
   };
 
   const handleAdd = () => {
     setEditRow(null);
-    setEditValues({ name: "", label: "", zipcode: "" });
+    setEditValues({ name: "", nameGu: "", label: "", zipcode: "" });
     setFormOpen(true);
   };
 
   const handleEdit = (row) => {
     setEditRow(row);
     setEditValues({
-      name: row?.name || "",
+      name:
+        (row?.name && typeof row.name === "object"
+          ? row.name.en
+          : row?.nameEn || row?.name) || "",
+      nameGu:
+        (row?.name && typeof row.name === "object"
+          ? row.name.gu
+          : row?.nameGu) || "",
       label: row?.label || "",
       zipcode: row?.zipcode || "",
     });
@@ -143,9 +154,10 @@ export default function LocationDetails({ config }) {
       await completeModalMutation(dispatch, {
         mutate: async () => {
           if (editRow?.id) {
+            const named = toNameEnGuPayload(editValues);
             const payload = {
               ...omitMetaFields(editRow),
-              name: editValues.name.trim(),
+              name: named.name,
               updatedAt: new Date(),
             };
             if (config.hasSamajFields) {
@@ -155,9 +167,10 @@ export default function LocationDetails({ config }) {
             await config.updateChild(editRow.id, payload);
           } else {
             const parentId = parent?.id || id;
+            const named = toNameEnGuPayload(editValues);
             const payload = {
               ...(config.getChildPayload?.(parent, parentId) || {}),
-              name: editValues.name.trim(),
+              name: named.name,
             };
             if (config.hasSamajFields) {
               payload.label = editValues.label;
@@ -304,8 +317,8 @@ export default function LocationDetails({ config }) {
             </Tooltip>
           }
           title={
-            parent?.name
-              ? `${parent.name} Details`
+            parent && masterNameText(parent)
+              ? `${masterNameText(parent)} Details`
               : `${config.entityLabel} Details`
           }
           actions={
@@ -384,16 +397,19 @@ export default function LocationDetails({ config }) {
           onClose={closeFormModal}
           title={config.childLabel}
         >
+            <MasterLangWrap>
             <Grid container className={"w-full"} spacing={2}>
               <Grid item xs={12}>
                 <FormControl className={"w-full flex gap-4"}>
-                  <CustomInput
-                    name={"name"}
+                  <BilingualInput
+                    standalone
+                    enName={"name"}
                     label={config.childLabel}
-                    value={editValues.name}
+                    enValue={editValues.name}
+                    guValue={editValues.nameGu}
                     variant="outlined"
-                    onChange={(e) =>
-                      setEditValues((pre) => ({ ...pre, name: e.target.value }))
+                    onValuesChange={({ en, gu }) =>
+                      setEditValues((pre) => ({ ...pre, name: en, nameGu: gu }))
                     }
                   />
                   {config.hasSamajFields ? (
@@ -438,6 +454,7 @@ export default function LocationDetails({ config }) {
                 </ActionButton>
               </Grid>
             </Grid>
+            </MasterLangWrap>
         </FormModal>
       ) : null}
       <DeleteConfirmFlow
