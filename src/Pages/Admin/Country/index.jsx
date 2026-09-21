@@ -168,6 +168,7 @@ export default function Index() {
             }
           },
           refresh: () => handleCountryList(),
+          syncMasters: ["country"],
           close: () => {
             resetForm();
             countryAddEditModalClose();
@@ -203,6 +204,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteCountry(Array.isArray(id) ? id : [id]),
       refresh: () => handleCountryList(),
+      syncMasters: ["country"],
     });
   };
 

@@ -170,6 +170,7 @@ export default function Index() {
             }
           },
           refresh: () => handleStateList(),
+          syncMasters: ["state"],
           close: () => {
             resetForm();
             stateAddEditModalClose();
@@ -204,6 +205,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteState(Array.isArray(id) ? id : [id]),
       refresh: () => handleStateList(),
+      syncMasters: ["state"],
     });
   };
 

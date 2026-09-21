@@ -14,6 +14,19 @@ import {
 
 const inflight = {};
 
+const MASTER_MAP = {
+  region: { path: "region", action: region },
+  city: { path: "city", action: city },
+  district: { path: "district", action: district },
+  samaj: { path: "samaj", action: samaj },
+  state: { path: "state", action: state },
+  surname: { path: "surname", action: surname },
+  country: { path: "country", action: country },
+  role: { path: "role", action: role },
+  gotra: { path: "gotra", action: gotra },
+  native: { path: "native", action: native },
+};
+
 const asRows = (value) =>
   Array.isArray(value) ? value : Array.isArray(value?.data) ? value.data : [];
 
@@ -23,41 +36,62 @@ export const resetMasterFetches = () => {
   });
 };
 
-const fetchAll = (key, path, action) => (dispatch, getState) => {
-  const existing = asRows(getState()?.location?.[key]);
-  if (existing.length) {
-    return Promise.resolve(existing);
-  }
-  if (inflight[key]) {
-    return inflight[key];
-  }
-  inflight[key] = axios
-    .get(`/${path}/get-all-list`)
-    .then((res) => {
-      const list = asRows(res.data);
-      dispatch(action(list));
-      return list;
-    })
-    .catch((error) => {
-      console.log(error);
-      return [];
-    })
-    .finally(() => {
-      delete inflight[key];
-    });
-  return inflight[key];
-};
+const runFetch =
+  (key, { force = false } = {}) =>
+  (dispatch, getState) => {
+    const meta = MASTER_MAP[key];
+    if (!meta) {
+      return Promise.resolve([]);
+    }
+    if (!force) {
+      const existing = asRows(getState()?.location?.[key]);
+      if (existing.length) {
+        return Promise.resolve(existing);
+      }
+    }
+    const inflightKey = force ? `${key}:force` : key;
+    if (inflight[inflightKey]) {
+      return inflight[inflightKey];
+    }
+    inflight[inflightKey] = axios
+      .get(`/${meta.path}/get-all-list`)
+      .then((res) => {
+        const list = asRows(res.data);
+        dispatch(meta.action(list));
+        return list;
+      })
+      .catch((error) => {
+        console.log(error);
+        return [];
+      })
+      .finally(() => {
+        delete inflight[inflightKey];
+      });
+    return inflight[inflightKey];
+  };
 
-export const getAllRegionData = fetchAll("region", "region", region);
-export const getAllCityData = fetchAll("city", "city", city);
-export const getAllDistrictData = fetchAll("district", "district", district);
-export const getAllSamajData = fetchAll("samaj", "samaj", samaj);
-export const getAllStateData = fetchAll("state", "state", state);
-export const getAllSurnameData = fetchAll("surname", "surname", surname);
-export const getAllCountryData = fetchAll("country", "country", country);
-export const getAllRoleData = fetchAll("role", "role", role);
-export const getAllGotraData = fetchAll("gotra", "gotra", gotra);
-export const getAllNativeData = fetchAll("native", "native", native);
+const fetchAll = (key) => runFetch(key);
+
+export const getAllRegionData = fetchAll("region");
+export const getAllCityData = fetchAll("city");
+export const getAllDistrictData = fetchAll("district");
+export const getAllSamajData = fetchAll("samaj");
+export const getAllStateData = fetchAll("state");
+export const getAllSurnameData = fetchAll("surname");
+export const getAllCountryData = fetchAll("country");
+export const getAllRoleData = fetchAll("role");
+export const getAllGotraData = fetchAll("gotra");
+export const getAllNativeData = fetchAll("native");
+
+export const refreshMaster = (key) => runFetch(key, { force: true });
+
+export const refreshMastersSilently = (dispatch, keys = []) => {
+  (Array.isArray(keys) ? keys : [keys]).forEach((key) => {
+    if (MASTER_MAP[key]) {
+      dispatch(refreshMaster(key));
+    }
+  });
+};
 
 export const loadLocationMasters = (dispatch) => {
   dispatch(getAllCountryData);

@@ -1,8 +1,9 @@
 import { endLoading, startLoading } from "../store/authSlice";
+import { refreshMastersSilently } from "./getAPICall";
 
 export const completeModalMutation = async (
   dispatch,
-  { mutate, refresh, close } = {}
+  { mutate, refresh, close, syncMasters } = {}
 ) => {
   await mutate();
   dispatch(startLoading());
@@ -14,4 +15,7 @@ export const completeModalMutation = async (
     dispatch(endLoading());
   }
   close?.();
+  if (syncMasters) {
+    refreshMastersSilently(dispatch, syncMasters);
+  }
 };

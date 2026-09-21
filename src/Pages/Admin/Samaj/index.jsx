@@ -189,6 +189,7 @@ export default function Index() {
             }
           },
           refresh: () => handleSamajList(),
+          syncMasters: ["samaj"],
           close: () => {
             resetForm();
             samajAddEditModalClose();
@@ -241,6 +242,7 @@ export default function Index() {
     await completeModalMutation(dispatch, {
       mutate: () => deleteSamaj(Array.isArray(id) ? id : [id]),
       refresh: () => handleSamajList(),
+      syncMasters: ["samaj"],
     });
   };
 
