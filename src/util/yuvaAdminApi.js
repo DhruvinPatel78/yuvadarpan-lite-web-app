@@ -73,4 +73,13 @@ export const updateYuva = async (id, payload) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const updateYuvaProfile = async (id, profile) => {
+  try {
+    const response = await axios.patch(`/yuvaList/profile/${id}`, { profile });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 }; 
