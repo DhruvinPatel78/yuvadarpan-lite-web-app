@@ -37,11 +37,13 @@ import {
 } from "../../../util/gotraApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 export default function Gotra() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, auth } = UseRedux();
+  const copy = useFilterCopy();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -261,7 +263,7 @@ export default function Gotra() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search gotra"
+          searchPlaceholder={copy.searchGotra}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}

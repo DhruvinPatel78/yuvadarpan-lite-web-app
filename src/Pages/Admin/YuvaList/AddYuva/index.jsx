@@ -39,7 +39,8 @@ import {
   useFormLanguage,
 } from "../../../../context/FormLanguageContext";
 import { labeledOptions } from "../../../../i18n/yuvaForm";
-import { flattenYuvaForm, masterNameText, toEnGuPayload, langText } from "../../../../util/bhasha";
+import { flattenYuvaForm, masterNameText, toEnGuPayload, langText, isFilledValue } from "../../../../util/bhasha";
+import { pickMasterId } from "../../../../Component/constant";
 
 const slugPart = (value) =>
   langText(value)
@@ -430,20 +431,26 @@ const AddYuva = () => {
   };
   const requiredText = (labelKey, english) =>
     language === "gu" ? `${t(labelKey)} જરૂરી છે` : english;
+  const filledField = (message, guKey) =>
+    Yup.mixed().test("filled", message, function (value) {
+      const gu = guKey ? this.parent?.[guKey] : undefined;
+      return isFilledValue(value, gu);
+    });
   const validationSchema = useMemo(
     () =>
       Yup.object({
-        firstName: Yup.string().required(requiredText("firstName", "First Name Is Required")),
-        motherName: Yup.string().required(requiredText("motherName", "Mother Name Is Required")),
-        fatherName: Yup.string().required(requiredText("fatherName", "Father Name Is Required")),
-        grandFatherName: Yup.string().required(
-          requiredText("grandFatherName", "Grand Father Name Is Required")
+        firstName: filledField(requiredText("firstName", "First Name Is Required"), "firstNameGu"),
+        motherName: filledField(requiredText("motherName", "Mother Name Is Required"), "motherNameGu"),
+        fatherName: filledField(requiredText("fatherName", "Father Name Is Required"), "fatherNameGu"),
+        grandFatherName: filledField(
+          requiredText("grandFatherName", "Grand Father Name Is Required"),
+          "grandFatherNameGu"
         ),
-        gender: Yup.string().required(requiredText("gender", "Gender Is Required")),
-        pob: Yup.string(),
+        gender: filledField(requiredText("gender", "Gender Is Required")),
+        pob: Yup.mixed(),
         ...(location?.state
           ? {
-              profileName: Yup.string().required(
+              profileName: filledField(
                 requiredText("profilePhoto", "Profile Photo Is Required")
               ),
             }
@@ -453,43 +460,42 @@ const AddYuva = () => {
           .test(
             "dob",
             requiredText("dob", "Date Of Birth Is Required"),
-            (value) => Boolean(value) && dayjs(value).isValid()
+            (value) => isFilledValue(value) && dayjs(value).isValid()
           ),
-        height: Yup.string().required(requiredText("height", "Height Is Required")),
-        weight: Yup.string().required(requiredText("weight", "Weight Is Required")),
-        firm: Yup.string().required(requiredText("firm", "Firm Is Required")),
-        firmAddress: Yup.string().required(
-          requiredText("firmAddress", "Firm Address Is Required")
+        height: filledField(requiredText("height", "Height Is Required")),
+        weight: filledField(requiredText("weight", "Weight Is Required")),
+        firm: filledField(requiredText("firm", "Firm Is Required"), "firmGu"),
+        firmAddress: filledField(
+          requiredText("firmAddress", "Firm Address Is Required"),
+          "firmAddressGu"
         ),
-        address: Yup.string().required(requiredText("address", "Address Is Required")),
-        state: Yup.string().required(requiredText("state", "State Is Required")),
-        region: Yup.string().required(requiredText("region", "Region Is Required")),
-        district: Yup.string().required(requiredText("district", "District Is Required")),
-        city: Yup.string().required(requiredText("city", "City Is Required")),
-        native: Yup.string().required(requiredText("native", "Native Is Required")),
+        address: filledField(requiredText("address", "Address Is Required"), "addressGu"),
+        state: filledField(requiredText("state", "State Is Required")),
+        region: filledField(requiredText("region", "Region Is Required")),
+        district: filledField(requiredText("district", "District Is Required")),
+        city: filledField(requiredText("city", "City Is Required")),
+        native: filledField(requiredText("native", "Native Is Required")),
         education: Yup.object({
-          education: Yup.string().required(
+          education: filledField(
             requiredText("highestEducation", "Education Is Required")
           ),
-          fieldOfStudy: Yup.string().when("education", {
-            is: (value) => higherEducation.includes(value),
+          fieldOfStudy: Yup.mixed().when("education", {
+            is: (value) => higherEducation.includes(String(value || "")),
             then: (schema) =>
-              schema.required(requiredText("fieldOfStudy", "Field of Study Is Required")),
+              schema.test(
+                "filled",
+                requiredText("fieldOfStudy", "Field of Study Is Required"),
+                (value) => isFilledValue(value)
+              ),
             otherwise: (schema) => schema.notRequired(),
           }),
         }),
         contactInfo: Yup.object({
-          name: Yup.string().required(requiredText("contactName", "Contact Name Is Required")),
-          lastName: Yup.string()
-            .transform((value) =>
-              value && typeof value === "object"
-                ? String(value.id ?? value.value ?? value._id ?? "")
-                : value == null
-                  ? ""
-                  : String(value)
-            )
-            .required(requiredText("contactLastName", "Contact Last Name Is Required")),
-          relation: Yup.string().required(
+          name: filledField(requiredText("contactName", "Contact Name Is Required"), "nameGu"),
+          lastName: filledField(
+            requiredText("contactLastName", "Contact Last Name Is Required")
+          ),
+          relation: filledField(
             requiredText("relation", "Contact Relation Is Required")
           ),
           phone: Yup.string()
@@ -498,35 +504,45 @@ const AddYuva = () => {
             .matches(/^[0-9]{10}$/, t("err.phone")),
         }),
         mamaInfo: Yup.object({
-          name: Yup.string().required(requiredText("mamaName", "Mama Name Is Required")),
-          lastName: Yup.string().required(
+          name: filledField(requiredText("mamaName", "Mama Name Is Required"), "nameGu"),
+          lastName: filledField(
             requiredText("mamaLastName", "Mama Last Name Is Required")
           ),
-          native: Yup.string().required(requiredText("mamaNative", "Mama Native Is Required")),
-          city: Yup.string().required(requiredText("mamaCity", "Mama City Is Required")),
+          native: filledField(requiredText("mamaNative", "Mama Native Is Required")),
+          city: filledField(requiredText("mamaCity", "Mama City Is Required"), "cityGu"),
         }),
-        lastName: Yup.string().required(requiredText("lastName", "Last Name Is Required")),
-        bloodGroup: Yup.string().required(requiredText("bloodGroup", "Blood Group Is Required")),
-        country: Yup.string().required(requiredText("country", "Country Is Required")),
-        familyId: Yup.number()
-          .typeError(t("err.number"))
-          .positive(t("err.positive"))
-          .required(requiredText("familyId", "Family ID IsRequired")),
-        activity: Yup.string().required(requiredText("activity", "Activity Is Required")),
-        abroadStudy: Yup.string().required(
+        lastName: filledField(requiredText("lastName", "Last Name Is Required")),
+        bloodGroup: filledField(requiredText("bloodGroup", "Blood Group Is Required")),
+        country: filledField(requiredText("country", "Country Is Required")),
+        familyId: Yup.mixed().test(
+          "familyId",
+          requiredText("familyId", "Family ID Is Required"),
+          (value) => {
+            const n = Number(String(value ?? "").trim());
+            return Number.isFinite(n) && n > 0;
+          }
+        ),
+        activity: filledField(requiredText("activity", "Activity Is Required")),
+        abroadStudy: filledField(
           language === "gu" ? "વિદેશ અભ્યાસ જરૂરી છે" : "AbroadStudy Required"
         ),
-        martialStatus: Yup.string().required(
+        martialStatus: filledField(
           requiredText("maritalStatus", "Martial Status Is Required")
         ),
-        handicapDetails: Yup.string().when("handicap", {
+        handicapDetails: Yup.mixed().when("handicap", {
           is: true,
           then: (schema) =>
-            schema.required(requiredText("handicapDetails", "Handicap Details Is Required")),
+            schema.test(
+              "filled",
+              requiredText("handicapDetails", "Handicap Details Is Required"),
+              function (value) {
+                return isFilledValue(value, this.parent?.handicapDetailsGu);
+              }
+            ),
           otherwise: (schema) => schema.notRequired(),
         }),
-        YSKno: Yup.string(),
-        localSamaj: Yup.string().required(requiredText("localSamaj", "Local Samaj Required")),
+        YSKno: Yup.mixed(),
+        localSamaj: filledField(requiredText("localSamaj", "Local Samaj Required")),
       }),
     // requiredText follows the selected form language
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1015,7 +1031,7 @@ const AddYuva = () => {
                       touched.lastName && errors.lastName && errors.lastName
                     }
                     onChange={(e, lastName) => {
-                      setFieldValue("lastName", lastName?.id || lastName?.value || "");
+                      setFieldValue("lastName", pickMasterId(lastName));
                       setSelectedLastName(lastName);
                     }}
                     onBlur={handleBlur}
@@ -1108,10 +1124,7 @@ const AddYuva = () => {
                     value={values.native}
                     errors={touched.native && errors.native && errors.native}
                     onChange={(e, native) => {
-                      setFieldValue(
-                        "native",
-                        native?.id || native?.value || native?._id || native?.uuid || ""
-                      );
+                      setFieldValue("native", pickMasterId(native));
                       setSelectedNative(native || null);
                     }}
                     onBlur={handleBlur}
@@ -1141,10 +1154,11 @@ const AddYuva = () => {
                     }
                     onSelect={handleChange}
                     onChange={(e, country) => {
-                      setFieldValue("country", country?.id || "");
+                      const countryId = pickMasterId(country);
+                      setFieldValue("country", countryId);
                       setSelectedCountry(country || null);
-                      setIsLocation((pre) => ({ ...pre, country: Boolean(country?.id) }));
-                      if (country?.id) getListById("state", country.id);
+                      setIsLocation((pre) => ({ ...pre, country: Boolean(countryId) }));
+                      if (countryId) getListById("state", countryId);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1159,10 +1173,11 @@ const AddYuva = () => {
                     value={values.state}
                     errors={touched?.state && errors?.state && errors?.state}
                     onChange={(e, state) => {
-                      setFieldValue("state", state?.id || "");
+                      const stateId = pickMasterId(state);
+                      setFieldValue("state", stateId);
                       setSelectedState(state || null);
-                      setIsLocation((pre) => ({ ...pre, state: Boolean(state?.id) }));
-                      if (state?.id) getListById("region", state.id);
+                      setIsLocation((pre) => ({ ...pre, state: Boolean(stateId) }));
+                      if (stateId) getListById("region", stateId);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.country}
@@ -1178,10 +1193,11 @@ const AddYuva = () => {
                     value={values.region}
                     errors={touched?.region && errors?.region && errors?.region}
                     onChange={(e, region) => {
-                      setFieldValue("region", region?.id || "");
+                      const regionId = pickMasterId(region);
+                      setFieldValue("region", regionId);
                       setSelectedRegion(region || null);
-                      setIsLocation((pre) => ({ ...pre, region: Boolean(region?.id) }));
-                      if (region?.id) getListById("district", region.id);
+                      setIsLocation((pre) => ({ ...pre, region: Boolean(regionId) }));
+                      if (regionId) getListById("district", regionId);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.state}
@@ -1199,10 +1215,11 @@ const AddYuva = () => {
                       touched?.district && errors?.district && errors?.district
                     }
                     onChange={(e, district) => {
-                      setFieldValue("district", district?.id || "");
+                      const districtId = pickMasterId(district);
+                      setFieldValue("district", districtId);
                       setSelectedDistrict(district || null);
-                      setIsLocation((pre) => ({ ...pre, district: Boolean(district?.id) }));
-                      if (district?.id) getListById("city", district.id);
+                      setIsLocation((pre) => ({ ...pre, district: Boolean(districtId) }));
+                      if (districtId) getListById("city", districtId);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.region}
@@ -1218,12 +1235,13 @@ const AddYuva = () => {
                     value={values.city}
                     errors={touched?.city && errors?.city && errors?.city}
                     onChange={(e, city) => {
-                      setFieldValue("city", city?.id || "");
+                      const cityId = pickMasterId(city);
+                      setFieldValue("city", cityId);
                       setSelectedCity(city || null);
-                      setIsLocation((pre) => ({ ...pre, city: Boolean(city?.id) }));
+                      setIsLocation((pre) => ({ ...pre, city: Boolean(cityId) }));
                       setFieldValue("localSamaj", "");
                       setSelectedSamaj(null);
-                      if (city?.id) getSamajList(city.id);
+                      if (cityId) getSamajList(cityId);
                     }}
                     onBlur={handleBlur}
                     disabled={!isLocation.district}
@@ -1244,7 +1262,7 @@ const AddYuva = () => {
                     }
                     disabled={!isLocation.city}
                     onChange={(e, localSamaj) => {
-                      setFieldValue("localSamaj", localSamaj?.id || "");
+                      setFieldValue("localSamaj", pickMasterId(localSamaj));
                       setSelectedSamaj(localSamaj || null);
                     }}
                     onBlur={handleBlur}
@@ -1443,7 +1461,7 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        lastName: lastName?.id || lastName?.value || "",
+                        lastName: pickMasterId(lastName),
                       });
                       setSelectedMamaLastName(lastName || null);
                     }}
@@ -1466,12 +1484,7 @@ const AddYuva = () => {
                     onChange={(e, native) => {
                       setFieldValue("mamaInfo", {
                         ...values?.mamaInfo,
-                        native:
-                          native?.id ||
-                          native?.value ||
-                          native?._id ||
-                          native?.uuid ||
-                          "",
+                        native: pickMasterId(native),
                       });
                       setSelectedMamaNative(native || null);
                     }}
@@ -1530,7 +1543,7 @@ const AddYuva = () => {
                     onChange={(e, lastName) => {
                       setFieldValue(
                         "contactInfo.lastName",
-                        lastName?.id || lastName?.value || ""
+                        pickMasterId(lastName)
                       );
                       setSelectedContactLastName(lastName || null);
                     }}

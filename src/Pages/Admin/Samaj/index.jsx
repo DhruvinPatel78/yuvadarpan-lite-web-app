@@ -36,6 +36,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import { isSamajManager, isCityManager, isDistrictManager, isRegionManager, isStateManager, isCountryManager } from "../../../util/util";
 import {
   getSamajList,
@@ -49,6 +50,7 @@ import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 export default function Index() {
   const dispatch = useDispatch();
   const { loading, country, state, region, district, city, auth } = UseRedux();
+  const copy = useFilterCopy();
   const samajManager = isSamajManager(auth?.user?.role);
   const cityManager = isCityManager(auth?.user?.role);
   const districtManager = isDistrictManager(auth?.user?.role);
@@ -394,7 +396,7 @@ export default function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search samaj"
+          searchPlaceholder={copy.searchSamaj}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => {
             setSelectedSearchByText(e.target.value);
@@ -410,8 +412,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={listHandler(country)}
                 multiple={true}
-                label={"Country"}
-                placeholder={"Select Your Country"}
+                label={copy.country}
+                placeholder={copy.countryPh}
                 {...filterCols}
                 value={selectedCountry}
                 name="country"
@@ -432,8 +434,8 @@ export default function Index() {
                   })
                 )}
                 multiple={true}
-                label={"State"}
-                placeholder={"Select Your State"}
+                label={copy.state}
+                placeholder={copy.statePh}
                 {...filterCols}
                 value={selectedState}
                 name="state"
@@ -453,8 +455,8 @@ export default function Index() {
                   })
                 )}
                 multiple={true}
-                label={"Region"}
-                placeholder={"Select Your Region"}
+                label={copy.region}
+                placeholder={copy.regionPh}
                 {...filterCols}
                 value={selectedRegion}
                 name="region"
@@ -473,8 +475,8 @@ export default function Index() {
                   })
                 )}
                 multiple={true}
-                label={"District"}
-                placeholder={"Select Your District"}
+                label={copy.district}
+                placeholder={copy.districtPh}
                 {...filterCols}
                 value={selectedDistrict}
                 name="district"

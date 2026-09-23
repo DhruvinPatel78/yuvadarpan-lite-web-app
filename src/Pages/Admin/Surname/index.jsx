@@ -40,23 +40,27 @@ import {
   deleteSurname,
 } from "../../../util/surnameApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
-import { fillMasterName, masterNameText, toNameEnGuPayload } from "../../../util/bhasha";
+import { fillMasterName, masterNameText, toNameEnGuPayload, matchesLangQuery } from "../../../util/bhasha";
+import { useFormLanguage } from "../../../context/FormLanguageContext";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import { addGotra, getGotraAllList } from "../../../util/gotraApi";
 import { gotra as setGotra } from "../../../store/locationSlice";
 
 const gotraFilter = createFilterOptions();
 
-const gotraNameOf = (value) => {
+const gotraNameOf = (value, lang = "en") => {
   if (!value) return "";
   if (typeof value === "string") return value.trim();
   if (value.inputValue) return String(value.inputValue).trim();
-  return masterNameText(value);
+  return masterNameText(value, lang);
 };
 
 export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, auth, gotra } = UseRedux();
+  const copy = useFilterCopy();
+  const { language } = useFormLanguage();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -156,8 +160,8 @@ export default function Index() {
           mutate: async () => {
             const alreadyListed = gotraOptions.some(
               (item) =>
-                String(masterNameText(item) || "").trim().toLowerCase() ===
-                gotraName.toLowerCase()
+                masterNameText(item, "en").toLowerCase() === gotraName.toLowerCase() ||
+                masterNameText(item, "gu").toLowerCase() === gotraName.toLowerCase()
             );
             if (gotraName && !alreadyListed) {
               try {
@@ -165,8 +169,8 @@ export default function Index() {
                 const rows = Array.isArray(gotra) ? gotra : [];
                 const exists = rows.some(
                   (item) =>
-                    String(masterNameText(item) || "").trim().toLowerCase() ===
-                    gotraName.toLowerCase()
+                    masterNameText(item, "en").toLowerCase() === gotraName.toLowerCase() ||
+                    masterNameText(item, "gu").toLowerCase() === gotraName.toLowerCase()
                 );
                 if (!exists && created) {
                   dispatch(setGotra([...rows, created]));
@@ -328,23 +332,30 @@ export default function Index() {
                 options={gotraOptions}
                 value={selectedGotra}
                 onChange={(_, value) => setSelectedGotra(value)}
-                getOptionLabel={(option) => gotraNameOf(option)}
+                getOptionLabel={(option) => gotraNameOf(option, language)}
+                filterOptions={(options, state) =>
+                  (Array.isArray(options) ? options : []).filter((option) =>
+                    matchesLangQuery(option, state.inputValue)
+                  )
+                }
                 isOptionEqualToValue={(option, selected) =>
                   String(option?.id || option?.value) ===
                   String(selected?.id || selected?.value)
                 }
-                disablePortal
+                componentsProps={{
+                  popper: { sx: { zIndex: 1500 } },
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    placeholder="Gotra"
+                    placeholder={copy.gotra}
                     sx={searchFieldSx}
                   />
                 )}
               />
             </div>
           }
-          searchPlaceholder="Search surname"
+          searchPlaceholder={copy.searchSurname}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}
@@ -420,7 +431,7 @@ export default function Index() {
                         handleHomeEndKeys
                         options={gotraOptions}
                         value={values.gotra || null}
-                        getOptionLabel={(option) => gotraNameOf(option)}
+                        getOptionLabel={(option) => gotraNameOf(option, language)}
                         isOptionEqualToValue={(option, selected) => {
                           const left = gotraNameOf(option).toLowerCase();
                           const right = gotraNameOf(selected).toLowerCase();

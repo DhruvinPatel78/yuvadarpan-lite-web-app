@@ -108,9 +108,11 @@ export default function BilingualInput({
     persist(next, keepSavedGu ? guValue : transliterateToGujarati(next));
   };
 
+  const filled = Boolean(String(enValue || "").trim() || String(guValue || "").trim());
   const common = {
     ...inputProps,
     name: enName,
+    errors: filled ? "" : inputProps.errors,
     onBlur: onBlur || formik?.handleBlur,
   };
 
@@ -121,7 +123,10 @@ export default function BilingualInput({
           key={`${enName}-gu-saved`}
           {...common}
           value={guValue}
-          onChange={(event) => persist(enValue, event.target.value)}
+          onChange={(event) => {
+            const nextGu = event.target.value;
+            persist(enValue || nextGu, nextGu);
+          }}
         />
       );
     }
@@ -134,7 +139,7 @@ export default function BilingualInput({
           if (!raw && !transliterated && (enValue || guValue)) {
             return;
           }
-          persist(enValue, transliterated);
+          persist(String(raw || enValue || "").trim(), transliterated || guValue);
         }}
         {...common}
         uncontrolled

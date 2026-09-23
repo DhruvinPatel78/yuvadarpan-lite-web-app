@@ -35,6 +35,8 @@ import {
   useFilteredIds,
   yuvaFilterList,
   masterLabelOf,
+  searchTextParams,
+  searchByFromOption,
 } from "../../../Component/constant";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
@@ -57,13 +59,14 @@ import {
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { masterNameText, pickYuvaLangText } from "../../../util/bhasha";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 const MOBILE_PAGE_SIZE = 20;
 
-const yuvaPersonName = (row) =>
+const yuvaPersonName = (row, lang = "en") =>
   [
-    pickYuvaLangText(row, "firstName"),
-    pickYuvaLangText(row, "fatherName"),
+    pickYuvaLangText(row, "firstName", lang),
+    pickYuvaLangText(row, "fatherName", lang),
   ]
     .filter(Boolean)
     .join(" ");
@@ -102,6 +105,7 @@ const YuvaList = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const { surname, city, state, region, district, samaj, country, auth, native: nativeList, gotra: gotraList } = UseRedux();
+  const copy = useFilterCopy();
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager =
@@ -184,7 +188,7 @@ const YuvaList = () => {
         const fullName = [
           pickYuvaLangText(record.row, "firstName"),
           record.row.middleName,
-          masterLabelOf(surname, record?.row?.lastName),
+          masterLabelOf(surname, record?.row?.lastName, copy.language),
         ]
           .filter(Boolean)
           .join(" ");
@@ -244,7 +248,7 @@ const YuvaList = () => {
       filterable: false,
       renderCell: (record) => {
         const cityName =
-          masterLabelOf(city, record?.row?.city);
+          masterLabelOf(city, record?.row?.city, copy.language);
         return (
           <span className="block w-full min-w-0 truncate" title={cityName}>
             {cityName}
@@ -262,7 +266,7 @@ const YuvaList = () => {
       filterable: false,
       renderCell: (record) => {
         const nativeName =
-          masterLabelOf(nativeList, record?.row?.native);
+          masterLabelOf(nativeList, record?.row?.native, copy.language);
         return (
           <span className="block w-full min-w-0 truncate" title={nativeName}>
             {nativeName}
@@ -304,7 +308,7 @@ const YuvaList = () => {
                   onClick={() =>
                     setDeleteTarget({
                       id: record?.id || record?.row?.id,
-                      name: yuvaPersonName(record?.row),
+                      name: yuvaPersonName(record?.row, copy.language),
                     })
                   }
                 />
@@ -314,7 +318,7 @@ const YuvaList = () => {
         </div>
       ),
     },
-  ], [surname, city, nativeList, canEditRow, navigate]);
+  ], [surname, city, nativeList, canEditRow, navigate, copy.language]);
 
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
   const surnameFilterList = useMemo(
@@ -331,20 +335,13 @@ const YuvaList = () => {
     const limit = isMobile ? MOBILE_PAGE_SIZE : rowsPerPage;
     const pageNum = append ? options.pageNum : isMobile ? 1 : page + 1;
     try {
-      const searchField = selectedSearchBy.id;
-      const searchValue = isRest ? "" : selectedSearchByText;
-      const nameSearchFields = [
-        "",
-        "firstName",
-        "fatherName",
-        "grandFatherName",
-        "name",
-      ];
+      const searchValue = isRest ? "" : String(selectedSearchByText || "").trim();
+      const fieldText = isRest ? {} : searchTextParams(selectedSearchBy, searchValue);
       const text =
-        searchValue && nameSearchFields.includes(searchField || "")
-          ? { search: searchValue }
-          : searchValue && searchField
-            ? { [searchField]: searchValue }
+        Object.keys(fieldText).length
+          ? fieldText
+          : searchValue
+            ? { search: searchValue }
             : {};
       if (append) {
         setLoadingMore(true);
@@ -354,19 +351,24 @@ const YuvaList = () => {
       if (!append && !skipLoader) {
         dispatch(startLoading());
       }
+      const lastNameIds = isRest
+        ? []
+        : lastNameIdsForGotraFilter(
+            surname,
+            selectedGotra,
+            filteredSurnameIds
+          );
       const params = {
         page: pageNum,
         limit,
-        lastName: isRest
-          ? []
-          : lastNameIdsForGotraFilter(
-              surname,
-              selectedGotra,
-              filteredSurnameIds
-            ),
-        native: isRest ? [] : filteredNativeIds,
         ...text,
       };
+      if (lastNameIds.length) {
+        params.lastName = lastNameIds;
+      }
+      if (!isRest && filteredNativeIds.length) {
+        params.native = filteredNativeIds;
+      }
       if (isSamajManager) {
         params.ownSamaj = ownUserList;
       }
@@ -468,7 +470,7 @@ const YuvaList = () => {
   };
 
   const yuvas = yuvaList?.data || [];
-  const lookupName = (list, id) => masterLabelOf(list, id) || "-";
+  const lookupName = (list, id) => masterLabelOf(list, id, copy.language) || "-";
 
   const toggleCardSelection = (id) => {
     setSelectedYuvas((prev) =>
@@ -544,11 +546,7 @@ const YuvaList = () => {
           }
         />
         <MasterFilterBar
-          searchPlaceholder={
-            isMobile
-              ? "Search by name"
-              : "Search by first, father or grandfather name"
-          }
+          searchPlaceholder={isMobile ? copy.search : copy.searchYuva}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => {
             setSelectedSearchByText(e.target.value);
@@ -570,8 +568,8 @@ const YuvaList = () => {
               <CustomAutoComplete
                 list={gotraOptions}
                 multiple={true}
-                label={"Gotra"}
-                placeholder={"Select Your Gotra"}
+                label={copy.gotra}
+                placeholder={copy.gotraPh}
                 {...filterCols}
                 value={selectedGotra}
                 name="gotra"
@@ -585,8 +583,8 @@ const YuvaList = () => {
               <CustomAutoComplete
                 list={surnameFilterList}
                 multiple={true}
-                label={"Surname"}
-                placeholder={"Select Your Surname"}
+                label={copy.surname}
+                placeholder={copy.surnamePh}
                 {...filterCols}
                 value={selectedSurname}
                 name="surname"
@@ -601,8 +599,8 @@ const YuvaList = () => {
               <CustomAutoComplete
                 list={listHandler(nativeList)}
                 multiple={true}
-                label={"Native"}
-                placeholder={"Select Your Native"}
+                label={copy.native}
+                placeholder={copy.nativePh}
                 {...filterCols}
                 name="native"
                 value={selectedNative}
@@ -614,16 +612,13 @@ const YuvaList = () => {
               />
               <CustomAutoComplete
                 list={yuvaFilterList}
-                label={"Search By"}
-                placeholder={"Select Your Search By"}
+                label={copy.searchBy}
+                placeholder={copy.searchByPh}
                 {...filterCols}
                 name="search"
                 value={selectedSearchBy.name}
                 onChange={(e, search) => {
-                  setSelectedSearchBy({
-                    name: search.label,
-                    id: search.value,
-                  });
+                  setSelectedSearchBy(searchByFromOption(search));
                 }}
               />
               <Grid
@@ -698,7 +693,7 @@ const YuvaList = () => {
               const fullName = [
                 pickYuvaLangText(row, "firstName"),
                 row.middleName,
-                masterLabelOf(surname, row.lastName),
+                masterLabelOf(surname, row.lastName, copy.language),
               ]
                 .filter(Boolean)
                 .join(" ");
@@ -769,7 +764,7 @@ const YuvaList = () => {
                           onClick={() =>
                             setDeleteTarget({
                               id: row.id,
-                              name: yuvaPersonName(row),
+                              name: yuvaPersonName(row, copy.language),
                             })
                           }
                         >
@@ -831,7 +826,7 @@ const YuvaList = () => {
           <div className="text-center sm:text-left min-w-0 flex-1">
             <h2 className="text-lg font-semibold text-primary leading-snug break-words">
               {pickYuvaLangText(userData, "firstName")}{" "}
-              {masterLabelOf(surname, userData?.lastName)}{" "}
+              {masterLabelOf(surname, userData?.lastName, copy.language)}{" "}
             </h2>
             <p className="text-sm text-mutedText mt-1">
               {moment(userData?.dob).format("DD/MM/YYYY hh:mm A")}
