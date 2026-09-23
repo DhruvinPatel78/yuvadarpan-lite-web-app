@@ -2,16 +2,17 @@ import React from "react";
 import moment from "moment/moment";
 import { getUserImageSrc } from "../../util/defaultUserImage";
 import { asDisplayText, langText, masterNameText, pickOtherMap } from "../../util/bhasha";
+import { tForm } from "../../i18n/yuvaForm";
 
 export const getLookupName = (list, id, fallback = "", lang = "en") => {
-  if (id == null || id === "") return fallback || "";
+  if (id == null || id === "") return langText(fallback, lang) || "";
   const key = String(id);
   const found = (list || []).find((item) =>
     [item?.id, item?.value, item?._id, item?.uuid].some(
       (value) => value != null && String(value) === key
     )
   );
-  return masterNameText(found, lang) || langText(fallback) || "";
+  return masterNameText(found, lang) || langText(fallback, lang) || "";
 };
 
 export const hasValue = (value) => {
@@ -64,8 +65,21 @@ export const extraOtherFields = (other) => {
     .filter((item) => hasValue(item.title) && hasValue(item.description));
 };
 
-const fieldValue = (fields, label) =>
-  (fields || []).find((field) => field.label === label)?.value || "";
+const fieldValue = (fields, key) =>
+  (fields || []).find((field) => field.key === key)?.value || "";
+
+const codedText = (value, prefix, lang) => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return langText(value, lang);
+  }
+  const code = String(value || "").trim();
+  if (!code) return "";
+  if (prefix) {
+    const keyed = tForm(lang, `${prefix}.${code}`);
+    if (keyed !== `${prefix}.${code}`) return keyed;
+  }
+  return code;
+};
 
 const BiodataSection = ({ title, fields, caps = false }) => {
   const visibleFields = (fields || []).filter((field) => hasValue(field?.value));
@@ -83,128 +97,176 @@ const BiodataSection = ({ title, fields, caps = false }) => {
   );
 };
 
-const buildPrintModel = (data, lists) => {
+const buildPrintModel = (data, lists, lang = "en") => {
   const { city, state, surname, country, region, district, samaj, nativeList } =
     lists;
   const labels = data?.labels || {};
+  const t = (key) => tForm(lang, key);
+  const lookup = (list, id, fallback) =>
+    getLookupName(list, id, fallback, lang);
   const fullName = [
-    langText(data?.firstName),
-    langText(data?.fatherName),
-    getLookupName(surname, data?.lastName, labels.lastName),
+    langText(data?.firstName, lang),
+    langText(data?.fatherName, lang),
+    lookup(surname, data?.lastName, labels.lastName),
   ]
     .filter(Boolean)
     .join(" ");
 
   const showHandicap = data?.handicap === true;
-
-  const additionalOther = extraOtherFields(pickOtherMap(data, "en"));
+  const additionalOther = extraOtherFields(pickOtherMap(data, lang));
+  const yesNo = (value) => (value === true ? t("yes") : "");
 
   return {
     fullName,
     photo: getUserImageSrc(data?.profile?.url),
     phone: data?.contactInfo?.phone,
     personal: [
-      { label: "Name", value: fullName },
+      { key: "firstName", label: t("firstName"), value: fullName },
       {
-        label: "Date of Birth",
-        value: data?.dob ? moment(data.dob).format("D MMMM YYYY") : "",
+        key: "dob",
+        label: t("dob"),
+        value: data?.dob
+          ? moment(data.dob).format(lang === "gu" ? "DD/MM/YYYY" : "D MMMM YYYY")
+          : "",
       },
-      { label: "Gender", value: langText(data?.gender) },
-      { label: "Marital Status", value: langText(data?.martialStatus) },
-      { label: "Place of Birth", value: langText(data?.pob) },
-      { label: "Height", value: data?.height },
-      { label: "Weight", value: data?.weight },
-      { label: "Blood Group", value: data?.bloodGroup },
-      { label: "Family ID", value: data?.familyId },
-      { label: "YSK No", value: data?.YSKno },
+      { key: "gender", label: t("gender"), value: langText(data?.gender, lang) },
+      {
+        key: "martialStatus",
+        label: t("maritalStatus"),
+        value: langText(data?.martialStatus, lang),
+      },
+      { key: "pob", label: t("pob"), value: langText(data?.pob, lang) },
+      { key: "height", label: t("height"), value: data?.height },
+      { key: "weight", label: t("weight"), value: data?.weight },
+      { key: "bloodGroup", label: t("bloodGroup"), value: data?.bloodGroup },
+      { key: "familyId", label: t("familyId"), value: data?.familyId },
+      { key: "yskNo", label: t("yskNo"), value: data?.YSKno },
     ],
     contact: [
-      { label: "Phone", value: data?.contactInfo?.phone },
-      { label: "Name", value: langText(data?.contactInfo?.name) },
+      { key: "phone", label: t("phone"), value: data?.contactInfo?.phone },
       {
-        label: "Last Name",
-        value: getLookupName(
+        key: "contactName",
+        label: t("firstName"),
+        value: langText(data?.contactInfo?.name, lang),
+      },
+      {
+        key: "contactLastName",
+        label: t("lastName"),
+        value: lookup(
           surname,
           data?.contactInfo?.lastName,
           labels.contactLastName
         ),
       },
-      { label: "Relation", value: data?.contactInfo?.relation },
-      { label: "Address", value: langText(data?.address) },
+      {
+        key: "relation",
+        label: t("relation"),
+        value: codedText(data?.contactInfo?.relation, "relation", lang),
+      },
+      { key: "address", label: t("address"), value: langText(data?.address, lang) },
     ],
     family: [
-      { label: "Father’s Name", value: langText(data?.fatherName) },
-      { label: "Grand Father’s Name", value: langText(data?.grandFatherName) },
-      { label: "Mother’s Name", value: langText(data?.motherName) },
+      { key: "fatherName", label: t("fatherName"), value: langText(data?.fatherName, lang) },
+      {
+        key: "grandFatherName",
+        label: t("grandFatherName"),
+        value: langText(data?.grandFatherName, lang),
+      },
+      { key: "motherName", label: t("motherName"), value: langText(data?.motherName, lang) },
     ],
     mama: [
-      { label: "Name", value: langText(data?.mamaInfo?.name) },
+      { key: "mamaName", label: t("firstName"), value: langText(data?.mamaInfo?.name, lang) },
       {
-        label: "Last Name",
-        value: getLookupName(
-          surname,
-          data?.mamaInfo?.lastName,
-          labels.mamaLastName
-        ),
+        key: "mamaLastName",
+        label: t("lastName"),
+        value: lookup(surname, data?.mamaInfo?.lastName, labels.mamaLastName),
       },
       {
-        label: "Native",
-        value: getLookupName(
-          nativeList,
-          data?.mamaInfo?.native,
-          labels.mamaNative
-        ),
+        key: "mamaNative",
+        label: t("native"),
+        value: lookup(nativeList, data?.mamaInfo?.native, labels.mamaNative),
       },
-      { label: "City", value: langText(data?.mamaInfo?.city) },
+      { key: "mamaCity", label: t("city"), value: langText(data?.mamaInfo?.city, lang) },
     ],
     education: [
       {
-        label: "Education",
-        value: data?.education?.education || data?.education,
+        key: "education",
+        label: t("education"),
+        value: codedText(
+          data?.education?.education || data?.education,
+          "education",
+          lang
+        ),
       },
       {
-        label: "Field of Study",
+        key: "fieldOfStudy",
+        label: t("fieldOfStudy"),
         value: data?.education?.fieldOfStudy || data?.fieldOfStudy,
       },
     ],
     career: [
-      { label: "Activity", value: langText(data?.activity) },
-      { label: "Firm", value: langText(data?.firm) },
-      { label: "Firm Address", value: langText(data?.firmAddress) },
+      { key: "activity", label: t("activity"), value: langText(data?.activity, lang) },
+      { key: "firm", label: t("firm"), value: langText(data?.firm, lang) },
+      {
+        key: "firmAddress",
+        label: t("firmAddress"),
+        value: langText(data?.firmAddress, lang),
+      },
     ],
     location: [
-      { label: "Country", value: getLookupName(country, data?.country, labels.country) },
-      { label: "State", value: getLookupName(state, data?.state, labels.state) },
-      { label: "Region", value: getLookupName(region, data?.region, labels.region) },
-      { label: "District", value: getLookupName(district, data?.district, labels.district) },
-      { label: "City", value: getLookupName(city, data?.city, labels.city) },
-      { label: "Native", value: getLookupName(nativeList, data?.native, labels.native) },
-      { label: "Local Samaj", value: getLookupName(samaj, data?.localSamaj, labels.localSamaj) },
+      { key: "country", label: t("country"), value: lookup(country, data?.country, labels.country) },
+      { key: "state", label: t("state"), value: lookup(state, data?.state, labels.state) },
+      { key: "region", label: t("region"), value: lookup(region, data?.region, labels.region) },
+      { key: "district", label: t("district"), value: lookup(district, data?.district, labels.district) },
+      { key: "city", label: t("city"), value: lookup(city, data?.city, labels.city) },
+      { key: "native", label: t("native"), value: lookup(nativeList, data?.native, labels.native) },
+      { key: "localSamaj", label: t("localSamaj"), value: lookup(samaj, data?.localSamaj, labels.localSamaj) },
     ],
     other: [
       ...(showHandicap
         ? [
-            { label: "Handicap", value: "Yes" },
-            { label: "Handicap Details", value: langText(data?.handicapDetails) },
+            { key: "handicap", label: t("handicap"), value: yesNo(true) },
+            {
+              key: "handicapDetails",
+              label: t("handicapDetails"),
+              value: langText(data?.handicapDetails, lang),
+            },
           ]
         : []),
-      { label: "Manglik", value: data?.manglik === true ? "Yes" : "" },
+      { key: "manglik", label: t("manglik"), value: yesNo(data?.manglik === true) },
     ],
     additional: additionalOther.map((item) => ({
       label: item.title,
       value: item.description,
     })),
+    titles: {
+      biodata: t("biodata"),
+      personalInfo: t("personalInfo"),
+      contactDetails: t("contactDetails"),
+      familyDetails: t("familyDetails"),
+      mamaInfo: t("mamaInfo"),
+      education: t("education"),
+      career: t("career"),
+      location: t("location"),
+      otherInfo: t("otherInfo"),
+      additionalInfo: t("additionalInfo"),
+      job: t("job"),
+      company: t("company"),
+      workLocation: t("workLocation"),
+      highestDegree: t("highestDegree"),
+    },
   };
 };
 
 const TemplateTwo = ({ model }) => {
+  const titles = model.titles || {};
   const career = [
-    { label: "Job", value: fieldValue(model.career, "Activity") },
-    { label: "Company", value: fieldValue(model.career, "Firm") },
-    { label: "Work Location", value: fieldValue(model.career, "Firm Address") },
+    { label: titles.job, value: fieldValue(model.career, "activity") },
+    { label: titles.company, value: fieldValue(model.career, "firm") },
+    { label: titles.workLocation, value: fieldValue(model.career, "firmAddress") },
   ];
   const contact = model.contact.filter((field) =>
-    ["Phone", "Address"].includes(field.label)
+    ["phone", "address"].includes(field.key)
   );
 
   return (
@@ -214,40 +276,40 @@ const TemplateTwo = ({ model }) => {
       <div className="yuva-biodata-corner tr" />
       <div className="yuva-biodata-corner bl" />
       <div className="yuva-biodata-corner br" />
-      <h1 className="yuva-biodata-title">Bio-Data</h1>
+      <h1 className="yuva-biodata-title">{titles.biodata}</h1>
       <div className="yuva-biodata-body">
         <div className="yuva-biodata-left">
           <img
             src={model.photo}
-            alt={model.fullName || "Profile"}
+            alt={model.fullName || titles.biodata}
             className="yuva-biodata-photo"
           />
           {model.fullName ? (
             <h2 className="yuva-biodata-name">{model.fullName}</h2>
           ) : null}
           <BiodataSection
-            title="Personal Info"
+            title={titles.personalInfo}
             caps
             fields={model.personal}
           />
-          <BiodataSection title="Contact Details" caps fields={contact} />
+          <BiodataSection title={titles.contactDetails} caps fields={contact} />
         </div>
         <div className="yuva-biodata-right">
-          <BiodataSection title="Family Details" fields={model.family} />
-          <BiodataSection title="Mama Info" fields={model.mama} />
+          <BiodataSection title={titles.familyDetails} fields={model.family} />
+          <BiodataSection title={titles.mamaInfo} fields={model.mama} />
           <BiodataSection
-            title="Education"
+            title={titles.education}
             fields={[
               {
-                label: "Highest Degree",
-                value: fieldValue(model.education, "Education"),
+                label: titles.highestDegree,
+                value: fieldValue(model.education, "education"),
               },
             ]}
           />
-          <BiodataSection title="Career" fields={career} />
-          <BiodataSection title="Location" fields={model.location} />
-          <BiodataSection title="Other Info" fields={model.other} />
-          <BiodataSection title="Additional Info" fields={model.additional} />
+          <BiodataSection title={titles.career} fields={career} />
+          <BiodataSection title={titles.location} fields={model.location} />
+          <BiodataSection title={titles.otherInfo} fields={model.other} />
+          <BiodataSection title={titles.additionalInfo} fields={model.additional} />
         </div>
       </div>
     </div>
@@ -255,8 +317,8 @@ const TemplateTwo = ({ model }) => {
   );
 };
 
-const YuvaPrintTemplate = ({ data, lists }) => {
-  const model = buildPrintModel(data, lists);
+const YuvaPrintTemplate = ({ data, lists, language = "en" }) => {
+  const model = buildPrintModel(data, lists, language);
   return <TemplateTwo model={model} />;
 };
 

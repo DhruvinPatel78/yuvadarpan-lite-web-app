@@ -35,7 +35,8 @@ import {
 } from "../../util/getAPICall";
 import { getPublicYuva, getYuvaById } from "../../util/yuvaAdminApi";
 import { canEditYuvaRecord, isRegularUser } from "../../util/util";
-import { asDisplayText, pickOtherMap, pickYuvaLangText, userLanguage } from "../../util/bhasha";
+import { asDisplayText, langText, pickOtherMap, pickYuvaLangText, userLanguage } from "../../util/bhasha";
+import { tForm } from "../../i18n/yuvaForm";
 import { endLoading, startLoading } from "../../store/authSlice";
 import {
   addYuvaToShortlist,
@@ -54,11 +55,11 @@ function a11yProps(index) {
     "aria-controls": `simple-tabpanel-${index}`,
   };
 }
-const profileTabs = [
-  { id: 1, title: "Personal Info" },
-  { id: 2, title: "Mama Info" },
-  { id: 3, title: "Contact Info" },
-  { id: 4, title: "Other Info" },
+const profileTabKeys = [
+  { id: 1, titleKey: "personalInfo" },
+  { id: 2, titleKey: "mamaInfo" },
+  { id: 3, titleKey: "contactInfo" },
+  { id: 4, titleKey: "otherInfo" },
 ];
 
 const getYuvaShareId = (value) => {
@@ -155,11 +156,11 @@ const MobileSection = ({ title, children }) => (
   </section>
 );
 
-const AdditionalInfoFields = ({ additionalFields }) =>
+const AdditionalInfoFields = ({ additionalFields, heading }) =>
   additionalFields.length ? (
     <div className="mt-5 w-full">
       <p className="text-base font-bold text-primary mb-3 pt-2 border-t border-line">
-        Additional Info
+        {heading}
       </p>
       <div className="w-full flex flex-col gap-4">
         {additionalFields.map((item, index) => (
@@ -232,7 +233,22 @@ const ProfilePage = () => {
     native: nativeList,
     auth,
   } = UseRedux();
-  const language = userLanguage(auth?.user);
+  const language = isPublicView ? "gu" : userLanguage(auth?.user);
+  const labelLang = isPublicView ? "gu" : "en";
+  const tLabel = (key) => tForm(labelLang, key);
+  const choiceText = (value, prefix) => {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return langText(value, language);
+    }
+    const code = String(value || "").trim();
+    if (!code) return "";
+    if (prefix) {
+      const keyed = tForm(language, `${prefix}.${code}`);
+      if (keyed !== `${prefix}.${code}`) return keyed;
+    }
+    const plain = tForm(language, code.toLowerCase());
+    return plain !== code.toLowerCase() ? plain : titleCase(code);
+  };
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
   const photoUrl = data?.profile?.url || "";
@@ -268,7 +284,7 @@ const ProfilePage = () => {
       })
       .catch(() => {
         if (!state) {
-          setLoadError("Yuva profile not found");
+          setLoadError(tForm(isPublicView ? "gu" : "en", "yuvaNotFound"));
         }
       })
       .finally(() => {
@@ -326,108 +342,114 @@ const ProfilePage = () => {
     .join(", ");
   const activityLabel = pick("activity");
   const personalFields = [
-    { label: "Name", value: pick("firstName") },
-    { label: "Father Name", value: pick("fatherName") },
-    { label: "Grand Father Name", value: pick("grandFatherName") },
+    { label: tLabel("firstName"), value: pick("firstName") },
+    { label: tLabel("fatherName"), value: pick("fatherName") },
+    { label: tLabel("grandFatherName"), value: pick("grandFatherName") },
     {
-      label: "Last Name",
+      label: tLabel("lastName"),
       value: pickMaster(surname, data?.lastName, labels.lastName),
     },
-    { label: "Mother Name", value: pick("motherName") },
-    { label: "Family ID", value: data?.familyId },
-    { label: "Gender", value: pick("gender") },
+    { label: tLabel("motherName"), value: pick("motherName") },
+    { label: tLabel("familyId"), value: data?.familyId },
+    { label: tLabel("gender"), value: pick("gender") },
     {
-      label: "Date of Birth",
+      label: tLabel("dob"),
       value: data?.dob ? moment(data.dob).format("DD/MM/YYYY hh:mm A") : "-",
     },
-    { label: "Birth Place", value: pick("pob") },
+    { label: tLabel("pob"), value: pick("pob") },
     {
-      label: "Native",
+      label: tLabel("native"),
       value: pickMaster(nativeList, data?.native, labels.native),
     },
-    { label: "YSK No.", value: data?.YSKno },
-    { label: "Marital Status", value: pick("martialStatus") },
-    { label: "Height (ft)", value: data?.height },
-    { label: "Weight (kg)", value: data?.weight },
-    { label: "Activity", value: activityLabel },
-    { label: "Firm", value: pick("firm") },
+    { label: tLabel("yskNo"), value: data?.YSKno },
+    { label: tLabel("maritalStatus"), value: pick("martialStatus") },
+    { label: tLabel("height"), value: data?.height },
+    { label: tLabel("weight"), value: data?.weight },
+    { label: tLabel("activity"), value: activityLabel },
+    { label: tLabel("firm"), value: pick("firm") },
     {
-      label: "Country",
+      label: tLabel("country"),
       value: pickMaster(country, data?.country, labels.country),
     },
     {
-      label: "State",
+      label: tLabel("state"),
       value: pickMaster(stateList, data?.state, labels.state),
     },
     {
-      label: "Region",
+      label: tLabel("region"),
       value: pickMaster(region, data?.region, labels.region),
     },
     {
-      label: "District",
+      label: tLabel("district"),
       value: pickMaster(district, data?.district, labels.district),
     },
     {
-      label: "City",
+      label: tLabel("city"),
       value: pickMaster(city, data?.city, labels.city),
     },
-    { label: "Firm Address", value: pick("firmAddress") },
+    { label: tLabel("firmAddress"), value: pick("firmAddress") },
     {
-      label: "Local Samaj",
+      label: tLabel("localSamaj"),
       value: pickMaster(samaj, data?.localSamaj, labels.localSamaj),
     },
-    { label: "Address", value: pick("address") },
+    { label: tLabel("address"), value: pick("address") },
   ];
   const mamaFields = [
     {
-      label: "Mama Name",
+      label: tLabel("mamaName"),
       value: pick("mamaInfo.name"),
     },
     {
-      label: "Mama Last Name",
+      label: tLabel("mamaLastName"),
       value: pickMaster(surname, data?.mamaInfo?.lastName, labels.mamaLastName),
     },
     {
-      label: "Mama Native",
+      label: tLabel("mamaNative"),
       value: pickMaster(nativeList, data?.mamaInfo?.native, labels.mamaNative),
     },
     {
-      label: "Mama City",
+      label: tLabel("mamaCity"),
       value: pick("mamaInfo.city"),
     },
   ];
   const contactFields = [
     {
-      label: "Contact Person Name",
+      label: tLabel("contactName"),
       value: pick("contactInfo.name"),
     },
     {
-      label: "Last Name",
+      label: tLabel("lastName"),
       value: pickMaster(
         surname,
         data?.contactInfo?.lastName,
         labels.contactLastName
       ),
     },
-    { label: "Contact Person Phone", value: data?.contactInfo?.phone },
-    { label: "Relation", value: titleCase(data?.contactInfo?.relation) },
-    { label: "Address", value: pick("address") },
+    { label: tLabel("contactPhone"), value: data?.contactInfo?.phone },
+    {
+      label: tLabel("relation"),
+      value: choiceText(data?.contactInfo?.relation, "relation"),
+    },
+    { label: tLabel("address"), value: pick("address") },
   ];
   const additionalFields = extraOtherFields(pickOtherMap(data, language));
   const otherFields = [
     {
-      label: "Highest Education",
-      value: titleCase(data?.education?.education || data?.education),
+      label: tLabel("highestEducation"),
+      value: choiceText(
+        data?.education?.education || data?.education,
+        "education"
+      ),
     },
     {
-      label: "Field of Study",
+      label: tLabel("fieldOfStudy"),
       value: data?.education?.fieldOfStudy || data?.fieldOfStudy || "-",
     },
-    { label: "Blood Group", value: data?.bloodGroup },
+    { label: tLabel("bloodGroup"), value: data?.bloodGroup },
     ...(data?.handicap === true
       ? [
-          { label: "Handicap", value: "Yes" },
-          { label: "Handicap Details", value: pick("handicapDetails") },
+          { label: tLabel("handicap"), value: tLabel("yes") },
+          { label: tLabel("handicapDetails"), value: pick("handicapDetails") },
         ]
       : []),
   ];
@@ -462,15 +484,17 @@ const ProfilePage = () => {
         document.execCommand("copy");
         document.body.removeChild(input);
       }
-      setNotification({ type: "success", message: "Profile link copied" });
+      setNotification({ type: "success", message: tLabel("profileLinkCopied") });
     } catch (e) {
-      setNotification({ type: "error", message: "Unable to copy link" });
+      setNotification({ type: "error", message: tLabel("unableToCopyLink") });
     }
   };
 
   const handlePrint = () => {
     const previousTitle = document.title;
-    document.title = fullName ? `Yuva Details - ${fullName}` : "Yuva Details";
+    document.title = fullName
+      ? `${tLabel("yuvaDetails")} - ${fullName}`
+      : tLabel("yuvaDetails");
     const restoreTitle = () => {
       document.title = previousTitle;
       window.removeEventListener("afterprint", restoreTitle);
@@ -523,9 +547,10 @@ const ProfilePage = () => {
   }
 
   return (
-    <Box>
+    <Box className={labelLang === "gu" ? "form-lang-gu" : ""}>
       <YuvaPrintTemplate
         data={data}
+        language={labelLang}
         lists={{
           city,
           state: stateList,
@@ -547,11 +572,10 @@ const ProfilePage = () => {
               <button
                 type="button"
                 aria-label="Home"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline underline-offset-4 min-h-[44px] md:min-h-0"
+                className="inline-flex items-center justify-center text-primary min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
                 onClick={handleHome}
               >
                 <HomeOutlinedIcon fontSize="small" />
-                <span>Back to home</span>
               </button>
             ) : (
               <button
@@ -561,7 +585,7 @@ const ProfilePage = () => {
                 onClick={handleBack}
               >
                 <ArrowBackIcon fontSize="small" />
-                Back to directory
+                {tLabel("backToDirectory")}
               </button>
             )}
             <div className="flex gap-2 flex-wrap justify-end shrink-0 items-center">
@@ -621,7 +645,7 @@ const ProfilePage = () => {
                   </button>
                   {data?.familyId ? (
                     <span className="mt-3 px-2.5 py-0.5 rounded-md text-xs font-medium bg-muted text-primary text-center">
-                      Family ID {data.familyId}
+                      {tLabel("familyId")} {data.familyId}
                     </span>
                   ) : null}
                   <h1 className="mt-3 text-lg sm:text-xl font-semibold text-primary text-center leading-snug break-words px-1">
@@ -645,7 +669,7 @@ const ProfilePage = () => {
                       {[
                         pick("contactInfo.name"),
                         data?.contactInfo?.relation
-                          ? `(${titleCase(data.contactInfo.relation)})`
+                          ? `(${choiceText(data.contactInfo.relation, "relation")})`
                           : "",
                         data?.contactInfo?.phone,
                       ]
@@ -675,11 +699,11 @@ const ProfilePage = () => {
                     scrollButtons="auto"
                     allowScrollButtonsMobile
                   >
-                    {profileTabs?.map((item, index) => {
+                    {profileTabKeys?.map((item, index) => {
                       return (
                         <AppTab
                           key={item.id}
-                          label={item.title}
+                          label={tLabel(item.titleKey)}
                           {...a11yProps(index)}
                         />
                       );
@@ -712,22 +736,28 @@ const ProfilePage = () => {
                     className={"w-full"}
                   >
                     <DetailFields fields={otherFields} />
-                    <AdditionalInfoFields additionalFields={additionalFields} />
+                    <AdditionalInfoFields
+                      additionalFields={additionalFields}
+                      heading={tLabel("additionalInfo")}
+                    />
                   </CustomTabPanel>
                 </div>
                 <div className="md:hidden w-full">
-                  <MobileSection title="Personal Info">
+                  <MobileSection title={tLabel("personalInfo")}>
                     <DetailFields fields={personalFields} />
                   </MobileSection>
-                  <MobileSection title="Mama Info">
+                  <MobileSection title={tLabel("mamaInfo")}>
                     <DetailFields fields={mamaFields} />
                   </MobileSection>
-                  <MobileSection title="Contact Info">
+                  <MobileSection title={tLabel("contactInfo")}>
                     <DetailFields fields={contactFields} />
                   </MobileSection>
-                  <MobileSection title="Other Info">
+                  <MobileSection title={tLabel("otherInfo")}>
                     <DetailFields fields={otherFields} />
-                    <AdditionalInfoFields additionalFields={additionalFields} />
+                    <AdditionalInfoFields
+                      additionalFields={additionalFields}
+                      heading={tLabel("additionalInfo")}
+                    />
                   </MobileSection>
                 </div>
               </Card>
