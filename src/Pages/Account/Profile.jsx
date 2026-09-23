@@ -18,6 +18,7 @@ import { getCurrentUser, updateUser } from "../../util/userApi";
 import { persistUpdatedUser } from "./persistUser";
 import { PageHeader, Card, Button } from "../../Component/UI";
 import PreferredLanguageField from "../../Component/Common/preferredLanguageField";
+import { isRegularUser } from "../../util/util";
 
 const toDateInputValue = (value) => {
   if (!value) return "";
@@ -30,6 +31,7 @@ export default function Profile() {
   const { loading, auth, surname } = UseRedux();
   const { notification, setNotification } = NotificationData();
   const user = auth?.user;
+  const showLanguage = !isRegularUser(user?.role);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -197,14 +199,16 @@ export default function Profile() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
-                <PreferredLanguageField
-                  xs={12}
-                  sm={6}
-                  label="Language"
-                  value={values.language}
-                  onChange={(next) => setFieldValue("language", next)}
-                  errors={touched.language && errors.language}
-                />
+                {showLanguage ? (
+                  <PreferredLanguageField
+                    xs={12}
+                    sm={6}
+                    label="Language"
+                    value={values.language}
+                    onChange={(next) => setFieldValue("language", next)}
+                    errors={touched.language && errors.language}
+                  />
+                ) : null}
                 <Grid
                   item
                   xs={12}

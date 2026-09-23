@@ -54,7 +54,10 @@ const runFetch =
       return inflight[inflightKey];
     }
     inflight[inflightKey] = axios
-      .get(`/${meta.path}/get-all-list`)
+      .get(`/${meta.path}/get-all-list`, {
+        params: force ? { t: Date.now() } : undefined,
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      })
       .then((res) => {
         const list = asRows(res.data);
         dispatch(meta.action(list));
@@ -85,13 +88,12 @@ export const getAllNativeData = fetchAll("native");
 
 export const refreshMaster = (key) => runFetch(key, { force: true });
 
-export const refreshMastersSilently = (dispatch, keys = []) => {
-  (Array.isArray(keys) ? keys : [keys]).forEach((key) => {
-    if (MASTER_MAP[key]) {
-      dispatch(refreshMaster(key));
-    }
-  });
-};
+export const refreshMastersSilently = (dispatch, keys = []) =>
+  Promise.all(
+    (Array.isArray(keys) ? keys : [keys])
+      .filter((key) => MASTER_MAP[key])
+      .map((key) => dispatch(refreshMaster(key)))
+  );
 
 export const loadLocationMasters = (dispatch) => {
   dispatch(getAllCountryData);

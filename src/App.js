@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login/index";
@@ -55,8 +55,65 @@ import { getCurrentUser } from "./util/userApi";
 import { persistUpdatedUser } from "./Pages/Account/persistUser";
 import { loadLocationMasters } from "./util/getAPICall";
 
+const LOADER_HOLD_MS = 500;
+const LOADER_FADE_MS = 200;
+
+function useHeldLoader(loading) {
+  const [phase, setPhase] = useState("off");
+  const startedAt = useRef(0);
+
+  useLayoutEffect(() => {
+    if (loading) {
+      if (!startedAt.current) {
+        startedAt.current = Date.now();
+      }
+      setPhase("on");
+      return undefined;
+    }
+
+    if (!startedAt.current) {
+      return undefined;
+    }
+
+    const remaining = Math.max(
+      0,
+      LOADER_HOLD_MS - (Date.now() - startedAt.current)
+    );
+    const timer = window.setTimeout(() => setPhase("out"), remaining);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
+    if (phase !== "out") {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      startedAt.current = 0;
+      setPhase("off");
+    }, LOADER_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [phase]);
+
+  useLayoutEffect(() => {
+    if (phase === "off") {
+      return undefined;
+    }
+    const y = window.scrollY;
+    const holdScroll = () => {
+      if (window.scrollY !== y) {
+        window.scrollTo(0, y);
+      }
+    };
+    window.addEventListener("scroll", holdScroll, { passive: true });
+    return () => window.removeEventListener("scroll", holdScroll);
+  }, [phase]);
+
+  return phase;
+}
+
 function App() {
   const { loading } = UseRedux();
+  const loaderPhase = useHeldLoader(loading);
   const dispatch = useDispatch();
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -279,7 +336,9 @@ function App() {
       </Route>
     </Routes>
       <PwaInstallBanner />
-      {loading ? <FullPageLoader /> : null}
+      {loaderPhase !== "off" ? (
+        <FullPageLoader fading={loaderPhase === "out"} />
+      ) : null}
     </>
     </FormLanguageProvider>
   );

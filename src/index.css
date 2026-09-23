@@ -63,6 +63,8 @@ body,
 
 html {
   overflow-x: hidden;
+  scrollbar-gutter: stable;
+  overflow-anchor: none;
 }
 
 body {

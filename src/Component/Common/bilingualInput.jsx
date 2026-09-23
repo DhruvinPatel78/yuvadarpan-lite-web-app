@@ -74,6 +74,15 @@ export default function BilingualInput({
     ? transliterateToGujarati(enValue)
     : "";
   const keepSavedGu = Boolean(String(guValue || "").trim()) && guValue !== autoGu;
+  const guFieldKind = useRef({ language: "", plain: false });
+  if (guFieldKind.current.language !== language) {
+    const hasGu = Boolean(String(guValue || "").trim());
+    const hasEn = Boolean(String(enValue || "").trim());
+    guFieldKind.current = {
+      language,
+      plain: isGu && hasGu && (!hasEn || keepSavedGu),
+    };
+  }
 
   const persist = (en, gu) => {
     if (en === enValue && gu === guValue) {
@@ -106,7 +115,7 @@ export default function BilingualInput({
   };
 
   if (isGu) {
-    if (keepSavedGu || (!String(enValue || "").trim() && String(guValue || "").trim())) {
+    if (guFieldKind.current.plain) {
       return (
         <CustomInput
           key={`${enName}-gu-saved`}
