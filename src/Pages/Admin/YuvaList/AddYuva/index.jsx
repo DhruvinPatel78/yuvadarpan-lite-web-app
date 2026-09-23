@@ -23,7 +23,7 @@ import { useDispatch } from "react-redux";
 import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
-import { addYuva, updateYuva } from "../../../../util/yuvaAdminApi";
+import { addYuva, updateYuva, updateYuvaProfile } from "../../../../util/yuvaAdminApi";
 import {
   canEditYuvaRecord,
   isAdmin,
@@ -608,11 +608,7 @@ const AddYuva = () => {
         otherGu: fieldsToOtherGuObject(newFieldList, newField),
       });
       if (location?.state) {
-        updateAPIHandler({
-          ...newValue,
-          id: values.id,
-          ...(values?.profile?.url ? { profile: values.profile } : {}),
-        });
+        updateAPIHandler({ ...newValue, id: values.id });
       } else {
         addYuvaListHandler(newValue);
       }
@@ -637,14 +633,6 @@ const AddYuva = () => {
     submitCount,
   } = formik;
 
-  const persistYuvaProfile = async (uploaded) => {
-    const yuvaId = values?.id || editYuva?.id;
-    if (!yuvaId || !uploaded?.url) {
-      return;
-    }
-    await updateYuva(yuvaId, { profile: uploaded });
-  };
-
   const imageUploadHandler = (file) => {
     dispatch(startLoading());
     const formData = new FormData();
@@ -655,11 +643,15 @@ const AddYuva = () => {
         contentType: "multipart/form-data",
       })
       .then((res) => {
-        const uploaded = res?.data?.data;
-        setFieldValue("profile", uploaded);
-        setFieldValue("profileName", uploaded?.name);
-        if (isEdit) {
-          persistYuvaProfile(uploaded).catch((e) =>
+        const profile = res?.data?.data;
+        if (!profile) {
+          return;
+        }
+        setFieldValue("profile", profile);
+        setFieldValue("profileName", profile?.name);
+        const yuvaId = values?.id || location?.state?.data?.id;
+        if (yuvaId) {
+          updateYuvaProfile(yuvaId, profile).catch((e) =>
             console.log("error API  = = = = >", e)
           );
         }
@@ -690,10 +682,7 @@ const AddYuva = () => {
       const res = await axios.post(`/image/upload`, formData, {
         contentType: "multipart/form-data",
       });
-      await updateYuva(createdYuva.id, {
-        ...createdYuva,
-        profile: res?.data?.data,
-      });
+      await updateYuvaProfile(createdYuva.id, res?.data?.data);
       goToYuvaList();
     } catch (e) {
       // Optionally handle error with notification
