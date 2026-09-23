@@ -16,7 +16,6 @@ import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import CustomRadio from "../../Component/Common/customRadio";
-import PreferredLanguageField from "../../Component/Common/preferredLanguageField";
 import { registerUser } from "../../util/authApi";
 import { messaging } from "../../firebase";
 import { getToken } from "firebase/messaging";
@@ -103,7 +102,7 @@ export default function Index() {
         localSamaj: value?.localSamaj,
         role: "USER",
         gender: value?.gender,
-        language: value?.language === "en" ? "en" : "gu",
+        language: "gu",
         fcmToken: fcmToken,
       });
       resetForm();
@@ -134,7 +133,6 @@ export default function Index() {
       region: "",
       localSamaj: "",
       gender: "male",
-      language: "gu",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -144,7 +142,6 @@ export default function Index() {
       localSamaj: Yup.string().required("Required"),
       region: Yup.string().required("Required"),
       gender: Yup.string().required("Required"),
-      language: Yup.string().oneOf(["en", "gu"]).required("Required"),
       email: Yup.string()
         .matches(
           "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
@@ -374,13 +371,6 @@ export default function Index() {
                 className={"flex flex-row"}
                 onChange={handleChange}
                 onBlur={handleBlur}
-              />
-              <PreferredLanguageField
-                xs={12}
-                sm={6}
-                value={values.language}
-                onChange={(next) => setFieldValue("language", next)}
-                errors={touched.language && errors.language && errors.language}
               />
               <Grid item xs={12}>
                 <Button

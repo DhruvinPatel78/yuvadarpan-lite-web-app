@@ -385,7 +385,7 @@ const ProfilePage = () => {
     },
     {
       label: "Mama Last Name",
-      value: pickMaster(surname, data?.mamaInfo?.lastName),
+      value: pickMaster(surname, data?.mamaInfo?.lastName, labels.mamaLastName),
     },
     {
       label: "Mama Native",
@@ -403,7 +403,11 @@ const ProfilePage = () => {
     },
     {
       label: "Last Name",
-      value: pickMaster(surname, data?.contactInfo?.lastName),
+      value: pickMaster(
+        surname,
+        data?.contactInfo?.lastName,
+        labels.contactLastName
+      ),
     },
     { label: "Contact Person Phone", value: data?.contactInfo?.phone },
     { label: "Relation", value: titleCase(data?.contactInfo?.relation) },

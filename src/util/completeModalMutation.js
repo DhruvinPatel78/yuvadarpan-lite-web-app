@@ -11,11 +11,11 @@ export const completeModalMutation = async (
     if (refresh) {
       await refresh();
     }
+    if (syncMasters) {
+      await refreshMastersSilently(dispatch, syncMasters);
+    }
   } finally {
     dispatch(endLoading());
   }
   close?.();
-  if (syncMasters) {
-    refreshMastersSilently(dispatch, syncMasters);
-  }
 };

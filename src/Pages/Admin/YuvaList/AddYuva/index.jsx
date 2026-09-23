@@ -4,7 +4,7 @@ import {
   CircularProgress,
   Grid,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CustomInput from "../../../../Component/Common/customInput";
 import CustomAutoComplete from "../../../../Component/Common/customAutoComplete";
 import CustomRadio from "../../../../Component/Common/customRadio";
@@ -428,6 +428,110 @@ const AddYuva = () => {
       setNewFieldList([]);
     }
   };
+  const requiredText = (labelKey, english) =>
+    language === "gu" ? `${t(labelKey)} જરૂરી છે` : english;
+  const validationSchema = useMemo(
+    () =>
+      Yup.object({
+        firstName: Yup.string().required(requiredText("firstName", "First Name Is Required")),
+        motherName: Yup.string().required(requiredText("motherName", "Mother Name Is Required")),
+        fatherName: Yup.string().required(requiredText("fatherName", "Father Name Is Required")),
+        grandFatherName: Yup.string().required(
+          requiredText("grandFatherName", "Grand Father Name Is Required")
+        ),
+        gender: Yup.string().required(requiredText("gender", "Gender Is Required")),
+        pob: Yup.string(),
+        ...(location?.state
+          ? {
+              profileName: Yup.string().required(
+                requiredText("profilePhoto", "Profile Photo Is Required")
+              ),
+            }
+          : {}),
+        dob: Yup.mixed()
+          .nullable()
+          .test(
+            "dob",
+            requiredText("dob", "Date Of Birth Is Required"),
+            (value) => Boolean(value) && dayjs(value).isValid()
+          ),
+        height: Yup.string().required(requiredText("height", "Height Is Required")),
+        weight: Yup.string().required(requiredText("weight", "Weight Is Required")),
+        firm: Yup.string().required(requiredText("firm", "Firm Is Required")),
+        firmAddress: Yup.string().required(
+          requiredText("firmAddress", "Firm Address Is Required")
+        ),
+        address: Yup.string().required(requiredText("address", "Address Is Required")),
+        state: Yup.string().required(requiredText("state", "State Is Required")),
+        region: Yup.string().required(requiredText("region", "Region Is Required")),
+        district: Yup.string().required(requiredText("district", "District Is Required")),
+        city: Yup.string().required(requiredText("city", "City Is Required")),
+        native: Yup.string().required(requiredText("native", "Native Is Required")),
+        education: Yup.object({
+          education: Yup.string().required(
+            requiredText("highestEducation", "Education Is Required")
+          ),
+          fieldOfStudy: Yup.string().when("education", {
+            is: (value) => higherEducation.includes(value),
+            then: (schema) =>
+              schema.required(requiredText("fieldOfStudy", "Field of Study Is Required")),
+            otherwise: (schema) => schema.notRequired(),
+          }),
+        }),
+        contactInfo: Yup.object({
+          name: Yup.string().required(requiredText("contactName", "Contact Name Is Required")),
+          lastName: Yup.string()
+            .transform((value) =>
+              value && typeof value === "object"
+                ? String(value.id ?? value.value ?? value._id ?? "")
+                : value == null
+                  ? ""
+                  : String(value)
+            )
+            .required(requiredText("contactLastName", "Contact Last Name Is Required")),
+          relation: Yup.string().required(
+            requiredText("relation", "Contact Relation Is Required")
+          ),
+          phone: Yup.string()
+            .transform((value) => String(value ?? "").replace(/\D/g, ""))
+            .required(requiredText("contactPhone", "Contact Phone Number Is Required"))
+            .matches(/^[0-9]{10}$/, t("err.phone")),
+        }),
+        mamaInfo: Yup.object({
+          name: Yup.string().required(requiredText("mamaName", "Mama Name Is Required")),
+          lastName: Yup.string().required(
+            requiredText("mamaLastName", "Mama Last Name Is Required")
+          ),
+          native: Yup.string().required(requiredText("mamaNative", "Mama Native Is Required")),
+          city: Yup.string().required(requiredText("mamaCity", "Mama City Is Required")),
+        }),
+        lastName: Yup.string().required(requiredText("lastName", "Last Name Is Required")),
+        bloodGroup: Yup.string().required(requiredText("bloodGroup", "Blood Group Is Required")),
+        country: Yup.string().required(requiredText("country", "Country Is Required")),
+        familyId: Yup.number()
+          .typeError(t("err.number"))
+          .positive(t("err.positive"))
+          .required(requiredText("familyId", "Family ID IsRequired")),
+        activity: Yup.string().required(requiredText("activity", "Activity Is Required")),
+        abroadStudy: Yup.string().required(
+          language === "gu" ? "વિદેશ અભ્યાસ જરૂરી છે" : "AbroadStudy Required"
+        ),
+        martialStatus: Yup.string().required(
+          requiredText("maritalStatus", "Martial Status Is Required")
+        ),
+        handicapDetails: Yup.string().when("handicap", {
+          is: true,
+          then: (schema) =>
+            schema.required(requiredText("handicapDetails", "Handicap Details Is Required")),
+          otherwise: (schema) => schema.notRequired(),
+        }),
+        YSKno: Yup.string(),
+        localSamaj: Yup.string().required(requiredText("localSamaj", "Local Samaj Required")),
+      }),
+    // requiredText follows the selected form language
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [language, location?.state]
+  );
   const formik = useFormik({
     initialValues: {
       firstName: "",
@@ -493,83 +597,13 @@ const AddYuva = () => {
         addYuvaListHandler(newValue);
       }
     },
-    validationSchema: Yup.object({
-      firstName: Yup.string().required("First Name Is Required"),
-      motherName: Yup.string().required("Mother Name Is Required"),
-      fatherName: Yup.string().required("Father Name Is Required"),
-      grandFatherName: Yup.string().required("Grand Father Name Is Required"),
-      gender: Yup.string().required("Gender Is Required"),
-      pob: Yup.string(),
-      ...(location?.state
-        ? { profileName: Yup.string().required("Profile Photo Is Required") }
-        : {}),
-      dob: Yup.mixed()
-        .nullable()
-        .test(
-          "dob",
-          "Date Of Birth Is Required",
-          (value) => Boolean(value) && dayjs(value).isValid()
-        ),
-      height: Yup.string().required("Height Is Required"),
-      weight: Yup.string().required("Weight Is Required"),
-      firm: Yup.string().required("Firm Is Required"),
-      firmAddress: Yup.string().required("Firm Address Is Required"),
-      address: Yup.string().required("Address Is Required"),
-      state: Yup.string().required("State Is Required"),
-      region: Yup.string().required("Region Is Required"),
-      district: Yup.string().required("District Is Required"),
-      city: Yup.string().required("City Is Required"),
-      native: Yup.string().required("Native Is Required"),
-      education: Yup.object({
-        education: Yup.string().required("Education Is Required"),
-        fieldOfStudy: Yup.string().when("education", {
-          is: (value) => higherEducation.includes(value),
-          then: (schema) => schema.required("Field of Study Is Required"),
-          otherwise: (schema) => schema.notRequired(),
-        }),
-      }),
-      contactInfo: Yup.object({
-        name: Yup.string().required("Contact Name Is Required"),
-        lastName: Yup.string()
-          .transform((value) =>
-            value && typeof value === "object"
-              ? String(value.id ?? value.value ?? value._id ?? "")
-              : value == null
-                ? ""
-                : String(value)
-          )
-          .required("Contact Last Name Is Required"),
-        relation: Yup.string().required("Contact Relation Is Required"),
-        phone: Yup.string()
-          .transform((value) => String(value ?? "").replace(/\D/g, ""))
-          .required("Contact Phone Number Is Required")
-          .matches(/^[0-9]{10}$/, "Enter a valid 10-digit phone number"),
-      }),
-      mamaInfo: Yup.object({
-        name: Yup.string().required("Mama Name Is Required"),
-        lastName: Yup.string().required("Mama Last Name Is Required"),
-        native: Yup.string().required("Mama Native Is Required"),
-        city: Yup.string().required("Mama City Is Required"),
-      }),
-      lastName: Yup.string().required("Last Name Is Required"),
-      bloodGroup: Yup.string().required("Blood Group Is Required"),
-      country: Yup.string().required("Country Is Required"),
-      familyId: Yup.number()
-        .typeError("Must be a Number")
-        .positive()
-        .required("Family ID IsRequired"),
-      activity: Yup.string().required("Activity Is Required"),
-      abroadStudy: Yup.string().required("AbroadStudy Required"),
-      martialStatus: Yup.string().required("Martial Status Is Required"),
-      handicapDetails: Yup.string().when("handicap", {
-        is: true,
-        then: (schema) => schema.required("Handicap Details Is Required"),
-        otherwise: (schema) => schema.notRequired(),
-      }),
-      YSKno: Yup.string(),
-      localSamaj: Yup.string().required("Local Samaj Required"),
-    }),
+    validationSchema,
   });
+  useEffect(() => {
+    formik.validateForm();
+    // Refresh messages already on screen when the form language changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
   const {
     isSubmitting,
     errors,

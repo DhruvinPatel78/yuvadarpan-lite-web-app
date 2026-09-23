@@ -82,6 +82,7 @@ export default function CustomAutoComplete({
     if (typeof option === "string") return option;
     return masterNameText(option, language) || String(option.label || "");
   };
+  const selected = multiple ? value || [] : resolveOption(list, value);
 
   return (
     <Grid item {...rest}>
@@ -124,7 +125,7 @@ export default function CustomAutoComplete({
         }}
         defaultValue={defaultValue}
         options={Array.isArray(list) ? list : []}
-        value={multiple ? value || [] : resolveOption(list, value)}
+        value={selected}
         getOptionLabel={optionLabel}
         isOptionEqualToValue={(option, selected) =>
           Boolean(option) &&
