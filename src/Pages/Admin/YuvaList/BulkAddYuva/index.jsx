@@ -13,7 +13,7 @@ import { useDispatch } from "react-redux";
 import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
-import { addBulkYuva, updateYuva } from "../../../../util/yuvaAdminApi";
+import { addBulkYuva, updateYuvaProfile } from "../../../../util/yuvaAdminApi";
 import axios from "../../../../util/useAxios";
 import { Button as ActionButton, Card, FormModal, PageHeader } from "../../../../Component/UI";
 import {
@@ -341,10 +341,7 @@ const BulkAddYuva = () => {
       const res = await axios.post(`/image/upload`, formData, {
         contentType: "multipart/form-data",
       });
-      await updateYuva(createdYuva.id, {
-        ...createdYuva,
-        profile: res?.data?.data,
-      });
+      await updateYuvaProfile(createdYuva.id, res?.data?.data);
       goToNextPhoto();
     } catch (e) {
       setNotification({
