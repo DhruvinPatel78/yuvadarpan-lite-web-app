@@ -124,8 +124,7 @@ export default function BilingualInput({
           {...common}
           value={guValue}
           onChange={(event) => {
-            const nextGu = event.target.value;
-            persist(enValue || nextGu, nextGu);
+            persist(enValue, event.target.value);
           }}
         />
       );
@@ -139,7 +138,10 @@ export default function BilingualInput({
           if (!raw && !transliterated && (enValue || guValue)) {
             return;
           }
-          persist(String(raw || enValue || "").trim(), transliterated || guValue);
+          persist(
+            String(enValue || "").trim() ? enValue : String(raw || "").trim(),
+            transliterated || guValue
+          );
         }}
         {...common}
         uncontrolled
