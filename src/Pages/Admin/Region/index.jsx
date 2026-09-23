@@ -36,6 +36,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import { isLocationMasterReadOnly, isStateManager, isCityManager, isDistrictManager, isRegionManager, isCountryManager } from "../../../util/util";
 import {
   getRegionList,
@@ -50,6 +51,7 @@ export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, country, state, auth } = UseRedux();
+  const copy = useFilterCopy();
   const stateManager = isStateManager(auth?.user?.role);
   const countryManager = isCountryManager(auth?.user?.role);
   const [ownStateList, setOwnStateList] = useState(false);
@@ -344,7 +346,7 @@ export default function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search region"
+          searchPlaceholder={copy.searchRegion}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => {
             setSelectedSearchByText(e.target.value);
@@ -360,8 +362,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={listHandler(country)}
                 multiple={true}
-                label={"Country"}
-                placeholder={"Select Your Country"}
+                label={copy.country}
+                placeholder={copy.countryPh}
                 {...filterCols}
                 value={selectedCountry}
                 name="country"
@@ -379,8 +381,8 @@ export default function Index() {
                   })
                 )}
                 multiple={true}
-                label={"State"}
-                placeholder={"Select Your State"}
+                label={copy.state}
+                placeholder={copy.statePh}
                 {...filterCols}
                 value={selectedState}
                 name="state"

@@ -5,17 +5,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmModal from "./ConfirmModal";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
 import { masterNameText } from "../../util/bhasha";
+import { useFormLanguage } from "../../context/FormLanguageContext";
 
 const ACTION_COL_WIDTH = 156;
 const GRID_HEADER_HEIGHT = 56;
 const GRID_ROW_HEIGHT = 52;
 const EMPTY_GRID_BODY = 96;
 
-function gridNameText(params) {
-  return masterNameText(params?.row) || "";
-}
-
-function normalizeTableColumns(columns = []) {
+function normalizeTableColumns(columns = [], language = "en") {
   return columns.map((col) => {
     const cellClassName = String(col.cellClassName || "")
       .replace(/\bpx-\d+\b/g, "")
@@ -40,7 +37,7 @@ function normalizeTableColumns(columns = []) {
         ...col,
         minWidth: col.minWidth || col.width || 120,
         cellClassName: `${cellClassName} px-2`.trim(),
-        valueGetter: gridNameText,
+        valueGetter: (params) => masterNameText(params?.row, language) || "",
       };
     }
 
@@ -68,6 +65,7 @@ function CustomTable({
   bulkActions = [],
   deleteEntity,
 }) {
+  const { language } = useFormLanguage();
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const showCheckboxes =
@@ -76,8 +74,8 @@ function CustomTable({
   const showToolbar =
     selectedIds.length > 0 && (onDeleteSelected || bulkActions.length > 0);
   const normalizedColumns = useMemo(
-    () => normalizeTableColumns(columns),
-    [columns]
+    () => normalizeTableColumns(columns, language),
+    [columns, language]
   );
   const rowCount = data?.data?.length || 0;
   const gridHeight =

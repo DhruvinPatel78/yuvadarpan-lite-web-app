@@ -27,26 +27,10 @@ export default function CustomSelect({
   ...rest
 }) {
   const { language } = useFormLanguage();
-  const [open, setOpen] = React.useState(false);
-  const rootRef = React.useRef(null);
-
-  React.useEffect(() => {
-    if (!open) return undefined;
-    const onMouseDown = (event) => {
-      if (rootRef.current?.contains(event.target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open]);
 
   return (
     <Grid item {...rest}>
-      <FormControl
-        className={"w-full"}
-        ref={rootRef}
-        sx={{ position: "relative" }}
-      >
+      <FormControl className={"w-full"} sx={{ position: "relative" }}>
         <InputLabel
           className={"text-primary"}
           color="primary"
@@ -66,32 +50,16 @@ export default function CustomSelect({
           fullWidth
           required={required}
           onBlur={onBlur}
-          open={open}
-          onOpen={() => setOpen(true)}
-          onClose={() => setOpen(false)}
           MenuProps={{
-            disablePortal: true,
             disableScrollLock: true,
-            BackdropProps: {
-              sx: { display: "none" },
-            },
             PaperProps: {
               sx: {
                 maxHeight: 280,
-                width: "100%",
-                position: "absolute !important",
-                left: "0 !important",
-                top: "4px !important",
-                transform: "none !important",
+                zIndex: 1500,
               },
             },
             sx: {
-              position: "absolute !important",
-              left: "0 !important",
-              top: "100% !important",
-              width: "100%",
-              transform: "none !important",
-              zIndex: 20,
+              zIndex: 1500,
             },
           }}
           sx={{

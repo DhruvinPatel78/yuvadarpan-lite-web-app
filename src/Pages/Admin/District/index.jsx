@@ -36,6 +36,7 @@ import {
   useFilteredIds,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import { isLocationMasterReadOnly, isRegionManager, isCityManager, isDistrictManager, isStateManager, isCountryManager } from "../../../util/util";
 import {
   getDistrictList,
@@ -50,6 +51,7 @@ export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, country, state, region, auth } = UseRedux();
+  const copy = useFilterCopy();
   const regionManager = isRegionManager(auth?.user?.role);
   const stateManager = isStateManager(auth?.user?.role);
   const countryManager = isCountryManager(auth?.user?.role);
@@ -370,7 +372,7 @@ export default function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search district"
+          searchPlaceholder={copy.searchDistrict}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => {
             setSelectedSearchByText(e.target.value);
@@ -386,8 +388,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={listHandler(country)}
                 multiple={true}
-                label={"Country"}
-                placeholder={"Select Your Country"}
+                label={copy.country}
+                placeholder={copy.countryPh}
                 {...filterCols}
                 value={selectedCountry}
                 name="country"
@@ -406,8 +408,8 @@ export default function Index() {
                   })
                 )}
                 multiple={true}
-                label={"State"}
-                placeholder={"Select Your State"}
+                label={copy.state}
+                placeholder={copy.statePh}
                 {...filterCols}
                 value={selectedState}
                 name="state"
@@ -425,8 +427,8 @@ export default function Index() {
                   })
                 )}
                 multiple={true}
-                label={"Region"}
-                placeholder={"Select Your Region"}
+                label={copy.region}
+                placeholder={copy.regionPh}
                 {...filterCols}
                 value={selectedRegion}
                 name="state"

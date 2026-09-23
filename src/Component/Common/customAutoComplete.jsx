@@ -1,23 +1,14 @@
 import * as React from "react";
 import { Grid, styled, TextField, Autocomplete } from "@mui/material";
 import { fieldControlCss } from "../UI/fieldStyles";
-import { masterNameText } from "../../util/bhasha";
+import { masterNameText, matchesLangQuery } from "../../util/bhasha";
 import { useFormLanguage } from "../../context/FormLanguageContext";
 
 const optionIdOf = (option) => {
   if (option == null || option === "") return "";
   if (typeof option !== "object") return String(option);
-  const id = option.uuid ?? option.id ?? option.value ?? option._id;
+  const id = option.uuid || option.id || option.value || option._id;
   return id == null ? "" : String(id);
-};
-
-const optionMatchesQuery = (option, query) => {
-  const q = String(query || "").trim().toLowerCase();
-  if (!q) return true;
-  return (
-    masterNameText(option, "en").toLowerCase().includes(q) ||
-    masterNameText(option, "gu").toLowerCase().includes(q)
-  );
 };
 
 const resolveOption = (list, value) => {
@@ -25,7 +16,14 @@ const resolveOption = (list, value) => {
   const rows = Array.isArray(list) ? list : [];
   if (typeof value === "object") {
     const selectedId = optionIdOf(value);
-    return rows.find((item) => optionIdOf(item) === selectedId) || value;
+    if (selectedId) {
+      return rows.find((item) => optionIdOf(item) === selectedId) || value;
+    }
+    const label = masterNameText(value);
+    return (
+      rows.find((item) => masterNameText(item) === label) ||
+      value
+    );
   }
   const key = String(value);
   return (
@@ -66,13 +64,13 @@ export default function CustomAutoComplete({
   limitTags = 2,
   required = true,
   multiple = false,
-  disablePortal = true,
+  disablePortal = false,
   open,
   onOpen,
   onClose,
   openOnFocus = false,
   autoHighlight = true,
-  autoComplete = true,
+  autoComplete = false,
   onMouseDown,
   ...rest
 }) {
@@ -87,25 +85,29 @@ export default function CustomAutoComplete({
   return (
     <Grid item {...rest}>
       <PrimaryAutocomplete
-        key={`${name}-${language}`}
         disabled={disabled}
         disablePortal={disablePortal}
         autoHighlight={autoHighlight}
         autoComplete={autoComplete}
+        autoSelect={false}
+        blurOnSelect={multiple ? false : "touch"}
+        clearOnBlur={false}
         openOnFocus={openOnFocus}
         onMouseDown={onMouseDown}
         {...(open !== undefined ? { open, onOpen, onClose } : { onOpen, onClose })}
-        includeInputInList
         filterSelectedOptions={multiple}
-        filterOptions={(options, state) =>
-          (Array.isArray(options) ? options : []).filter((option) =>
-            optionMatchesQuery(option, state.inputValue)
-          )
-        }
+        filterOptions={(options, state) => {
+          const rows = Array.isArray(options) ? options : [];
+          const query = state?.inputValue;
+          if (!String(query || "").trim()) {
+            return rows;
+          }
+          return rows.filter((option) => matchesLangQuery(option, query));
+        }}
         componentsProps={{
           popper: {
             sx: {
-              zIndex: 20,
+              zIndex: 1500,
               width: "100%",
               "@media (max-width: 767.95px)": {
                 maxWidth: "calc(100vw - 24px)",
@@ -127,12 +129,15 @@ export default function CustomAutoComplete({
         options={Array.isArray(list) ? list : []}
         value={selected}
         getOptionLabel={optionLabel}
-        isOptionEqualToValue={(option, selected) =>
-          Boolean(option) &&
-          selected != null &&
-          selected !== "" &&
-          optionIdOf(option) === optionIdOf(selected)
-        }
+        isOptionEqualToValue={(option, selected) => {
+          if (!option || selected == null || selected === "") return false;
+          const optionId = optionIdOf(option);
+          const selectedId = optionIdOf(selected);
+          if (optionId && selectedId) {
+            return optionId === selectedId;
+          }
+          return optionLabel(option) === optionLabel(selected);
+        }}
         multiple={multiple}
         id={`autoComplete-${name}`}
         label={label}
@@ -160,7 +165,9 @@ export default function CustomAutoComplete({
           />
         )}
         onSelect={onSelect}
-        onChange={onChange}
+        onChange={(event, nextValue, reason, details) => {
+          onChange?.(event, nextValue, reason, details);
+        }}
         onBlur={onBlur}
         disableClearable={multiple}
         limitTags={limitTags}

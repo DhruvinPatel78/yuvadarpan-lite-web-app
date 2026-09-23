@@ -343,6 +343,23 @@ export const masterNameText = (row, lang = "en") => {
   );
 };
 
+const foldText = (value) =>
+  String(value || "")
+    .normalize("NFKC")
+    .toLocaleLowerCase();
+
+export const matchesLangQuery = (option, query) => {
+  const q = foldText(query).trim();
+  if (!q) return true;
+  return (
+    foldText(masterNameText(option, "en")).includes(q) ||
+    foldText(masterNameText(option, "gu")).includes(q) ||
+    foldText(option?.label).includes(q) ||
+    foldText(option?.value).includes(q) ||
+    foldText(option?.id).includes(q)
+  );
+};
+
 export const fillMasterName = (setFieldValue, row = {}) => {
   const name = row?.name;
   const en =

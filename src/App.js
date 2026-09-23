@@ -54,6 +54,7 @@ import { logout } from "./store/authSlice";
 import { getCurrentUser } from "./util/userApi";
 import { persistUpdatedUser } from "./Pages/Account/persistUser";
 import { loadLocationMasters } from "./util/getAPICall";
+import { userLanguage } from "./util/bhasha";
 
 const LOADER_HOLD_MS = 500;
 const LOADER_FADE_MS = 200;
@@ -112,8 +113,9 @@ function useHeldLoader(loading) {
 }
 
 function App() {
-  const { loading } = UseRedux();
+  const { loading, auth } = UseRedux();
   const loaderPhase = useHeldLoader(loading);
+  const formLang = auth?.user ? userLanguage(auth.user) : "en";
   const dispatch = useDispatch();
   const [sessionReady, setSessionReady] = useState(false);
 
@@ -143,7 +145,7 @@ function App() {
   }
 
   return (
-    <FormLanguageProvider defaultLanguage="en">
+    <FormLanguageProvider defaultLanguage={formLang} syncFrom={formLang}>
     <>
       <Routes>
       <Route path={"/"}>

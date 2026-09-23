@@ -1,5 +1,6 @@
 import React from "react";
 import { CircularProgress, IconButton } from "@mui/material";
+import { useFormLanguage } from "../../context/FormLanguageContext";
 
 const variants = {
   primary:
@@ -52,17 +53,18 @@ export function FilterActions({
   onSubmit,
   onReset,
   showReset = false,
-  submitLabel = "Submit",
-  resetLabel = "Reset",
+  submitLabel,
+  resetLabel,
 }) {
+  const { t } = useFormLanguage();
   return (
     <div className="flex flex-col-reverse md:flex-row md:flex-wrap items-stretch md:items-center gap-2 w-full md:w-auto">
       <Button type="button" onClick={onSubmit} className="max-md:w-full">
-        {submitLabel}
+        {submitLabel || t("submit")}
       </Button>
       {showReset ? (
         <Button type="button" variant="secondary" onClick={onReset} className="max-md:w-full">
-          {resetLabel}
+          {resetLabel || t("reset")}
         </Button>
       ) : null}
     </div>

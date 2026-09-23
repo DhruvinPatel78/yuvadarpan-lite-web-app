@@ -32,11 +32,13 @@ import {
 } from "../../../util/countryApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, auth } = UseRedux();
+  const copy = useFilterCopy();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const hideRowActions = hideLocationRowActions(auth?.user?.role);
   const [page, setPage] = useState(0);
@@ -276,7 +278,7 @@ export default function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search country"
+          searchPlaceholder={copy.searchCountry}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}
