@@ -3,6 +3,7 @@ import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import LoadableImage from "./LoadableImage";
 import { asDisplayText } from "../../util/bhasha";
 
@@ -30,7 +31,7 @@ const ProfileCard = ({
   const ageNum = Number(age);
   const ageText =
     Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 120
-      ? `${ageNum} yrs`
+      ? `${ageNum} વર્ષ`
       : "";
 
   return (
@@ -88,7 +89,6 @@ const ProfileCard = ({
           />
           <span className="truncate">
             {locationText || "—"}
-            {ageText ? ` · ${ageText}` : ""}
           </span>
         </p>
         <p className="mt-1.5 text-sm text-primary flex items-start gap-1.5 min-w-0">
@@ -97,14 +97,12 @@ const ProfileCard = ({
           />
           <span className="truncate">{firmText || "—"}</span>
         </p>
-        <div className="mt-auto pt-3 border-t border-line flex items-center justify-between gap-2">
-          <span className="text-xs text-mutedText truncate">
-            {bornDate ? `Born ${bornDate}` : ""}
-          </span>
-          <span className="text-sm font-semibold text-primary whitespace-nowrap">
-            View
-          </span>
-        </div>
+        <p className="mt-1.5 text-sm text-primary flex items-start gap-1.5 min-w-0">
+          <CalendarMonthIcon
+            sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}
+          />
+          <span className="truncate">{bornDate ? `${bornDate}` : ""} {ageText ? ` · ${ageText}` : ""}</span>
+        </p>
       </div>
     </div>
   );
