@@ -608,7 +608,11 @@ const AddYuva = () => {
         otherGu: fieldsToOtherGuObject(newFieldList, newField),
       });
       if (location?.state) {
-        updateAPIHandler({ ...newValue, id: values.id });
+        updateAPIHandler({
+          ...newValue,
+          id: values.id,
+          ...(values?.profile?.url ? { profile: values.profile } : {}),
+        });
       } else {
         addYuvaListHandler(newValue);
       }
@@ -633,6 +637,14 @@ const AddYuva = () => {
     submitCount,
   } = formik;
 
+  const persistYuvaProfile = async (uploaded) => {
+    const yuvaId = values?.id || editYuva?.id;
+    if (!yuvaId || !uploaded?.url) {
+      return;
+    }
+    await updateYuva(yuvaId, { profile: uploaded });
+  };
+
   const imageUploadHandler = (file) => {
     dispatch(startLoading());
     const formData = new FormData();
@@ -643,8 +655,14 @@ const AddYuva = () => {
         contentType: "multipart/form-data",
       })
       .then((res) => {
-        setFieldValue("profile", res?.data?.data);
-        setFieldValue("profileName", res?.data?.data?.name);
+        const uploaded = res?.data?.data;
+        setFieldValue("profile", uploaded);
+        setFieldValue("profileName", uploaded?.name);
+        if (isEdit) {
+          persistYuvaProfile(uploaded).catch((e) =>
+            console.log("error API  = = = = >", e)
+          );
+        }
       })
       .catch((e) => console.log("error API  = = = = >", e))
       .finally(() => {
