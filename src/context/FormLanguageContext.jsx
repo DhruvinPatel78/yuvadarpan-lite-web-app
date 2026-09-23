@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { FORM_LANG, tForm } from "../i18n/yuvaForm";
 
 const FormLanguageContext = createContext({
@@ -8,8 +8,19 @@ const FormLanguageContext = createContext({
   t: (key) => tForm(FORM_LANG.EN, key),
 });
 
-export function FormLanguageProvider({ children, defaultLanguage = FORM_LANG.EN }) {
+export function FormLanguageProvider({
+  children,
+  defaultLanguage = FORM_LANG.EN,
+  syncFrom,
+}) {
   const [language, setLanguage] = useState(defaultLanguage);
+
+  useEffect(() => {
+    if (syncFrom === FORM_LANG.EN || syncFrom === FORM_LANG.GU) {
+      setLanguage(syncFrom);
+    }
+  }, [syncFrom]);
+
   const value = useMemo(
     () => ({
       language,

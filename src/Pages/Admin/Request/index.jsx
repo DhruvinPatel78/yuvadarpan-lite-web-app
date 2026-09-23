@@ -27,6 +27,8 @@ import {
   surnamesForGotra,
   useFilteredIds,
   masterLabelOf,
+  searchTextParams,
+  searchByFromOption,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 import { useDispatch } from "react-redux";
@@ -37,13 +39,15 @@ import {
   approveRejectMany,
 } from "../../../util/requestApi";
 import { getAllGotraData } from "../../../util/getAPICall";
-import { langText } from "../../../util/bhasha";
+import { langText, masterNameText } from "../../../util/bhasha";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 const MOBILE_PAGE_SIZE = 20;
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
   const { samaj, region, state, surname, auth, gotra: gotraList } = UseRedux();
+  const copy = useFilterCopy();
   const isSamajManager = String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager = String(auth?.user?.role || "").toUpperCase() === "CITY_MANAGER";
   const isDistrictManager = String(auth?.user?.role || "").toUpperCase() === "DISTRICT_MANAGER";
@@ -69,7 +73,7 @@ export default function Index() {
   const [selectedRegion, setSelectedRegion] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
-    label: "",
+    name: "",
     id: "",
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
@@ -125,9 +129,8 @@ export default function Index() {
     const append = Boolean(options.append);
     const limit = isMobile ? MOBILE_PAGE_SIZE : rowsPerPage;
     const pageNum = append ? options.pageNum : isMobile ? 1 : page + 1;
-    const text = selectedSearchByText
-      ? { [selectedSearchBy.id]: isRest ? "" : selectedSearchByText }
-      : {};
+    const searchValue = isRest ? "" : String(selectedSearchByText || "").trim();
+    const text = isRest ? {} : searchTextParams(selectedSearchBy, searchValue);
     if (append) {
       setLoadingMore(true);
     } else {
@@ -137,21 +140,30 @@ export default function Index() {
       }
     }
     try {
+      const lastNameIds = isRest
+        ? []
+        : lastNameIdsForGotraFilter(
+            surname,
+            selectedGotra,
+            filteredSurnameIds
+          );
       const params = {
         page: pageNum,
         limit,
-        lastName: isRest
-          ? []
-          : lastNameIdsForGotraFilter(
-              surname,
-              selectedGotra,
-              filteredSurnameIds
-            ),
-        state: isRest ? [] : filteredStateIds,
-        region: isRest ? [] : filteredRegionIds,
-        samaj: isRest ? [] : filteredSamajIds,
         ...text,
       };
+      if (lastNameIds.length) {
+        params.lastName = lastNameIds;
+      }
+      if (!isRest && filteredStateIds.length) {
+        params.state = filteredStateIds;
+      }
+      if (!isRest && filteredRegionIds.length) {
+        params.region = filteredRegionIds;
+      }
+      if (!isRest && filteredSamajIds.length) {
+        params.samaj = filteredSamajIds;
+      }
       const data = await getUserRequests(params);
       setUserList((prev) => {
         if (!append) {
@@ -228,7 +240,7 @@ export default function Index() {
   const handleReset = () => {
     setSelectedSearchByText("");
     setSelectedSearchBy({
-      label: "",
+      name: "",
       id: "",
     });
     setSelectedGotra([]);
@@ -378,7 +390,7 @@ export default function Index() {
   ];
 
   const requests = userList?.data || [];
-  const lookupName = (list, id) => masterLabelOf(list, id) || "-";
+  const lookupName = (list, id) => masterLabelOf(list, id, copy.language) || "-";
 
   const toggleCardSelection = (id) => {
     setSelectedUsers((prev) =>
@@ -422,7 +434,17 @@ export default function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search"
+          searchPlaceholder={
+            selectedSearchBy.id
+              ? `${copy.search} ${
+                  masterNameText(
+                    requestFilterList.find((item) => item.id === selectedSearchBy.id),
+                    copy.language
+                  ) || ""
+                }`.trim()
+              : copy.search
+          }
+          searchDisabledHint={copy.searchDisabledHint}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => {
             setSelectedSearchByText(e.target.value);
@@ -447,8 +469,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={gotraOptions}
                 multiple={true}
-                label={"Gotra"}
-                placeholder={"Select Your Gotra"}
+                label={copy.gotra}
+                placeholder={copy.gotraPh}
                 {...filterCols}
                 value={selectedGotra}
                 name="gotra"
@@ -462,8 +484,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={surnameFilterList}
                 multiple={true}
-                label={"Surname"}
-                placeholder={"Select Your Last Name"}
+                label={copy.surname}
+                placeholder={copy.surnamePh}
                 {...filterCols}
                 value={selectedSurname}
                 name="surname"
@@ -480,8 +502,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={listHandler(state)}
                 multiple={true}
-                label={"State"}
-                placeholder={"Select Your State"}
+                label={copy.state}
+                placeholder={copy.statePh}
                 {...filterCols}
                 name="state"
                 value={selectedState}
@@ -496,8 +518,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={listHandler(regionListByState)}
                 multiple={true}
-                label={"Region"}
-                placeholder={"Select Your Region"}
+                label={copy.region}
+                placeholder={copy.regionPh}
                 {...filterCols}
                 name="region"
                 value={selectedRegion}
@@ -512,8 +534,8 @@ export default function Index() {
               <CustomAutoComplete
                 list={listHandler(samajListByRegion)}
                 multiple={true}
-                label={"Samaj"}
-                placeholder={"Select Your Samaj"}
+                label={copy.samaj}
+                placeholder={copy.samajPh}
                 {...filterCols}
                 name="samaj"
                 value={selectedSamaj}
@@ -527,16 +549,13 @@ export default function Index() {
               )}
               <CustomAutoComplete
                 list={requestFilterList}
-                label={"Search By"}
-                placeholder={"Select Your Search By"}
+                label={copy.searchBy}
+                placeholder={copy.searchByPh}
                 {...filterCols}
                 name="search"
-                value={selectedSearchBy.label}
+                value={selectedSearchBy.name}
                 onChange={(e, search) => {
-                  setSelectedSearchBy({
-                    label: search.label,
-                    id: search.value,
-                  });
+                  setSelectedSearchBy(searchByFromOption(search));
                 }}
               />
               <Grid

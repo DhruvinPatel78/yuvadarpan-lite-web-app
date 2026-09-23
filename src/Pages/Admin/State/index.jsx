@@ -36,12 +36,16 @@ import {
   deleteState,
 } from "../../../util/stateApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
-import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
+import { fillMasterName, toNameEnGuPayload, masterNameText, matchesLangQuery } from "../../../util/bhasha";
+import { useFormLanguage } from "../../../context/FormLanguageContext";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, country, auth } = UseRedux();
+  const copy = useFilterCopy();
+  const { language } = useFormLanguage();
   const countryManager = isCountryManager(auth?.user?.role);
   const [ownCountryList, setOwnCountryList] = useState(false);
   const canAct = countryManager
@@ -315,26 +319,31 @@ export default function Index() {
                 value={filterCountry}
                 onChange={(_, value) => setFilterCountry(value)}
                 getOptionLabel={(option) =>
-                  option?.label ||
-                  (typeof option?.name === "string" ? option.name : option?.name?.en) ||
-                  ""
+                  masterNameText(option, language) || option?.label || ""
+                }
+                filterOptions={(options, state) =>
+                  (Array.isArray(options) ? options : []).filter((option) =>
+                    matchesLangQuery(option, state.inputValue)
+                  )
                 }
                 isOptionEqualToValue={(option, selected) =>
                   String(option?.id || option?.value) ===
                   String(selected?.id || selected?.value)
                 }
-                disablePortal
+                componentsProps={{
+                  popper: { sx: { zIndex: 1500 } },
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    placeholder="Country"
+                    placeholder={copy.country}
                     sx={searchFieldSx}
                   />
                 )}
               />
             </div>
           }
-          searchPlaceholder="Search state"
+          searchPlaceholder={copy.searchState}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}

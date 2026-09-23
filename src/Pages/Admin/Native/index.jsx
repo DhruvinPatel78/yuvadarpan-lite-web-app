@@ -30,10 +30,12 @@ import {
 } from "../../../util/nativeApi";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 export default function Index() {
   const dispatch = useDispatch();
   const { loading, auth } = UseRedux();
+  const copy = useFilterCopy();
   const canManage = !isLocationMasterReadOnly(auth?.user?.role);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -246,7 +248,7 @@ export default function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search native"
+          searchPlaceholder={copy.searchNative}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}

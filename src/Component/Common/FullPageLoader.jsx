@@ -1,7 +1,7 @@
 import React from "react";
 import Box from "@mui/material/Box";
 
-const FullPageLoader = () => {
+const FullPageLoader = ({ fading = false }) => {
   return (
     <Box
       role="alert"
@@ -9,6 +9,11 @@ const FullPageLoader = () => {
       aria-label="Loading YUVADARPAN content"
       tabIndex={-1}
       className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#f4f0ea]"
+      style={{
+        opacity: fading ? 0 : 1,
+        transition: "opacity 200ms ease",
+        touchAction: "none",
+      }}
     >
       <svg
         className="w-[80vw] h-[15vh] max-w-[400px] max-h-[80px]"

@@ -9,6 +9,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import TuneIcon from "@mui/icons-material/Tune";
 import Card from "./Card";
+import { useFormLanguage } from "../../context/FormLanguageContext";
 
 export const searchFieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -23,7 +24,7 @@ export const searchFieldSx = {
 
 export default function MasterFilterBar({
   leading,
-  searchPlaceholder = "Search",
+  searchPlaceholder,
   searchValue = "",
   onSearchChange,
   searchDisabled = false,
@@ -33,30 +34,45 @@ export default function MasterFilterBar({
   isFilterOpen = false,
   className = "",
   hideFilterBadge = false,
+  searchDisabledHint,
 }) {
+  const { t } = useFormLanguage();
   const hasExtra = Boolean(extraFilters);
+  const disabledHint = searchDisabledHint || t("searchDisabledHint");
+  const placeholder = searchDisabled
+    ? disabledHint
+    : searchPlaceholder || t("search");
 
   return (
     <Card padded={false} className={`p-2.5 sm:p-3 w-full ${className}`}>
       <div className="flex items-center gap-2 w-full min-w-0">
         {leading ? <div className="shrink-0">{leading}</div> : null}
-        <TextField
-          className="flex-1 min-w-0"
-          placeholder={searchPlaceholder}
-          value={searchValue}
-          onChange={onSearchChange}
-          disabled={searchDisabled}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#9a9aa8" }} />
-              </InputAdornment>
-            ),
+        <div
+          className={`flex-1 min-w-0 ${searchDisabled ? "cursor-pointer" : ""}`}
+          onClick={() => {
+            if (searchDisabled && !isFilterOpen) {
+              onFilterClick?.();
+            }
           }}
-          sx={searchFieldSx}
-        />
+        >
+          <TextField
+            className="w-full"
+            placeholder={placeholder}
+            value={searchValue}
+            onChange={onSearchChange}
+            disabled={searchDisabled}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#9a9aa8" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={searchFieldSx}
+          />
+        </div>
         {!hideFilterBadge ?
-        <Badge badgeContent={filterCount} color="error" overlap="circular">
+        <Badge badgeContent={filterCount} color="error" overlap="circular" className="shrink-0 self-center">
           <IconButton
             aria-label="Filter"
             aria-expanded={hasExtra ? isFilterOpen : undefined}

@@ -47,8 +47,13 @@ const CustomInput = ({
   };
 
   const isDate = type === "date";
+  const displayValue =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? String(value.en || value.gu || value.name || "")
+      : value;
   const filled =
-    isDate || (value != null && String(value).trim() !== "");
+    isDate || (displayValue != null && String(displayValue).trim() !== "");
+  const showError = Boolean(errors) && !filled;
 
   return (
     <Grid item {...rest}>
@@ -63,13 +68,13 @@ const CustomInput = ({
           type === "tel" ? "tel" : type === "password" ? "new-password" : "off"
         }
         onChange={uncontrolled ? undefined : onChange}
-        defaultValue={uncontrolled ? value : undefined}
+        defaultValue={uncontrolled ? displayValue : undefined}
         value={
           uncontrolled
             ? undefined
-            : isDate && value
-            ? String(value).match(/^(\d{4}-\d{2}-\d{2})/)?.[1] || ""
-            : value
+            : isDate && displayValue
+            ? String(displayValue).match(/^(\d{4}-\d{2}-\d{2})/)?.[1] || ""
+            : displayValue
         }
         fullWidth
         multiline={multiline}
@@ -103,7 +108,7 @@ const CustomInput = ({
         focused={isDate ? undefined : focused}
         onBlur={onBlur}
         disabled={disabled}
-        error={Boolean(errors)}
+        error={showError}
         inputProps={{
           ...(type === "number" ? { inputMode: "numeric" } : {}),
           ...(type === "tel"
@@ -120,7 +125,7 @@ const CustomInput = ({
           ...inputProps,
         }}
       />
-      {errors ? (
+      {showError ? (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
       ) : null}
     </Grid>

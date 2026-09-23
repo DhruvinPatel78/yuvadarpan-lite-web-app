@@ -5,6 +5,7 @@ import CustomSwitch from "./CustomSwitch";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
 import { Button, Card } from "../UI";
 import { masterNameText } from "../../util/bhasha";
+import { useFormLanguage } from "../../context/FormLanguageContext";
 
 const MasterMobileCards = ({
   rows = [],
@@ -12,7 +13,7 @@ const MasterMobileCards = ({
   selectedIds = [],
   onToggleSelect,
   canSelect = false,
-  getTitle = (row) => masterNameText(row) || "-",
+  getTitle,
   getDetails,
   showActive = true,
   activeDisabled = false,
@@ -29,6 +30,8 @@ const MasterMobileCards = ({
   onDeleteSelected,
   deleteEntity,
 }) => {
+  const { language } = useFormLanguage();
+  const titleOf = getTitle || ((row) => masterNameText(row, language) || "-");
   const hasFooterActions = Boolean(onView || onEdit || onDelete);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
@@ -79,7 +82,7 @@ const MasterMobileCards = ({
                       "font-semibold text-primary text-[15px] leading-tight min-w-0 pr-1 break-words"
                     }
                   >
-                    {getTitle(row)}
+                    {titleOf(row)}
                   </p>
                   {canSelect ? (
                     <Checkbox

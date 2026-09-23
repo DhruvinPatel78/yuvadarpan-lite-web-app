@@ -7,6 +7,7 @@ import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
 import { Navigate, useNavigate } from "react-router-dom";
 import { UseRedux } from "../../../Component/useRedux";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import { isAdmin } from "../../../util/util";
 import { MasterFilterBar, PageHeader, Button as ActionButton } from "../../../Component/UI";
 import { clearActivityLogs, getActivityLogs } from "../../../util/logsApi";
@@ -45,6 +46,7 @@ const selectSx = {
 
 export default function Logs() {
   const { auth } = UseRedux();
+  const copy = useFilterCopy();
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -196,7 +198,7 @@ export default function Logs() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search actor, record, or activity"
+          searchPlaceholder={copy.searchLogs}
           searchValue={search}
           onSearchChange={(e) => setSearch(e.target.value)}
           filterCount={filterCount}

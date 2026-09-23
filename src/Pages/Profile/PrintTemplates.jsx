@@ -123,7 +123,11 @@ const buildPrintModel = (data, lists) => {
       { label: "Name", value: langText(data?.contactInfo?.name) },
       {
         label: "Last Name",
-        value: getLookupName(surname, data?.contactInfo?.lastName),
+        value: getLookupName(
+          surname,
+          data?.contactInfo?.lastName,
+          labels.contactLastName
+        ),
       },
       { label: "Relation", value: data?.contactInfo?.relation },
       { label: "Address", value: langText(data?.address) },
@@ -137,11 +141,19 @@ const buildPrintModel = (data, lists) => {
       { label: "Name", value: langText(data?.mamaInfo?.name) },
       {
         label: "Last Name",
-        value: getLookupName(surname, data?.mamaInfo?.lastName),
+        value: getLookupName(
+          surname,
+          data?.mamaInfo?.lastName,
+          labels.mamaLastName
+        ),
       },
       {
         label: "Native",
-        value: getLookupName(nativeList, data?.mamaInfo?.native),
+        value: getLookupName(
+          nativeList,
+          data?.mamaInfo?.native,
+          labels.mamaNative
+        ),
       },
       { label: "City", value: langText(data?.mamaInfo?.city) },
     ],

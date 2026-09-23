@@ -9,6 +9,7 @@ import ContainerPage from "../../../Component/Container";
 import { getRoleList, updateRole, deleteRole } from "../../../util/roleApi";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import { UseRedux } from "../../../Component/useRedux";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import { Navigate } from "react-router-dom";
 import { isLocationMasterReadOnly } from "../../../util/util";
 import { MasterFilterBar, PageHeader } from "../../../Component/UI";
@@ -18,6 +19,7 @@ import { completeModalMutation } from "../../../util/completeModalMutation";
 
 export default function Index() {
   const { auth } = UseRedux();
+  const copy = useFilterCopy();
   const dispatch = useDispatch();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -161,7 +163,7 @@ export default function Index() {
       >
         <PageHeader className="w-full" title="Roles" />
         <MasterFilterBar
-          searchPlaceholder="Search role"
+          searchPlaceholder={copy.searchRole}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => setSelectedSearchByText(e.target.value)}
           filterCount={filterCount}

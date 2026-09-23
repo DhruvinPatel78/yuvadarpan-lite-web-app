@@ -54,6 +54,8 @@ import {
   useFilteredIds,
   getListById,
   masterLabelOf,
+  searchTextParams,
+  searchByFromOption,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 import {
@@ -76,7 +78,8 @@ import {
   getAllCountryData,
   getAllGotraData,
 } from "../../../util/getAPICall";
-import { languageLabel } from "../../../util/bhasha";
+import { languageLabel, masterNameText } from "../../../util/bhasha";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -392,6 +395,7 @@ function UserPasswordPanel({
 function Index() {
   const dispatch = useDispatch();
   const { loading, surname, region, samaj, country, auth, gotra: gotraList } = UseRedux();
+  const copy = useFilterCopy();
   const lastNameOptions = useMemo(() => asOptions(surname), [surname]);
   const regionOptions = useMemo(() => asOptions(region), [region]);
   const countryOptions = useMemo(() => asOptions(country), [country]);
@@ -626,31 +630,37 @@ function Index() {
     const limit = isMobile ? MOBILE_PAGE_SIZE : rowsPerPage;
     const pageNum = append ? options.pageNum : isMobile ? 1 : page + 1;
     try {
-      const text = selectedSearchByText
-        ? {
-            [selectedSearchBy.id]: isRest ? "" : selectedSearchByText,
-          }
-        : {};
+      const searchValue = isRest ? "" : String(selectedSearchByText || "").trim();
+      const text = isRest ? {} : searchTextParams(selectedSearchBy, searchValue);
       if (append) {
         setLoadingMore(true);
       } else if (isMobile) {
         setMobilePage(1);
       }
+      const lastNameIds = isRest
+        ? []
+        : lastNameIdsForGotraFilter(
+            surname,
+            selectedGotra,
+            filteredSurnameIds
+          );
       const params = {
         page: pageNum,
         limit,
-        lastName: isRest
-          ? []
-          : lastNameIdsForGotraFilter(
-              surname,
-              selectedGotra,
-              filteredSurnameIds
-            ),
-        roles: isRest ? [] : filteredRolesIds,
-        region: isRest ? [] : filteredRegionIds,
-        samaj: isRest ? [] : filteredSamajIds,
         ...text,
       };
+      if (lastNameIds.length) {
+        params.lastName = lastNameIds;
+      }
+      if (!isRest && filteredRolesIds.length) {
+        params.roles = filteredRolesIds;
+      }
+      if (!isRest && filteredRegionIds.length) {
+        params.region = filteredRegionIds;
+      }
+      if (!isRest && filteredSamajIds.length) {
+        params.samaj = filteredSamajIds;
+      }
       if (isSamajManager) {
         params.ownSamaj = true;
       }
@@ -931,7 +941,7 @@ function Index() {
   const handleReset = () => {
     setSelectedSearchByText("");
     setSelectedSearchBy({
-      label: "",
+      name: "",
       id: "",
     });
     setSelectedGotra([]);
@@ -1079,7 +1089,7 @@ function Index() {
   };
 
   const users = userList?.data || [];
-  const lookupName = (list, id) => masterLabelOf(list, id) || "-";
+  const lookupName = (list, id) => masterLabelOf(list, id, copy.language) || "-";
   const formatUserDate = (value) => {
     if (!value) return "-";
     const date = new Date(value);
@@ -1161,7 +1171,17 @@ function Index() {
           }
         />
         <MasterFilterBar
-          searchPlaceholder="Search"
+          searchPlaceholder={
+            selectedSearchBy.id
+              ? `${copy.search} ${
+                  masterNameText(
+                    requestFilterList.find((item) => item.id === selectedSearchBy.id),
+                    copy.language
+                  ) || ""
+                }`.trim()
+              : copy.search
+          }
+          searchDisabledHint={copy.searchDisabledHint}
           searchValue={selectedSearchByText}
           onSearchChange={(e) => {
             setSelectedSearchByText(e.target.value);
@@ -1186,8 +1206,8 @@ function Index() {
               <CustomAutoComplete
                 list={gotraOptions}
                 multiple={true}
-                label={"Gotra"}
-                placeholder={"Select Your Gotra"}
+                label={copy.gotra}
+                placeholder={copy.gotraPh}
                 {...filterCols}
                 value={selectedGotra}
                 name="gotra"
@@ -1201,8 +1221,8 @@ function Index() {
               <CustomAutoComplete
                 list={surnameFilterList}
                 multiple={true}
-                label={"Surname"}
-                placeholder={"Select Your Last Name"}
+                label={copy.surname}
+                placeholder={copy.surnamePh}
                 {...filterCols}
                 value={selectedSurname}
                 name="surname"
@@ -1217,8 +1237,8 @@ function Index() {
               <CustomAutoComplete
                 list={listHandler(region)}
                 multiple={true}
-                label={"Region"}
-                placeholder={"Select Your Region"}
+                label={copy.region}
+                placeholder={copy.regionPh}
                 {...filterCols}
                 name="region"
                 value={selectedRegion}
@@ -1233,8 +1253,8 @@ function Index() {
               <CustomAutoComplete
                 list={listHandler(samajListByRegion)}
                 multiple={true}
-                label={"Samaj"}
-                placeholder={"Select Your Samaj"}
+                label={copy.samaj}
+                placeholder={copy.samajPh}
                 {...filterCols}
                 name="samaj"
                 value={selectedSamaj}
@@ -1248,16 +1268,13 @@ function Index() {
               <CustomAutoComplete
                 list={rolesList()}
                 multiple={true}
-                label={"Role"}
-                placeholder={"Select Your role"}
+                label={copy.role}
+                placeholder={copy.rolePh}
                 {...filterCols}
                 name="role"
                 value={selectedRole}
                 onChange={(e, role) => {
-                  if (
-                    role &&
-                    !selectedRole.some((item) => item.name === e.target.innerText)
-                  ) {
+                  if (role) {
                     setSelectedRole((pre) => getSelectedData(pre, role, e));
                   }
                 }}
@@ -1265,16 +1282,13 @@ function Index() {
               )}
               <CustomAutoComplete
                 list={requestFilterList}
-                label={"Search By"}
-                placeholder={"Select Your Search By"}
+                label={copy.searchBy}
+                placeholder={copy.searchByPh}
                 {...filterCols}
                 name="search"
                 value={selectedSearchBy.name}
                 onChange={(e, search) => {
-                  setSelectedSearchBy({
-                    name: search.label,
-                    id: search.value,
-                  });
+                  setSelectedSearchBy(searchByFromOption(search));
                 }}
               />
               <Grid

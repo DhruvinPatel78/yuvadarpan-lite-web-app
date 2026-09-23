@@ -13,7 +13,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import TuneIcon from "@mui/icons-material/Tune";
-import { formatYuvaDob, isRegularUser, toCamelCase } from "../../../util/util";
+import { formatYuvaDob, isRegularUser } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
@@ -43,6 +43,7 @@ import {
   getSelectedData,
   gotraOptionList,
   handleListById,
+  isAllOption,
   lastNameIdsForGotraFilter,
   listHandler,
   masterLabelOf,
@@ -56,6 +57,8 @@ import {
   maritalStatusList,
 } from "../../Admin/YuvaList/BulkAddYuva/formConfig";
 import { pickYuvaLangText, userLanguage } from "../../../util/bhasha";
+import { bilingualLabel, bilingualOptions } from "../../../i18n/yuvaForm";
+import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -73,16 +76,19 @@ const searchFieldSx = {
 const asFilterOptions = (values, labelFor) =>
   (Array.isArray(values) ? values : []).map((value) => {
     const label = labelFor ? labelFor(value) : value;
-    return { id: value, name: label, label, value };
+    const name =
+      label && typeof label === "object" && !Array.isArray(label)
+        ? label
+        : { en: String(label), gu: String(label) };
+    return { id: value, name, label: name.en, value };
   });
 
-const GENDER_OPTIONS = [
-  { id: "male", name: "Male", label: "Male", value: "male" },
-  { id: "female", name: "Female", label: "Female", value: "female" },
-];
-const BLOOD_GROUP_OPTIONS = asFilterOptions(bloodGroupList);
-const MARITAL_STATUS_OPTIONS = asFilterOptions(maritalStatusList, toCamelCase);
-const EDUCATION_OPTIONS = asFilterOptions(educationList);
+const GENDER_OPTIONS = bilingualOptions(["male", "female"]);
+const BLOOD_GROUP_OPTIONS = asFilterOptions(bloodGroupList, (value) =>
+  value === "NOT KNOWN" ? bilingualLabel("blood.NOT KNOWN") : value
+);
+const MARITAL_STATUS_OPTIONS = bilingualOptions(maritalStatusList, "marital");
+const EDUCATION_OPTIONS = bilingualOptions(educationList, "education");
 
 const emptyAppliedFilters = {
   gotra: [],
@@ -115,6 +121,7 @@ const sanitizeAgeInput = (raw) => {
 const Home = () => {
   const { surname, city, state, region, district, samaj, auth, gotra: gotraList, native: nativeList } = UseRedux();
   const language = userLanguage(auth?.user);
+  const copy = useFilterCopy();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const canShortlist = isRegularUser(auth?.user?.role);
@@ -312,7 +319,7 @@ const Home = () => {
 
   const loadMoreRef = useRef(null);
   const appliedFilterCount = [
-    (appliedFilters.gotra || []).some((item) => item?.name !== "All"),
+    (appliedFilters.gotra || []).some((item) => !isAllOption(item)),
     appliedFilters.lastNameIds.length,
     appliedFilters.stateIds.length,
     appliedFilters.regionIds.length,
@@ -440,8 +447,8 @@ const Home = () => {
       <CustomAutoComplete
         list={gotraOptions}
         multiple={true}
-        label={"Gotra"}
-        placeholder={"Select Your Gotra"}
+        label={copy.gotra}
+        placeholder={copy.gotraPh}
         {...fieldSize}
         name="gotra"
         value={selectedGotra}
@@ -455,8 +462,8 @@ const Home = () => {
       <CustomAutoComplete
         list={surnameFilterList}
         multiple={true}
-        label={"Surname"}
-        placeholder={"Select Your Surname"}
+        label={copy.surname}
+        placeholder={copy.surnamePh}
         {...fieldSize}
         name="surname"
         value={selectedSurname}
@@ -469,8 +476,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(state)}
         multiple={true}
-        label={"State"}
-        placeholder={"Select Your State"}
+        label={copy.state}
+        placeholder={copy.statePh}
         {...fieldSize}
         name="state"
         value={selectedState}
@@ -492,8 +499,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(regionListByState)}
         multiple={true}
-        label={"Region"}
-        placeholder={"Select Your Region"}
+        label={copy.region}
+        placeholder={copy.regionPh}
         {...fieldSize}
         name="region"
         value={selectedRegion}
@@ -516,8 +523,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(districtListByRegion)}
         multiple={true}
-        label={"District"}
-        placeholder={"Select Your District"}
+        label={copy.district}
+        placeholder={copy.districtPh}
         {...fieldSize}
         name="district"
         value={selectedDistrict}
@@ -527,7 +534,7 @@ const Home = () => {
             setCityListByDistrict(data);
             setSelectedDistrict((pre) => getSelectedData(pre, selected, e));
             const districtIds = selected
-              .filter((item) => item.name !== "All")
+              .filter((item) => !isAllOption(item))
               .map((item) => item.id);
             const matchingSamaj = districtIds.length
               ? samaj.filter((item) => districtIds.includes(item.district_id))
@@ -541,8 +548,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(cityListByDistrict)}
         multiple={true}
-        label={"City"}
-        placeholder={"Select Your City"}
+        label={copy.city}
+        placeholder={copy.cityPh}
         {...fieldSize}
         name="city"
         value={selectedCity}
@@ -550,7 +557,7 @@ const Home = () => {
           if (selected) {
             setSelectedCity((pre) => getSelectedData(pre, selected, e));
             const cityIds = selected
-              .filter((item) => item.name !== "All")
+              .filter((item) => !isAllOption(item))
               .map((item) => item.id);
             const matchingSamaj = cityIds.length
               ? samaj.filter((item) => cityIds.includes(item.city_id))
@@ -563,8 +570,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(samajListByParent)}
         multiple={true}
-        label={"Samaj"}
-        placeholder={"Select Your Samaj"}
+        label={copy.samaj}
+        placeholder={copy.samajPh}
         {...fieldSize}
         name="samaj"
         value={selectedSamaj}
@@ -577,8 +584,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(nativeList)}
         multiple={true}
-        label={"Native"}
-        placeholder={"Select Native"}
+        label={copy.native}
+        placeholder={copy.nativePh}
         {...fieldSize}
         name="native"
         value={selectedNative}
@@ -591,8 +598,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(GENDER_OPTIONS)}
         multiple={true}
-        label={"Gender"}
-        placeholder={"Select Gender"}
+        label={copy.gender}
+        placeholder={copy.genderPh}
         {...fieldSize}
         name="gender"
         value={selectedGender}
@@ -605,8 +612,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(BLOOD_GROUP_OPTIONS)}
         multiple={true}
-        label={"Blood group"}
-        placeholder={"Select Blood Group"}
+        label={copy.bloodGroup}
+        placeholder={copy.bloodGroupPh}
         {...fieldSize}
         name="bloodGroup"
         value={selectedBloodGroup}
@@ -619,8 +626,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(MARITAL_STATUS_OPTIONS)}
         multiple={true}
-        label={"Marital status"}
-        placeholder={"Select Marital Status"}
+        label={copy.maritalStatus}
+        placeholder={copy.maritalStatusPh}
         {...fieldSize}
         name="martialStatus"
         value={selectedMaritalStatus}
@@ -633,8 +640,8 @@ const Home = () => {
       <CustomAutoComplete
         list={listHandler(EDUCATION_OPTIONS)}
         multiple={true}
-        label={"Education"}
-        placeholder={"Select Education"}
+        label={copy.education}
+        placeholder={copy.educationPh}
         {...fieldSize}
         name="education"
         value={selectedEducation}
@@ -646,8 +653,8 @@ const Home = () => {
       />
       <CustomInput
         type="number"
-        label="Min age"
-        placeholder="From"
+        label={copy.minAge}
+        placeholder={copy.minAgePh}
         name="minAge"
         min={0}
         max={120}
@@ -662,8 +669,8 @@ const Home = () => {
       />
       <CustomInput
         type="number"
-        label="Max age"
-        placeholder="To"
+        label={copy.maxAge}
+        placeholder={copy.maxAgePh}
         name="maxAge"
         min={0}
         max={120}
@@ -688,7 +695,7 @@ const Home = () => {
         disabled={!showReset}
         className="max-md:w-full"
       >
-        Clear
+        {copy.clear}
       </Button>
       <Button
         type="button"
@@ -696,7 +703,7 @@ const Home = () => {
         className="max-md:w-full"
         icon={<FilterListIcon sx={{ fontSize: 18 }} />}
       >
-        Apply filters
+        {copy.applyFilters}
       </Button>
     </div>
   );
@@ -707,12 +714,12 @@ const Home = () => {
       <Container maxWidth="xl" className={"p-3 sm:p-4 pb-6"}>
         {canShortlist ? (
           <div className="flex items-center justify-between gap-3 mb-4">
-            <p className="text-lg font-WorkSemiBold text-primary">Yuva directory</p>
+            <p className="text-lg font-WorkSemiBold text-primary">{copy.yuvaDirectory}</p>
             <Button
               variant="secondary"
               onClick={() => navigate("/shortlisted")}
             >
-              Your Shortlisted
+              {copy.yourShortlisted}
             </Button>
           </div>
         ) : null}
@@ -720,7 +727,7 @@ const Home = () => {
           <div className="flex items-center gap-2 w-full min-w-0">
             <TextField
               className="flex-1 min-w-0"
-              placeholder="Search by name, father, mobile, family ID"
+              placeholder={copy.searchDirectory}
               value={keywordSearch}
               onChange={(event) => setKeywordSearch(event.target.value)}
               InputProps={{
@@ -804,9 +811,9 @@ const Home = () => {
         </div>
         {yuvaList.length === 0 ? (
           <p className="mt-12 text-center text-sm text-mutedText">
-            No yuva found.
+            {copy.noYuvaFound}
             <span className="block mt-1">
-              Try a different search or clear your filters.
+              {copy.tryDifferent}
             </span>
           </p>
         ) : hasMore ? (
