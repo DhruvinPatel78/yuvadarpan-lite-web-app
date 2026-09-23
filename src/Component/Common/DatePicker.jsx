@@ -29,6 +29,7 @@ const DatePicker = ({
   const parsedValue = value ? dayjs(value) : null;
   const pickerValue =
     parsedValue && parsedValue.isValid() ? parsedValue : null;
+  const showError = Boolean(errors) && !pickerValue;
 
   return (
     <Grid item xs={xs} sm={sm} md={md} lg={lg} xl={xl}>
@@ -47,21 +48,21 @@ const DatePicker = ({
               required,
               focused,
               placeholder,
-              error: Boolean(errors),
+              error: showError,
               onBlur,
               className: "w-full",
               sx: {
                 "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: errors ? "red !important" : "#d2c8c2 !important",
+                  borderColor: showError ? "red !important" : "#d2c8c2 !important",
                 },
               },
             },
           }}
         />
       </LocalizationProvider>
-      {errors && (
+      {showError ? (
         <div className={"text-error text-sm transition-all"}>{errors}</div>
-      )}
+      ) : null}
     </Grid>
   );
 };

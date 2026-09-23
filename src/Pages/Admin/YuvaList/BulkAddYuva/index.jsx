@@ -32,6 +32,7 @@ import {
   yuvaHasContent,
 } from "./formConfig";
 import { langText, masterNameText } from "../../../../util/bhasha";
+import { bilingualOptions } from "../../../../i18n/yuvaForm";
 
 const FormSection = ({ title, description, children }) => (
   <Card className="w-full">
@@ -861,7 +862,7 @@ const BulkAddYuva = () => {
                     }
                   />
                   <CustomSelect
-                    list={relationList}
+                    list={bilingualOptions(relationList, "relation")}
                     label="Relation"
                     placeholder="Enter Your Relation"
                     name="contactInfo.relation"

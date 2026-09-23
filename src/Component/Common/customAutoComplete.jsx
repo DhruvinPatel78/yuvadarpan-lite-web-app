@@ -81,6 +81,10 @@ export default function CustomAutoComplete({
     return masterNameText(option, language) || String(option.label || "");
   };
   const selected = multiple ? value || [] : resolveOption(list, value);
+  const hasValue = multiple
+    ? (Array.isArray(selected) ? selected.length > 0 : false)
+    : Boolean(selected);
+  const showError = Boolean(errors) && !hasValue;
 
   return (
     <Grid item {...rest}>
@@ -89,9 +93,9 @@ export default function CustomAutoComplete({
         disablePortal={disablePortal}
         autoHighlight={autoHighlight}
         autoComplete={autoComplete}
-        autoSelect={false}
+        autoSelect={!multiple}
         blurOnSelect={multiple ? false : "touch"}
-        clearOnBlur={false}
+        clearOnBlur={!multiple}
         openOnFocus={openOnFocus}
         onMouseDown={onMouseDown}
         {...(open !== undefined ? { open, onOpen, onClose } : { onOpen, onClose })}
@@ -149,14 +153,12 @@ export default function CustomAutoComplete({
             name={name}
             label={label}
             placeholder={placeholder}
-            error={Boolean(errors)}
+            error={showError}
             onBlur={onBlur}
             required={Boolean(required)}
             InputLabelProps={{
               ...params.InputLabelProps,
-              ...((multiple ? (value || []).length : value != null && value !== "")
-                ? { shrink: true }
-                : null),
+              ...(hasValue ? { shrink: true } : null),
             }}
             inputProps={{
               ...params.inputProps,
@@ -172,9 +174,9 @@ export default function CustomAutoComplete({
         disableClearable={multiple}
         limitTags={limitTags}
       />
-      {errors && (
+      {showError ? (
         <p className={"text-error text-sm transition-all"}>{errors}</p>
-      )}
+      ) : null}
     </Grid>
   );
 }

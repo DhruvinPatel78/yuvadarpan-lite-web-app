@@ -292,6 +292,37 @@ export const langText = (value, lang = "en") => {
 
 export const asDisplayText = langText;
 
+export const isFilledValue = (...parts) =>
+  parts.some((value) => {
+    if (value == null || value === false) {
+      return false;
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value);
+    }
+    if (typeof value === "object") {
+      if (Array.isArray(value)) {
+        return value.some((item) => isFilledValue(item));
+      }
+      if (typeof value.isValid === "function") {
+        return Boolean(value.isValid());
+      }
+      if (value instanceof Date) {
+        return !Number.isNaN(value.getTime());
+      }
+      return isFilledValue(
+        value.en,
+        value.gu,
+        value.id,
+        value.value,
+        value.uuid,
+        value._id,
+        value.name
+      );
+    }
+    return String(value).trim() !== "";
+  });
+
 export const pickLangValue = (en, gu, lang) => {
   if (en && typeof en === "object") {
     return langText(en, lang);
