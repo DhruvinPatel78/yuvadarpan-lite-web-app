@@ -3,7 +3,7 @@ import axios from "./useAxios";
 export const getPublicYuva = async (id) => {
   try {
     // const response = await axios.get(`/yuvaList/public/${id}`);
-    const response = await axios.get(`/yuvaList/${id}`);
+    const response = await axios.get(`/yuvaList/list/${id}`);
     return response.data;
   } catch (error) {
     throw error;
