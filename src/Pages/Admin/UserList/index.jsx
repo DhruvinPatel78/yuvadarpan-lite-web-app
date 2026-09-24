@@ -421,6 +421,7 @@ function Index() {
   const canAct = true;
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [listLoading, setListLoading] = useState(true);
   const [mobilePage, setMobilePage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -634,8 +635,11 @@ function Index() {
       const text = isRest ? {} : searchTextParams(selectedSearchBy, searchValue);
       if (append) {
         setLoadingMore(true);
-      } else if (isMobile) {
-        setMobilePage(1);
+      } else {
+        setListLoading(true);
+        if (isMobile) {
+          setMobilePage(1);
+        }
       }
       const lastNameIds = isRest
         ? []
@@ -703,6 +707,8 @@ function Index() {
       if (append) {
         setLoadingMore(false);
         loadingMoreLock.current = false;
+      } else {
+        setListLoading(false);
       }
     }
   };
@@ -1344,6 +1350,7 @@ function Index() {
             className={"mx-0 w-full"}
             page={page}
             setPage={setPage}
+            loading={listLoading}
             onDeleteSelected={canAct ? deleteAPI : undefined}
             deleteEntity="user"
           />

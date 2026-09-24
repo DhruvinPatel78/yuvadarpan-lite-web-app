@@ -90,6 +90,7 @@ const YuvaList = () => {
   const [value, setValue] = React.useState("1");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [listLoading, setListLoading] = useState(true);
   const [mobilePage, setMobilePage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -345,11 +346,11 @@ const YuvaList = () => {
             : {};
       if (append) {
         setLoadingMore(true);
-      } else if (isMobile) {
-        setMobilePage(1);
-      }
-      if (!append && !skipLoader) {
-        dispatch(startLoading());
+      } else {
+        setListLoading(true);
+        if (isMobile) {
+          setMobilePage(1);
+        }
       }
       const lastNameIds = isRest
         ? []
@@ -411,8 +412,8 @@ const YuvaList = () => {
       if (append) {
         setLoadingMore(false);
         loadingMoreLock.current = false;
-      } else if (!skipLoader) {
-        dispatch(endLoading());
+      } else {
+        setListLoading(false);
       }
     }
   };
@@ -682,6 +683,7 @@ const YuvaList = () => {
             setPage={setPage}
             page={page}
             setPageSize={setRowsPerPage}
+            loading={listLoading}
             checkboxSelection={canAct}
             onDeleteSelected={canAct ? deleteAPI : undefined}
             deleteEntity="yuva"
