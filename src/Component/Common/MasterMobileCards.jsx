@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Checkbox, TablePagination } from "@mui/material";
+import { Checkbox, CircularProgress, TablePagination } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CustomSwitch from "./CustomSwitch";
 import DeleteConfirmFlow from "./DeleteConfirmFlow";
@@ -29,6 +29,7 @@ const MasterMobileCards = ({
   showPagination = true,
   onDeleteSelected,
   deleteEntity,
+  loading = false,
 }) => {
   const { language } = useFormLanguage();
   const titleOf = getTitle || ((row) => masterNameText(row, language) || "-");
@@ -63,7 +64,11 @@ const MasterMobileCards = ({
           ) : null}
         </div>
       ) : null}
-      {rows.length ? (
+      {loading ? (
+        <Card className="flex items-center justify-center py-10">
+          <CircularProgress size={28} className="!text-primary" />
+        </Card>
+      ) : rows.length ? (
         rows.map((row) => {
           const id = row.id;
           const isSelected = selectedIds.includes(id);
@@ -157,17 +162,21 @@ const MasterMobileCards = ({
           <p className="text-sm text-mutedText mt-1">Nothing to show yet.</p>
         </Card>
       )}
-      {showPagination && rows.length ? (
+      {showPagination && (Number(total) > 0 || rows.length > 0) ? (
         <div className={"w-full bg-white rounded-xl overflow-x-auto"}>
           <TablePagination
             component="div"
-            count={total}
+            count={Number(total) || 0}
             page={page}
             onPageChange={(event, newPage) => setPage(newPage)}
             rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(event) =>
-              setRowsPerPage(parseInt(event.target.value, 10))
-            }
+            onRowsPerPageChange={(event) => {
+              setRowsPerPage(parseInt(event.target.value, 10) || 10);
+              if (page !== 0) {
+                setPage(0);
+              }
+            }}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             labelRowsPerPage=""
             sx={{
               width: "100%",

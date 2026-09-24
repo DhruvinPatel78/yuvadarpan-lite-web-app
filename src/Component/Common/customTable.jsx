@@ -64,6 +64,7 @@ function CustomTable({
   onDeleteSelected,
   bulkActions = [],
   deleteEntity,
+  loading = false,
 }) {
   const { language } = useFormLanguage();
   const [selectedIds, setSelectedIds] = useState([]);
@@ -77,10 +78,20 @@ function CustomTable({
     () => normalizeTableColumns(columns, language),
     [columns, language]
   );
-  const rowCount = data?.data?.length || 0;
+  const rows = Array.isArray(data?.data) ? data.data : [];
+  const totalFromApi = Number(data?.total);
+  const totalCount = Number.isFinite(totalFromApi)
+    ? Math.max(0, totalFromApi)
+    : 0;
+  const showLoading = Boolean(loading) || data == null;
+  const rowCount = rows.length;
   const gridHeight =
     GRID_HEADER_HEIGHT +
-    (rowCount ? rowCount * GRID_ROW_HEIGHT : EMPTY_GRID_BODY);
+    (rowCount
+      ? rowCount * GRID_ROW_HEIGHT
+      : showLoading
+        ? 160
+        : EMPTY_GRID_BODY);
   const tableMinWidth = useMemo(() => {
     const columnsWidth = normalizedColumns.reduce(
       (sum, col) => sum + (Number(col.minWidth) || 120),
@@ -88,13 +99,20 @@ function CustomTable({
     );
     return columnsWidth + (showCheckboxes ? 58 : 0);
   }, [normalizedColumns, showCheckboxes]);
+  const safePageSize = Number(pageSize) > 0 ? Number(pageSize) : 10;
+  const maxPage = Math.max(0, Math.ceil(totalCount / safePageSize) - 1);
+  const currentPage = Math.min(Math.max(0, Number(page) || 0), maxPage);
 
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+    setPage?.(newPage);
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setPageSize(parseInt(event.target.value, 10));
+    const nextSize = parseInt(event.target.value, 10) || 10;
+    setPageSize?.(nextSize);
+    if (currentPage !== 0) {
+      setPage?.(0);
+    }
   };
 
   const handleSelectionChange = (ids) => {
@@ -114,6 +132,12 @@ function CustomTable({
     onRowSelectionModelChange?.([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, pageSize]);
+
+  useEffect(() => {
+    if (page > maxPage) {
+      setPage?.(maxPage);
+    }
+  }, [maxPage, page, setPage]);
 
   return (
     <div className={"w-full min-w-0 bg-white rounded-xl border border-line overflow-hidden shadow-card"}>
@@ -166,18 +190,23 @@ function CustomTable({
       <div className="w-full min-w-0 overflow-x-auto" style={{ overflowAnchor: "none" }}>
       <DataGrid
         className={`${className} bg-white border-0 ${showToolbar ? "!rounded-t-none" : ""}`}
-        rows={data?.data || []}
+        rows={rows}
         columns={normalizedColumns}
+        loading={showLoading}
         hideFooter
         disableColumnFilter
         disableColumnMenu
         disableRowSelectionOnClick
         filterMode="server"
         sortingMode="client"
+        paginationMode="server"
+        rowCount={totalCount}
+        paginationModel={{ page: currentPage, pageSize: safePageSize }}
+        onPaginationModelChange={() => {}}
         checkboxSelection={showCheckboxes}
         rowSelectionModel={selectedIds}
         onRowSelectionModelChange={handleSelectionChange}
-        getRowId={(row) => row.id}
+        getRowId={(row) => row.id || row.uuid || row._id}
         rowHeight={GRID_ROW_HEIGHT}
         columnHeaderHeight={GRID_HEADER_HEIGHT}
         sx={{
@@ -292,11 +321,12 @@ function CustomTable({
         <div className={"w-full bg-white p-2 flex justify-end border-t border-line overflow-x-auto"}>
           <TablePagination
             component="div"
-            count={data ? Math.ceil(data?.total) : 0}
-            page={page}
+            count={totalCount}
+            page={currentPage}
             onPageChange={handleChangePage}
-            rowsPerPage={pageSize}
+            rowsPerPage={safePageSize}
             onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[10, 25, 50, 100]}
           />
         </div>
       ) : null}
