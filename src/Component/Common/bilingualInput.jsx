@@ -43,6 +43,7 @@ function GujaratiImeField({
 export default function BilingualInput({
   enName,
   standalone = false,
+  plainGujarati = false,
   enValue: enValueProp,
   guValue: guValueProp,
   onValuesChange,
@@ -80,7 +81,8 @@ export default function BilingualInput({
     const hasEn = Boolean(String(enValue || "").trim());
     guFieldKind.current = {
       language,
-      plain: isGu && hasGu && (!hasEn || keepSavedGu),
+      // Address-like fields skip IME so digits/hyphens stay Latin (same as edit with saved Gu).
+      plain: Boolean(plainGujarati) || (isGu && hasGu && (!hasEn || keepSavedGu)),
     };
   }
 
