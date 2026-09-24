@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { FormikContext } from "formik";
-import { useDirectInputTransliteration } from "@bhashaime/core";
 import CustomInput from "./customInput";
 import { transliterateToGujarati } from "../../util/bhasha";
 import { useFormLanguage } from "../../context/FormLanguageContext";
@@ -17,33 +16,16 @@ const toGuName = (enName) => {
   return [...parts, `${last}Gu`].join(".");
 };
 
-function GujaratiImeField({
-  inputRef,
-  initialRawValue,
-  onTransliterate,
-  ...inputProps
-}) {
-  const frozenRaw = useRef(initialRawValue || "").current;
-  const onTransliterateRef = useRef(onTransliterate);
-  onTransliterateRef.current = onTransliterate;
-  const stableOnTransliterate = useCallback((raw, transliterated) => {
-    onTransliterateRef.current?.(raw, transliterated);
-  }, []);
-
-  useDirectInputTransliteration({
-    ref: inputRef,
-    language: "gujarati",
-    initialRawValue: frozenRaw,
-    onTransliterate: stableOnTransliterate,
-  });
-
-  return <CustomInput {...inputProps} inputRef={inputRef} />;
-}
+const asText = (value) => {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return String(value.en || value.gu || "");
+  }
+  return value == null ? "" : String(value);
+};
 
 export default function BilingualInput({
   enName,
   standalone = false,
-  plainGujarati = false,
   enValue: enValueProp,
   guValue: guValueProp,
   onValuesChange,
@@ -52,7 +34,6 @@ export default function BilingualInput({
 }) {
   const { language } = useFormLanguage();
   const formik = React.useContext(FormikContext);
-  const inputRef = useRef(null);
   const isGu = language === FORM_LANG.GU;
   const guName = toGuName(enName);
   const useStandalone = standalone || !formik;
@@ -63,28 +44,28 @@ export default function BilingualInput({
   const guValueRaw = useStandalone
     ? guValueProp || ""
     : getByPath(formik?.values, guName) || "";
-  const asText = (value) => {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      return String(value.en || value.gu || "");
-    }
-    return value || "";
-  };
   const enValue = asText(enValueRaw);
   const guValue = asText(guValueRaw);
-  const autoGu = String(enValue || "").trim()
-    ? transliterateToGujarati(enValue)
-    : "";
-  const keepSavedGu = Boolean(String(guValue || "").trim()) && guValue !== autoGu;
-  const guFieldKind = useRef({ language: "", plain: false });
-  if (guFieldKind.current.language !== language) {
-    const hasGu = Boolean(String(guValue || "").trim());
-    const hasEn = Boolean(String(enValue || "").trim());
-    guFieldKind.current = {
-      language,
-      // Address-like fields skip IME so digits/hyphens stay Latin (same as edit with saved Gu).
-      plain: Boolean(plainGujarati) || (isGu && hasGu && (!hasEn || keepSavedGu)),
-    };
-  }
+
+  // Gu produced from the last English change. If current Gu still matches this,
+  // later English edits may refresh Gu. Manual Gu edits clear this link.
+  const lastAutoGuRef = useRef("");
+  const guLinkedToEnRef = useRef(true);
+  const bootstrappedRef = useRef(false);
+
+  useEffect(() => {
+    if (bootstrappedRef.current) {
+      return;
+    }
+    bootstrappedRef.current = true;
+    const auto = String(enValue || "").trim()
+      ? transliterateToGujarati(enValue)
+      : "";
+    lastAutoGuRef.current = auto;
+    // Existing Gu that differs from English transliteration was typed/saved by user.
+    guLinkedToEnRef.current =
+      !String(guValue || "").trim() || guValue === auto;
+  }, [enValue, guValue]);
 
   const persist = (en, gu) => {
     if (en === enValue && gu === guValue) {
@@ -98,19 +79,46 @@ export default function BilingualInput({
     formik.setFieldValue(guName, gu);
   };
 
-  useEffect(() => {
-    if (!isGu && String(enValue || "").trim() && !String(guValue || "").trim()) {
-      persist(enValue, transliterateToGujarati(enValue));
+  const handleEnglishChange = (event) => {
+    const next = event.target.value;
+    if (guLinkedToEnRef.current) {
+      const nextGu = String(next || "").trim()
+        ? transliterateToGujarati(next)
+        : "";
+      lastAutoGuRef.current = nextGu;
+      persist(next, nextGu);
+      return;
     }
+    persist(next, guValue);
+  };
+
+  const handleGujaratiChange = (event) => {
+    const nextGu = event.target.value;
+    guLinkedToEnRef.current = false;
+    lastAutoGuRef.current = "";
+    persist(enValue, nextGu);
+  };
+
+  // When switching to English with Gu still empty and still linked, fill Gu once.
+  useEffect(() => {
+    if (isGu) {
+      return;
+    }
+    if (!guLinkedToEnRef.current) {
+      return;
+    }
+    if (!String(enValue || "").trim() || String(guValue || "").trim()) {
+      return;
+    }
+    const nextGu = transliterateToGujarati(enValue);
+    lastAutoGuRef.current = nextGu;
+    persist(enValue, nextGu);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGu]);
 
-  const handleEnglishChange = (event) => {
-    const next = event.target.value;
-    persist(next, keepSavedGu ? guValue : transliterateToGujarati(next));
-  };
-
-  const filled = Boolean(String(enValue || "").trim() || String(guValue || "").trim());
+  const filled = Boolean(
+    String(enValue || "").trim() || String(guValue || "").trim()
+  );
   const common = {
     ...inputProps,
     name: enName,
@@ -119,36 +127,12 @@ export default function BilingualInput({
   };
 
   if (isGu) {
-    if (guFieldKind.current.plain) {
-      return (
-        <CustomInput
-          key={`${enName}-gu-saved`}
-          {...common}
-          value={guValue}
-          onChange={(event) => {
-            persist(enValue, event.target.value);
-          }}
-        />
-      );
-    }
     return (
-      <GujaratiImeField
+      <CustomInput
         key={`${enName}-gu`}
-        inputRef={inputRef}
-        initialRawValue={enValue}
-        onTransliterate={(raw, transliterated) => {
-          if (!raw && !transliterated && (enValue || guValue)) {
-            return;
-          }
-          persist(
-            String(enValue || "").trim() ? enValue : String(raw || "").trim(),
-            transliterated || guValue
-          );
-        }}
         {...common}
-        uncontrolled
         value={guValue}
-        onChange={() => {}}
+        onChange={handleGujaratiChange}
       />
     );
   }
