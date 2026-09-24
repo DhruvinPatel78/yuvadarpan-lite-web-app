@@ -4,7 +4,7 @@ import {
   CircularProgress,
   Grid,
 } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import CustomInput from "../../../../Component/Common/customInput";
 import CustomAutoComplete from "../../../../Component/Common/customAutoComplete";
 import CustomRadio from "../../../../Component/Common/customRadio";
@@ -32,6 +32,7 @@ import {
 } from "../../../../util/util";
 import dayjs from "dayjs";
 import LoadableImage from "../../../../Component/Common/LoadableImage";
+import PhotoCropModal from "../../../../Component/Common/PhotoCropModal";
 import BilingualInput from "../../../../Component/Common/bilingualInput";
 import LanguageSwitcher from "../../../../Component/LanguageSwitcher";
 import {
@@ -41,6 +42,7 @@ import {
 import { labeledOptions } from "../../../../i18n/yuvaForm";
 import { flattenYuvaForm, masterNameText, toEnGuPayload, langText, isFilledValue } from "../../../../util/bhasha";
 import { pickMasterId } from "../../../../Component/constant";
+import { readFileAsDataUrl } from "../../../../util/cropImage";
 
 const slugPart = (value) =>
   langText(value)
@@ -155,6 +157,11 @@ const AddYuva = () => {
   const [createdYuva, setCreatedYuva] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
+  const [cropSrc, setCropSrc] = useState("");
+  const [cropMode, setCropMode] = useState(null);
+  const [cropFileName, setCropFileName] = useState("yuva_photo.jpg");
+  const photoInputRef = useRef(null);
+  const createdPhotoInputRef = useRef(null);
   const [newFieldList, setNewFieldList] = useState([]);
   const [lastNameList, setLastNameList] = useState(surname);
   const [selectedLastName, setSelectedLastName] = useState(null);
@@ -633,6 +640,32 @@ const AddYuva = () => {
     submitCount,
   } = formik;
 
+  const closeCropModal = () => {
+    setCropSrc("");
+    setCropMode(null);
+    setCropFileName("yuva_photo.jpg");
+    if (photoInputRef.current) {
+      photoInputRef.current.value = "";
+    }
+    if (createdPhotoInputRef.current) {
+      createdPhotoInputRef.current.value = "";
+    }
+  };
+
+  const openPhotoCrop = async (file, mode) => {
+    if (!file) {
+      return;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setCropFileName(file.name || "yuva_photo.jpg");
+      setCropMode(mode);
+      setCropSrc(dataUrl);
+    } catch (e) {
+      console.log("photo read failed", e);
+    }
+  };
+
   const imageUploadHandler = (file) => {
     dispatch(startLoading());
     const formData = new FormData();
@@ -668,6 +701,18 @@ const AddYuva = () => {
     }
     setSelectedPhoto(file);
     setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleCropConfirm = async (file) => {
+    const mode = cropMode;
+    closeCropModal();
+    if (mode === "edit") {
+      imageUploadHandler(file);
+      return;
+    }
+    if (mode === "created") {
+      handleCreatedPhotoSelect(file);
+    }
   };
 
   const uploadCreatedYuvaPhoto = async () => {
@@ -956,6 +1001,7 @@ const AddYuva = () => {
                       </label>
                     </div>
                     <input
+                      ref={photoInputRef}
                       type="file"
                       id="upload-button"
                       style={{ display: "none" }}
@@ -964,7 +1010,7 @@ const AddYuva = () => {
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
-                          imageUploadHandler(file);
+                          openPhotoCrop(file, "edit");
                         }
                         setFieldTouched("profileName", true);
                       }}
@@ -1279,6 +1325,7 @@ const AddYuva = () => {
                     label={t("address")}
                     placeholder={t("addressPh")}
                     enName={"address"}
+                    plainGujarati
                     multiline={true}
                     xs={12}
                     sm={6}
@@ -1293,6 +1340,7 @@ const AddYuva = () => {
                     label={t("firmAddress")}
                     placeholder={t("firmAddressPh")}
                     enName={"firmAddress"}
+                    plainGujarati
                     multiline={true}
                     xs={12}
                     sm={6}
@@ -1863,6 +1911,7 @@ const AddYuva = () => {
             )}
           </label>
           <input
+            ref={createdPhotoInputRef}
             type="file"
             id="created-yuva-upload"
             style={{ display: "none" }}
@@ -1870,7 +1919,7 @@ const AddYuva = () => {
             onChange={(e) => {
               const file = e.target.files[0];
               if (file) {
-                handleCreatedPhotoSelect(file);
+                openPhotoCrop(file, "created");
               }
             }}
           />
@@ -1895,6 +1944,18 @@ const AddYuva = () => {
             </ActionButton>
           </div>
       </FormModal>
+      <PhotoCropModal
+        open={Boolean(cropSrc)}
+        imageSrc={cropSrc}
+        fileName={cropFileName}
+        title={t("cropPhoto")}
+        hint={t("cropHint")}
+        cancelLabel={t("cancel")}
+        confirmLabel={t("usePhoto")}
+        zoomLabel={t("zoom")}
+        onCancel={closeCropModal}
+        onConfirm={handleCropConfirm}
+      />
     </Box>
   );
 };
