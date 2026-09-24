@@ -1325,7 +1325,6 @@ const AddYuva = () => {
                     label={t("address")}
                     placeholder={t("addressPh")}
                     enName={"address"}
-                    plainGujarati
                     multiline={true}
                     xs={12}
                     sm={6}
@@ -1340,7 +1339,6 @@ const AddYuva = () => {
                     label={t("firmAddress")}
                     placeholder={t("firmAddressPh")}
                     enName={"firmAddress"}
-                    plainGujarati
                     multiline={true}
                     xs={12}
                     sm={6}
