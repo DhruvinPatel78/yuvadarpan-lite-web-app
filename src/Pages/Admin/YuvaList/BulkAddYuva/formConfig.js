@@ -87,7 +87,7 @@ export const relationList = [
   "Father",
   "Mother",
   "ElderUncle",
-  "ElderAunty"
+  "ElderAunty",
   "Uncle",
   "Aunty",
   "Brother",
