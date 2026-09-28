@@ -292,6 +292,87 @@ export const langText = (value, lang = "en") => {
 
 export const asDisplayText = langText;
 
+/** Resolve gender / marital / activity codes (and lang pairs) to a display label. */
+export const choiceLabel = (value, prefix, lang = "en") => {
+  const text = asInputText(value);
+  if (!text) return "";
+  const lower = text.toLowerCase();
+  const tryKey = (code) => {
+    if (!code) return "";
+    if (prefix) {
+      const keyed = tForm(lang, `${prefix}.${code}`);
+      if (keyed !== `${prefix}.${code}`) return keyed;
+    }
+    const plain = tForm(lang, code);
+    return plain !== code ? plain : "";
+  };
+  const direct = tryKey(lower);
+  if (direct) return direct;
+
+  // Reverse-match display labels (e.g. "Engaged" / "વગ્દાન") back to a code.
+  if (prefix) {
+    const known = {
+      marital: [
+        "single",
+        "engaged",
+        "married",
+        "divorce",
+        "seprated",
+        "widow",
+        "widower",
+      ],
+      activity: [
+        "abroad",
+        "business",
+        "child",
+        "farming",
+        "house hold",
+        "house wife",
+        "job seeker",
+        "job/service",
+        "retired",
+        "self employed",
+        "study",
+      ],
+      relation: [
+        "Grandfather",
+        "Grandmother",
+        "Father",
+        "Mother",
+        "ElderUncle",
+        "ElderAunty",
+        "Uncle",
+        "Aunty",
+        "Brother",
+        "Sister",
+        "Fai",
+        "Fuva",
+        "Mama",
+        "Mami",
+        "Masa",
+        "Masi",
+        "Guardian",
+      ],
+    }[prefix];
+    if (known) {
+      for (const code of known) {
+        const en = tForm("en", `${prefix}.${code}`);
+        const gu = tForm("gu", `${prefix}.${code}`);
+        if (
+          en.toLowerCase() === lower ||
+          gu === text ||
+          gu.toLowerCase() === lower
+        ) {
+          const labeled = tryKey(code);
+          if (labeled) return labeled;
+        }
+      }
+    }
+  }
+
+  return langText(value, lang) || text;
+};
+
 export const isFilledValue = (...parts) =>
   parts.some((value) => {
     if (value == null || value === false) {
