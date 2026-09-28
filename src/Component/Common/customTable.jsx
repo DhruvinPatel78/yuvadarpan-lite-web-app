@@ -256,6 +256,7 @@ function CustomTable({
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
+            textAlign: "center",
             borderColor: "#e4ddd4",
             overflow: "hidden",
             minWidth: 0,
@@ -277,6 +278,10 @@ function CustomTable({
             whiteSpace: "nowrap",
             minWidth: 0,
             width: "100%",
+            textAlign: "center",
+          },
+          "& .MuiDataGrid-cell.align-left .MuiDataGrid-cellContent": {
+            textAlign: "left",
           },
           "& .MuiDataGrid-columnHeaderCheckbox": {
             "& .MuiDataGrid-columnHeaderTitleContainer": {
