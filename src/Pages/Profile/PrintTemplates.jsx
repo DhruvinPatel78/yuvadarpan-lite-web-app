@@ -257,6 +257,9 @@ const TemplateTwo = ({ model }) => {
   const contact = model.contact.filter((field) =>
     ["phone", "address"].includes(field.key)
   );
+  const personalWithoutName = (model.personal || []).filter(
+    (field) => field.key !== "firstName"
+  );
 
   return (
   <div className="yuva-print-sheet yuva-print-template-2 hidden">
@@ -266,20 +269,37 @@ const TemplateTwo = ({ model }) => {
       <div className="yuva-biodata-corner bl" />
       <div className="yuva-biodata-corner br" />
       <h1 className="yuva-biodata-title">{titles.biodata}</h1>
-      <div className="yuva-biodata-body">
-        <div className="yuva-biodata-left">
-          <img
-            src={model.photo}
-            alt={model.fullName || titles.biodata}
-            className="yuva-biodata-photo"
-          />
+      <div className="yuva-biodata-intro">
+        <img
+          src={model.photo}
+          alt={model.fullName || titles.biodata}
+          className="yuva-biodata-photo"
+        />
+        <div className="yuva-biodata-intro-main">
           {model.fullName ? (
             <h2 className="yuva-biodata-name">{model.fullName}</h2>
           ) : null}
+          <div className="yuva-biodata-intro-meta">
+            {(model.personal || [])
+              .filter((field) =>
+                ["dob", "gender", "martialStatus", "height", "weight", "bloodGroup"].includes(
+                  field.key
+                )
+              )
+              .map((field) => (
+                <span key={field.key} className="yuva-biodata-chip">
+                  <em>{field.label}</em> {asDisplayText(field.value)}
+                </span>
+              ))}
+          </div>
+        </div>
+      </div>
+      <div className="yuva-biodata-body">
+        <div className="yuva-biodata-left">
           <BiodataSection
             title={titles.personalInfo}
             caps
-            fields={model.personal}
+            fields={personalWithoutName}
           />
           <BiodataSection title={titles.contactDetails} caps fields={contact} />
         </div>

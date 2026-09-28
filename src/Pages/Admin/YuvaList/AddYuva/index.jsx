@@ -912,8 +912,6 @@ const AddYuva = () => {
     "Grandmother",
     "Father",
     "Mother",
-    "ElderUncle",
-    "ElderAunty",
     "Uncle",
     "Aunty",
     "Brother",
