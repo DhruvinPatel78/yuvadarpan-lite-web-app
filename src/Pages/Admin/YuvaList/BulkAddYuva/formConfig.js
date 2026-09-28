@@ -269,10 +269,11 @@ export const bulkAddValidationSchema = Yup.object({
   grandFatherName: Yup.string().required("Grand Father Name Is Required"),
   lastName: Yup.string().required("Last Name Is Required"),
   motherName: Yup.string().required("Mother Name Is Required"),
-  familyId: Yup.number()
-    .typeError("Must be a Number")
-    .positive()
-    .required("Family ID IsRequired"),
+  familyId: Yup.mixed().test(
+    "familyId",
+    "Family ID Is Required",
+    (value) => String(value ?? "").trim() !== ""
+  ),
   native: Yup.string().required("Native Is Required"),
   firm: Yup.string().required("Firm Is Required"),
   country: Yup.string().required("Country Is Required"),

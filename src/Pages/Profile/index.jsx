@@ -35,7 +35,7 @@ import {
 } from "../../util/getAPICall";
 import { getPublicYuva, getYuvaById } from "../../util/yuvaAdminApi";
 import { canEditYuvaRecord, isRegularUser } from "../../util/util";
-import { asDisplayText, langText, pickOtherMap, pickYuvaLangText, userLanguage } from "../../util/bhasha";
+import { asDisplayText, choiceLabel, pickOtherMap, pickYuvaLangText, userLanguage } from "../../util/bhasha";
 import { tForm } from "../../i18n/yuvaForm";
 import { endLoading, startLoading } from "../../store/authSlice";
 import {
@@ -237,17 +237,10 @@ const ProfilePage = () => {
   const labelLang = isPublicView ? "gu" : "en";
   const tLabel = (key) => tForm(labelLang, key);
   const choiceText = (value, prefix) => {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      return langText(value, language);
-    }
+    const labeled = choiceLabel(value, prefix, language);
+    if (labeled) return labeled;
     const code = String(value || "").trim();
-    if (!code) return "";
-    if (prefix) {
-      const keyed = tForm(language, `${prefix}.${code}`);
-      if (keyed !== `${prefix}.${code}`) return keyed;
-    }
-    const plain = tForm(language, code.toLowerCase());
-    return plain !== code.toLowerCase() ? plain : titleCase(code);
+    return code ? titleCase(code) : "";
   };
   const { notification, setNotification } = NotificationData();
   const dispatch = useDispatch();
@@ -340,7 +333,6 @@ const ProfilePage = () => {
   ]
     .filter((item) => item && item !== "-")
     .join(", ");
-  const activityLabel = pick("activity");
   const personalFields = [
     { label: tLabel("firstName"), value: pick("firstName") },
     { label: tLabel("fatherName"), value: pick("fatherName") },
@@ -351,7 +343,7 @@ const ProfilePage = () => {
     },
     { label: tLabel("motherName"), value: pick("motherName") },
     { label: tLabel("familyId"), value: data?.familyId },
-    { label: tLabel("gender"), value: pick("gender") },
+    { label: tLabel("gender"), value: choiceText(data?.gender) },
     {
       label: tLabel("dob"),
       value: data?.dob ? moment(data.dob).format("DD/MM/YYYY hh:mm A") : "-",
@@ -362,10 +354,13 @@ const ProfilePage = () => {
       value: pickMaster(nativeList, data?.native, labels.native),
     },
     { label: tLabel("yskNo"), value: data?.YSKno },
-    { label: tLabel("maritalStatus"), value: pick("martialStatus") },
+    {
+      label: tLabel("maritalStatus"),
+      value: choiceText(data?.martialStatus, "marital"),
+    },
     { label: tLabel("height"), value: data?.height },
     { label: tLabel("weight"), value: data?.weight },
-    { label: tLabel("activity"), value: activityLabel },
+    { label: tLabel("activity"), value: choiceText(data?.activity, "activity") },
     { label: tLabel("firm"), value: pick("firm") },
     {
       label: tLabel("country"),
@@ -651,9 +646,9 @@ const ProfilePage = () => {
                   <h1 className="mt-3 text-lg sm:text-xl font-semibold text-primary text-center leading-snug break-words px-1">
                     {fullName || "-"}
                   </h1>
-                  {activityLabel !== "-" ? (
+                  {choiceText(data?.activity, "activity") ? (
                     <p className="mt-1 text-sm text-mutedText text-center">
-                      {activityLabel}
+                      {choiceText(data?.activity, "activity")}
                     </p>
                   ) : null}
                   <div className="w-full mt-4 pt-4 border-t border-line flex flex-col gap-3">

@@ -6,12 +6,14 @@ import { useLocation, useParams } from "react-router-dom";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import { Card, PageHeader } from "../../../Component/UI";
-import LoadableImage from "../../../Component/Common/LoadableImage";
 import { getUserInfo } from "../../../util/userApi";
-import { languageLabel } from "../../../util/bhasha";
+import { languageLabel, masterNameText } from "../../../util/bhasha";
 import {
   getAllCountryData,
+  getAllStateData,
   getAllRegionData,
+  getAllDistrictData,
+  getAllCityData,
   getAllSamajData,
   getAllSurnameData,
 } from "../../../util/getAPICall";
@@ -28,13 +30,18 @@ function DetailItem({ label, value }) {
   );
 }
 
-const lookupName = (list, id) =>
-  list?.find(
+const lookupName = (list, id) => {
+  if (id == null || id === "") return "-";
+  const key = String(id);
+  const found = (list || []).find(
     (item) =>
-      String(item?.id) === String(id) ||
-      String(item?._id) === String(id) ||
-      String(item?.value) === String(id),
-  )?.name || id || "-";
+      String(item?.id) === key ||
+      String(item?._id) === key ||
+      String(item?.value) === key ||
+      String(item?.uuid) === key
+  );
+  return masterNameText(found) || "-";
+};
 
 const formatRole = (role) =>
   String(role || "-")
@@ -55,13 +62,16 @@ export default function UserDetails() {
   const snapshot = location.state && !location.state.backTo ? location.state : null;
   const [user, setUser] = useState(snapshot || null);
   const [missing, setMissing] = useState(false);
-  const { surname, region, samaj, country } = UseRedux();
+  const { surname, region, samaj, country, state, district, city } = UseRedux();
 
   useEffect(() => {
     dispatch(getAllSurnameData);
-    dispatch(getAllRegionData);
-    dispatch(getAllSamajData);
     dispatch(getAllCountryData);
+    dispatch(getAllStateData);
+    dispatch(getAllRegionData);
+    dispatch(getAllDistrictData);
+    dispatch(getAllCityData);
+    dispatch(getAllSamajData);
   }, [dispatch]);
 
   useEffect(() => {
@@ -88,22 +98,15 @@ export default function UserDetails() {
           </Card>
         ) : (
           <Card className="w-full">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-              <LoadableImage
-                src=""
-                alt=""
-                className="w-24 h-24 rounded-full pointer-events-none"
-              />
-              <div className="text-center sm:text-left min-w-0">
-                <h2 className="text-lg font-semibold text-primary leading-snug break-words">
-                  {[user?.firstName, user?.middleName].filter(Boolean).join(" ")}{" "}
-                  {lookupName(surname, user?.lastName)}
-                </h2>
-                <p className="text-sm text-mutedText mt-1">{formatRole(user?.role)}</p>
-                <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
-                  Family ID {user?.familyId || "-"}
-                </span>
-              </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-primary leading-snug break-words">
+                {[user?.firstName, user?.middleName].filter(Boolean).join(" ")}{" "}
+                {lookupName(surname, user?.lastName)}
+              </h2>
+              <p className="text-sm text-mutedText mt-1">{formatRole(user?.role)}</p>
+              <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
+                Family ID {user?.familyId || "-"}
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mt-6 pt-5 border-t border-line">
               <DetailItem
@@ -118,9 +121,12 @@ export default function UserDetails() {
               <DetailItem label="Mobile" value={user?.mobile} />
               <DetailItem label="Gender" value={user?.gender} />
               <DetailItem label="Language" value={languageLabel(user?.language)} />
-              <DetailItem label="Region" value={lookupName(region, user?.region)} />
-              <DetailItem label="Local samaj" value={lookupName(samaj, user?.localSamaj)} />
               <DetailItem label="Country" value={lookupName(country, user?.country)} />
+              <DetailItem label="State" value={lookupName(state, user?.state)} />
+              <DetailItem label="Region" value={lookupName(region, user?.region)} />
+              <DetailItem label="District" value={lookupName(district, user?.district)} />
+              <DetailItem label="City" value={lookupName(city, user?.city)} />
+              <DetailItem label="Local samaj" value={lookupName(samaj, user?.localSamaj)} />
               <DetailItem label="Allowed" value={user?.allowed ? "Yes" : "No"} />
               <DetailItem label="Active" value={user?.active ? "Yes" : "No"} />
               <DetailItem label="Created at" value={formatUserDate(user?.createdAt)} />

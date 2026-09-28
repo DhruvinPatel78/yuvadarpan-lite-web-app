@@ -6,7 +6,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
 import { formatYuvaDob, isRegularUser } from "../../../util/util";
-import { pickYuvaLangText, userLanguage } from "../../../util/bhasha";
+import { choiceLabel, pickYuvaLangText, userLanguage } from "../../../util/bhasha";
 import { masterLabelOf } from "../../../Component/constant";
 import {
   getShortlistedYuvas,
@@ -135,6 +135,7 @@ const Shortlisted = () => {
               mother={pickYuvaLangText(data, "motherName", language)}
               firm={pickYuvaLangText(data, "firm", language)}
               surname={masterLabelOf(surname, data?.lastName, language)}
+              maritalStatus={choiceLabel(data?.martialStatus, "marital", language)}
               shortlisted
               onToggleShortlist={() => handleRemove(data)}
               onClick={() =>

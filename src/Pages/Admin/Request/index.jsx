@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Checkbox, CircularProgress, Grid, Paper, Tooltip, useMediaQuery } from "@mui/material";
-import { Button as ActionButton, FilterActions, FormModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
+import { Button as ActionButton, FilterActions, AppModal, MasterFilterBar, PageHeader } from "../../../Component/UI";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import PlaylistRemoveIcon from "@mui/icons-material/PlaylistRemove";
 import CustomTable from "../../../Component/Common/customTable";
 import Header from "../../../Component/Header";
-import CustomTextFieldInfo from "../../../Component/Common/customTextFieldInfo";
 import {
   NotificationData,
   NotificationSnackbar,
@@ -38,15 +37,48 @@ import {
   approveRejectUser,
   approveRejectMany,
 } from "../../../util/requestApi";
-import { getAllGotraData } from "../../../util/getAPICall";
-import { langText, masterNameText } from "../../../util/bhasha";
+import {
+  getAllGotraData,
+  getAllCountryData,
+  getAllStateData,
+  getAllRegionData,
+  getAllDistrictData,
+  getAllCityData,
+  getAllSamajData,
+  getAllSurnameData,
+} from "../../../util/getAPICall";
+import { langText, languageLabel, masterNameText } from "../../../util/bhasha";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
+import moment from "moment";
 
 const MOBILE_PAGE_SIZE = 20;
 
+function RequestDetailItem({ label, value }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-mutedText">
+        {label}
+      </p>
+      <p className="text-sm text-primary mt-0.5 break-words">{value || "-"}</p>
+    </div>
+  );
+}
+
+const formatRole = (role) =>
+  String(role || "-")
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const formatUserDate = (value) => {
+  if (!value) return "-";
+  const parsed = moment(value);
+  return parsed.isValid() ? parsed.format("DD/MM/YYYY hh:mm A") : String(value);
+};
+
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { samaj, region, state, surname, auth, gotra: gotraList } = UseRedux();
+  const { samaj, region, state, surname, country, district, city, auth, gotra: gotraList } = UseRedux();
   const copy = useFilterCopy();
   const isSamajManager = String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager = String(auth?.user?.role || "").toUpperCase() === "CITY_MANAGER";
@@ -201,6 +233,13 @@ export default function Index() {
 
   useEffect(() => {
     dispatch(getAllGotraData);
+    dispatch(getAllSurnameData);
+    dispatch(getAllCountryData);
+    dispatch(getAllStateData);
+    dispatch(getAllRegionData);
+    dispatch(getAllDistrictData);
+    dispatch(getAllCityData);
+    dispatch(getAllSamajData);
   }, [dispatch]);
 
   const loadMoreRequests = () => {
@@ -682,55 +721,83 @@ export default function Index() {
           ) : null}
         </div>
       </ContainerPage>
-      <FormModal
+      <AppModal
         open={requestInfoModel}
         onClose={requestInfoModalClose}
-        title="View Detail"
-        maxWidth="720px"
+        maxWidth="560px"
+        className="p-4 sm:p-6 pt-7 max-h-[min(90dvh,90vh)] overflow-auto"
       >
-          <Grid container spacing={2}>
-            <CustomTextFieldInfo
-              grid={12}
-              label={"Family Id"}
-              value={selectedUser?.familyId}
-            />
-            <CustomTextFieldInfo
-              grid={4}
-              label={"First Name"}
-              value={selectedUser?.firstName}
-            />
-            <CustomTextFieldInfo
-              grid={4}
-              label={"Middle Name"}
-              value={selectedUser?.middleName}
-            />
-            <CustomTextFieldInfo
-              grid={4}
-              label={"Last Name"}
-              value={lookupName(surname, selectedUser?.lastName)}
-            />
-            <CustomTextFieldInfo
-              grid={6}
-              label={"E-mail"}
-              value={selectedUser?.email}
-            />
-            <CustomTextFieldInfo
-              grid={6}
-              label={"Mobile"}
-              value={selectedUser?.mobile}
-            />
-            <CustomTextFieldInfo
-              grid={6}
-              label={"Region"}
-              value={lookupName(region, selectedUser?.region)}
-            />
-            <CustomTextFieldInfo
-              grid={6}
-              label={"Local Samaj"}
-              value={lookupName(samaj, selectedUser?.localSamaj)}
-            />
-          </Grid>
-      </FormModal>
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={requestInfoModalClose}
+          className="absolute top-3 right-3 text-primary p-2 rounded-md hover:bg-muted min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:p-1 md:top-4 md:right-4 flex items-center justify-center"
+        >
+          <CloseIcon fontSize="small" />
+        </button>
+        <div className="pr-8 min-w-0">
+          <h2 className="text-lg font-semibold text-primary leading-snug break-words">
+            {[selectedUser?.firstName, selectedUser?.middleName]
+              .filter(Boolean)
+              .join(" ")}{" "}
+            {lookupName(surname, selectedUser?.lastName)}
+          </h2>
+          <p className="text-sm text-mutedText mt-1">
+            {formatRole(selectedUser?.role || "USER")}
+          </p>
+          <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
+            Family ID {selectedUser?.familyId || "-"}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mt-6 pt-5 border-t border-line">
+          <RequestDetailItem
+            label="Date of birth"
+            value={
+              selectedUser?.dob && moment(selectedUser.dob).isValid()
+                ? moment(selectedUser.dob).format("DD/MM/YYYY hh:mm A")
+                : "-"
+            }
+          />
+          <RequestDetailItem label="Email" value={selectedUser?.email} />
+          <RequestDetailItem label="Mobile" value={selectedUser?.mobile} />
+          <RequestDetailItem
+            label="Gender"
+            value={langText(selectedUser?.gender) || selectedUser?.gender}
+          />
+          <RequestDetailItem
+            label="Language"
+            value={languageLabel(selectedUser?.language)}
+          />
+          <RequestDetailItem
+            label="Country"
+            value={lookupName(country, selectedUser?.country)}
+          />
+          <RequestDetailItem
+            label="State"
+            value={lookupName(state, selectedUser?.state)}
+          />
+          <RequestDetailItem
+            label="Region"
+            value={lookupName(region, selectedUser?.region)}
+          />
+          <RequestDetailItem
+            label="District"
+            value={lookupName(district, selectedUser?.district)}
+          />
+          <RequestDetailItem
+            label="City"
+            value={lookupName(city, selectedUser?.city)}
+          />
+          <RequestDetailItem
+            label="Local Samaj"
+            value={lookupName(samaj, selectedUser?.localSamaj)}
+          />
+          <RequestDetailItem
+            label="Created at"
+            value={formatUserDate(selectedUser?.createdAt)}
+          />
+        </div>
+      </AppModal>
       <NotificationSnackbar notification={notification} />
     </Box>
   );

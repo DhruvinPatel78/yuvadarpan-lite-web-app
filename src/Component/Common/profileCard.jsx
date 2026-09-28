@@ -4,6 +4,7 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import LoadableImage from "./LoadableImage";
 import { asDisplayText } from "../../util/bhasha";
 
@@ -17,6 +18,7 @@ const ProfileCard = ({
   mother,
   firm,
   surname,
+  maritalStatus,
   onClick,
   shortlisted = false,
   onToggleShortlist,
@@ -28,6 +30,7 @@ const ProfileCard = ({
   const bornDate = dob ? String(dob).split(",")[0].trim() : "";
   const locationText = asDisplayText(location);
   const firmText = asDisplayText(firm);
+  const maritalText = asDisplayText(maritalStatus);
   const ageNum = Number(age);
   const ageText =
     Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 120
@@ -97,6 +100,14 @@ const ProfileCard = ({
           />
           <span className="truncate">{firmText || "—"}</span>
         </p>
+        {maritalText ? (
+          <p className="mt-1.5 text-sm text-primary flex items-start gap-1.5 min-w-0">
+            <FavoriteBorderIcon
+              sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}
+            />
+            <span className="truncate">{maritalText}</span>
+          </p>
+        ) : null}
         <p className="mt-1.5 text-sm text-primary flex items-start gap-1.5 min-w-0">
           <CalendarMonthIcon
             sx={{ fontSize: 16, color: "#8a8a96", marginTop: "2px" }}

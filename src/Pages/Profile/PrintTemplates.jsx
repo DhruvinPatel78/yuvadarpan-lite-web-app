@@ -1,7 +1,7 @@
 import React from "react";
 import moment from "moment/moment";
 import { getUserImageSrc } from "../../util/defaultUserImage";
-import { asDisplayText, langText, masterNameText, pickOtherMap } from "../../util/bhasha";
+import { asDisplayText, choiceLabel, langText, masterNameText, pickOtherMap } from "../../util/bhasha";
 import { tForm } from "../../i18n/yuvaForm";
 
 export const getLookupName = (list, id, fallback = "", lang = "en") => {
@@ -68,18 +68,7 @@ export const extraOtherFields = (other) => {
 const fieldValue = (fields, key) =>
   (fields || []).find((field) => field.key === key)?.value || "";
 
-const codedText = (value, prefix, lang) => {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return langText(value, lang);
-  }
-  const code = String(value || "").trim();
-  if (!code) return "";
-  if (prefix) {
-    const keyed = tForm(lang, `${prefix}.${code}`);
-    if (keyed !== `${prefix}.${code}`) return keyed;
-  }
-  return code;
-};
+const codedText = (value, prefix, lang) => choiceLabel(value, prefix, lang);
 
 const BiodataSection = ({ title, fields, caps = false }) => {
   const visibleFields = (fields || []).filter((field) => hasValue(field?.value));
@@ -129,11 +118,11 @@ const buildPrintModel = (data, lists, lang = "en") => {
           ? moment(data.dob).format(lang === "gu" ? "DD/MM/YYYY" : "D MMMM YYYY")
           : "",
       },
-      { key: "gender", label: t("gender"), value: langText(data?.gender, lang) },
+      { key: "gender", label: t("gender"), value: codedText(data?.gender, null, lang) },
       {
         key: "martialStatus",
         label: t("maritalStatus"),
-        value: langText(data?.martialStatus, lang),
+        value: codedText(data?.martialStatus, "marital", lang),
       },
       { key: "pob", label: t("pob"), value: langText(data?.pob, lang) },
       { key: "height", label: t("height"), value: data?.height },

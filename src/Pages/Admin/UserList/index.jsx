@@ -28,7 +28,6 @@ import { endLoading, startLoading } from "../../../store/authSlice";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import ContainerPage from "../../../Component/Container";
-import LoadableImage from "../../../Component/Common/LoadableImage";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import CustomRadio from "../../../Component/Common/customRadio";
@@ -56,6 +55,7 @@ import {
   masterLabelOf,
   searchTextParams,
   searchByFromOption,
+  pickMasterId,
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 import {
@@ -76,6 +76,9 @@ import {
   getAllRegionData,
   getAllSamajData,
   getAllCountryData,
+  getAllStateData,
+  getAllDistrictData,
+  getAllCityData,
   getAllGotraData,
 } from "../../../util/getAPICall";
 import { languageLabel, masterNameText } from "../../../util/bhasha";
@@ -114,7 +117,11 @@ const comparableUserValues = (vals) => {
     lastName: String(vals?.lastName || ""),
     email: String(vals?.email || ""),
     mobile: String(vals?.mobile || ""),
+    country: String(vals?.country || ""),
+    state: String(vals?.state || ""),
     region: String(vals?.region || ""),
+    district: String(vals?.district || ""),
+    city: String(vals?.city || ""),
     localSamaj: String(vals?.localSamaj || ""),
     dob: toDateInputValue(vals?.dob),
     gender: String(vals?.gender || "").toLowerCase(),
@@ -394,7 +401,7 @@ function UserPasswordPanel({
 
 function Index() {
   const dispatch = useDispatch();
-  const { loading, surname, region, samaj, country, auth, gotra: gotraList } = UseRedux();
+  const { loading, surname, region, samaj, country, state, district, city, auth, gotra: gotraList } = UseRedux();
   const copy = useFilterCopy();
   const lastNameOptions = useMemo(() => asOptions(surname), [surname]);
   const regionOptions = useMemo(() => asOptions(region), [region]);
@@ -465,16 +472,7 @@ function Index() {
 
   const saveUserRecord = async (formValues) => {
     try {
-      const {
-        confirmPassword,
-        password,
-        role,
-        country,
-        state,
-        district,
-        city,
-        ...rest
-      } = formValues;
+      const { confirmPassword, password, role, ...rest } = formValues;
       const roleValue =
         isSamajManager ||
         isCityManager ||
@@ -490,6 +488,12 @@ function Index() {
       const payload = {
         ...rest,
         role: roleValue,
+        country: formValues.country || "",
+        state: formValues.state || "",
+        district: formValues.district || "",
+        city: formValues.city || "",
+        region: formValues.region || "",
+        localSamaj: formValues.localSamaj || "",
         dob: formValues.dob ? moment(formValues.dob).format() : formValues.dob,
         gender: String(formValues.gender || "").toLowerCase(),
         language: formValues.language === "en" ? "en" : "gu",
@@ -565,7 +569,11 @@ function Index() {
           .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
           .required("Required"),
         email: Yup.string().email("Enter a valid email").required("Required"),
+        country: Yup.string().required("Required"),
+        state: Yup.string().required("Required"),
         region: Yup.string().required("Required"),
+        district: Yup.string().required("Required"),
+        city: Yup.string().required("Required"),
         localSamaj: Yup.string().required("Required"),
         gender: Yup.string().required("Required"),
         dob: Yup.date()
@@ -718,6 +726,9 @@ function Index() {
     dispatch(getAllRegionData);
     dispatch(getAllSamajData);
     dispatch(getAllCountryData);
+    dispatch(getAllStateData);
+    dispatch(getAllDistrictData);
+    dispatch(getAllCityData);
     dispatch(getAllGotraData);
   }, [dispatch]);
 
@@ -760,6 +771,74 @@ function Index() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, hasMore, mobilePage, loadingMore]);
 
+  const hydrateLocationCascade = async (userInfo) => {
+    const countryOpt = findOption(countryOptions, userInfo?.country);
+    const countryId = pickMasterId(countryOpt) || userInfo?.country || "";
+    setSelectedCountryName(countryOpt || null);
+
+    let nextStates = [];
+    if (countryId) {
+      try {
+        nextStates = (await getListById("state", countryId)) || [];
+      } catch (e) {
+        nextStates = [];
+      }
+    }
+    setStateList(nextStates);
+    const stateOpt = findOption(asOptions(nextStates), userInfo?.state);
+    const stateId = pickMasterId(stateOpt) || userInfo?.state || "";
+    setSelectedStateName(stateOpt || null);
+
+    let nextRegions = [];
+    if (stateId) {
+      try {
+        nextRegions = (await getListById("region", stateId)) || [];
+      } catch (e) {
+        nextRegions = [];
+      }
+    }
+    setRegionList(nextRegions);
+    const regionOpt =
+      findOption(asOptions(nextRegions), userInfo?.region) ||
+      findOption(regionOptions, userInfo?.region);
+    const regionId = pickMasterId(regionOpt) || userInfo?.region || "";
+    setSelectedRegionName(regionOpt || null);
+
+    let nextDistricts = [];
+    if (regionId) {
+      try {
+        nextDistricts = (await getListById("district", regionId)) || [];
+      } catch (e) {
+        nextDistricts = [];
+      }
+    }
+    setDistrictList(nextDistricts);
+    const districtOpt = findOption(asOptions(nextDistricts), userInfo?.district);
+    const districtId = pickMasterId(districtOpt) || userInfo?.district || "";
+    setSelectedDistrictName(districtOpt || null);
+
+    let nextCities = [];
+    if (districtId) {
+      try {
+        nextCities = (await getListById("city", districtId)) || [];
+      } catch (e) {
+        nextCities = [];
+      }
+    }
+    setCityList(nextCities);
+    const cityOpt = findOption(asOptions(nextCities), userInfo?.city);
+    const cityId = pickMasterId(cityOpt) || userInfo?.city || "";
+    setSelectedCityName(cityOpt || null);
+
+    if (cityId) {
+      await getSamajList(cityId);
+    } else if (regionId) {
+      await getSamajListByRegion(regionId, regionOpt);
+    } else {
+      setSamajList([]);
+    }
+  };
+
   const userInfoModalOpen = (userInfo) => {
     setUserInfoModel(true);
     setModalView("form");
@@ -799,13 +878,19 @@ function Index() {
         ...nextValues,
       }));
       originalUserRef.current = comparableUserValues(nextValues);
-      const regionOption = findOption(regionOptions, userInfo?.region);
-      setSelectedRegionName(regionOption);
-      if (userInfo?.region) {
-        getSamajListByRegion(userInfo.region, regionOption);
-      }
+      hydrateLocationCascade(userInfo);
     } else {
       originalUserRef.current = "";
+      setSelectedCountryName(null);
+      setSelectedStateName(null);
+      setSelectedRegionName(null);
+      setSelectedDistrictName(null);
+      setSelectedCityName(null);
+      setStateList([]);
+      setRegionList([]);
+      setDistrictList([]);
+      setCityList([]);
+      setSamajList([]);
       resetForm();
     }
   };
@@ -1485,26 +1570,19 @@ function Index() {
         >
           <CloseIcon fontSize="small" />
         </button>
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pr-6">
-          <LoadableImage
-            src=""
-            alt=""
-            className="w-24 h-24 rounded-full pointer-events-none"
-          />
-          <div className="text-center sm:text-left min-w-0">
-            <h2 className="text-lg font-semibold text-primary leading-snug break-words">
-              {[viewUser?.firstName, viewUser?.middleName]
-                .filter(Boolean)
-                .join(" ")}{" "}
-              {lookupName(surname, viewUser?.lastName)}
-            </h2>
-            <p className="text-sm text-mutedText mt-1">
-              {formatRole(viewUser?.role)}
-            </p>
-            <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
-              Family ID {viewUser?.familyId || "-"}
-            </span>
-          </div>
+        <div className="pr-8 min-w-0">
+          <h2 className="text-lg font-semibold text-primary leading-snug break-words">
+            {[viewUser?.firstName, viewUser?.middleName]
+              .filter(Boolean)
+              .join(" ")}{" "}
+            {lookupName(surname, viewUser?.lastName)}
+          </h2>
+          <p className="text-sm text-mutedText mt-1">
+            {formatRole(viewUser?.role)}
+          </p>
+          <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
+            Family ID {viewUser?.familyId || "-"}
+          </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mt-6 pt-5 border-t border-line">
           <UserDetailItem
@@ -1520,8 +1598,24 @@ function Index() {
           <UserDetailItem label="Gender" value={viewUser?.gender} />
           <UserDetailItem label="Language" value={languageLabel(viewUser?.language)} />
           <UserDetailItem
+            label="Country"
+            value={lookupName(country, viewUser?.country)}
+          />
+          <UserDetailItem
+            label="State"
+            value={lookupName(state, viewUser?.state)}
+          />
+          <UserDetailItem
             label="Region"
             value={lookupName(region, viewUser?.region)}
+          />
+          <UserDetailItem
+            label="District"
+            value={lookupName(district, viewUser?.district)}
+          />
+          <UserDetailItem
+            label="City"
+            value={lookupName(city, viewUser?.city)}
           />
           <UserDetailItem
             label="Local Samaj"
@@ -1730,240 +1824,206 @@ function Index() {
                         />
                       </FormControl>
                     </Grid>
-                    <Grid item xs={12}>
-                      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
-                        Location
-                      </p>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={countryOptions}
-                          label={"Country"}
-                          placeholder={"Select Your Country"}
-                          name={"country"}
-                          value={findOption(countryOptions, values?.country) || selectedCountryName}
-                          errors={
-                            touched?.country &&
-                            errors?.country &&
-                            errors?.country
-                          }
-                          onChange={(e, selectedCountry) => {
-                            setFieldValue("country", selectedCountry?.id);
-                            setFieldValue("state", "");
-                            setFieldValue("region", "");
-                            setFieldValue("district", "");
-                            setFieldValue("city", "");
-                            setFieldValue("localSamaj", "");
-                            setSelectedCountryName(selectedCountry?.name);
-                            setSelectedStateName(null);
-                            setSelectedRegionName(null);
-                            setSelectedDistrictName(null);
-                            setSelectedCityName(null);
-                            setRegionList([]);
-                            setDistrictList([]);
-                            setCityList([]);
-                            setSamajList([]);
-                            if (selectedCountry?.id) getStateList(selectedCountry.id);
-                            else setStateList([]);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={asOptions(stateList)}
-                          label={"State"}
-                          placeholder={"Select Your State"}
-                          name={"state"}
-                          value={findOption(asOptions(stateList), values?.state)}
-                          disabled={!selectedCountryName}
-                          errors={
-                            touched?.state && errors?.state && errors?.state
-                          }
-                          onChange={(e, selectedState) => {
-                            setFieldValue("state", selectedState?.id);
-                            setFieldValue("region", "");
-                            setFieldValue("district", "");
-                            setFieldValue("city", "");
-                            setFieldValue("localSamaj", "");
-                            setSelectedStateName(selectedState?.name);
-                            setSelectedRegionName(null);
-                            setSelectedDistrictName(null);
-                            setSelectedCityName(null);
-                            setDistrictList([]);
-                            setCityList([]);
-                            setSamajList([]);
-                            if (selectedState?.id) getRegionList(selectedState.id);
-                            else setRegionList([]);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={asOptions(regionList)}
-                          label={"Region"}
-                          placeholder={"Select Your Region"}
-                          name={"region"}
-                          value={findOption(asOptions(regionList), values?.region)}
-                          disabled={!selectedStateName}
-                          errors={
-                            touched?.region && errors?.region && errors?.region
-                          }
-                          onChange={(e, regionValue) => {
-                            setFieldValue("region", regionValue?.id);
-                            setFieldValue("district", "");
-                            setFieldValue("city", "");
-                            setFieldValue("localSamaj", "");
-                            setSelectedRegionName(regionValue?.name);
-                            setSelectedDistrictName(null);
-                            setSelectedCityName(null);
-                            setCityList([]);
-                            setSamajList([]);
-                            if (regionValue?.id) getDistrictList(regionValue.id);
-                            else setDistrictList([]);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={asOptions(districtList)}
-                          label={"District"}
-                          placeholder={"Select Your District"}
-                          name={"district"}
-                          value={findOption(asOptions(districtList), values?.district)}
-                          disabled={!selectedRegionName}
-                          errors={
-                            touched?.district &&
-                            errors?.district &&
-                            errors?.district
-                          }
-                          onChange={(e, district) => {
-                            setFieldValue("district", district?.id);
-                            setFieldValue("city", "");
-                            setFieldValue("localSamaj", "");
-                            setSelectedDistrictName(district?.name);
-                            setSelectedCityName(null);
-                            setSamajList([]);
-                            if (district?.id) getCityList(district.id);
-                            else setCityList([]);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={asOptions(cityList)}
-                          label={"City"}
-                          placeholder={"Select Your City"}
-                          name={"city"}
-                          value={findOption(asOptions(cityList), values?.city)}
-                          disabled={!selectedDistrictName}
-                          errors={
-                            touched?.city && errors?.city && errors?.city
-                          }
-                          onChange={(e, city) => {
-                            setFieldValue("city", city?.id);
-                            setFieldValue("localSamaj", "");
-                            setSelectedCityName(city?.name);
-                            if (city?.id) getSamajList(city.id);
-                            else setSamajList([]);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={asOptions(samajList)}
-                          label={"Local Samaj"}
-                          placeholder={"Select Your Samaj"}
-                          name={"localSamaj"}
-                          value={findOption(asOptions(samajList), values?.localSamaj)}
-                          disabled={!selectedCityName}
-                          errors={
-                            touched?.localSamaj &&
-                            errors?.localSamaj &&
-                            errors?.localSamaj
-                          }
-                          onChange={(e, localSamaj) => {
-                            setFieldValue("localSamaj", localSamaj?.id);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
                   </>
-                ) : (
-                  <>
-                    <Grid item xs={12}>
-                      <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
-                        Location
-                      </p>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={regionOptions}
-                          label={"Region"}
-                          placeholder={"Select Your Region"}
-                          name={"region"}
-                          value={selectedRegionOption}
-                          errors={
-                            touched?.region && errors?.region && errors?.region
-                          }
-                          onChange={(e, regionValue) => {
-                            setFieldValue("region", regionValue?.id || regionValue?.value || "");
-                            setFieldValue("localSamaj", "");
-                            setSelectedRegionName(regionValue || null);
-                            if (regionValue?.id || regionValue?.value) {
-                              getSamajListByRegion(
-                                regionValue.id || regionValue.value,
-                                regionValue
-                              );
-                            } else setSamajList([]);
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={4}>
-                      <FormControl className={"w-full"}>
-                        <CustomAutoComplete
-                          list={samajOptions}
-                          label={"Local Samaj"}
-                          placeholder={"Select Your Samaj"}
-                          name={"localSamaj"}
-                          value={selectedSamajOption}
-                          disabled={!values?.region}
-                          errors={
-                            touched?.localSamaj &&
-                            errors?.localSamaj &&
-                            errors?.localSamaj
-                          }
-                          onChange={(e, localSamaj) => {
-                            setFieldValue(
-                              "localSamaj",
-                              localSamaj?.id || localSamaj?.value || ""
-                            );
-                          }}
-                          onBlur={handleBlur}
-                        />
-                      </FormControl>
-                    </Grid>
-                  </>
-                )}
+                ) : null}
+                <Grid item xs={12}>
+                  <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-mutedText">
+                    Location
+                  </p>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={countryOptions}
+                      label={"Country"}
+                      placeholder={"Select Your Country"}
+                      name={"country"}
+                      value={
+                        findOption(countryOptions, values?.country) ||
+                        selectedCountryName
+                      }
+                      errors={
+                        touched?.country &&
+                        errors?.country &&
+                        errors?.country
+                      }
+                      onChange={(e, selectedCountry) => {
+                        setFieldValue("country", selectedCountry?.id || "");
+                        setFieldValue("state", "");
+                        setFieldValue("region", "");
+                        setFieldValue("district", "");
+                        setFieldValue("city", "");
+                        setFieldValue("localSamaj", "");
+                        setSelectedCountryName(selectedCountry || null);
+                        setSelectedStateName(null);
+                        setSelectedRegionName(null);
+                        setSelectedDistrictName(null);
+                        setSelectedCityName(null);
+                        setRegionList([]);
+                        setDistrictList([]);
+                        setCityList([]);
+                        setSamajList([]);
+                        if (selectedCountry?.id) {
+                          getStateList(selectedCountry.id);
+                        } else {
+                          setStateList([]);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={asOptions(stateList)}
+                      label={"State"}
+                      placeholder={"Select Your State"}
+                      name={"state"}
+                      value={findOption(asOptions(stateList), values?.state)}
+                      disabled={!values?.country}
+                      errors={
+                        touched?.state && errors?.state && errors?.state
+                      }
+                      onChange={(e, selectedState) => {
+                        setFieldValue("state", selectedState?.id || "");
+                        setFieldValue("region", "");
+                        setFieldValue("district", "");
+                        setFieldValue("city", "");
+                        setFieldValue("localSamaj", "");
+                        setSelectedStateName(selectedState || null);
+                        setSelectedRegionName(null);
+                        setSelectedDistrictName(null);
+                        setSelectedCityName(null);
+                        setDistrictList([]);
+                        setCityList([]);
+                        setSamajList([]);
+                        if (selectedState?.id) {
+                          getRegionList(selectedState.id);
+                        } else {
+                          setRegionList([]);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={asOptions(regionList)}
+                      label={"Region"}
+                      placeholder={"Select Your Region"}
+                      name={"region"}
+                      value={findOption(asOptions(regionList), values?.region)}
+                      disabled={!values?.state}
+                      errors={
+                        touched?.region && errors?.region && errors?.region
+                      }
+                      onChange={(e, regionValue) => {
+                        setFieldValue("region", regionValue?.id || "");
+                        setFieldValue("district", "");
+                        setFieldValue("city", "");
+                        setFieldValue("localSamaj", "");
+                        setSelectedRegionName(regionValue || null);
+                        setSelectedDistrictName(null);
+                        setSelectedCityName(null);
+                        setCityList([]);
+                        setSamajList([]);
+                        if (regionValue?.id) {
+                          getDistrictList(regionValue.id);
+                        } else {
+                          setDistrictList([]);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={asOptions(districtList)}
+                      label={"District"}
+                      placeholder={"Select Your District"}
+                      name={"district"}
+                      value={findOption(
+                        asOptions(districtList),
+                        values?.district
+                      )}
+                      disabled={!values?.region}
+                      errors={
+                        touched?.district &&
+                        errors?.district &&
+                        errors?.district
+                      }
+                      onChange={(e, district) => {
+                        setFieldValue("district", district?.id || "");
+                        setFieldValue("city", "");
+                        setFieldValue("localSamaj", "");
+                        setSelectedDistrictName(district || null);
+                        setSelectedCityName(null);
+                        setSamajList([]);
+                        if (district?.id) {
+                          getCityList(district.id);
+                        } else {
+                          setCityList([]);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={asOptions(cityList)}
+                      label={"City"}
+                      placeholder={"Select Your City"}
+                      name={"city"}
+                      value={findOption(asOptions(cityList), values?.city)}
+                      disabled={!values?.district}
+                      errors={
+                        touched?.city && errors?.city && errors?.city
+                      }
+                      onChange={(e, city) => {
+                        setFieldValue("city", city?.id || "");
+                        setFieldValue("localSamaj", "");
+                        setSelectedCityName(city || null);
+                        if (city?.id) {
+                          getSamajList(city.id);
+                        } else {
+                          setSamajList([]);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={asOptions(samajList)}
+                      label={"Local Samaj"}
+                      placeholder={"Select Your Samaj"}
+                      name={"localSamaj"}
+                      value={findOption(
+                        asOptions(samajList),
+                        values?.localSamaj
+                      )}
+                      disabled={!values?.city}
+                      errors={
+                        touched?.localSamaj &&
+                        errors?.localSamaj &&
+                        errors?.localSamaj
+                      }
+                      onChange={(e, localSamaj) => {
+                        setFieldValue("localSamaj", localSamaj?.id || "");
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomInput
