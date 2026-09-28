@@ -455,13 +455,7 @@ const AddYuva = () => {
         ),
         gender: filledField(requiredText("gender", "Gender Is Required")),
         pob: Yup.mixed(),
-        ...(location?.state
-          ? {
-              profileName: filledField(
-                requiredText("profilePhoto", "Profile Photo Is Required")
-              ),
-            }
-          : {}),
+        profileName: Yup.mixed(),
         dob: Yup.mixed()
           .nullable()
           .test(
@@ -521,18 +515,9 @@ const AddYuva = () => {
         lastName: filledField(requiredText("lastName", "Last Name Is Required")),
         bloodGroup: filledField(requiredText("bloodGroup", "Blood Group Is Required")),
         country: filledField(requiredText("country", "Country Is Required")),
-        familyId: Yup.mixed().test(
-          "familyId",
-          requiredText("familyId", "Family ID Is Required"),
-          (value) => {
-            const n = Number(String(value ?? "").trim());
-            return Number.isFinite(n) && n > 0;
-          }
-        ),
+        familyId: filledField(requiredText("familyId", "Family ID Is Required")),
         activity: filledField(requiredText("activity", "Activity Is Required")),
-        abroadStudy: filledField(
-          language === "gu" ? "વિદેશ અભ્યાસ જરૂરી છે" : "AbroadStudy Required"
-        ),
+        abroadStudy: Yup.mixed(),
         martialStatus: filledField(
           requiredText("maritalStatus", "Martial Status Is Required")
         ),
@@ -553,7 +538,7 @@ const AddYuva = () => {
       }),
     // requiredText follows the selected form language
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [language, location?.state]
+    [language]
   );
   const formik = useFormik({
     initialValues: {
@@ -614,10 +599,11 @@ const AddYuva = () => {
         other: fieldsToOtherObject(newFieldList, newField),
         otherGu: fieldsToOtherGuObject(newFieldList, newField),
       });
-      if (location?.state) {
-        updateAPIHandler({ ...newValue, id: values.id });
+      const yuvaId = values?.id || location?.state?.data?.id;
+      if (yuvaId) {
+        await updateAPIHandler({ ...newValue, id: yuvaId });
       } else {
-        addYuvaListHandler(newValue);
+        await addYuvaListHandler(newValue);
       }
     },
     validationSchema,
@@ -926,8 +912,6 @@ const AddYuva = () => {
     "Grandmother",
     "Father",
     "Mother",
-    "ElderUncle",
-    "ElderAunty",
     "Uncle",
     "Aunty",
     "Brother",

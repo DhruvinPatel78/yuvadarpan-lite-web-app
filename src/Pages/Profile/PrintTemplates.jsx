@@ -1,7 +1,7 @@
 import React from "react";
 import moment from "moment/moment";
 import { getUserImageSrc } from "../../util/defaultUserImage";
-import { asDisplayText, langText, masterNameText, pickOtherMap } from "../../util/bhasha";
+import { asDisplayText, choiceLabel, langText, masterNameText, pickOtherMap } from "../../util/bhasha";
 import { tForm } from "../../i18n/yuvaForm";
 
 export const getLookupName = (list, id, fallback = "", lang = "en") => {
@@ -68,18 +68,7 @@ export const extraOtherFields = (other) => {
 const fieldValue = (fields, key) =>
   (fields || []).find((field) => field.key === key)?.value || "";
 
-const codedText = (value, prefix, lang) => {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return langText(value, lang);
-  }
-  const code = String(value || "").trim();
-  if (!code) return "";
-  if (prefix) {
-    const keyed = tForm(lang, `${prefix}.${code}`);
-    if (keyed !== `${prefix}.${code}`) return keyed;
-  }
-  return code;
-};
+const codedText = (value, prefix, lang) => choiceLabel(value, prefix, lang);
 
 const BiodataSection = ({ title, fields, caps = false }) => {
   const visibleFields = (fields || []).filter((field) => hasValue(field?.value));
@@ -129,11 +118,11 @@ const buildPrintModel = (data, lists, lang = "en") => {
           ? moment(data.dob).format(lang === "gu" ? "DD/MM/YYYY" : "D MMMM YYYY")
           : "",
       },
-      { key: "gender", label: t("gender"), value: langText(data?.gender, lang) },
+      { key: "gender", label: t("gender"), value: codedText(data?.gender, null, lang) },
       {
         key: "martialStatus",
         label: t("maritalStatus"),
-        value: langText(data?.martialStatus, lang),
+        value: codedText(data?.martialStatus, "marital", lang),
       },
       { key: "pob", label: t("pob"), value: langText(data?.pob, lang) },
       { key: "height", label: t("height"), value: data?.height },
@@ -268,6 +257,9 @@ const TemplateTwo = ({ model }) => {
   const contact = model.contact.filter((field) =>
     ["phone", "address"].includes(field.key)
   );
+  const personalWithoutName = (model.personal || []).filter(
+    (field) => field.key !== "firstName"
+  );
 
   return (
   <div className="yuva-print-sheet yuva-print-template-2 hidden">
@@ -277,20 +269,37 @@ const TemplateTwo = ({ model }) => {
       <div className="yuva-biodata-corner bl" />
       <div className="yuva-biodata-corner br" />
       <h1 className="yuva-biodata-title">{titles.biodata}</h1>
-      <div className="yuva-biodata-body">
-        <div className="yuva-biodata-left">
-          <img
-            src={model.photo}
-            alt={model.fullName || titles.biodata}
-            className="yuva-biodata-photo"
-          />
+      <div className="yuva-biodata-intro">
+        <img
+          src={model.photo}
+          alt={model.fullName || titles.biodata}
+          className="yuva-biodata-photo"
+        />
+        <div className="yuva-biodata-intro-main">
           {model.fullName ? (
             <h2 className="yuva-biodata-name">{model.fullName}</h2>
           ) : null}
+          <div className="yuva-biodata-intro-meta">
+            {(model.personal || [])
+              .filter((field) =>
+                ["dob", "gender", "martialStatus", "height", "weight", "bloodGroup"].includes(
+                  field.key
+                )
+              )
+              .map((field) => (
+                <span key={field.key} className="yuva-biodata-chip">
+                  <em>{field.label}</em> {asDisplayText(field.value)}
+                </span>
+              ))}
+          </div>
+        </div>
+      </div>
+      <div className="yuva-biodata-body">
+        <div className="yuva-biodata-left">
           <BiodataSection
             title={titles.personalInfo}
             caps
-            fields={model.personal}
+            fields={personalWithoutName}
           />
           <BiodataSection title={titles.contactDetails} caps fields={contact} />
         </div>

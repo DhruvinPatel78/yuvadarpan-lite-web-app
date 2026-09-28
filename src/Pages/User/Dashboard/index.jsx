@@ -56,7 +56,7 @@ import {
   educationList,
   maritalStatusList,
 } from "../../Admin/YuvaList/BulkAddYuva/formConfig";
-import { pickYuvaLangText, userLanguage } from "../../../util/bhasha";
+import { choiceLabel, pickYuvaLangText, userLanguage } from "../../../util/bhasha";
 import { bilingualLabel, bilingualOptions } from "../../../i18n/yuvaForm";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
@@ -87,7 +87,10 @@ const GENDER_OPTIONS = bilingualOptions(["male", "female"]);
 const BLOOD_GROUP_OPTIONS = asFilterOptions(bloodGroupList, (value) =>
   value === "NOT KNOWN" ? bilingualLabel("blood.NOT KNOWN") : value
 );
-const MARITAL_STATUS_OPTIONS = bilingualOptions(maritalStatusList, "marital");
+const MARITAL_STATUS_OPTIONS = bilingualOptions(
+  maritalStatusList.filter((status) => status !== "engaged" && status !== "married"),
+  "marital"
+);
 const EDUCATION_OPTIONS = bilingualOptions(educationList, "education");
 
 const emptyAppliedFilters = {
@@ -792,6 +795,7 @@ const Home = () => {
               mother={pickYuvaLangText(data, "motherName", language)}
               firm={pickYuvaLangText(data, "firm", language)}
               surname={masterLabelOf(surname, data?.lastName, language)}
+              maritalStatus={choiceLabel(data?.martialStatus, "marital", language)}
               shortlisted={shortlistedIds.includes(String(data?.id || data?._id))}
               onToggleShortlist={
                 canShortlist
