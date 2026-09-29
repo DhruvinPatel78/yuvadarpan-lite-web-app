@@ -369,8 +369,7 @@ export const getListById = async (field, id) => {
   }));
 };
 
-export const useFilteredIds = (selectedItems, key = "id") => {
-  return useMemo(() => {
+export const getFilteredIds = (selectedItems, key = "id") => {
     const ids = [];
     (Array.isArray(selectedItems) ? selectedItems : []).forEach((item) => {
       if (item == null || item === "" || isAllOption(item)) {
@@ -395,5 +394,7 @@ export const useFilteredIds = (selectedItems, key = "id") => {
       });
     });
     return [...new Set(ids)];
-  }, [selectedItems, key]);
 };
+
+export const useFilteredIds = (selectedItems, key = "id") =>
+  useMemo(() => getFilteredIds(selectedItems, key), [selectedItems, key]);

@@ -7,6 +7,7 @@ import {
   TextField,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import TuneIcon from "@mui/icons-material/Tune";
 import Card from "./Card";
 import { useFormLanguage } from "../../context/FormLanguageContext";
@@ -67,6 +68,22 @@ export default function MasterFilterBar({
                   <SearchIcon sx={{ color: "#9a9aa8" }} />
                 </InputAdornment>
               ),
+              endAdornment: searchValue && !searchDisabled ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="clear search"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSearchChange?.({ target: { value: "" } });
+                    }}
+                    edge="end"
+                    size="small"
+                    sx={{ color: "#9a9aa8" }}
+                  >
+                    <ClearIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
             sx={searchFieldSx}
           />
