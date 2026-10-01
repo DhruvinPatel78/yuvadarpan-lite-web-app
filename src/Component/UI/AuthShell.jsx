@@ -7,6 +7,8 @@ export default function AuthShell({
   maxWidthClass = "sm:max-w-[420px]",
   showBrand = true,
   cardClassName = "",
+  beforeCard = null,
+  afterCard = null,
 }) {
   return (
     <div
@@ -30,12 +32,18 @@ export default function AuthShell({
           />
         </div>
       ) : null}
+      {beforeCard ? (
+        <div className={`w-full ${maxWidthClass} mb-4`}>{beforeCard}</div>
+      ) : null}
       <Card
         padded={false}
         className={`w-full ${maxWidthClass} ${cardClassName} shadow-raised !border-0`}
       >
         <div className="p-4 sm:p-8">{children}</div>
       </Card>
+      {afterCard ? (
+        <div className={`w-full ${maxWidthClass} mt-4`}>{afterCard}</div>
+      ) : null}
       <p className="mt-8 text-center text-xs text-mutedText font-WorkRegular">
         © {new Date().getFullYear()} Yuvadarpan
       </p>

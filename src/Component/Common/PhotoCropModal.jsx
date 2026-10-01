@@ -13,6 +13,8 @@ export default function PhotoCropModal({
   cancelLabel = "Cancel",
   confirmLabel = "Use photo",
   zoomLabel = "Zoom",
+  aspect = 1,
+  cropShape = "rect",
   onCancel,
   onConfirm,
 }) {
@@ -68,8 +70,8 @@ export default function PhotoCropModal({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1}
-            cropShape="rect"
+            aspect={aspect}
+            cropShape={cropShape}
             showGrid={false}
             onCropChange={setCrop}
             onCropComplete={onCropComplete}

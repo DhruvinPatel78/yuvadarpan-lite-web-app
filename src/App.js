@@ -15,6 +15,7 @@ import {
   DistrictDetails,
   Native,
   FamilyId,
+  Advertisement,
   Region,
   RegionDetails,
   Roles,
@@ -333,6 +334,11 @@ function App() {
             path="familyId"
             exact
             element={<PrivateRoute Component={FamilyId} />}
+          />
+          <Route
+            path="advertisement"
+            exact
+            element={<PrivateRoute Component={Advertisement} />}
           />
           <Route
             path="role"
