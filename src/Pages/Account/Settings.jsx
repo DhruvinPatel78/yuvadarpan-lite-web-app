@@ -1,8 +1,9 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, CircularProgress, Grid } from "@mui/material";
 import Header from "../../Component/Header";
 import ContainerPage from "../../Component/Container";
 import CustomInput from "../../Component/Common/customInput";
+import CustomSwitch from "../../Component/Common/CustomSwitch";
 import OTPInput from "../../Component/Common/OTPInput";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
@@ -24,6 +25,11 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { PageHeader, Card, Button } from "../../Component/UI";
 import { PwaInstallCard } from "../../Component/PwaInstall";
+import { isAdmin } from "../../util/util";
+import {
+  getAdvertisementDisplayEnabled,
+  setAdvertisementDisplayEnabled,
+} from "../../util/advertisementApi";
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -31,15 +37,59 @@ export default function Settings() {
   const { notification, setNotification } = NotificationData();
   const user = auth?.user;
   const email = user?.email || "";
+  const adminUser = isAdmin(user?.role);
   const [step, setStep] = useState("send");
   const [otp, setOtp] = useState("");
+  const [adsEnabled, setAdsEnabled] = useState(true);
+  const [adsLoading, setAdsLoading] = useState(false);
+  const [adsSaving, setAdsSaving] = useState(false);
   const otpRef = useRef();
+
+  useEffect(() => {
+    if (!adminUser) return undefined;
+    let active = true;
+    setAdsLoading(true);
+    getAdvertisementDisplayEnabled()
+      .then((enabled) => {
+        if (active) setAdsEnabled(enabled);
+      })
+      .catch(() => {
+        if (active) setAdsEnabled(true);
+      })
+      .finally(() => {
+        if (active) setAdsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [adminUser]);
 
   const showError = (err, fallback) => {
     setNotification({
       message: err?.response?.data?.message || fallback,
       type: "error",
     });
+  };
+
+  const handleAdsToggle = async () => {
+    if (adsSaving) return;
+    const next = !adsEnabled;
+    setAdsSaving(true);
+    setAdsEnabled(next);
+    try {
+      await setAdvertisementDisplayEnabled(next);
+      setNotification({
+        message: next
+          ? "Advertisements are now visible."
+          : "Advertisements are now hidden.",
+        type: "success",
+      });
+    } catch (err) {
+      setAdsEnabled(!next);
+      showError(err, "Could not update advertisement setting.");
+    } finally {
+      setAdsSaving(false);
+    }
   };
 
   const handleSendOtp = async () => {
@@ -241,7 +291,11 @@ export default function Settings() {
                       touched.confirmPassword && errors.confirmPassword
                     }
                   />
-                  <Grid item xs={12} className={"flex justify-end max-md:[&>button]:w-full"}>
+                  <Grid
+                    item
+                    xs={12}
+                    className={"flex justify-end max-md:[&>button]:w-full"}
+                  >
                     {loading ? (
                       <CircularProgress color="secondary" size={28} />
                     ) : (
@@ -261,6 +315,34 @@ export default function Settings() {
         <div className="w-full mt-4">
           <PwaInstallCard />
         </div>
+        {adminUser ? (
+          <Card className="w-full mt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-primary">
+                  Advertisement
+                </h2>
+                <p className="text-sm text-mutedText mt-1">
+                  Turn advertisements on or off across the app.
+                </p>
+              </div>
+              {adsLoading ? (
+                <CircularProgress color="secondary" size={24} />
+              ) : (
+                <CustomSwitch
+                  checked={adsEnabled}
+                  disabled={adsSaving}
+                  onClick={handleAdsToggle}
+                />
+              )}
+            </div>
+            <p className="text-sm text-mutedText mt-3">
+              {adsEnabled
+                ? "Advertisements are currently visible on selected pages."
+                : "Advertisements are currently hidden on all pages."}
+            </p>
+          </Card>
+        ) : null}
         <p className="text-sm text-mutedText mt-4 w-full leading-relaxed">
           We use a one-time code to confirm it's really you before your password
           is changed.

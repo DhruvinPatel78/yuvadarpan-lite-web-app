@@ -18,6 +18,7 @@ import { getCurrentUser, updateUser } from "../../util/userApi";
 import { persistUpdatedUser } from "./persistUser";
 import { PageHeader, Card, Button } from "../../Component/UI";
 import PreferredLanguageField from "../../Component/Common/preferredLanguageField";
+import { AdPairRow } from "../../Component/Common/AdBanner";
 import { isRegularUser } from "../../util/util";
 
 const toDateInputValue = (value) => {
@@ -226,6 +227,7 @@ export default function Profile() {
             </Form>
           </FormikProvider>
         </Card>
+        <AdPairRow page="profile" className="mt-4" />
       </ContainerPage>
       <NotificationSnackbar notification={notification} />
     </Box>

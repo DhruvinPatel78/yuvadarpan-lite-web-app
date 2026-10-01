@@ -163,6 +163,8 @@ export default function CustomAutoComplete({
             inputProps={{
               ...params.inputProps,
               autoComplete: "off",
+              // Multi-select stores chips, not input text — native required would always fail.
+              ...(multiple ? { required: false } : null),
             }}
           />
         )}

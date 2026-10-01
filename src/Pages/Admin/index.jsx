@@ -21,6 +21,7 @@ import Surname from "./Surname";
 import Gotra from "./Gotra";
 import Native from "./Native";
 import FamilyId from "./FamilyId";
+import Advertisement from "./Advertisement";
 import Roles from "./Roles";
 import Logs from "./Logs";
 import LogDetails from "./Logs/Details";
@@ -48,6 +49,7 @@ export {
   Gotra,
   Native,
   FamilyId,
+  Advertisement,
   Roles,
   Logs,
   LogDetails,

@@ -18,6 +18,11 @@ import { formatYuvaDob, isRegularUser } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
+import AdCard from "../../../Component/Common/AdCard";
+import {
+  interleaveAdsIntoList,
+  usePageAds,
+} from "../../../Component/Common/AdBanner";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -158,6 +163,11 @@ const Home = () => {
   const [samajListByParent, setSamajListByParent] = useState(samaj);
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
   const [shortlistedIds, setShortlistedIds] = useState([]);
+  const homeAds = usePageAds("dashboard");
+  const feedItems = useMemo(
+    () => interleaveAdsIntoList(yuvaList || [], homeAds, 4),
+    [yuvaList, homeAds]
+  );
 
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
   const surnameFilterList = useMemo(
@@ -892,39 +902,50 @@ const Home = () => {
           </Collapse>
         </Card>
         <div className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {yuvaList?.map((data) => (
-            <ProfileCard
-              key={data?.id}
-              imgSrc={data?.profile?.url}
-              name={pickYuvaLangText(data, "firstName", language)}
-              location={masterLabelOf(city, data?.city, language)}
-              age={moment().diff(data?.dob, "years")}
-              dob={formatYuvaDob(data?.dob)}
-              father={`${pickYuvaLangText(data, "fatherName", language)} ${pickYuvaLangText(
-                data,
-                "grandFatherName",
-                language
-              )}`}
-              mother={pickYuvaLangText(data, "motherName", language)}
-              firm={pickYuvaLangText(data, "firm", language)}
-              surname={masterLabelOf(surname, data?.lastName, language)}
-              maritalStatus={choiceLabel(data?.martialStatus, "marital", language)}
-              shortlisted={shortlistedIds.includes(String(data?.id || data?._id))}
-              onToggleShortlist={
-                canShortlist
-                  ? () => handleToggleShortlist(null, data)
-                  : undefined
-              }
-              onClick={() =>
-                navigate(
+          {feedItems.map((item, index) => {
+            if (item.type === "ad") {
+              return (
+                <AdCard
+                  key={`ad-${item.data?.id || index}`}
+                  ad={item.data}
+                />
+              );
+            }
+            const data = item.data;
+            return (
+              <ProfileCard
+                key={data?.id || `yuva-${index}`}
+                imgSrc={data?.profile?.url}
+                name={pickYuvaLangText(data, "firstName", language)}
+                location={masterLabelOf(city, data?.city, language)}
+                age={moment().diff(data?.dob, "years")}
+                dob={formatYuvaDob(data?.dob)}
+                father={`${pickYuvaLangText(data, "fatherName", language)} ${pickYuvaLangText(
+                  data,
+                  "grandFatherName",
+                  language
+                )}`}
+                mother={pickYuvaLangText(data, "motherName", language)}
+                firm={pickYuvaLangText(data, "firm", language)}
+                surname={masterLabelOf(surname, data?.lastName, language)}
+                maritalStatus={choiceLabel(data?.martialStatus, "marital", language)}
+                shortlisted={shortlistedIds.includes(String(data?.id || data?._id))}
+                onToggleShortlist={
                   canShortlist
-                    ? `/yuva/${data?.id || data?._id}`
-                    : `/admin/yuvalist/${data?.id || data?._id}`,
-                  { state: { ...data } }
-                )
-              }
-            />
-          ))}
+                    ? () => handleToggleShortlist(null, data)
+                    : undefined
+                }
+                onClick={() =>
+                  navigate(
+                    canShortlist
+                      ? `/yuva/${data?.id || data?._id}`
+                      : `/admin/yuvalist/${data?.id || data?._id}`,
+                    { state: { ...data } }
+                  )
+                }
+              />
+            );
+          })}
         </div>
         {yuvaList.length === 0 ? (
           <p className="mt-12 text-center text-sm text-mutedText">
