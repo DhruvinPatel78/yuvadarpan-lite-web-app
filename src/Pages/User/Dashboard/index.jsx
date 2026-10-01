@@ -13,6 +13,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import TuneIcon from "@mui/icons-material/Tune";
+import ClearIcon from "@mui/icons-material/Clear";
 import { formatYuvaDob, isRegularUser } from "../../../util/util";
 import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
@@ -40,6 +41,7 @@ import {
 import CustomInput from "../../../Component/Common/customInput";
 import {
   filterFieldCols,
+  getFilteredIds,
   getSelectedData,
   gotraOptionList,
   handleListById,
@@ -48,7 +50,6 @@ import {
   listHandler,
   masterLabelOf,
   surnamesForGotra,
-  useFilteredIds,
 } from "../../../Component/constant";
 import { Button, Card } from "../../../Component/UI";
 import {
@@ -158,17 +159,6 @@ const Home = () => {
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
   const [shortlistedIds, setShortlistedIds] = useState([]);
 
-  const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
-  const filteredStateIds = useFilteredIds(selectedState, "id");
-  const filteredRegionIds = useFilteredIds(selectedRegion, "id");
-  const filteredDistrictIds = useFilteredIds(selectedDistrict, "id");
-  const filteredCityIds = useFilteredIds(selectedCity, "id");
-  const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
-  const filteredNativeIds = useFilteredIds(selectedNative, "id");
-  const filteredGenders = useFilteredIds(selectedGender, "id");
-  const filteredBloodGroups = useFilteredIds(selectedBloodGroup, "id");
-  const filteredMaritalStatuses = useFilteredIds(selectedMaritalStatus, "id");
-  const filteredEducations = useFilteredIds(selectedEducation, "id");
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
   const surnameFilterList = useMemo(
     () => listHandler(surnamesForGotra(surname, selectedGotra)),
@@ -364,6 +354,54 @@ const Home = () => {
     return () => observer.disconnect();
   }, [handleLoadMore, hasMore, yuvaList.length]);
 
+  const getAppliedFiltersFromSelections = (overrides = {}) => {
+    const nextGotra = overrides.gotra ?? selectedGotra;
+    const nextSurname = overrides.surname ?? selectedSurname;
+    const nextState = overrides.state ?? selectedState;
+    const nextRegion = overrides.region ?? selectedRegion;
+    const nextDistrict = overrides.district ?? selectedDistrict;
+    const nextCity = overrides.city ?? selectedCity;
+    const nextSamaj = overrides.samaj ?? selectedSamaj;
+    const nextNative = overrides.native ?? selectedNative;
+    const nextGender = overrides.gender ?? selectedGender;
+    const nextBloodGroup = overrides.bloodGroup ?? selectedBloodGroup;
+    const nextMaritalStatus = overrides.maritalStatus ?? selectedMaritalStatus;
+    const nextEducation = overrides.education ?? selectedEducation;
+    let nextMinAge = overrides.minAge ?? minAge;
+    let nextMaxAge = overrides.maxAge ?? maxAge;
+
+    if (
+      nextMinAge !== "" &&
+      nextMaxAge !== "" &&
+      Number(nextMinAge) > Number(nextMaxAge)
+    ) {
+      nextMinAge = overrides.maxAge ?? maxAge;
+      nextMaxAge = overrides.minAge ?? minAge;
+    }
+
+    const surnameIds = getFilteredIds(nextSurname);
+    return {
+      gotra: nextGotra,
+      lastNameIds: lastNameIdsForGotraFilter(
+        surname,
+        nextGotra,
+        surnameIds
+      ),
+      stateIds: getFilteredIds(nextState),
+      regionIds: getFilteredIds(nextRegion),
+      districtIds: getFilteredIds(nextDistrict),
+      cityIds: getFilteredIds(nextCity),
+      samajIds: getFilteredIds(nextSamaj),
+      nativeIds: getFilteredIds(nextNative),
+      genders: getFilteredIds(nextGender),
+      bloodGroups: getFilteredIds(nextBloodGroup),
+      maritalStatuses: getFilteredIds(nextMaritalStatus),
+      educations: getFilteredIds(nextEducation),
+      minAge: nextMinAge,
+      maxAge: nextMaxAge,
+    };
+  };
+
   const handleApplyFilters = () => {
     let nextMinAge = minAge;
     let nextMaxAge = maxAge;
@@ -377,26 +415,7 @@ const Home = () => {
       setMinAge(nextMinAge);
       setMaxAge(nextMaxAge);
     }
-    setAppliedFilters({
-      gotra: selectedGotra,
-      lastNameIds: lastNameIdsForGotraFilter(
-        surname,
-        selectedGotra,
-        filteredSurnameIds
-      ),
-      stateIds: filteredStateIds,
-      regionIds: filteredRegionIds,
-      districtIds: filteredDistrictIds,
-      cityIds: filteredCityIds,
-      samajIds: filteredSamajIds,
-      nativeIds: filteredNativeIds,
-      genders: filteredGenders,
-      bloodGroups: filteredBloodGroups,
-      maritalStatuses: filteredMaritalStatuses,
-      educations: filteredEducations,
-      minAge: nextMinAge,
-      maxAge: nextMaxAge,
-    });
+    setAppliedFilters(getAppliedFiltersFromSelections({ minAge: nextMinAge, maxAge: nextMaxAge }));
     if (isMobile) {
       setIsFilterOpen(false);
     }
@@ -424,6 +443,43 @@ const Home = () => {
     setCityListByDistrict(city);
     setSamajListByParent(samaj);
     setAppliedFilters(emptyAppliedFilters);
+  };
+
+  const checkAutoResetOnLastClear = (overrides = {}) => {
+    const nextGotra = overrides.gotra ?? selectedGotra;
+    const nextSurname = overrides.surname ?? selectedSurname;
+    const nextState = overrides.state ?? selectedState;
+    const nextRegion = overrides.region ?? selectedRegion;
+    const nextDistrict = overrides.district ?? selectedDistrict;
+    const nextCity = overrides.city ?? selectedCity;
+    const nextSamaj = overrides.samaj ?? selectedSamaj;
+    const nextNative = overrides.native ?? selectedNative;
+    const nextGender = overrides.gender ?? selectedGender;
+    const nextBloodGroup = overrides.bloodGroup ?? selectedBloodGroup;
+    const nextMaritalStatus = overrides.maritalStatus ?? selectedMaritalStatus;
+    const nextEducation = overrides.education ?? selectedEducation;
+    const nextMinAge = overrides.minAge ?? minAge;
+    const nextMaxAge = overrides.maxAge ?? maxAge;
+
+    const hasAnySelection =
+      (nextGotra || []).some((item) => !isAllOption(item)) ||
+      (nextSurname || []).some((item) => !isAllOption(item)) ||
+      (nextState || []).some((item) => !isAllOption(item)) ||
+      (nextRegion || []).some((item) => !isAllOption(item)) ||
+      (nextDistrict || []).some((item) => !isAllOption(item)) ||
+      (nextCity || []).some((item) => !isAllOption(item)) ||
+      (nextSamaj || []).some((item) => !isAllOption(item)) ||
+      (nextNative || []).some((item) => !isAllOption(item)) ||
+      (nextGender || []).some((item) => !isAllOption(item)) ||
+      (nextBloodGroup || []).some((item) => !isAllOption(item)) ||
+      (nextMaritalStatus || []).some((item) => !isAllOption(item)) ||
+      (nextEducation || []).some((item) => !isAllOption(item)) ||
+      nextMinAge !== "" ||
+      nextMaxAge !== "";
+
+    if (!hasAnySelection && appliedFilterCount > 0) {
+      setAppliedFilters(emptyAppliedFilters);
+    }
   };
 
   const fieldSize = { ...filterFieldCols(3), sm: 6, md: 3, lg: 3 };
@@ -456,10 +512,10 @@ const Home = () => {
         name="gotra"
         value={selectedGotra}
         onChange={(e, gotra) => {
-          if (gotra) {
-            setSelectedGotra((pre) => getSelectedData(pre, gotra, e));
-            setSelectedSurname([]);
-          }
+          const nextGotra = gotra ? getSelectedData(selectedGotra, gotra, e) : [];
+          setSelectedGotra(nextGotra);
+          setSelectedSurname([]);
+          checkAutoResetOnLastClear({ gotra: nextGotra, surname: [] });
         }}
       />
       <CustomAutoComplete
@@ -471,9 +527,9 @@ const Home = () => {
         name="surname"
         value={selectedSurname}
         onChange={(e, lastName) => {
-          if (lastName) {
-            setSelectedSurname((pre) => getSelectedData(pre, lastName, e));
-          }
+          const nextSurname = lastName ? getSelectedData(selectedSurname, lastName, e) : [];
+          setSelectedSurname(nextSurname);
+          checkAutoResetOnLastClear({ surname: nextSurname });
         }}
       />
       <CustomAutoComplete
@@ -485,18 +541,29 @@ const Home = () => {
         name="state"
         value={selectedState}
         onChange={async (e, selected) => {
-          if (selected) {
+          const nextState = selected ? getSelectedData(selectedState, selected, e) : [];
+          setSelectedState(nextState);
+          setSelectedRegion([]);
+          setSelectedDistrict([]);
+          setSelectedCity([]);
+          setSelectedSamaj([]);
+          setDistrictListByRegion(district);
+          setCityListByDistrict(city);
+          setSamajListByParent(samaj);
+
+          if (selected && selected.length > 0) {
             const data = await handleListById("region", selected);
             setRegionListByState(data);
-            setSelectedState((pre) => getSelectedData(pre, selected, e));
-            setSelectedRegion([]);
-            setSelectedDistrict([]);
-            setSelectedCity([]);
-            setSelectedSamaj([]);
-            setDistrictListByRegion(district);
-            setCityListByDistrict(city);
-            setSamajListByParent(samaj);
+          } else {
+            setRegionListByState(region);
           }
+          checkAutoResetOnLastClear({
+            state: nextState,
+            region: [],
+            district: [],
+            city: [],
+            samaj: [],
+          });
         }}
       />
       <CustomAutoComplete
@@ -508,19 +575,30 @@ const Home = () => {
         name="region"
         value={selectedRegion}
         onChange={async (e, selected) => {
-          if (selected) {
+          const nextRegion = selected ? getSelectedData(selectedRegion, selected, e) : [];
+          setSelectedRegion(nextRegion);
+          setSelectedDistrict([]);
+          setSelectedCity([]);
+          setSelectedSamaj([]);
+          setCityListByDistrict(city);
+
+          if (selected && selected.length > 0) {
             const [districtData, samajData] = await Promise.all([
               handleListById("district", selected),
               handleListById("samaj", selected),
             ]);
             setDistrictListByRegion(districtData);
             setSamajListByParent(samajData);
-            setSelectedRegion((pre) => getSelectedData(pre, selected, e));
-            setSelectedDistrict([]);
-            setSelectedCity([]);
-            setSelectedSamaj([]);
-            setCityListByDistrict(city);
+          } else {
+            setDistrictListByRegion(district);
+            setSamajListByParent(samaj);
           }
+          checkAutoResetOnLastClear({
+            region: nextRegion,
+            district: [],
+            city: [],
+            samaj: [],
+          });
         }}
       />
       <CustomAutoComplete
@@ -532,10 +610,14 @@ const Home = () => {
         name="district"
         value={selectedDistrict}
         onChange={async (e, selected) => {
-          if (selected) {
+          const nextDistrict = selected ? getSelectedData(selectedDistrict, selected, e) : [];
+          setSelectedDistrict(nextDistrict);
+          setSelectedCity([]);
+          setSelectedSamaj([]);
+
+          if (selected && selected.length > 0) {
             const data = await handleListById("city", selected);
             setCityListByDistrict(data);
-            setSelectedDistrict((pre) => getSelectedData(pre, selected, e));
             const districtIds = selected
               .filter((item) => !isAllOption(item))
               .map((item) => item.id);
@@ -543,9 +625,15 @@ const Home = () => {
               ? samaj.filter((item) => districtIds.includes(item.district_id))
               : samaj;
             setSamajListByParent(matchingSamaj.length ? matchingSamaj : samaj);
-            setSelectedCity([]);
-            setSelectedSamaj([]);
+          } else {
+            setCityListByDistrict(city);
+            setSamajListByParent(samaj);
           }
+          checkAutoResetOnLastClear({
+            district: nextDistrict,
+            city: [],
+            samaj: [],
+          });
         }}
       />
       <CustomAutoComplete
@@ -557,8 +645,9 @@ const Home = () => {
         name="city"
         value={selectedCity}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedCity((pre) => getSelectedData(pre, selected, e));
+          const nextCity = selected ? getSelectedData(selectedCity, selected, e) : [];
+          setSelectedCity(nextCity);
+          if (selected && selected.length > 0) {
             const cityIds = selected
               .filter((item) => !isAllOption(item))
               .map((item) => item.id);
@@ -566,8 +655,14 @@ const Home = () => {
               ? samaj.filter((item) => cityIds.includes(item.city_id))
               : samaj;
             setSamajListByParent(matchingSamaj.length ? matchingSamaj : samaj);
-            setSelectedSamaj([]);
+          } else {
+            setSamajListByParent(samaj);
           }
+          setSelectedSamaj([]);
+          checkAutoResetOnLastClear({
+            city: nextCity,
+            samaj: [],
+          });
         }}
       />
       <CustomAutoComplete
@@ -579,9 +674,9 @@ const Home = () => {
         name="samaj"
         value={selectedSamaj}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedSamaj((pre) => getSelectedData(pre, selected, e));
-          }
+          const nextSamaj = selected ? getSelectedData(selectedSamaj, selected, e) : [];
+          setSelectedSamaj(nextSamaj);
+          checkAutoResetOnLastClear({ samaj: nextSamaj });
         }}
       />
       <CustomAutoComplete
@@ -593,9 +688,9 @@ const Home = () => {
         name="native"
         value={selectedNative}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedNative((pre) => getSelectedData(pre, selected, e));
-          }
+          const nextNative = selected ? getSelectedData(selectedNative, selected, e) : [];
+          setSelectedNative(nextNative);
+          checkAutoResetOnLastClear({ native: nextNative });
         }}
       />
       <CustomAutoComplete
@@ -607,9 +702,9 @@ const Home = () => {
         name="gender"
         value={selectedGender}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedGender((pre) => getSelectedData(pre, selected, e));
-          }
+          const nextGender = selected ? getSelectedData(selectedGender, selected, e) : [];
+          setSelectedGender(nextGender);
+          checkAutoResetOnLastClear({ gender: nextGender });
         }}
       />
       <CustomAutoComplete
@@ -621,9 +716,9 @@ const Home = () => {
         name="bloodGroup"
         value={selectedBloodGroup}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedBloodGroup((pre) => getSelectedData(pre, selected, e));
-          }
+          const nextBloodGroup = selected ? getSelectedData(selectedBloodGroup, selected, e) : [];
+          setSelectedBloodGroup(nextBloodGroup);
+          checkAutoResetOnLastClear({ bloodGroup: nextBloodGroup });
         }}
       />
       <CustomAutoComplete
@@ -635,9 +730,9 @@ const Home = () => {
         name="martialStatus"
         value={selectedMaritalStatus}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedMaritalStatus((pre) => getSelectedData(pre, selected, e));
-          }
+          const nextMaritalStatus = selected ? getSelectedData(selectedMaritalStatus, selected, e) : [];
+          setSelectedMaritalStatus(nextMaritalStatus);
+          checkAutoResetOnLastClear({ maritalStatus: nextMaritalStatus });
         }}
       />
       <CustomAutoComplete
@@ -649,9 +744,9 @@ const Home = () => {
         name="education"
         value={selectedEducation}
         onChange={(e, selected) => {
-          if (selected) {
-            setSelectedEducation((pre) => getSelectedData(pre, selected, e));
-          }
+          const nextEducation = selected ? getSelectedData(selectedEducation, selected, e) : [];
+          setSelectedEducation(nextEducation);
+          checkAutoResetOnLastClear({ education: nextEducation });
         }}
       />
       <CustomInput
@@ -667,6 +762,7 @@ const Home = () => {
           const next = sanitizeAgeInput(event.target.value);
           if (next !== null) {
             setMinAge(next);
+            checkAutoResetOnLastClear({ minAge: next });
           }
         }}
       />
@@ -683,6 +779,7 @@ const Home = () => {
           const next = sanitizeAgeInput(event.target.value);
           if (next !== null) {
             setMaxAge(next);
+            checkAutoResetOnLastClear({ maxAge: next });
           }
         }}
       />
@@ -739,6 +836,22 @@ const Home = () => {
                     <SearchIcon sx={{ color: "#9a9aa8" }} />
                   </InputAdornment>
                 ),
+                endAdornment: keywordSearch ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="clear search"
+                      onClick={() => {
+                        setKeywordSearch("");
+                        setDebouncedKeyword("");
+                      }}
+                      edge="end"
+                      size="small"
+                      sx={{ color: "#9a9aa8" }}
+                    >
+                      <ClearIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
               }}
               sx={searchFieldSx}
             />

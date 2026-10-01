@@ -14,6 +14,7 @@ import {
   District,
   DistrictDetails,
   Native,
+  FamilyId,
   Region,
   RegionDetails,
   Roles,
@@ -45,16 +46,19 @@ import VerifyOtp from "./Pages/VerifyOtp";
 import ChangePassword from "./Pages/ChangePassword";
 import AccountProfile from "./Pages/Account/Profile";
 import AccountSettings from "./Pages/Account/Settings";
+import ConnectSamaj from "./Pages/ConnectSamaj";
 import PwaInstallBanner from "./Component/PwaInstall";
 import FullPageLoader from "./Component/Common/FullPageLoader";
 import { FormLanguageProvider } from "./context/FormLanguageContext";
 import { UseRedux } from "./Component/useRedux";
 import { useDispatch } from "react-redux";
-import { logout } from "./store/authSlice";
+import { logout, setFamilyIdExists } from "./store/authSlice";
 import { getCurrentUser } from "./util/userApi";
 import { persistUpdatedUser } from "./Pages/Account/persistUser";
 import { loadLocationMasters } from "./util/getAPICall";
 import { userLanguage } from "./util/bhasha";
+import { resolveUserFamilyIdExists } from "./util/familyIdApi";
+import { isRegularUser } from "./util/util";
 
 const LOADER_HOLD_MS = 500;
 const LOADER_FADE_MS = 200;
@@ -127,9 +131,15 @@ function App() {
       return;
     }
     getCurrentUser()
-      .then((data) => {
+      .then(async (data) => {
         persistUpdatedUser(dispatch, { ...data, token }, data);
         loadLocationMasters(dispatch);
+        if (isRegularUser(data?.role)) {
+          const exists = await resolveUserFamilyIdExists(data);
+          dispatch(setFamilyIdExists(exists));
+        } else {
+          dispatch(setFamilyIdExists(true));
+        }
         setSessionReady(true);
       })
       .catch(() => {
@@ -174,7 +184,15 @@ function App() {
         <Route path="yuva/:id" exact element={<Profile />} />
 
         {/*Private Routes*/}
-        <Route index element={<PrivateRoute Component={Dashboard} />} />
+        <Route
+          index
+          element={<PrivateRoute Component={Dashboard} requireFamilyId />}
+        />
+        <Route
+          path="connect-samaj"
+          exact
+          element={<PrivateRoute Component={ConnectSamaj} userOnly />}
+        />
         <Route
           path="profile"
           exact
@@ -183,7 +201,9 @@ function App() {
         <Route
           path="shortlisted"
           exact
-          element={<PrivateRoute Component={Shortlisted} userOnly />}
+          element={
+            <PrivateRoute Component={Shortlisted} userOnly requireFamilyId />
+          }
         />
         <Route
           path="settings"
@@ -193,7 +213,7 @@ function App() {
         <Route
           path="pdf"
           exact
-          element={<PrivateRoute Component={NewUser} />}
+          element={<PrivateRoute Component={NewUser} requireFamilyId />}
         />
 
         {/*Admin Routes*/}
@@ -308,6 +328,11 @@ function App() {
             path="native"
             exact
             element={<PrivateRoute Component={Native} />}
+          />
+          <Route
+            path="familyId"
+            exact
+            element={<PrivateRoute Component={FamilyId} />}
           />
           <Route
             path="role"

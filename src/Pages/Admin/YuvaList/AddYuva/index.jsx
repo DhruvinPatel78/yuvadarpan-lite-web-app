@@ -4,7 +4,7 @@ import {
   CircularProgress,
   Grid,
 } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CustomInput from "../../../../Component/Common/customInput";
 import CustomAutoComplete from "../../../../Component/Common/customAutoComplete";
 import CustomRadio from "../../../../Component/Common/customRadio";
@@ -41,8 +41,50 @@ import {
 } from "../../../../context/FormLanguageContext";
 import { labeledOptions } from "../../../../i18n/yuvaForm";
 import { flattenYuvaForm, masterNameText, toEnGuPayload, langText, isFilledValue } from "../../../../util/bhasha";
-import { pickMasterId } from "../../../../Component/constant";
+import { getListById as fetchChildList, pickMasterId } from "../../../../Component/constant";
 import { readFileAsDataUrl } from "../../../../util/cropImage";
+
+const sameMasterKey = (left, right) => {
+  if (left == null || right == null || left === "" || right === "") return false;
+  return String(left).trim().toLowerCase() === String(right).trim().toLowerCase();
+};
+
+const masterMatchKey = (raw) => {
+  if (raw == null || raw === "") return "";
+  if (typeof raw === "object") {
+    return String(
+      pickMasterId(raw) ||
+        raw.en ||
+        raw.gu ||
+        masterNameText(raw, "en") ||
+        masterNameText(raw, "gu") ||
+        langText(raw, "en") ||
+        langText(raw, "gu") ||
+        ""
+    ).trim();
+  }
+  return String(raw).trim();
+};
+
+const findMasterOption = (options, raw) => {
+  const key = masterMatchKey(raw);
+  if (!key) return null;
+  const rows = Array.isArray(options) ? options : [];
+  return (
+    rows.find((item) => sameMasterKey(pickMasterId(item), key)) ||
+    rows.find(
+      (item) =>
+        sameMasterKey(item?.id, key) ||
+        sameMasterKey(item?.value, key) ||
+        sameMasterKey(item?._id, key) ||
+        sameMasterKey(item?.uuid, key)
+    ) ||
+    rows.find((item) => sameMasterKey(masterNameText(item, "en"), key)) ||
+    rows.find((item) => sameMasterKey(masterNameText(item, "gu"), key)) ||
+    rows.find((item) => sameMasterKey(item?.label, key)) ||
+    null
+  );
+};
 
 const slugPart = (value) =>
   langText(value)
@@ -188,13 +230,6 @@ const AddYuva = () => {
     titleGu: "",
     descriptionGu: "",
   });
-  const [isLocation, setIsLocation] = useState({
-    country: false,
-    state: false,
-    region: false,
-    district: false,
-    city: false,
-  });
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
   const [isEdit, setIsEdit] = useState(Boolean(location?.state));
   const editYuva = location?.state?.data || null;
@@ -281,15 +316,29 @@ const AddYuva = () => {
       });
   };
 
-  const getListById = (field, id) => {
-    axios
-      .get(`/${field}/list/${id}`)
-      .then((res) => {
-        formatLabelValue(res, field);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+  const getListById = async (field, id) => {
+    if (!id) {
+      if (field === "state") setStateList([]);
+      if (field === "region") setRegionList([]);
+      if (field === "district") setDistrictList([]);
+      if (field === "city") setCityList([]);
+      return [];
+    }
+    try {
+      const list = (await fetchChildList(field, id)) || [];
+      if (field === "state") setStateList(list);
+      else if (field === "region") setRegionList(list);
+      else if (field === "district") setDistrictList(list);
+      else if (field === "city") setCityList(list);
+      return list;
+    } catch (error) {
+      console.log(error);
+      if (field === "state") setStateList([]);
+      else if (field === "region") setRegionList([]);
+      else if (field === "district") setDistrictList([]);
+      else if (field === "city") setCityList([]);
+      return [];
+    }
   };
   const selectedValueSetName = (field) => {
     switch (field) {
@@ -333,57 +382,42 @@ const AddYuva = () => {
 
       case "country":
         country.forEach((data) => {
-          if (location?.state?.data?.country === data.id) {
-            // setFieldValue("country", data.name);
+          if (String(location?.state?.data?.country) === String(data.id)) {
             setSelectedCountry(masterNameText(data));
-            setIsLocation((pre) => ({ ...pre, country: true }));
           }
         });
         break;
       case "state":
         state.forEach((data) => {
-          if (location?.state?.data?.state === data.id) {
-            // setFieldValue("state", data.name);
+          if (String(location?.state?.data?.state) === String(data.id)) {
             setSelectedState(masterNameText(data));
-            setIsLocation((pre) => ({ ...pre, state: true }));
-            getListById("state", location?.state?.data?.country);
           }
         });
         break;
       case "region":
         region.forEach((data) => {
-          if (location?.state?.data?.region === data.id) {
-            // setFieldValue("region", data.name);
+          if (String(location?.state?.data?.region) === String(data.id)) {
             setSelectedRegion(masterNameText(data));
-            setIsLocation((pre) => ({ ...pre, region: true }));
-            getListById("region", location?.state?.data?.state);
           }
         });
         break;
       case "district":
         district.forEach((data) => {
-          if (location?.state?.data?.district === data.id) {
-            // setFieldValue("district", data.name);
+          if (String(location?.state?.data?.district) === String(data.id)) {
             setSelectedDistrict(masterNameText(data));
-            setIsLocation((pre) => ({ ...pre, district: true }));
-            getListById("district", location?.state?.data?.region);
           }
         });
         break;
       case "city":
         city.forEach((data) => {
-          if (location?.state?.data?.city === data.id) {
-            // setFieldValue("city", data.name);
+          if (String(location?.state?.data?.city) === String(data.id)) {
             setSelectedCity(masterNameText(data));
-            setIsLocation((pre) => ({ ...pre, city: true }));
-            getListById("city", location?.state?.data?.district);
           }
         });
         break;
       case "samaj":
-        getSamajList(location?.state?.data?.city);
         samaj.forEach((data) => {
-          if (location?.state?.data?.localSamaj === data.id) {
+          if (String(location?.state?.data?.localSamaj) === String(data.id)) {
             setSelectedSamaj(masterNameText(data));
           }
         });
@@ -626,6 +660,131 @@ const AddYuva = () => {
     submitCount,
   } = formik;
 
+  const locationHydratedFor = useRef("");
+
+  const hydrateLocationCascade = useCallback(
+    async (record) => {
+      const countries =
+        countryList.length > 0 ? countryList : setLableValueInList(country);
+      if (!countries.length) return;
+
+      const countryOpt = findMasterOption(
+        countries,
+        record?.country ?? record?.labels?.country
+      );
+      const countryId = pickMasterId(countryOpt);
+      if (!countryOpt || !countryId) {
+        setFieldValue("country", "");
+        setSelectedCountry(null);
+        setStateList([]);
+        setRegionList([]);
+        setDistrictList([]);
+        setCityList([]);
+        setSamajList([]);
+        return;
+      }
+      setCountryList(countries);
+      setFieldValue("country", countryId);
+      setSelectedCountry(countryOpt);
+
+      const states = (await getListById("state", countryId)) || [];
+      const stateOpt = findMasterOption(
+        states,
+        record?.state ?? record?.labels?.state
+      );
+      const stateId = pickMasterId(stateOpt);
+      if (!stateOpt || !stateId) {
+        setFieldValue("state", "");
+        setSelectedState(null);
+        setRegionList([]);
+        setDistrictList([]);
+        setCityList([]);
+        setSamajList([]);
+        return;
+      }
+      setFieldValue("state", stateId);
+      setSelectedState(stateOpt);
+
+      const regions = (await getListById("region", stateId)) || [];
+      const regionOpt = findMasterOption(
+        regions,
+        record?.region ?? record?.labels?.region
+      );
+      const regionId = pickMasterId(regionOpt);
+      if (!regionOpt || !regionId) {
+        setFieldValue("region", "");
+        setSelectedRegion(null);
+        setDistrictList([]);
+        setCityList([]);
+        setSamajList([]);
+        return;
+      }
+      setFieldValue("region", regionId);
+      setSelectedRegion(regionOpt);
+
+      const districts = (await getListById("district", regionId)) || [];
+      const districtOpt = findMasterOption(
+        districts,
+        record?.district ?? record?.labels?.district
+      );
+      const districtId = pickMasterId(districtOpt);
+      if (!districtOpt || !districtId) {
+        setFieldValue("district", "");
+        setSelectedDistrict(null);
+        setCityList([]);
+        setSamajList([]);
+        return;
+      }
+      setFieldValue("district", districtId);
+      setSelectedDistrict(districtOpt);
+
+      const cities = (await getListById("city", districtId)) || [];
+      const cityOpt = findMasterOption(
+        cities,
+        record?.city ?? record?.labels?.city
+      );
+      const cityId = pickMasterId(cityOpt);
+      if (!cityOpt || !cityId) {
+        setFieldValue("city", "");
+        setSelectedCity(null);
+        setSamajList([]);
+        return;
+      }
+      setFieldValue("city", cityId);
+      setSelectedCity(cityOpt);
+
+      await new Promise((resolve) => {
+        axios
+          .get(`/samaj/list/${cityId}`)
+          .then((res) => {
+            const list = setLableValueInList(res.data);
+            setSamajList(list);
+            const samajOpt = findMasterOption(
+              list,
+              record?.localSamaj ?? record?.labels?.localSamaj
+            );
+            const samajId = pickMasterId(samajOpt);
+            if (samajOpt && samajId) {
+              setFieldValue("localSamaj", samajId);
+              setSelectedSamaj(samajOpt);
+            } else {
+              setFieldValue("localSamaj", "");
+              setSelectedSamaj(null);
+            }
+          })
+          .catch(() => {
+            setSamajList([]);
+            setFieldValue("localSamaj", "");
+            setSelectedSamaj(null);
+          })
+          .finally(resolve);
+      });
+    },
+    // setLableValueInList / getListById close over latest language + setters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [country, countryList, setFieldValue]
+  );
+
   const closeCropModal = () => {
     setCropSrc("");
     setCropMode(null);
@@ -758,6 +917,7 @@ const AddYuva = () => {
   useEffect(() => {
     if (location?.state) {
       setIsEdit(true);
+      locationHydratedFor.current = "";
       const { gu: _ignoredGu, ...record } = location.state.data || {};
       const flat = flattenYuvaForm(record);
       setValues({
@@ -792,6 +952,20 @@ const AddYuva = () => {
       addLabelValueInList(data);
     }); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Resolve saved location names/ids to master ids, then load child option lists.
+  useEffect(() => {
+    if (!isEdit || !location?.state?.data) return;
+    const record = location.state.data;
+    const recordKey = String(record?.id || record?._id || "");
+    if (!recordKey || locationHydratedFor.current === recordKey) return;
+    const countries =
+      countryList.length > 0 ? countryList : setLableValueInList(country);
+    if (!countries.length) return;
+    locationHydratedFor.current = recordKey;
+    hydrateLocationCascade(record);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit, location?.state?.data, countryList, country, hydrateLocationCascade]);
 
   useEffect(() => {
     if (!nativeList.length) return;
@@ -1196,7 +1370,21 @@ const AddYuva = () => {
                       const countryId = pickMasterId(country);
                       setFieldValue("country", countryId);
                       setSelectedCountry(country || null);
-                      setIsLocation((pre) => ({ ...pre, country: Boolean(countryId) }));
+                      setFieldValue("state", "");
+                      setFieldValue("region", "");
+                      setFieldValue("district", "");
+                      setFieldValue("city", "");
+                      setFieldValue("localSamaj", "");
+                      setSelectedState(null);
+                      setSelectedRegion(null);
+                      setSelectedDistrict(null);
+                      setSelectedCity(null);
+                      setSelectedSamaj(null);
+                      setStateList([]);
+                      setRegionList([]);
+                      setDistrictList([]);
+                      setCityList([]);
+                      setSamajList([]);
                       if (countryId) getListById("state", countryId);
                     }}
                     onBlur={handleBlur}
@@ -1215,11 +1403,22 @@ const AddYuva = () => {
                       const stateId = pickMasterId(state);
                       setFieldValue("state", stateId);
                       setSelectedState(state || null);
-                      setIsLocation((pre) => ({ ...pre, state: Boolean(stateId) }));
+                      setFieldValue("region", "");
+                      setFieldValue("district", "");
+                      setFieldValue("city", "");
+                      setFieldValue("localSamaj", "");
+                      setSelectedRegion(null);
+                      setSelectedDistrict(null);
+                      setSelectedCity(null);
+                      setSelectedSamaj(null);
+                      setRegionList([]);
+                      setDistrictList([]);
+                      setCityList([]);
+                      setSamajList([]);
                       if (stateId) getListById("region", stateId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.country}
+                    disabled={!values.country}
                   />
                   <CustomAutoComplete
                     list={regionList}
@@ -1235,11 +1434,19 @@ const AddYuva = () => {
                       const regionId = pickMasterId(region);
                       setFieldValue("region", regionId);
                       setSelectedRegion(region || null);
-                      setIsLocation((pre) => ({ ...pre, region: Boolean(regionId) }));
+                      setFieldValue("district", "");
+                      setFieldValue("city", "");
+                      setFieldValue("localSamaj", "");
+                      setSelectedDistrict(null);
+                      setSelectedCity(null);
+                      setSelectedSamaj(null);
+                      setDistrictList([]);
+                      setCityList([]);
+                      setSamajList([]);
                       if (regionId) getListById("district", regionId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.state}
+                    disabled={!values.state}
                   />
                   <CustomAutoComplete
                     list={districtList}
@@ -1257,11 +1464,16 @@ const AddYuva = () => {
                       const districtId = pickMasterId(district);
                       setFieldValue("district", districtId);
                       setSelectedDistrict(district || null);
-                      setIsLocation((pre) => ({ ...pre, district: Boolean(districtId) }));
+                      setFieldValue("city", "");
+                      setFieldValue("localSamaj", "");
+                      setSelectedCity(null);
+                      setSelectedSamaj(null);
+                      setCityList([]);
+                      setSamajList([]);
                       if (districtId) getListById("city", districtId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.region}
+                    disabled={!values.region}
                   />
                   <CustomAutoComplete
                     list={cityList}
@@ -1277,13 +1489,13 @@ const AddYuva = () => {
                       const cityId = pickMasterId(city);
                       setFieldValue("city", cityId);
                       setSelectedCity(city || null);
-                      setIsLocation((pre) => ({ ...pre, city: Boolean(cityId) }));
                       setFieldValue("localSamaj", "");
                       setSelectedSamaj(null);
+                      setSamajList([]);
                       if (cityId) getSamajList(cityId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.district}
+                    disabled={!values.district}
                   />
                   <CustomAutoComplete
                     list={samajList}
@@ -1299,7 +1511,7 @@ const AddYuva = () => {
                       errors?.localSamaj &&
                       errors?.localSamaj
                     }
-                    disabled={!isLocation.city}
+                    disabled={!values.city}
                     onChange={(e, localSamaj) => {
                       setFieldValue("localSamaj", pickMasterId(localSamaj));
                       setSelectedSamaj(localSamaj || null);

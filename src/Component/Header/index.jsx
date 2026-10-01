@@ -16,10 +16,16 @@ import useHeader from "./useHeader";
 import FloatingButton from "../Common/FloatingButton";
 import { YuvadarpanLogo } from "../Icons";
 import { isRegularUser } from "../../util/util";
+import { useSelector } from "react-redux";
 
 const menuItems = [
   { label: "Profile", path: "/profile" },
-  { label: "Your Shortlisted", path: "/shortlisted", userOnly: true },
+  {
+    label: "Your Shortlisted",
+    path: "/shortlisted",
+    userOnly: true,
+    requiresFamilyId: true,
+  },
   { label: "Settings", path: "/settings" },
   { label: "Logout", action: "logout" },
 ];
@@ -30,6 +36,7 @@ const Header = () => {
     navigate,
     action: { handleLogOut },
   } = useHeader();
+  const familyIdExists = useSelector((state) => state.auth.familyIdExists);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
   const handleOpenUserMenu = (event) => {
@@ -122,7 +129,15 @@ const Header = () => {
                 onClose={handleCloseUserMenu}
               >
                 {menuItems
-                  .filter((item) => !item.userOnly || isRegularUser(user?.user?.role))
+                  .filter((item) => {
+                    if (item.userOnly && !isRegularUser(user?.user?.role)) {
+                      return false;
+                    }
+                    if (item.requiresFamilyId && familyIdExists !== true) {
+                      return false;
+                    }
+                    return true;
+                  })
                   .map((item) => (
                   <MenuItem
                     key={item.label}

@@ -15,11 +15,13 @@ import {
 import { Button, PageHeader } from "../../../Component/UI";
 import { endLoading, startLoading } from "../../../store/authSlice";
 import { useDispatch } from "react-redux";
+import { useFormLanguage } from "../../../context/FormLanguageContext";
 
 const PAGE_SIZE = 12;
 
 const Shortlisted = () => {
   const { surname, city, auth } = UseRedux();
+  const { t } = useFormLanguage();
   const language = userLanguage(auth?.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -110,11 +112,11 @@ const Shortlisted = () => {
       <Header />
       <Container maxWidth="xl" className="p-3 sm:p-4 pb-6">
         <PageHeader
-          title="Your Shortlisted"
-          description="Yuva profiles you saved from the directory."
+          title={t("yourShortlisted")}
+          description={t("yourShortlistedDescription")}
           actions={
             <Button variant="secondary" onClick={() => navigate("/")}>
-              Back to Home
+              {t("backToDirectory")}
             </Button>
           }
         />
