@@ -15,6 +15,7 @@ export const UseRedux = () =>
       role: state.location.role,
       gotra: state.location.gotra,
       native: state.location.native,
+      familyId: state.location.familyId,
     }),
     shallowEqual
   );

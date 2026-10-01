@@ -10,6 +10,7 @@ const LINKED_PATHS = {
   surname: "/surname/linked",
   gotra: "/gotra/linked",
   native: "/native/linked",
+  familyId: "/familyId/linked",
   role: "/role/linked",
   user: "/user/linked",
   yuva: "/yuvaList/linked",

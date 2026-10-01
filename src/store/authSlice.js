@@ -5,6 +5,7 @@ const initialState = {
   loggedIn: false,
   loading: false,
   error: null,
+  familyIdExists: null,
 };
 
 const authSlice = createSlice({
@@ -23,15 +24,25 @@ const authSlice = createSlice({
       state.loggedIn = true;
       state.error = null;
     },
+    setFamilyIdExists: (state, action) => {
+      state.familyIdExists = action.payload;
+    },
     logout: (state) => {
       state.user = null;
       state.loggedIn = false;
       state.loading = false;
       state.error = null;
+      state.familyIdExists = null;
     },
   },
 });
 
-export const { login, logout, startLoading, endLoading } = authSlice.actions;
+export const {
+  login,
+  logout,
+  startLoading,
+  endLoading,
+  setFamilyIdExists,
+} = authSlice.actions;
 
 export default authSlice.reducer;

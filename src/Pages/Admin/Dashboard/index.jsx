@@ -22,6 +22,7 @@ const dashboardItems = {
     { id: 10, title: "Surname", href: "/admin/surname" },
     { id: 11, title: "Native", href: "/admin/native" },
     { id: 12, title: "Roles", href: "/admin/role" },
+    { id: 14, title: "Family ID", href: "/admin/familyId" },
     { id: 13, title: "Logs", href: "/admin/logs" },
   ],
 };

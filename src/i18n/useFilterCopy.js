@@ -55,6 +55,7 @@ export const useFilterCopy = () => {
       searchCity: t("searchCity"),
       searchSamaj: t("searchSamaj"),
       searchNative: t("searchNative"),
+      searchFamilyId: t("searchFamilyId"),
       searchGotra: t("searchGotra"),
       searchSurname: t("searchSurname"),
       searchRole: t("searchRole"),

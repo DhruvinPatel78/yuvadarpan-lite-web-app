@@ -20,6 +20,7 @@ import Samaj from "./Samaj";
 import Surname from "./Surname";
 import Gotra from "./Gotra";
 import Native from "./Native";
+import FamilyId from "./FamilyId";
 import Roles from "./Roles";
 import Logs from "./Logs";
 import LogDetails from "./Logs/Details";
@@ -46,6 +47,7 @@ export {
   Surname,
   Gotra,
   Native,
+  FamilyId,
   Roles,
   Logs,
   LogDetails,
