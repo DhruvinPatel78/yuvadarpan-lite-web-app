@@ -8,13 +8,20 @@ import {
   NotificationSnackbar,
 } from "../../Component/Common/notification";
 import { useDispatch } from "react-redux";
-import { login, startLoading, endLoading } from "../../store/authSlice";
+import {
+  login,
+  startLoading,
+  endLoading,
+  setFamilyIdExists,
+} from "../../store/authSlice";
 import { loadLocationMasters } from "../../util/getAPICall";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
 import { UseRedux } from "../../Component/useRedux";
 import { loginUser } from "../../util/authApi";
 import { getCurrentUser } from "../../util/userApi";
+import { resolveUserFamilyIdExists } from "../../util/familyIdApi";
+import { isRegularUser } from "../../util/util";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -49,10 +56,22 @@ export default function Index() {
           localStorage.setItem("token", res?.token);
           const me = await getCurrentUser();
           localStorage.setItem("user", JSON.stringify(me));
+
+          let familyIdExists = true;
+          if (isRegularUser(me?.role)) {
+            familyIdExists = await resolveUserFamilyIdExists(me);
+          }
+          dispatch(setFamilyIdExists(familyIdExists));
           setNotification({ message: "Signed in.", type: "success" });
           loadLocationMasters(dispatch);
           dispatch(login({ ...me, token: res?.token }));
           resetForm();
+          navigate(
+            isRegularUser(me?.role) && !familyIdExists
+              ? "/connect-samaj"
+              : "/",
+            { replace: true }
+          );
         } catch (err) {
           dispatch(endLoading());
           setNotification({

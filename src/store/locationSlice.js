@@ -11,6 +11,7 @@ const initialState = {
   role: [],
   gotra: [],
   native: [],
+  familyId: [],
 };
 
 const locationReducer = createSlice({
@@ -47,6 +48,9 @@ const locationReducer = createSlice({
     native: (state, action) => {
       state.native = action.payload;
     },
+    familyId: (state, action) => {
+      state.familyId = action.payload;
+    },
     clearLocation: (state) => {
       state.region = [];
       state.state = [];
@@ -57,6 +61,7 @@ const locationReducer = createSlice({
       state.role = [];
       state.gotra = [];
       state.native = [];
+      state.familyId = [];
     },
   },
 });
@@ -73,6 +78,7 @@ export const {
   role,
   gotra,
   native,
+  familyId,
 } = locationReducer.actions;
 
 export default locationReducer.reducer;

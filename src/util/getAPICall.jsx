@@ -10,6 +10,7 @@ import {
   role,
   gotra,
   native,
+  familyId,
 } from "../store/locationSlice";
 
 const inflight = {};
@@ -25,6 +26,7 @@ const MASTER_MAP = {
   role: { path: "role", action: role },
   gotra: { path: "gotra", action: gotra },
   native: { path: "native", action: native },
+  familyId: { path: "familyId", action: familyId },
 };
 
 const asRows = (value) =>
@@ -85,6 +87,7 @@ export const getAllCountryData = fetchAll("country");
 export const getAllRoleData = fetchAll("role");
 export const getAllGotraData = fetchAll("gotra");
 export const getAllNativeData = fetchAll("native");
+export const getAllFamilyIdData = fetchAll("familyId");
 
 export const refreshMaster = (key) => runFetch(key, { force: true });
 
@@ -105,5 +108,6 @@ export const loadLocationMasters = (dispatch) => {
   dispatch(getAllSurnameData);
   dispatch(getAllGotraData);
   dispatch(getAllNativeData);
+  dispatch(getAllFamilyIdData);
   dispatch(getAllRoleData);
 };
