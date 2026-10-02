@@ -2,8 +2,24 @@ import React, { useEffect, useState } from "react";
 import { getAdvertisementsByPage } from "../../util/advertisementApi";
 import AdCard from "./AdCard";
 
+/** Stable priority order: 1st, 2nd, 3rd… then id. */
+export const sortAdsByPriority = (list = []) =>
+  [...list].sort((a, b) => {
+    const pa = Number(a?.priority);
+    const pb = Number(b?.priority);
+    const aOk = Number.isFinite(pa);
+    const bOk = Number.isFinite(pb);
+    if (aOk && bOk && pa !== pb) return pa - pb;
+    if (aOk && !bOk) return -1;
+    if (!aOk && bOk) return 1;
+    return String(a?.id || a?.uuid || "").localeCompare(
+      String(b?.id || b?.uuid || "")
+    );
+  });
+
 /**
- * Loads ads for a page. Optional fallback pages if primary has no ads.
+ * Loads ads for a page. Optional fallback pages if primary has no / few ads.
+ * Always returns ads sorted by priority (never shuffled).
  */
 export const usePageAds = (page, { fallbackPages = [] } = {}) => {
   const [ads, setAds] = useState([]);
@@ -31,13 +47,16 @@ export const usePageAds = (page, { fallbackPages = [] } = {}) => {
               seen.set(String(adId), { ...row, id: String(adId) });
             }
           });
-          // Need 1 under profile + 2 under details.
+          // Primary page: keep every ad. Fallbacks only fill up to 3.
+          if (key === page) {
+            continue;
+          }
           if (seen.size >= 3) {
             break;
           }
         }
         if (active) {
-          setAds([...seen.values()]);
+          setAds(sortAdsByPriority([...seen.values()]));
         }
       } catch {
         if (active) setAds([]);
@@ -52,38 +71,31 @@ export const usePageAds = (page, { fallbackPages = [] } = {}) => {
   return ads;
 };
 
-/** Fisher–Yates shuffle (copy). */
-export const shuffleList = (list = []) => {
-  const next = [...list];
-  for (let i = next.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [next[i], next[j]] = [next[j], next[i]];
-  }
-  return next;
-};
-
 /**
- * Insert shuffled ads into a yuva list roughly every N items.
+ * Insert ads into a yuva list every N items, in fixed priority order.
+ * Same inputs always produce the same feed (no random).
  */
 export const interleaveAdsIntoList = (yuvaRows = [], ads = [], every = 4) => {
-  if (!ads.length) {
+  const orderedAds = sortAdsByPriority(ads);
+  if (!orderedAds.length) {
     return yuvaRows.map((row) => ({ type: "yuva", data: row }));
   }
-  const shuffledAds = shuffleList(ads);
+
   const result = [];
   let adIndex = 0;
   const spacing = Math.max(2, every);
 
   yuvaRows.forEach((row, index) => {
     result.push({ type: "yuva", data: row });
-    if ((index + 1) % spacing === 0 && adIndex < shuffledAds.length) {
-      result.push({ type: "ad", data: shuffledAds[adIndex] });
+    if ((index + 1) % spacing === 0 && adIndex < orderedAds.length) {
+      result.push({ type: "ad", data: orderedAds[adIndex] });
       adIndex += 1;
     }
   });
 
-  while (adIndex < shuffledAds.length) {
-    result.push({ type: "ad", data: shuffledAds[adIndex] });
+  // Remaining ads stay in priority order at the end (still not random).
+  while (adIndex < orderedAds.length) {
+    result.push({ type: "ad", data: orderedAds[adIndex] });
     adIndex += 1;
   }
 
