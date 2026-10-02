@@ -15,6 +15,8 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
+import { usePageAds } from "../../Component/Common/AdBanner";
+import AdCard from "../../Component/Common/AdCard";
 import { UseRedux } from "../../Component/useRedux";
 import CustomTabPanel from "./CustomTabPanel";
 import YuvaPrintTemplate, {
@@ -261,6 +263,11 @@ const ProfilePage = () => {
     Boolean(auth?.loggedIn && auth?.user) &&
     isRegularUser(auth?.user?.role);
   const [shortlisted, setShortlisted] = React.useState(false);
+  const pageAds = usePageAds("share_profile", {
+    fallbackPages: ["profile", "dashboard", "login"],
+  });
+  const profileAd = pageAds[0] || null;
+  const detailsAds = pageAds.slice(1, 3);
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -604,14 +611,16 @@ const ProfilePage = () => {
               </IconBtn>
             </div>
           </div>
-          <Grid container spacing={2.5}>
-            <Grid item xs={12} md={4} lg={4}>
-              <Card className="md:sticky md:top-24 relative">
+          <div className="w-full grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-start">
+            <div className="md:col-span-4 w-full min-w-0 flex flex-col gap-4">
+              <Card className="relative w-full">
                 {canShortlist ? (
                   <button
                     type="button"
                     aria-label={
-                      shortlisted ? "Remove from shortlist" : "Add to shortlist"
+                      shortlisted
+                        ? "Remove from shortlist"
+                        : "Add to shortlist"
                     }
                     aria-pressed={shortlisted}
                     className="absolute top-3 right-3 z-10 p-0 bg-transparent border-0 shadow-none text-primary cursor-pointer appearance-none"
@@ -682,8 +691,10 @@ const ProfilePage = () => {
                   </div>
                 </div>
               </Card>
-            </Grid>
-            <Grid item xs={12} md={8} lg={8}>
+              {profileAd ? <AdCard ad={profileAd} /> : null}
+            </div>
+
+            <div className="md:col-span-8 w-full min-w-0 flex flex-col gap-4">
               <Card className="flex flex-col gap-3 sm:gap-4 items-start min-w-0">
                 <div className="hidden md:flex md:flex-col md:gap-4 md:items-start w-full min-w-0">
                   <AppTabs
@@ -756,8 +767,15 @@ const ProfilePage = () => {
                   </MobileSection>
                 </div>
               </Card>
-            </Grid>
-          </Grid>
+              {detailsAds.length ? (
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {detailsAds.map((ad) => (
+                    <AdCard key={ad.id || ad.uuid || ad._id} ad={ad} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
         </ContainerPage>
       </div>
       <Modal

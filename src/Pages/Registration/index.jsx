@@ -20,6 +20,7 @@ import { registerUser } from "../../util/authApi";
 import { messaging } from "../../firebase";
 import { getToken } from "firebase/messaging";
 import getMessagingRegistration from "../../util/getMessagingRegistration";
+import AdBanner from "../../Component/Common/AdBanner";
 
 const FCM_WAIT_MS = 3500;
 
@@ -174,7 +175,10 @@ export default function Index() {
 
   return (
     <>
-      <AuthShell maxWidthClass="sm:max-w-[600px]">
+      <AuthShell
+        maxWidthClass="sm:max-w-[600px]"
+        beforeCard={<AdBanner page="signup" />}
+      >
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2}>

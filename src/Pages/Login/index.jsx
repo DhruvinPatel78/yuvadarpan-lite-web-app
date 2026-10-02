@@ -22,6 +22,7 @@ import { loginUser } from "../../util/authApi";
 import { getCurrentUser } from "../../util/userApi";
 import { resolveUserFamilyIdExists } from "../../util/familyIdApi";
 import { isRegularUser } from "../../util/util";
+import AdBanner from "../../Component/Common/AdBanner";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ export default function Index() {
 
   return (
     <>
-    <AuthShell>
+    <AuthShell beforeCard={<AdBanner page="login" />}>
         <FormikProvider value={formik}>
           <Form>
             <Grid container spacing={2.5}>

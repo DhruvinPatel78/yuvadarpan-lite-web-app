@@ -23,6 +23,7 @@ const dashboardItems = {
     { id: 11, title: "Native", href: "/admin/native" },
     { id: 12, title: "Roles", href: "/admin/role" },
     { id: 14, title: "Family ID", href: "/admin/familyId" },
+    { id: 15, title: "Advertisement", href: "/admin/advertisement" },
     { id: 13, title: "Logs", href: "/admin/logs" },
   ],
 };
@@ -40,7 +41,8 @@ export default function Index() {
   ).filter(
     (item) =>
       !(isLocationMasterReadOnly(user?.role) && item.href === "/admin/role") &&
-      !(!isAdmin(user?.role) && item.href === "/admin/logs")
+      !(!isAdmin(user?.role) && item.href === "/admin/logs") &&
+      !(!isAdmin(user?.role) && item.href === "/admin/advertisement")
   );
 
   return (
