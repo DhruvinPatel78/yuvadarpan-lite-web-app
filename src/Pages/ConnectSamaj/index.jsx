@@ -26,10 +26,13 @@ const ConnectSamaj = () => {
       <ContainerPage className="flex flex-col items-center justify-center min-h-[60vh] py-10">
         <div className="w-full max-w-xl text-center px-4">
           <h1 className="text-2xl sm:text-3xl font-semibold text-primary mb-4 form-lang-gu">
-            Family ID મળ્યું નથી
+            યુવદર્પણ પુસ્તક મળ્યું નથી?
           </h1>
           <p className="text-base sm:text-lg leading-relaxed text-primary form-lang-gu">
-            કૃપા કરીને તમારા સમાજ સાથે સંપર્ક કરો અને તમારું Family ID ઉમેરાવો.
+            કૃપા કરીને તમારા સમાજ સાથે સંપર્ક કરો અને યુવદર્પણ પુસ્તક મેળવો.
+          </p>
+          <p className="text-base sm:text-lg leading-relaxed text-primary form-lang-gu">
+            ડિજિટલ યુવદર્પણ ઉપયોગમાં લેવા માટે યુવદર્પણ પુસ્તક મેળવવું જરૂરી છે.
           </p>
         </div>
       </ContainerPage>
