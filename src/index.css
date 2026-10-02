@@ -63,7 +63,7 @@ body,
 
 .pwa-pull-refresh {
   position: fixed;
-  top: calc(8px + env(safe-area-inset-top, 0px));
+  top: calc(56px + env(safe-area-inset-top, 0px));
   left: 50%;
   z-index: 1300;
   pointer-events: none;
