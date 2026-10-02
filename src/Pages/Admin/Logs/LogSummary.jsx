@@ -11,6 +11,7 @@ export const ENTITY_PATHS = {
   region: (id) => `/admin/region/${id}`,
   district: (id) => `/admin/district/${id}`,
   city: (id) => `/admin/city/${id}`,
+  familyId: () => `/admin/familyId`,
 };
 
 export const entityNavState = (log) => {
@@ -124,9 +125,11 @@ export function LogSummary({ log }) {
         </>
       );
     }
+    const typeLabel =
+      log.entityType === "familyId" ? "Family ID" : log.entityType;
     return (
       <>
-        {actor} added new {entity} {log.entityType}.
+        {actor} added new {entity} {typeLabel}.
       </>
     );
   }
