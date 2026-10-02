@@ -49,6 +49,7 @@ import AccountProfile from "./Pages/Account/Profile";
 import AccountSettings from "./Pages/Account/Settings";
 import ConnectSamaj from "./Pages/ConnectSamaj";
 import PwaInstallBanner from "./Component/PwaInstall";
+import PwaPullToRefresh from "./Component/PwaPullToRefresh";
 import FullPageLoader from "./Component/Common/FullPageLoader";
 import { FormLanguageProvider } from "./context/FormLanguageContext";
 import { UseRedux } from "./Component/useRedux";
@@ -369,6 +370,7 @@ function App() {
       </Route>
     </Routes>
       <PwaInstallBanner />
+      <PwaPullToRefresh />
       {loaderPhase !== "off" ? (
         <FullPageLoader fading={loaderPhase === "out"} />
       ) : null}
