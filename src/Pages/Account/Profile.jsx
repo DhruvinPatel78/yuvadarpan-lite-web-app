@@ -7,6 +7,7 @@ import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import CustomRadio from "../../Component/Common/customRadio";
 import { Form, FormikProvider, useFormik } from "formik";
 import * as Yup from "yup";
+import moment from "moment";
 import { useDispatch } from "react-redux";
 import { endLoading, startLoading } from "../../store/authSlice";
 import { UseRedux } from "../../Component/useRedux";
@@ -17,9 +18,16 @@ import {
 import { getCurrentUser, updateUser } from "../../util/userApi";
 import { persistUpdatedUser } from "./persistUser";
 import { PageHeader, Card, Button } from "../../Component/UI";
-import PreferredLanguageField from "../../Component/Common/preferredLanguageField";
-import { AdPairRow } from "../../Component/Common/AdBanner";
-import { isRegularUser } from "../../util/util";
+import { languageLabel, masterNameText } from "../../util/bhasha";
+import {
+  getAllCityData,
+  getAllCountryData,
+  getAllDistrictData,
+  getAllRegionData,
+  getAllSamajData,
+  getAllStateData,
+  getAllSurnameData,
+} from "../../util/getAPICall";
 
 const toDateInputValue = (value) => {
   if (!value) return "";
@@ -27,12 +35,40 @@ const toDateInputValue = (value) => {
   return isoDate ? isoDate[1] : "";
 };
 
+const lookupName = (list, id) => {
+  if (id == null || id === "") return "-";
+  const key = String(id);
+  const found = (list || []).find(
+    (item) =>
+      String(item?.id) === key ||
+      String(item?._id) === key ||
+      String(item?.value) === key ||
+      String(item?.uuid) === key
+  );
+  return masterNameText(found) || "-";
+};
+
+const formatUserDate = (value) => {
+  if (!value) return "-";
+  const parsed = moment(value);
+  return parsed.isValid() ? parsed.format("DD/MM/YYYY hh:mm A") : String(value);
+};
+
 export default function Profile() {
   const dispatch = useDispatch();
-  const { loading, auth, surname } = UseRedux();
+  const {
+    loading,
+    auth,
+    surname,
+    country,
+    state,
+    region,
+    district,
+    city,
+    samaj,
+  } = UseRedux();
   const { notification, setNotification } = NotificationData();
   const user = auth?.user;
-  const showLanguage = !isRegularUser(user?.role);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -44,7 +80,6 @@ export default function Profile() {
       mobile: user?.mobile || "",
       dob: toDateInputValue(user?.dob),
       gender: user?.gender || "",
-      language: user?.language === "en" ? "en" : "gu",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -52,7 +87,6 @@ export default function Profile() {
       lastName: Yup.string().required("Required"),
       email: Yup.string().email("Enter a valid email").required("Required"),
       mobile: Yup.string().required("Required"),
-      language: Yup.string().oneOf(["en", "gu"]).required("Required"),
     }),
     onSubmit: async (values) => {
       dispatch(startLoading());
@@ -89,6 +123,16 @@ export default function Profile() {
     ) || null;
 
   useEffect(() => {
+    dispatch(getAllSurnameData);
+    dispatch(getAllCountryData);
+    dispatch(getAllStateData);
+    dispatch(getAllRegionData);
+    dispatch(getAllDistrictData);
+    dispatch(getAllCityData);
+    dispatch(getAllSamajData);
+  }, [dispatch]);
+
+  useEffect(() => {
     const loadUser = async () => {
       try {
         const data = await getCurrentUser();
@@ -118,9 +162,18 @@ export default function Profile() {
             <Form>
               <Grid container spacing={2.5}>
                 <CustomInput
+                    type={"text"}
+                    xs={12}
+                    sm={4}
+                    label={"Family ID"}
+                    name="familyId"
+                    value={user?.familyId || "-"}
+                    readOnly
+                />
+                <CustomInput
                   type={"text"}
                   xs={12}
-                  sm={6}
+                  sm={4}
                   label={"First name"}
                   name="firstName"
                   value={values.firstName}
@@ -131,7 +184,7 @@ export default function Profile() {
                 <CustomInput
                   type={"text"}
                   xs={12}
-                  sm={6}
+                  sm={4}
                   label={"Middle name"}
                   name="middleName"
                   value={values.middleName}
@@ -144,7 +197,7 @@ export default function Profile() {
                   label={"Last name"}
                   placeholder={"Select last name"}
                   xs={12}
-                  sm={6}
+                  sm={4}
                   name="lastName"
                   value={lastNameValue}
                   errors={touched.lastName && errors.lastName}
@@ -158,7 +211,7 @@ export default function Profile() {
                 <CustomInput
                   type={"text"}
                   xs={12}
-                  sm={6}
+                  sm={4}
                   label={"Email"}
                   name="email"
                   value={values.email}
@@ -169,7 +222,7 @@ export default function Profile() {
                 <CustomInput
                   type={"text"}
                   xs={12}
-                  sm={6}
+                  sm={4}
                   label={"Mobile"}
                   name="mobile"
                   value={values.mobile}
@@ -180,7 +233,7 @@ export default function Profile() {
                 <CustomInput
                   type={"date"}
                   xs={12}
-                  sm={6}
+                  sm={4}
                   label={"Date of birth"}
                   name="dob"
                   value={values.dob}
@@ -196,20 +249,113 @@ export default function Profile() {
                   name={"gender"}
                   value={values.gender}
                   xs={12}
+                  sm={4}
                   className={"flex flex-row"}
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
-                {showLanguage ? (
-                  <PreferredLanguageField
-                    xs={12}
-                    sm={6}
-                    label="Language"
-                    value={values.language}
-                    onChange={(next) => setFieldValue("language", next)}
-                    errors={touched.language && errors.language}
-                  />
-                ) : null}
+
+
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Language"}
+                  name="language"
+                  value={languageLabel(user?.language) || "-"}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Country"}
+                  name="country"
+                  value={lookupName(country, user?.country)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"State"}
+                  name="state"
+                  value={lookupName(state, user?.state)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Region"}
+                  name="region"
+                  value={lookupName(region, user?.region)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"District"}
+                  name="district"
+                  value={lookupName(district, user?.district)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"City"}
+                  name="city"
+                  value={lookupName(city, user?.city)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Local samaj"}
+                  name="localSamaj"
+                  value={lookupName(samaj, user?.localSamaj)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={2}
+                  label={"Allowed"}
+                  name="allowed"
+                  value={user?.allowed ? "Yes" : "No"}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={2}
+                  label={"Active"}
+                  name="active"
+                  value={user?.active ? "Yes" : "No"}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Created at"}
+                  name="createdAt"
+                  value={formatUserDate(user?.createdAt)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Updated at"}
+                  name="updatedAt"
+                  value={formatUserDate(user?.updatedAt)}
+                  readOnly
+                />
+
                 <Grid
                   item
                   xs={12}
@@ -227,7 +373,6 @@ export default function Profile() {
             </Form>
           </FormikProvider>
         </Card>
-        <AdPairRow page="profile" className="mt-4" />
       </ContainerPage>
       <NotificationSnackbar notification={notification} />
     </Box>

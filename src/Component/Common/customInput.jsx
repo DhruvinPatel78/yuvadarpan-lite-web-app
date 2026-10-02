@@ -26,6 +26,7 @@ const CustomInput = ({
   multiline,
   required = false,
   disabled = false,
+  readOnly = false,
   onBlur,
   id,
   max,
@@ -54,6 +55,7 @@ const CustomInput = ({
   const filled =
     isDate || (displayValue != null && String(displayValue).trim() !== "");
   const showError = Boolean(errors) && !filled;
+  const locked = Boolean(disabled || readOnly);
 
   return (
     <Grid item {...rest}>
@@ -67,7 +69,7 @@ const CustomInput = ({
         autoComplete={
           type === "tel" ? "tel" : type === "password" ? "new-password" : "off"
         }
-        onChange={uncontrolled ? undefined : onChange}
+        onChange={uncontrolled || locked ? undefined : onChange}
         defaultValue={uncontrolled ? displayValue : undefined}
         value={
           uncontrolled
@@ -84,6 +86,7 @@ const CustomInput = ({
         }}
         InputProps={{
           notched: filled ? true : undefined,
+          readOnly: locked,
           rows: 5,
           endAdornment: type === "password" && (
             <IconButton
@@ -104,11 +107,45 @@ const CustomInput = ({
           ),
         }}
         required={required}
-        autoFocus={autoFocus}
-        focused={isDate ? undefined : focused}
+        autoFocus={readOnly ? false : autoFocus}
+        focused={readOnly ? false : isDate ? undefined : focused}
         onBlur={onBlur}
-        disabled={disabled}
+        disabled={disabled && !readOnly}
         error={showError}
+        onMouseDown={
+          readOnly
+            ? (event) => {
+                event.preventDefault();
+              }
+            : undefined
+        }
+        sx={
+          readOnly && !disabled
+            ? {
+                pointerEvents: "none",
+                "& .MuiOutlinedInput-root": {
+                  cursor: "default",
+                  backgroundColor: "#fff",
+                },
+                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                  {
+                    borderColor: "#d7d0c8 !important",
+                    borderWidth: "1px !important",
+                  },
+                "& .MuiOutlinedInput-input": {
+                  cursor: "default",
+                  color: "#542b2b",
+                  WebkitTextFillColor: "#542b2b",
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#542b2b !important",
+                },
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: "#542b2b !important",
+                },
+              }
+            : undefined
+        }
         inputProps={{
           ...(type === "number" ? { inputMode: "numeric" } : {}),
           ...(type === "tel"
@@ -122,6 +159,12 @@ const CustomInput = ({
           ...(isDate ? { max: max || localToday(), min } : {}),
           ...(!isDate && min != null ? { min } : {}),
           ...(!isDate && max != null ? { max } : {}),
+          ...(readOnly
+            ? {
+                readOnly: true,
+                tabIndex: -1,
+              }
+            : {}),
           ...inputProps,
         }}
       />
