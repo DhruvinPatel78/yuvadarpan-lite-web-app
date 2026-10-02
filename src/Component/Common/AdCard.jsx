@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 
 /**
- * Advertisement card with AD badge (no profile-photo fallback).
+ * Advertisement card matching yuva card height.
+ * Image is contained and centered (not stretched).
+ * Details sit bottom-left on a theme-color gradient.
  */
 const AdCard = ({ ad, className = "" }) => {
   const imageUrl =
@@ -16,39 +18,45 @@ const AdCard = ({ ad, className = "" }) => {
     return null;
   }
 
+  const linkLabel = ad.websiteLink
+    ? ad.websiteLink.replace(/^https?:\/\//i, "")
+    : "";
+
   const content = (
     <div
-      className={`group w-full min-w-0 rounded-xl overflow-hidden bg-white border-2 border-solid border-line-strong md:border md:border-line shadow-card hover:border-primary transition-colors duration-200 flex flex-col ${className}`.trim()}
+      className={`group relative w-full h-full min-h-[280px] min-w-0 rounded-xl overflow-hidden bg-muted border-2 border-solid border-line-strong md:border md:border-line shadow-card hover:border-primary transition-colors duration-200 ${className}`.trim()}
     >
-      <div className="aspect-[5/4] bg-muted overflow-hidden relative">
-        {imageUrl && !failed ? (
-          <img
-            src={imageUrl}
-            alt={ad.name || "Advertisement"}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            onError={() => setFailed(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-sm text-mutedText">
-            Ad
-          </div>
-        )}
-        <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary text-white shadow-card">
-          AD
-        </span>
-      </div>
-      {ad.name ? (
-        <div className="px-3.5 pt-3.5 pb-3.5 flex flex-col flex-1 min-w-0">
-          <h2 className="text-[15px] font-semibold text-primary leading-snug line-clamp-2">
-            {ad.name}
-          </h2>
-          {ad.websiteLink ? (
-            <p className="mt-2 text-sm text-mutedText truncate">
-              {ad.websiteLink.replace(/^https?:\/\//i, "")}
-            </p>
-          ) : null}
+      {imageUrl && !failed ? (
+        <img
+          src={imageUrl}
+          alt={ad.name || "Advertisement"}
+          className="absolute inset-0 m-auto max-w-full max-h-full w-full h-full object-contain object-center p-3 transition-transform duration-300 group-hover:scale-[1.02]"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-mutedText">
+          Ad
         </div>
-      ) : null}
+      )}
+
+      <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary text-white shadow-card">
+        AD
+      </span>
+
+      {(ad.name || linkLabel) && (
+        <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-primary via-primary/85 to-transparent pt-14">
+          <div className="px-3.5 pb-3.5 pr-12 max-w-full text-left">
+            {ad.name ? (
+              <h2 className="text-[15px] font-semibold text-white leading-snug line-clamp-2">
+                {ad.name}
+              </h2>
+            ) : null}
+            {linkLabel ? (
+              <p className="mt-1 text-sm text-white/85 truncate">{linkLabel}</p>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -59,7 +67,7 @@ const AdCard = ({ ad, className = "" }) => {
         target="_blank"
         rel="noopener noreferrer"
         aria-label={ad.name || "Advertisement"}
-        className="block w-full no-underline text-inherit"
+        className="block w-full h-full no-underline text-inherit"
       >
         {content}
       </a>

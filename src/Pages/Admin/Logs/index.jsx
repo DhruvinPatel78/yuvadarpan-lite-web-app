@@ -33,6 +33,7 @@ const ENTITY_OPTIONS = [
   { value: "region", label: "Region" },
   { value: "state", label: "State" },
   { value: "country", label: "Country" },
+  { value: "familyId", label: "Family ID" },
 ];
 
 const selectSx = {

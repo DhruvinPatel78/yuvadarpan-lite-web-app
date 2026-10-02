@@ -164,10 +164,10 @@ const Home = () => {
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
   const [shortlistedIds, setShortlistedIds] = useState([]);
   const homeAds = usePageAds("dashboard");
-  const feedItems = useMemo(
-    () => interleaveAdsIntoList(yuvaList || [], homeAds, 4),
-    [yuvaList, homeAds]
-  );
+  const feedItems = useMemo(() => {
+    // Wait until ads are considered with the yuva page so slots stay fixed on refresh.
+    return interleaveAdsIntoList(yuvaList || [], homeAds, 4);
+  }, [yuvaList, homeAds]);
 
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
   const surnameFilterList = useMemo(
