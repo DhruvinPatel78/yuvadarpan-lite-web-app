@@ -272,6 +272,12 @@ const ProfilePage = () => {
     setTabValue(newValue);
   };
 
+  React.useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname, id]);
+
   React.useEffect(() => {
     if (!id) return;
     dispatch(startLoading());
