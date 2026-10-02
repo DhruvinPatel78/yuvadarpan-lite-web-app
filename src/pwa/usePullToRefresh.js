@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const TRIGGER_DISTANCE = 72;
-const MAX_PULL = 112;
-const RESISTANCE = 0.42;
+const TRIGGER_DISTANCE = 64;
+const MAX_PULL = 120;
+const RESISTANCE = 0.55;
+const INSTALLED_KEY = "yuvadarpan.pwaInstalled";
 
 const isStandaloneDisplay = () => {
   if (typeof window === "undefined") return false;
@@ -13,6 +14,15 @@ const isStandaloneDisplay = () => {
     window.matchMedia("(display-mode: window-controls-overlay)").matches ||
     window.navigator.standalone === true
   );
+};
+
+const isPwaContext = () => {
+  if (isStandaloneDisplay()) return true;
+  try {
+    return window.localStorage.getItem(INSTALLED_KEY) === "1";
+  } catch {
+    return false;
+  }
 };
 
 const pageScrollTop = () =>
@@ -41,12 +51,30 @@ const scrolledAncestorBlocksPull = (target) => {
   return false;
 };
 
-const hasOpenOverlay = () =>
-  Boolean(
-    document.querySelector(
-      ".MuiModal-root, .MuiDrawer-root, .MuiDialog-root, [aria-modal='true']"
-    )
+const isVisibleOverlay = (node) => {
+  if (!(node instanceof Element)) return false;
+  if (node.getAttribute("aria-hidden") === "true") return false;
+  if (node.hasAttribute("hidden")) return false;
+  const style = window.getComputedStyle(node);
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    Number(style.opacity) === 0
+  ) {
+    return false;
+  }
+  // keepMounted MUI Menus leave an empty Modal shell in the DOM when closed
+  const rect = node.getBoundingClientRect();
+  if (rect.width < 2 && rect.height < 2) return false;
+  return true;
+};
+
+const hasOpenOverlay = () => {
+  const nodes = document.querySelectorAll(
+    ".MuiModal-root, .MuiDrawer-root, .MuiDialog-root, [aria-modal='true']"
   );
+  return Array.from(nodes).some(isVisibleOverlay);
+};
 
 export default function usePullToRefresh({
   enabled = true,
@@ -54,6 +82,9 @@ export default function usePullToRefresh({
 } = {}) {
   const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [active, setActive] = useState(() =>
+    typeof window !== "undefined" ? isPwaContext() : false
+  );
   const startY = useRef(0);
   const tracking = useRef(false);
   const pulling = useRef(false);
@@ -77,7 +108,6 @@ export default function usePullToRefresh({
         window.location.reload();
       }
     } finally {
-      // Full reload never reaches here; soft refresh does.
       refreshingRef.current = false;
       setRefreshing(false);
       setDistance(0);
@@ -85,21 +115,39 @@ export default function usePullToRefresh({
   }, [onRefresh, setDistance]);
 
   useEffect(() => {
-    if (!enabled || !isStandaloneDisplay()) {
+    const syncActive = () => setActive(isPwaContext());
+    syncActive();
+    const media = window.matchMedia("(display-mode: standalone)");
+    if (media.addEventListener) {
+      media.addEventListener("change", syncActive);
+      return () => media.removeEventListener("change", syncActive);
+    }
+    media.addListener(syncActive);
+    return () => media.removeListener(syncActive);
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !active) {
       return undefined;
     }
 
+    const resetPull = () => {
+      tracking.current = false;
+      pulling.current = false;
+      setDistance(0);
+    };
+
     const onTouchStart = (event) => {
       if (refreshingRef.current || hasOpenOverlay()) {
-        tracking.current = false;
+        resetPull();
         return;
       }
       if (pageScrollTop() > 1) {
-        tracking.current = false;
+        resetPull();
         return;
       }
       if (scrolledAncestorBlocksPull(event.target)) {
-        tracking.current = false;
+        resetPull();
         return;
       }
       startY.current = event.touches[0].clientY;
@@ -110,8 +158,7 @@ export default function usePullToRefresh({
     const onTouchMove = (event) => {
       if (!tracking.current || refreshingRef.current) return;
       if (pageScrollTop() > 1) {
-        tracking.current = false;
-        setDistance(0);
+        resetPull();
         return;
       }
       const delta = event.touches[0].clientY - startY.current;
@@ -149,12 +196,13 @@ export default function usePullToRefresh({
       document.removeEventListener("touchend", onTouchEnd);
       document.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [enabled, refresh, setDistance]);
+  }, [active, enabled, refresh, setDistance]);
 
   return {
     pullDistance,
     refreshing,
     armed: pullDistance >= TRIGGER_DISTANCE,
-    visible: pullDistance > 8 || refreshing,
+    visible: pullDistance > 6 || refreshing,
+    active,
   };
 }

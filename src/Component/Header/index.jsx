@@ -120,7 +120,6 @@ const Header = () => {
                   vertical: "top",
                   horizontal: "right",
                 }}
-                keepMounted
                 transformOrigin={{
                   vertical: "top",
                   horizontal: "right",
