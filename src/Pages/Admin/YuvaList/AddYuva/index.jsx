@@ -42,7 +42,7 @@ import {
 import { labeledOptions } from "../../../../i18n/yuvaForm";
 import { flattenYuvaForm, masterNameText, toEnGuPayload, langText, isFilledValue } from "../../../../util/bhasha";
 import { getListById as fetchChildList, pickMasterId } from "../../../../Component/constant";
-import { readFileAsDataUrl } from "../../../../util/cropImage";
+import { loadImageForCrop } from "../../../../util/cropImage";
 
 const sameMasterKey = (left, right) => {
   if (left == null || right == null || left === "" || right === "") return false;
@@ -202,8 +202,10 @@ const AddYuva = () => {
   const [cropSrc, setCropSrc] = useState("");
   const [cropMode, setCropMode] = useState(null);
   const [cropFileName, setCropFileName] = useState("yuva_photo.jpg");
+  const [cropLoading, setCropLoading] = useState(false);
   const photoInputRef = useRef(null);
   const createdPhotoInputRef = useRef(null);
+  const cropRequestId = useRef(0);
   const [newFieldList, setNewFieldList] = useState([]);
   const [lastNameList, setLastNameList] = useState(surname);
   const [selectedLastName, setSelectedLastName] = useState(null);
@@ -786,9 +788,11 @@ const AddYuva = () => {
   );
 
   const closeCropModal = () => {
+    cropRequestId.current += 1;
     setCropSrc("");
     setCropMode(null);
     setCropFileName("yuva_photo.jpg");
+    setCropLoading(false);
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
     }
@@ -801,13 +805,28 @@ const AddYuva = () => {
     if (!file) {
       return;
     }
+    const requestId = ++cropRequestId.current;
+    setCropMode(mode);
+    setCropFileName(file.name || "yuva_photo.jpg");
+    setCropSrc("");
+    setCropLoading(true);
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      setCropFileName(file.name || "yuva_photo.jpg");
-      setCropMode(mode);
+      const { dataUrl, fileName } = await loadImageForCrop(file);
+      if (requestId !== cropRequestId.current) {
+        return;
+      }
+      setCropFileName(fileName);
       setCropSrc(dataUrl);
     } catch (e) {
+      if (requestId !== cropRequestId.current) {
+        return;
+      }
       console.log("photo read failed", e);
+      closeCropModal();
+    } finally {
+      if (requestId === cropRequestId.current) {
+        setCropLoading(false);
+      }
     }
   };
 
@@ -1166,7 +1185,7 @@ const AddYuva = () => {
                       id="upload-button"
                       style={{ display: "none" }}
                       name="profileName"
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
@@ -2111,7 +2130,7 @@ const AddYuva = () => {
             type="file"
             id="created-yuva-upload"
             style={{ display: "none" }}
-            accept="image/*"
+            accept="image/*,.heic,.heif,image/heic,image/heif"
             onChange={(e) => {
               const file = e.target.files[0];
               if (file) {
@@ -2141,8 +2160,9 @@ const AddYuva = () => {
           </div>
       </FormModal>
       <PhotoCropModal
-        open={Boolean(cropSrc)}
+        open={cropLoading || Boolean(cropSrc)}
         imageSrc={cropSrc}
+        loading={cropLoading}
         fileName={cropFileName}
         title={t("cropPhoto")}
         hint={t("cropHint")}

@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Cropper from "react-easy-crop";
-import { Slider } from "@mui/material";
+import { CircularProgress, Slider } from "@mui/material";
 import { FormModal, Button as ActionButton } from "../UI";
 import { getCroppedImageFile } from "../../util/cropImage";
 
 export default function PhotoCropModal({
   open,
   imageSrc,
+  loading = false,
   fileName = "yuva_photo.jpg",
   title = "Crop photo",
   hint = "Drag to reposition. Use the slider to zoom.",
@@ -22,6 +23,7 @@ export default function PhotoCropModal({
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [saving, setSaving] = useState(false);
+  const showCropper = Boolean(imageSrc) && !loading;
 
   useEffect(() => {
     if (!open) {
@@ -38,7 +40,7 @@ export default function PhotoCropModal({
   }, []);
 
   const handleConfirm = async () => {
-    if (!imageSrc || !croppedAreaPixels || saving) {
+    if (!imageSrc || !croppedAreaPixels || saving || loading) {
       return;
     }
     setSaving(true);
@@ -58,14 +60,17 @@ export default function PhotoCropModal({
 
   return (
     <FormModal
-      open={open && Boolean(imageSrc)}
-      onClose={onCancel}
+      open={open}
+      onClose={() => {
+        if (loading || saving) return;
+        onCancel?.();
+      }}
       title={title}
       maxWidth="560px"
     >
       <p className="text-sm text-mutedText mb-3">{hint}</p>
       <div className="relative w-full h-[280px] sm:h-[340px] rounded-xl overflow-hidden bg-black/90">
-        {imageSrc ? (
+        {showCropper ? (
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -77,7 +82,11 @@ export default function PhotoCropModal({
             onCropComplete={onCropComplete}
             onZoomChange={setZoom}
           />
-        ) : null}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <CircularProgress size={36} thickness={4} sx={{ color: "#fff" }} />
+          </div>
+        )}
       </div>
       <div className="mt-4 px-1">
         <p className="text-xs font-medium text-mutedText mb-1">{zoomLabel}</p>
@@ -87,6 +96,7 @@ export default function PhotoCropModal({
           max={3}
           step={0.05}
           aria-label="Zoom"
+          disabled={!showCropper || saving}
           onChange={(_event, value) => setZoom(value)}
           sx={{
             color: "var(--color-primary, #542b2b)",
@@ -100,7 +110,7 @@ export default function PhotoCropModal({
           variant="secondary"
           fullWidth
           onClick={onCancel}
-          disabled={saving}
+          disabled={saving || loading}
         >
           {cancelLabel}
         </ActionButton>
@@ -108,7 +118,7 @@ export default function PhotoCropModal({
           type="button"
           fullWidth
           onClick={handleConfirm}
-          disabled={!croppedAreaPixels || saving}
+          disabled={!showCropper || !croppedAreaPixels || saving || loading}
           loading={saving}
         >
           {confirmLabel}
