@@ -34,6 +34,7 @@ import {
   UserDetails,
 } from "./Pages/Admin";
 import Gotra from "./Pages/Admin/Gotra";
+
 import NewUser from "./Pages/User/NewUser";
 import Dashboard from "./Pages/Dashboard";
 import NotFound from "./Pages/NotFound";
