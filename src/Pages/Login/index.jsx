@@ -2,7 +2,7 @@ import React from "react";
 import { Grid, Link } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { AuthShell, Button } from "../../Component/UI";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   NotificationData,
   NotificationSnackbar,
@@ -24,8 +24,15 @@ import { resolveUserFamilyIdExists } from "../../util/familyIdApi";
 import { isRegularUser } from "../../util/util";
 import AdBanner from "../../Component/Common/AdBanner";
 
+const safeNextPath = (raw) => {
+  const value = String(raw || "").trim();
+  if (!value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+};
+
 export default function Index() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const { loading } = UseRedux();
   const { notification, setNotification } = NotificationData();
@@ -67,12 +74,12 @@ export default function Index() {
           loadLocationMasters(dispatch);
           dispatch(login({ ...me, token: res?.token }));
           resetForm();
-          navigate(
+          const next = safeNextPath(searchParams.get("next"));
+          const fallback =
             isRegularUser(me?.role) && !familyIdExists
               ? "/connect-samaj"
-              : "/",
-            { replace: true }
-          );
+              : "/";
+          navigate(next || fallback, { replace: true });
         } catch (err) {
           dispatch(endLoading());
           setNotification({

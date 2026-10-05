@@ -6,7 +6,7 @@ import ContainerPage from "../../Component/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { isRegularUser } from "../../util/util";
 import FullPageLoader from "../../Component/Common/FullPageLoader";
-import { Button } from "../../Component/UI";
+import { AuthShell, Button } from "../../Component/UI";
 import {
   createAccessPayment,
   getAccessPrice,
@@ -28,7 +28,9 @@ const ConnectSamaj = () => {
   const [paymentEnabled, setPaymentEnabled] = useState(null);
   const [priceInr, setPriceInr] = useState(100);
   const [paying, setPaying] = useState(false);
-  const [verifying, setVerifying] = useState(false);
+  const [verifying, setVerifying] = useState(() =>
+    Boolean(String(new URLSearchParams(window.location.search).get("payment") || "").trim())
+  );
   const verifyTried = useRef("");
 
   useEffect(() => {
@@ -45,9 +47,6 @@ const ConnectSamaj = () => {
   }, []);
 
   useEffect(() => {
-    if (paymentEnabled !== true) {
-      return;
-    }
     const merchantOrderId = String(searchParams.get("payment") || "").trim();
     if (!merchantOrderId || verifyTried.current === merchantOrderId) {
       return;
@@ -85,7 +84,6 @@ const ConnectSamaj = () => {
       })
       .finally(() => setVerifying(false));
   }, [
-    paymentEnabled,
     searchParams,
     setSearchParams,
     dispatch,
@@ -96,7 +94,28 @@ const ConnectSamaj = () => {
   if (!isRegularUser(user?.role)) {
     return <Navigate to="/" replace />;
   }
-  if (familyIdExists === null || paymentEnabled === null || verifying) {
+
+  if (verifying) {
+    return (
+      <AuthShell showBrand={false} maxWidthClass="sm:max-w-[520px]">
+        <div className="text-center py-6">
+          <h1 className="text-xl font-semibold text-primary">
+            Confirming your payment
+          </h1>
+          <p className="text-sm text-mutedText mt-2">
+            Please wait while we unlock access for your Family ID.
+          </p>
+          <div
+            className="mt-8 mx-auto h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin"
+            aria-hidden="true"
+          />
+        </div>
+        <NotificationSnackbar notification={notification} />
+      </AuthShell>
+    );
+  }
+
+  if (familyIdExists === null || paymentEnabled === null) {
     return <FullPageLoader />;
   }
   if (familyIdExists) {

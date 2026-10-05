@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login/index";
 import Registration from "./Pages/Registration/index";
@@ -53,6 +53,15 @@ import PwaPullToRefresh from "./Component/PwaPullToRefresh";
 import FullPageLoader from "./Component/Common/FullPageLoader";
 import { FormLanguageProvider } from "./context/FormLanguageContext";
 import { UseRedux } from "./Component/useRedux";
+
+/** Redirect /login/connect-samaj?payment=… → /connect-samaj?payment=… */
+const LegacyPaymentReturnRedirect = () => {
+  const [searchParams] = useSearchParams();
+  const qs = searchParams.toString();
+  return (
+    <Navigate to={`/connect-samaj${qs ? `?${qs}` : ""}`} replace />
+  );
+};
 import { useDispatch } from "react-redux";
 import { logout, setFamilyIdExists } from "./store/authSlice";
 import { getCurrentUser } from "./util/userApi";
@@ -163,6 +172,11 @@ function App() {
       <Route path={"/"}>
         {/*Public Routes*/}
         <Route path="login" exact element={<PublicRoute Component={Login} />} />
+        {/* Legacy bad PhonePe return path when FRONTEND_URL ended with /login */}
+        <Route
+          path="login/connect-samaj"
+          element={<LegacyPaymentReturnRedirect />}
+        />
         <Route
           path="reset-password"
           exact

@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { isRegularUser } from "./util";
 import FamilyIdGate from "./FamilyIdGate";
@@ -10,9 +10,15 @@ const PrivateRoute = ({
   requireFamilyId = false,
 }) => {
   const { loggedIn, user } = useSelector((state) => state.auth);
+  const location = useLocation();
 
   if (!loggedIn) {
-    return <Navigate to="/login" />;
+    const next = `${location.pathname}${location.search || ""}`;
+    const loginTo =
+      next && next !== "/"
+        ? `/login?next=${encodeURIComponent(next)}`
+        : "/login";
+    return <Navigate to={loginTo} replace />;
   }
   if (userOnly && !isRegularUser(user?.role)) {
     return <Navigate to="/" replace />;
