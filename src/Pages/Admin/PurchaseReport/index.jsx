@@ -4,7 +4,7 @@ import { Box, MenuItem, TextField } from "@mui/material";
 import CustomTable from "../../../Component/Common/customTable";
 import MasterMobileCards from "../../../Component/Common/MasterMobileCards";
 import ContainerPage from "../../../Component/Container";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { UseRedux } from "../../../Component/useRedux";
 import { isAdmin } from "../../../util/util";
 import { MasterFilterBar, PageHeader } from "../../../Component/UI";
@@ -43,6 +43,7 @@ const statusLabel = (status) => {
 
 export default function PurchaseReport() {
   const { auth } = UseRedux();
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [report, setReport] = useState(null);
@@ -114,16 +115,29 @@ export default function PurchaseReport() {
       headerClassName: "bg-primary text-white outline-none align-left",
       cellClassName: "items-center flex outline-none align-left",
       filterable: false,
-      renderCell: (record) => (
-        <div className="text-sm leading-snug py-1 w-full text-left">
-          <div className="font-semibold text-primary">
-            {record?.row?.userName || "—"}
+      renderCell: (record) => {
+        const row = record?.row;
+        const name = row?.userName || "—";
+        const userId = row?.userId;
+        return (
+          <div className="text-sm leading-snug py-1 w-full text-left">
+            {userId ? (
+              <button
+                type="button"
+                className="font-semibold text-primary underline underline-offset-2 text-left"
+                onClick={() => navigate(`/admin/userlist/${userId}`)}
+              >
+                {name}
+              </button>
+            ) : (
+              <div className="font-semibold text-primary">{name}</div>
+            )}
+            <div className="text-mutedText text-xs">
+              {row?.userEmail || "—"}
+            </div>
           </div>
-          <div className="text-mutedText text-xs">
-            {record?.row?.userEmail || "—"}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       field: "userMobile",
@@ -278,6 +292,9 @@ export default function PurchaseReport() {
             `Family ID ${row.familyId || "—"} · ₹${row.amountInr ?? "—"}`,
             `${statusLabel(row.status)} · ${row.userMobile || row.userEmail || "—"}`,
           ]}
+          onView={(row) => {
+            if (row?.userId) navigate(`/admin/userlist/${row.userId}`);
+          }}
           page={page}
           setPage={setPage}
           rowsPerPage={rowsPerPage}
