@@ -16,6 +16,7 @@ import {
   Native,
   FamilyId,
   Advertisement,
+  PurchaseReport,
   Region,
   RegionDetails,
   Roles,
@@ -354,6 +355,11 @@ function App() {
             path="advertisement"
             exact
             element={<PrivateRoute Component={Advertisement} />}
+          />
+          <Route
+            path="purchases"
+            exact
+            element={<PrivateRoute Component={PurchaseReport} />}
           />
           <Route
             path="role"

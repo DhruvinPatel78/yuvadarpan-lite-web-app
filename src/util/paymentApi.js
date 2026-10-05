@@ -16,3 +16,8 @@ export const getPaymentStatus = async (merchantOrderId) => {
   );
   return response.data;
 };
+
+export const getPurchaseReport = async (params) => {
+  const response = await axios.get("/payment/report", { params });
+  return response.data;
+};

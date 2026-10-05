@@ -22,6 +22,7 @@ import Gotra from "./Gotra";
 import Native from "./Native";
 import FamilyId from "./FamilyId";
 import Advertisement from "./Advertisement";
+import PurchaseReport from "./PurchaseReport";
 import Roles from "./Roles";
 import Logs from "./Logs";
 import LogDetails from "./Logs/Details";
@@ -50,6 +51,7 @@ export {
   Native,
   FamilyId,
   Advertisement,
+  PurchaseReport,
   Roles,
   Logs,
   LogDetails,
