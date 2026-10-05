@@ -17,6 +17,18 @@ export const getPaymentStatus = async (merchantOrderId) => {
   return response.data;
 };
 
+export const getPaymentEnabled = async () => {
+  const response = await axios.get("/payment/enabled");
+  return Boolean(response.data?.enabled);
+};
+
+export const setPaymentEnabled = async (enabled) => {
+  const response = await axios.patch("/payment/enabled", {
+    enabled: Boolean(enabled),
+  });
+  return response.data;
+};
+
 export const getPurchaseReport = async (params) => {
   const response = await axios.get("/payment/report", { params });
   return response.data;

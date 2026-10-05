@@ -30,6 +30,10 @@ import {
   getAdvertisementDisplayEnabled,
   setAdvertisementDisplayEnabled,
 } from "../../util/advertisementApi";
+import {
+  getPaymentEnabled,
+  setPaymentEnabled,
+} from "../../util/paymentApi";
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -43,22 +47,37 @@ export default function Settings() {
   const [adsEnabled, setAdsEnabled] = useState(true);
   const [adsLoading, setAdsLoading] = useState(false);
   const [adsSaving, setAdsSaving] = useState(false);
+  const [paymentEnabled, setPaymentEnabledState] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentSaving, setPaymentSaving] = useState(false);
   const otpRef = useRef();
 
   useEffect(() => {
     if (!adminUser) return undefined;
     let active = true;
     setAdsLoading(true);
-    getAdvertisementDisplayEnabled()
-      .then((enabled) => {
-        if (active) setAdsEnabled(enabled);
-      })
-      .catch(() => {
-        if (active) setAdsEnabled(true);
-      })
-      .finally(() => {
-        if (active) setAdsLoading(false);
-      });
+    setPaymentLoading(true);
+    Promise.all([
+      getAdvertisementDisplayEnabled()
+        .then((enabled) => {
+          if (active) setAdsEnabled(enabled);
+        })
+        .catch(() => {
+          if (active) setAdsEnabled(true);
+        }),
+      getPaymentEnabled()
+        .then((enabled) => {
+          if (active) setPaymentEnabledState(enabled);
+        })
+        .catch(() => {
+          if (active) setPaymentEnabledState(false);
+        }),
+    ]).finally(() => {
+      if (active) {
+        setAdsLoading(false);
+        setPaymentLoading(false);
+      }
+    });
     return () => {
       active = false;
     };
@@ -89,6 +108,27 @@ export default function Settings() {
       showError(err, "Could not update advertisement setting.");
     } finally {
       setAdsSaving(false);
+    }
+  };
+
+  const handlePaymentToggle = async () => {
+    if (paymentSaving) return;
+    const next = !paymentEnabled;
+    setPaymentSaving(true);
+    setPaymentEnabledState(next);
+    try {
+      await setPaymentEnabled(next);
+      setNotification({
+        message: next
+          ? "Family ID payments are now enabled."
+          : "Family ID payments are now disabled.",
+        type: "success",
+      });
+    } catch (err) {
+      setPaymentEnabledState(!next);
+      showError(err, "Could not update payment setting.");
+    } finally {
+      setPaymentSaving(false);
     }
   };
 
@@ -340,6 +380,35 @@ export default function Settings() {
               {adsEnabled
                 ? "Advertisements are currently visible on selected pages."
                 : "Advertisements are currently hidden on all pages."}
+            </p>
+          </Card>
+        ) : null}
+        {adminUser ? (
+          <Card className="w-full mt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold text-primary">
+                  Family ID payment
+                </h2>
+                <p className="text-sm text-mutedText mt-1">
+                  Allow members to unlock access with PhonePe when their Family
+                  ID is missing.
+                </p>
+              </div>
+              {paymentLoading ? (
+                <CircularProgress color="secondary" size={24} />
+              ) : (
+                <CustomSwitch
+                  checked={paymentEnabled}
+                  disabled={paymentSaving}
+                  onClick={handlePaymentToggle}
+                />
+              )}
+            </div>
+            <p className="text-sm text-mutedText mt-3">
+              {paymentEnabled
+                ? "Payment option is currently shown on Connect Samaj."
+                : "Payment option is currently hidden. Members will only see the contact-samaj message."}
             </p>
           </Card>
         ) : null}
