@@ -53,6 +53,14 @@ import PwaPullToRefresh from "./Component/PwaPullToRefresh";
 import FullPageLoader from "./Component/Common/FullPageLoader";
 import { FormLanguageProvider } from "./context/FormLanguageContext";
 import { UseRedux } from "./Component/useRedux";
+import { useDispatch } from "react-redux";
+import { logout, setFamilyIdExists } from "./store/authSlice";
+import { getCurrentUser } from "./util/userApi";
+import { persistUpdatedUser } from "./Pages/Account/persistUser";
+import { loadLocationMasters } from "./util/getAPICall";
+import { userLanguage } from "./util/bhasha";
+import { resolveUserFamilyIdExists } from "./util/familyIdApi";
+import { isRegularUser } from "./util/util";
 
 /** Redirect /login/connect-samaj?payment=… → /connect-samaj?payment=… */
 const LegacyPaymentReturnRedirect = () => {
@@ -62,14 +70,6 @@ const LegacyPaymentReturnRedirect = () => {
     <Navigate to={`/connect-samaj${qs ? `?${qs}` : ""}`} replace />
   );
 };
-import { useDispatch } from "react-redux";
-import { logout, setFamilyIdExists } from "./store/authSlice";
-import { getCurrentUser } from "./util/userApi";
-import { persistUpdatedUser } from "./Pages/Account/persistUser";
-import { loadLocationMasters } from "./util/getAPICall";
-import { userLanguage } from "./util/bhasha";
-import { resolveUserFamilyIdExists } from "./util/familyIdApi";
-import { isRegularUser } from "./util/util";
 
 const LOADER_HOLD_MS = 500;
 const LOADER_FADE_MS = 200;
