@@ -20,6 +20,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteConfirmFlow from "../../../Component/Common/DeleteConfirmFlow";
 import AddIcon from "@mui/icons-material/Add";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate } from "react-router-dom";
@@ -60,6 +61,7 @@ import { endLoading, startLoading } from "../../../store/authSlice";
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { masterNameText, pickYuvaLangText } from "../../../util/bhasha";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
+import ExportYuvaModal from "./ExportYuvaModal";
 
 const MOBILE_PAGE_SIZE = 20;
 
@@ -150,6 +152,7 @@ const YuvaList = () => {
   });
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -528,6 +531,14 @@ const YuvaList = () => {
             >
               View User Dashboard
             </Button>
+            <ActionButton
+              variant="secondary"
+              className="max-md:w-full"
+              icon={<FileDownloadOutlinedIcon sx={{ fontSize: 18 }} />}
+              onClick={() => setExportOpen(true)}
+            >
+              Export
+            </ActionButton>
             <ActionButton
               variant="secondary"
               className="max-md:w-full"
@@ -1078,6 +1089,10 @@ const YuvaList = () => {
           </div>
         </Box>
       </AppModal>
+      <ExportYuvaModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+      />
       <DeleteConfirmFlow
         open={Boolean(deleteTarget) || bulkDeleteOpen}
         entity="yuva"
