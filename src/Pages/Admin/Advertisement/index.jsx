@@ -46,7 +46,7 @@ import {
 import { completeModalMutation } from "../../../util/completeModalMutation";
 import { Navigate } from "react-router-dom";
 import { startLoading, endLoading } from "../../../store/authSlice";
-import { readFileAsDataUrl } from "../../../util/cropImage";
+import { loadImageForCrop } from "../../../util/cropImage";
 
 const normalizeWebsiteLink = (value) => {
   const link = String(value || "").trim();
@@ -67,6 +67,7 @@ export default function Index() {
   const { loading, auth } = UseRedux();
   const canManage = isAdmin(auth?.user?.role);
   const photoInputRef = useRef(null);
+  const cropRequestId = useRef(0);
   const mobileDragIndexRef = useRef(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -81,6 +82,7 @@ export default function Index() {
   const [imageTouched, setImageTouched] = useState(false);
   const [cropSrc, setCropSrc] = useState("");
   const [cropFileName, setCropFileName] = useState("advertisement.jpg");
+  const [cropLoading, setCropLoading] = useState(false);
   const [reordering, setReordering] = useState(false);
   const skipSearchEffect = useRef(true);
   const filterCount = Number(Boolean(searchText.trim()));
@@ -214,8 +216,10 @@ export default function Index() {
   } = formik;
 
   const closeCropModal = () => {
+    cropRequestId.current += 1;
     setCropSrc("");
     setCropFileName("advertisement.jpg");
+    setCropLoading(false);
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
     }
@@ -223,12 +227,27 @@ export default function Index() {
 
   const openPhotoCrop = async (file) => {
     if (!file) return;
+    const requestId = ++cropRequestId.current;
+    setCropFileName(file.name || "advertisement.jpg");
+    setCropSrc("");
+    setCropLoading(true);
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      setCropFileName(file.name || "advertisement.jpg");
+      const { dataUrl, fileName } = await loadImageForCrop(file);
+      if (requestId !== cropRequestId.current) {
+        return;
+      }
+      setCropFileName(fileName);
       setCropSrc(dataUrl);
     } catch (e) {
+      if (requestId !== cropRequestId.current) {
+        return;
+      }
       console.log("photo read failed", e);
+      closeCropModal();
+    } finally {
+      if (requestId === cropRequestId.current) {
+        setCropLoading(false);
+      }
     }
   };
 
@@ -560,7 +579,7 @@ export default function Index() {
                       type="file"
                       id="ad-upload-button"
                       style={{ display: "none" }}
-                      accept="image/*"
+                      accept="image/*,.heic,.heif,image/heic,image/heif"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
@@ -622,8 +641,9 @@ export default function Index() {
       ) : null}
 
       <PhotoCropModal
-        open={Boolean(cropSrc)}
+        open={cropLoading || Boolean(cropSrc)}
         imageSrc={cropSrc}
+        loading={cropLoading}
         fileName={cropFileName}
         title="Crop advertisement"
         hint="Drag to reposition. Use the slider to zoom."
