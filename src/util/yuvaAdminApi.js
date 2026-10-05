@@ -81,4 +81,17 @@ export const updateYuvaProfile = async (id, profile) => {
   } catch (error) {
     throw error;
   }
+};
+
+export const exportYuvaList = async (params, config = {}) => {
+  try {
+    const response = await axios.get("/yuvaList/export", {
+      params,
+      responseType: "blob",
+      ...config,
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
 }; 
