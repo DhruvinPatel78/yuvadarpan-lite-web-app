@@ -836,9 +836,7 @@ const AddYuva = () => {
     formData.append("image", file);
     formData.append("filename", buildYuvaPhotoName(values));
     axios
-      .post(`/image/upload`, formData, {
-        contentType: "multipart/form-data",
-      })
+      .post(`/image/upload`, formData)
       .then((res) => {
         const profile = res?.data?.data;
         if (!profile) {
@@ -888,10 +886,12 @@ const AddYuva = () => {
       const formData = new FormData();
       formData.append("image", selectedPhoto);
       formData.append("filename", buildYuvaPhotoName(createdYuva));
-      const res = await axios.post(`/image/upload`, formData, {
-        contentType: "multipart/form-data",
-      });
-      await updateYuvaProfile(createdYuva.id, res?.data?.data);
+      const res = await axios.post(`/image/upload`, formData);
+      const profile = res?.data?.data;
+      if (!profile?.url) {
+        throw new Error("Image upload failed.");
+      }
+      await updateYuvaProfile(createdYuva.id, profile);
       goToYuvaList();
     } catch (e) {
       // Optionally handle error with notification

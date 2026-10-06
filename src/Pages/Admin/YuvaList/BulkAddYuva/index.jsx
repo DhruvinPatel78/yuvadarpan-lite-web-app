@@ -390,10 +390,12 @@ const BulkAddYuva = () => {
       const formData = new FormData();
       formData.append("image", selectedPhoto);
       formData.append("filename", buildYuvaPhotoName(createdYuva));
-      const res = await axios.post(`/image/upload`, formData, {
-        contentType: "multipart/form-data",
-      });
-      await updateYuvaProfile(createdYuva.id, res?.data?.data);
+      const res = await axios.post(`/image/upload`, formData);
+      const profile = res?.data?.data;
+      if (!profile?.url) {
+        throw new Error("Image upload failed.");
+      }
+      await updateYuvaProfile(createdYuva.id, profile);
       goToNextPhoto();
     } catch (e) {
       setNotification({
@@ -418,22 +420,21 @@ const BulkAddYuva = () => {
   const yuvaArrayError =
     typeof errors?.yuvas === "string" ? errors.yuvas : "";
   const currentYuva = createdYuvas[photoIndex] || {};
+  const lastNameRow = lastNameList.find(
+    (item) => String(item.id) === String(currentYuva.lastName)
+  );
   const currentLastName =
-    lastNameList.find(
-      (item) => String(item.id) === String(currentYuva.lastName)
-    )?.label ||
-    masterNameText(
-      lastNameList.find(
-        (item) => String(item.id) === String(currentYuva.lastName)
-      )
-    ) ||
-    selectedLastName ||
+    masterNameText(lastNameRow) ||
+    langText(lastNameRow?.label) ||
+    masterNameText(selectedLastName) ||
+    langText(selectedLastName) ||
     "";
   const currentYuvaName =
     [langText(currentYuva.firstName), currentLastName]
       .filter(Boolean)
       .join(" ")
       .trim() || "This Yuva";
+  const fatherDisplay = langText(currentYuva.fatherName);
   const isLastPhoto = photoIndex >= createdYuvas.length - 1;
 
   const renderActionButtons = () => (
@@ -1024,9 +1025,9 @@ const BulkAddYuva = () => {
           <h3 className="text-xl font-WorkSemiBold text-primary mt-1 break-words">
             {currentYuvaName}
           </h3>
-          {currentYuva.fatherName ? (
+          {fatherDisplay ? (
             <p className="text-sm text-mutedText mt-1">
-              Father: {currentYuva.fatherName}
+              Father: {fatherDisplay}
             </p>
           ) : null}
           {createdYuvas.length > 1 ? (

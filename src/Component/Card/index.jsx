@@ -2,11 +2,13 @@ import React from "react";
 import Card from "../UI/Card";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
-const CustomCard = ({ title, action }) => {
+const CustomCard = ({ title, action, badge }) => {
   const initial = String(title || "")
     .trim()
     .charAt(0)
     .toUpperCase();
+  const count = Number(badge);
+  const showBadge = Number.isFinite(count) && count > 0;
 
   return (
     <Card
@@ -15,7 +17,11 @@ const CustomCard = ({ title, action }) => {
       onClick={action}
       role="button"
       tabIndex={0}
-      aria-label={`Navigate to ${title}`}
+      aria-label={
+        showBadge
+          ? `Navigate to ${title}, ${count} new`
+          : `Navigate to ${title}`
+      }
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
@@ -35,9 +41,16 @@ const CustomCard = ({ title, action }) => {
             {title}
           </h2>
         </div>
-        <span className="w-9 h-9 rounded-full bg-muted text-mutedText flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-          <ChevronRightIcon fontSize="small" />
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {showBadge ? (
+            <span className="min-w-[28px] h-7 px-2 rounded-full bg-primary text-white text-sm font-semibold flex items-center justify-center tabular-nums">
+              {count > 99 ? "99+" : count}
+            </span>
+          ) : null}
+          <span className="w-9 h-9 rounded-full bg-muted text-mutedText flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+            <ChevronRightIcon fontSize="small" />
+          </span>
+        </div>
       </div>
     </Card>
   );
