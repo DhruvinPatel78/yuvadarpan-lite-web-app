@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Grid } from "@mui/material";
 import CustomCard from "../../../Component/Card";
 import Header from "../../../Component/Header";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ContainerPage from "../../../Component/Container";
-import { isAdmin, isRegularUser, isLocationMasterReadOnly } from "../../../util/util";
+import {
+  isAdmin,
+  isRegularUser,
+  isLocationMasterReadOnly,
+} from "../../../util/util";
 import { PageHeader } from "../../../Component/UI";
+import { getUserRequests } from "../../../util/requestApi";
 
 const dashboardItems = {
   ADMIN: [
@@ -31,6 +36,22 @@ const dashboardItems = {
 export default function Index() {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const [newRequestCount, setNewRequestCount] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    getUserRequests({ page: 1, limit: 1 })
+      .then((data) => {
+        if (!active) return;
+        setNewRequestCount(Number(data?.total) || 0);
+      })
+      .catch(() => {
+        if (active) setNewRequestCount(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (isRegularUser(user?.role)) {
     return <Navigate to="/" replace />;
@@ -59,6 +80,9 @@ export default function Index() {
               <CustomCard
                 title={item?.title}
                 action={() => navigate(item?.href)}
+                badge={
+                  item.href === "/admin/request" ? newRequestCount : undefined
+                }
               />
             </Grid>
           ))}
