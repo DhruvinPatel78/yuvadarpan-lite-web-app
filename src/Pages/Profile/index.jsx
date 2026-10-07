@@ -49,7 +49,7 @@ import {
   NotificationData,
   NotificationSnackbar,
 } from "../../Component/Common/notification";
-import { AppTabs, AppTab, Button, Card, IconBtn } from "../../Component/UI";
+import { AppTabs, AppTab, Card, IconBtn } from "../../Component/UI";
 import LoadableImage from "../../Component/Common/LoadableImage";
 function a11yProps(index) {
   return {

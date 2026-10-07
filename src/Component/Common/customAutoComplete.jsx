@@ -158,7 +158,7 @@ export default function CustomAutoComplete({
             required={Boolean(required)}
             InputLabelProps={{
               ...params.InputLabelProps,
-              ...(hasValue ? { shrink: true } : null),
+              ...(label && hasValue ? { shrink: true } : null),
             }}
             inputProps={{
               ...params.inputProps,

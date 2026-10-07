@@ -34,8 +34,6 @@ export default function NewUser() {
   const [city, setCity] = useState("");
   const [cityList, setCityList] = useState([]);
   const [cityListEn, setCityListEn] = useState([]);
-  const [cityListGuj, setCityListGuj] = useState([]);
-  const [pdf, setPdf] = useState();
 
   const dispatch = useDispatch();
   const getAPIData = async () => {
@@ -44,7 +42,6 @@ export default function NewUser() {
       const cityData = await getCityList();
       setCityList(cityData);
       setCityListEn(cityData.map((city) => city.label?.en));
-      setCityListGuj(cityData.map((city) => city.label?.gu));
     } catch (error) {
       // Optionally handle error with notification
     } finally {

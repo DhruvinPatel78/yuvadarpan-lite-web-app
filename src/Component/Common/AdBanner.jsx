@@ -124,16 +124,32 @@ export const AdBanner = ({ page, className = "" }) => {
   }
 
   const current = ads[index] || ads[0];
+  const imageUrl = typeof current?.image?.url === "string" ? current.image.url.trim() : "";
   const content = (
-    <div className="relative w-full">
-      <img
-        src={current.image.url}
-        alt={current.name || "Advertisement"}
-        className="w-full max-h-40 object-contain rounded-lg bg-white"
-      />
-      <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary text-white shadow-card">
+    <div className="group relative w-full h-40 rounded-2xl overflow-hidden shadow-sm border border-amber-500/25 bg-surface hover:border-amber-500/60 transition-all duration-300">
+      {imageUrl ? (
+        <>
+          <img
+            src={imageUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover filter blur-xl scale-125 opacity-40 transition-transform duration-700 group-hover:scale-150"
+          />
+          <img
+            src={imageUrl}
+            alt="Advertisement"
+            className="relative z-0 w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+        </>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-sm font-medium text-mutedText bg-muted/30">
+          Advertisement
+        </div>
+      )}
+      <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-600/95 to-amber-700/95 backdrop-blur-md border border-amber-300/40 text-white text-[10px] font-extrabold tracking-widest uppercase shadow-md pointer-events-none">
+        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         AD
-      </span>
+      </div>
     </div>
   );
 

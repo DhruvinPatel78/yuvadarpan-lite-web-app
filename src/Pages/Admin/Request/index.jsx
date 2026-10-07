@@ -14,7 +14,6 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ContainerPage from "../../../Component/Container";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
-import CustomInput from "../../../Component/Common/customInput";
 import {
   getSelectedData,
   gotraOptionList,

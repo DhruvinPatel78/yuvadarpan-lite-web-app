@@ -215,7 +215,6 @@ export default function Index() {
     errors,
     values,
     resetForm,
-    handleChange,
     handleBlur,
     touched,
     setFieldValue,

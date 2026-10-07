@@ -26,11 +26,11 @@ export const higherEducation = [
 ];
 
 export const maritalStatusList = [
-  "divorce",
+  "single",
   "engaged",
   "married",
+  "divorce",
   "seprated",
-  "single",
   "widow",
   "widower",
 ];
@@ -111,6 +111,30 @@ export const fieldsToOtherObject = (list = [], draft) => {
     const description = String(item?.description || "").trim();
     if (title && description) {
       acc[title.replace(/\s+/g, "_")] = description;
+    }
+    return acc;
+  }, {});
+};
+
+export const fieldsToOtherGuObject = (list = [], draft) => {
+  const rows = [...list];
+  const draftTitle = String(draft?.title || "").trim();
+  const draftDescriptionGu = String(
+    draft?.descriptionGu || draft?.description || ""
+  ).trim();
+  if (draftTitle && draftDescriptionGu) {
+    rows.push({
+      title: draftTitle,
+      descriptionGu: draftDescriptionGu,
+    });
+  }
+  return rows.reduce((acc, item) => {
+    const title = String(item?.title || "").trim();
+    const descriptionGu = String(
+      item?.descriptionGu || item?.description || ""
+    ).trim();
+    if (title && descriptionGu) {
+      acc[title.replace(/\s+/g, "_")] = descriptionGu;
     }
     return acc;
   }, {});
