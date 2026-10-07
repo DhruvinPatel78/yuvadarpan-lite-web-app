@@ -120,29 +120,49 @@ const CustomInput = ({
             : undefined
         }
         sx={
-          readOnly && !disabled
+          locked
             ? {
-                pointerEvents: "none",
+                opacity: "1 !important",
+                pointerEvents: readOnly ? "none" : undefined,
                 "& .MuiOutlinedInput-root": {
                   cursor: "default",
-                  backgroundColor: "#fff",
+                  backgroundColor: "#efe8e0 !important",
+                  backdropFilter: "blur(2px)",
+                  WebkitBackdropFilter: "blur(2px)",
+                  opacity: "1 !important",
+                },
+                "& .MuiOutlinedInput-root:hover": {
+                  backgroundColor: "#efe8e0 !important",
+                },
+                "& .MuiOutlinedInput-root.Mui-disabled": {
+                  opacity: "1 !important",
+                  backgroundColor: "#efe8e0 !important",
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#ddd4cb !important",
                 },
                 "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
                   {
-                    borderColor: "#d7d0c8 !important",
+                    borderColor: "#ddd4cb !important",
                     borderWidth: "1px !important",
                   },
-                "& .MuiOutlinedInput-input": {
+                "& .MuiOutlinedInput-input, & .MuiInputBase-input": {
                   cursor: "default",
-                  color: "#542b2b",
-                  WebkitTextFillColor: "#542b2b",
+                  color: "#6b5555 !important",
+                  WebkitTextFillColor: "#6b5555 !important",
+                  opacity: "1 !important",
                 },
                 "& .MuiInputLabel-root": {
-                  color: "#542b2b !important",
+                  color: "#8a7870 !important",
+                  opacity: "1 !important",
+                  backgroundColor: "transparent",
                 },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#542b2b !important",
-                },
+                "& .MuiInputLabel-root.Mui-focused, & .MuiInputLabel-root.Mui-disabled":
+                  {
+                    color: "#8a7870 !important",
+                    opacity: "1 !important",
+                    backgroundColor: "transparent",
+                  },
               }
             : undefined
         }

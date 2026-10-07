@@ -9,6 +9,19 @@ export const fieldControlCss = `
       border-color: #542b2b;
     }
   }
+  & .MuiOutlinedInput-input,
+  & .MuiInputBase-input {
+    color: #542b2b;
+    -webkit-text-fill-color: #542b2b;
+    opacity: 1;
+  }
+  & .MuiOutlinedInput-input:read-only,
+  & .MuiOutlinedInput-input[readonly],
+  & .MuiInputBase-input:read-only,
+  & .MuiInputBase-input[readonly] {
+    opacity: 1 !important;
+    cursor: default;
+  }
   & .MuiInputLabel-root {
     overflow: visible;
     max-width: calc(100% - 24px);
@@ -38,8 +51,20 @@ export const fieldControlCss = `
   & .Mui-focused .MuiOutlinedInput-notchedOutline {
     border-color: #542b2b !important;
   }
+  /* Keep locked fields readable — never fade the whole control. */
   & .Mui-disabled {
-    opacity: 0.5;
+    opacity: 1 !important;
+  }
+  & .Mui-disabled .MuiOutlinedInput-input,
+  & .Mui-disabled .MuiInputBase-input,
+  & .MuiOutlinedInput-input.Mui-disabled,
+  & .MuiInputBase-input.Mui-disabled {
+    color: #542b2b !important;
+    -webkit-text-fill-color: #542b2b !important;
+    opacity: 1 !important;
+  }
+  & .Mui-disabled .MuiOutlinedInput-notchedOutline {
+    border-color: #d7d0c8 !important;
   }
   & .Mui-error {
     &.Mui-focused fieldset {
