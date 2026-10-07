@@ -53,6 +53,7 @@ import {
   useFilteredIds,
   getListById,
   masterLabelOf,
+  masterKeys,
   searchTextParams,
   searchByFromOption,
   pickMasterId,
@@ -63,6 +64,7 @@ import {
   addUser,
   updateUser,
   deleteUser,
+  getUserInfo,
 } from "../../../util/userApi";
 import { getSamajByCity } from "../../../util/samajApi";
 import useAxios from "../../../util/useAxios";
@@ -135,27 +137,27 @@ const sameId = (left, right) => {
   return String(left) === String(right);
 };
 
-const optionKeys = (item) =>
-  [item?.id, item?._id, item?.value].filter((key) => key != null && key !== "");
+const optionKeys = (item) => masterKeys(item);
 
 const asOptions = (items = []) =>
-  (Array.isArray(items) ? items : []).map((item) => ({
-    ...item,
-    label: item?.label || item?.name || "",
-    name: item?.name || item?.label || "",
-    value: item?.value || item?.id || item?._id,
-    id: item?.id || item?._id || item?.value,
-  }));
+  (Array.isArray(items) ? items : []).map((item) => {
+    const id = pickMasterId(item) || item?.id || item?._id || item?.value || "";
+    return {
+      ...item,
+      label: masterNameText(item) || item?.label || "",
+      name: item?.name || item?.label || "",
+      value: id,
+      id,
+    };
+  });
 
 const findOption = (options, raw) => {
   if (raw == null || raw === "") return null;
   const keys =
-    typeof raw === "object"
-      ? optionKeys(raw)
-      : [raw];
+    typeof raw === "object" ? masterKeys(raw) : [String(raw)];
   return (
     (options || []).find((item) =>
-      [...optionKeys(item), item?.label, item?.name].some((key) =>
+      masterKeys(item).some((key) =>
         keys.some((match) => sameId(key, match))
       )
     ) || null
@@ -771,9 +773,29 @@ function Index() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, hasMore, mobilePage, loadingMore]);
 
+  const locationFromSamaj = (userInfo = {}) => {
+    const samajOpt =
+      findOption(asOptions(samaj), userInfo?.localSamaj) ||
+      findOption(asOptions(samajList), userInfo?.localSamaj);
+    if (!samajOpt) return { ...userInfo };
+    return {
+      ...userInfo,
+      country: userInfo?.country || samajOpt.country_id || "",
+      state: userInfo?.state || samajOpt.state_id || "",
+      region: userInfo?.region || samajOpt.region_id || "",
+      district: userInfo?.district || samajOpt.district_id || "",
+      city: userInfo?.city || samajOpt.city_id || "",
+      localSamaj:
+        pickMasterId(samajOpt) || userInfo?.localSamaj || "",
+    };
+  };
+
   const hydrateLocationCascade = async (userInfo) => {
-    const countryOpt = findOption(countryOptions, userInfo?.country);
-    const countryId = pickMasterId(countryOpt) || userInfo?.country || "";
+    const source = locationFromSamaj(userInfo);
+
+    const countryOpt = findOption(countryOptions, source?.country);
+    const countryId =
+      pickMasterId(countryOpt) || String(source?.country || "").trim();
     setSelectedCountryName(countryOpt || null);
 
     let nextStates = [];
@@ -784,9 +806,11 @@ function Index() {
         nextStates = [];
       }
     }
+    const stateOptions = asOptions(nextStates);
     setStateList(nextStates);
-    const stateOpt = findOption(asOptions(nextStates), userInfo?.state);
-    const stateId = pickMasterId(stateOpt) || userInfo?.state || "";
+    const stateOpt = findOption(stateOptions, source?.state);
+    const stateId =
+      pickMasterId(stateOpt) || String(source?.state || "").trim();
     setSelectedStateName(stateOpt || null);
 
     let nextRegions = [];
@@ -797,11 +821,13 @@ function Index() {
         nextRegions = [];
       }
     }
+    const regionCascadeOptions = asOptions(nextRegions);
     setRegionList(nextRegions);
     const regionOpt =
-      findOption(asOptions(nextRegions), userInfo?.region) ||
-      findOption(regionOptions, userInfo?.region);
-    const regionId = pickMasterId(regionOpt) || userInfo?.region || "";
+      findOption(regionCascadeOptions, source?.region) ||
+      findOption(regionOptions, source?.region);
+    const regionId =
+      pickMasterId(regionOpt) || String(source?.region || "").trim();
     setSelectedRegionName(regionOpt || null);
 
     let nextDistricts = [];
@@ -812,9 +838,11 @@ function Index() {
         nextDistricts = [];
       }
     }
+    const districtOptions = asOptions(nextDistricts);
     setDistrictList(nextDistricts);
-    const districtOpt = findOption(asOptions(nextDistricts), userInfo?.district);
-    const districtId = pickMasterId(districtOpt) || userInfo?.district || "";
+    const districtOpt = findOption(districtOptions, source?.district);
+    const districtId =
+      pickMasterId(districtOpt) || String(source?.district || "").trim();
     setSelectedDistrictName(districtOpt || null);
 
     let nextCities = [];
@@ -825,60 +853,94 @@ function Index() {
         nextCities = [];
       }
     }
+    const cityOptions = asOptions(nextCities);
     setCityList(nextCities);
-    const cityOpt = findOption(asOptions(nextCities), userInfo?.city);
-    const cityId = pickMasterId(cityOpt) || userInfo?.city || "";
+    const cityOpt = findOption(cityOptions, source?.city);
+    const cityId =
+      pickMasterId(cityOpt) || String(source?.city || "").trim();
     setSelectedCityName(cityOpt || null);
 
+    let loadedSamaj = [];
     if (cityId) {
-      await getSamajList(cityId);
+      loadedSamaj = (await getSamajList(cityId)) || [];
     } else if (regionId) {
-      await getSamajListByRegion(regionId, regionOpt);
+      loadedSamaj = (await getSamajListByRegion(regionId, regionOpt)) || [];
     } else {
       setSamajList([]);
     }
+    const samajOpt =
+      findOption(asOptions(loadedSamaj), source?.localSamaj) ||
+      findOption(asOptions(samaj), source?.localSamaj);
+    const localSamajId =
+      pickMasterId(samajOpt) || String(source?.localSamaj || "").trim();
+
+    const resolved = {
+      country: countryId,
+      state: stateId,
+      region: regionId,
+      district: districtId,
+      city: cityId,
+      localSamaj: localSamajId,
+    };
+    Object.entries(resolved).forEach(([key, value]) => {
+      setFieldValue(key, value, false);
+    });
+    return resolved;
   };
 
-  const userInfoModalOpen = (userInfo) => {
+  const userInfoModalOpen = async (userInfo) => {
     setUserInfoModel(true);
     setModalView("form");
     if (isAddUser === false && userInfo) {
+      let detail = userInfo;
+      try {
+        const fetched = await getUserInfo(userInfo?.id || userInfo?._id);
+        if (fetched) detail = fetched;
+      } catch (e) {
+        detail = userInfo;
+      }
+      const enriched = locationFromSamaj(detail);
       const roleOption =
         rolesList(false).find(
           (item) =>
-            item?.value === userInfo?.role ||
-            item?.id === userInfo?.role ||
-            item?.name === userInfo?.role
-        ) || userInfo?.role || "";
+            item?.value === enriched?.role ||
+            item?.id === enriched?.role ||
+            item?.name === enriched?.role
+        ) || enriched?.role || "";
       const nextValues = {
-        familyId: userInfo?.familyId || "",
-        firstName: userInfo?.firstName || "",
-        middleName: userInfo?.middleName || "",
-        lastName: userInfo?.lastName || "",
-        mobile: String(userInfo?.mobile || ""),
-        email: userInfo?.email || "",
+        familyId: enriched?.familyId || "",
+        firstName: enriched?.firstName || "",
+        middleName: enriched?.middleName || "",
+        lastName: enriched?.lastName || "",
+        mobile: String(enriched?.mobile || ""),
+        email: enriched?.email || "",
         password: "",
         confirmPassword: "",
-        active: userInfo?.active,
-        allowed: userInfo?.allowed,
-        region: userInfo?.region || "",
-        country: userInfo?.country || "",
-        state: userInfo?.state || "",
-        district: userInfo?.district || "",
-        city: userInfo?.city || "",
-        localSamaj: userInfo?.localSamaj || "",
-        dob: toDateInputValue(userInfo?.dob),
-        gender: String(userInfo?.gender || "").toLowerCase(),
-        language: userInfo?.language === "en" ? "en" : "gu",
+        active: enriched?.active,
+        allowed: enriched?.allowed,
+        region: enriched?.region || "",
+        country: enriched?.country || "",
+        state: enriched?.state || "",
+        district: enriched?.district || "",
+        city: enriched?.city || "",
+        localSamaj: enriched?.localSamaj || "",
+        dob: toDateInputValue(enriched?.dob),
+        gender: String(enriched?.gender || "").toLowerCase(),
+        language: enriched?.language === "en" ? "en" : "gu",
         role: roleOption,
-        id: userInfo?.id,
+        id: enriched?.id || userInfo?.id,
       };
       setValues((pre) => ({
         ...pre,
         ...nextValues,
       }));
-      originalUserRef.current = comparableUserValues(nextValues);
-      hydrateLocationCascade(userInfo);
+      const resolved = await hydrateLocationCascade(enriched);
+      const withResolved = { ...nextValues, ...resolved };
+      setValues((pre) => ({
+        ...pre,
+        ...withResolved,
+      }));
+      originalUserRef.current = comparableUserValues(withResolved);
     } else {
       originalUserRef.current = "";
       setSelectedCountryName(null);
@@ -1006,26 +1068,26 @@ function Index() {
     try {
       const response = await useAxios.get(`/samaj/listByRegion/${regionId}`);
       const fetched = asOptions(response?.data || []);
-      setSamajList(fetched.length ? fetched : localMatches);
+      const rows = fetched.length ? fetched : localMatches;
+      setSamajList(rows);
+      return rows;
     } catch (e) {
       if (!localMatches.length) {
         setSamajList([]);
       }
+      return localMatches;
     }
   };
 
   const getSamajList = async (cityId) => {
     try {
       const data = await getSamajByCity(cityId);
-      setSamajList(
-        (data || []).map((item) => ({
-          ...item,
-          label: item.name,
-          value: item.id,
-        }))
-      );
+      const rows = asOptions(data || []);
+      setSamajList(rows);
+      return rows;
     } catch (e) {
       setSamajList([]);
+      return [];
     }
   };
 
@@ -1880,7 +1942,10 @@ function Index() {
                       label={"State"}
                       placeholder={"Select Your State"}
                       name={"state"}
-                      value={findOption(asOptions(stateList), values?.state)}
+                      value={
+                        findOption(asOptions(stateList), values?.state) ||
+                        selectedStateName
+                      }
                       disabled={!values?.country}
                       errors={
                         touched?.state && errors?.state && errors?.state
@@ -1915,7 +1980,10 @@ function Index() {
                       label={"Region"}
                       placeholder={"Select Your Region"}
                       name={"region"}
-                      value={findOption(asOptions(regionList), values?.region)}
+                      value={
+                        findOption(asOptions(regionList), values?.region) ||
+                        selectedRegionName
+                      }
                       disabled={!values?.state}
                       errors={
                         touched?.region && errors?.region && errors?.region
@@ -1947,10 +2015,12 @@ function Index() {
                       label={"District"}
                       placeholder={"Select Your District"}
                       name={"district"}
-                      value={findOption(
-                        asOptions(districtList),
-                        values?.district
-                      )}
+                      value={
+                        findOption(
+                          asOptions(districtList),
+                          values?.district
+                        ) || selectedDistrictName
+                      }
                       disabled={!values?.region}
                       errors={
                         touched?.district &&
@@ -1981,7 +2051,10 @@ function Index() {
                       label={"City"}
                       placeholder={"Select Your City"}
                       name={"city"}
-                      value={findOption(asOptions(cityList), values?.city)}
+                      value={
+                        findOption(asOptions(cityList), values?.city) ||
+                        selectedCityName
+                      }
                       disabled={!values?.district}
                       errors={
                         touched?.city && errors?.city && errors?.city
@@ -2008,7 +2081,9 @@ function Index() {
                       placeholder={"Select Your Samaj"}
                       name={"localSamaj"}
                       value={findOption(
-                        asOptions(samajList),
+                        asOptions(samajList).length
+                          ? asOptions(samajList)
+                          : asOptions(samaj),
                         values?.localSamaj
                       )}
                       disabled={!values?.city}

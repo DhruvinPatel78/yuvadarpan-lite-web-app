@@ -24,7 +24,7 @@ import { resolveUserFamilyIdExists } from "../../util/familyIdApi";
 import { isRegularUser } from "../../util/util";
 import AdBanner from "../../Component/Common/AdBanner";
 
-export default function Index() {
+function LoginForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading } = UseRedux();
@@ -35,6 +35,8 @@ export default function Index() {
       email: "",
       password: "",
     },
+    validateOnChange: false,
+    validateOnBlur: true,
     validationSchema: Yup.object({
       email: Yup.string()
         .required("Required")
@@ -97,77 +99,83 @@ export default function Index() {
 
   return (
     <>
-    <AuthShell beforeCard={<AdBanner page="login" />}>
-        <FormikProvider value={formik}>
-          <Form>
-            <Grid container spacing={2.5}>
-              <Grid item xs={12}>
-                <p className="text-center text-primary font-semibold text-[22px] leading-tight">
-                  Sign in
-                </p>
-                <p className="text-center text-sm text-mutedText mt-1.5">
-                  Use your email or mobile number
-                </p>
-              </Grid>
-              <CustomInput
-                type={"text"}
-                xs={12}
-                label={"Username"}
-                placeholder={"Enter Your Username"}
-                name="email"
-                disabled={loading}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.email}
-                errors={touched.email && errors.email && errors.email}
-              />
-              <CustomInput
-                type={"password"}
-                xs={12}
-                label={"Password"}
-                placeholder={"Enter Your Password"}
-                name="password"
-                disabled={loading}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.password}
-                errors={touched.password && errors.password && errors.password}
-              />
-              <Grid item xs={12} className="flex justify-end !pt-0">
-                <Link
-                  href={"/reset-password"}
-                  className="!text-sm !text-primary !no-underline font-medium"
-                >
-                  Forgot password?
-                </Link>
-              </Grid>
-              <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  fullWidth
-                  disabled={loading || !values.password || !values.email}
-                  loading={loading}
-                >
-                  Sign In
-                </Button>
-              </Grid>
-              <Grid item xs={12}>
-                <p className="flex justify-center flex-wrap text-sm cursor-default text-mutedText">
-                  New here?
-                  <span
-                    className="px-1 font-semibold text-primary underline cursor-pointer"
-                    onClick={() => (loading ? {} : navigate("/register"))}
-                    style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
-                  >
-                    Create an account
-                  </span>
-                </p>
-              </Grid>
+      <FormikProvider value={formik}>
+        <Form noValidate>
+          <Grid container spacing={2.5}>
+            <Grid item xs={12}>
+              <p className="text-center text-primary font-semibold text-[22px] leading-tight">
+                Sign in
+              </p>
+              <p className="text-center text-sm text-mutedText mt-1.5">
+                Use your email or mobile number
+              </p>
             </Grid>
-          </Form>
-        </FormikProvider>
-    </AuthShell>
+            <CustomInput
+              type={"text"}
+              xs={12}
+              label={"Username"}
+              placeholder={"Enter Your Username"}
+              name="email"
+              disabled={loading}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.email}
+              errors={touched.email && errors.email && errors.email}
+            />
+            <CustomInput
+              type={"password"}
+              xs={12}
+              label={"Password"}
+              placeholder={"Enter Your Password"}
+              name="password"
+              disabled={loading}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.password}
+              errors={touched.password && errors.password && errors.password}
+            />
+            <Grid item xs={12} className="flex justify-end !pt-0">
+              <Link
+                href={"/reset-password"}
+                className="!text-sm !text-primary !no-underline font-medium"
+              >
+                Forgot password?
+              </Link>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                type="submit"
+                fullWidth
+                disabled={loading || !values.password || !values.email}
+                loading={loading}
+              >
+                Sign In
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <p className="flex justify-center flex-wrap text-sm cursor-default text-mutedText">
+                New here?
+                <span
+                  className="px-1 font-semibold text-primary underline cursor-pointer"
+                  onClick={() => (loading ? {} : navigate("/register"))}
+                  style={loading ? { opacity: 0.5 } : { opacity: "unset" }}
+                >
+                  Create an account
+                </span>
+              </p>
+            </Grid>
+          </Grid>
+        </Form>
+      </FormikProvider>
       <NotificationSnackbar notification={notification} />
     </>
+  );
+}
+
+export default function Index() {
+  return (
+    <AuthShell beforeCard={<AdBanner page="login" />}>
+      <LoginForm />
+    </AuthShell>
   );
 }

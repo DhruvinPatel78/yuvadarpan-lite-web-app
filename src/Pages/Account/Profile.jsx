@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Box, CircularProgress, Grid } from "@mui/material";
 import Header from "../../Component/Header";
 import ContainerPage from "../../Component/Container";
@@ -18,7 +18,12 @@ import {
 import { getCurrentUser, updateUser } from "../../util/userApi";
 import { persistUpdatedUser } from "./persistUser";
 import { PageHeader, Card, Button } from "../../Component/UI";
-import { languageLabel, masterNameText } from "../../util/bhasha";
+import { languageLabel, userLanguage } from "../../util/bhasha";
+import {
+  masterKeys,
+  masterLabelOf,
+  pickMasterId,
+} from "../../Component/constant";
 import {
   getAllCityData,
   getAllCountryData,
@@ -35,17 +40,15 @@ const toDateInputValue = (value) => {
   return isoDate ? isoDate[1] : "";
 };
 
-const lookupName = (list, id) => {
-  if (id == null || id === "") return "-";
+const lookupName = (list, id, lang = "en") =>
+  masterLabelOf(list, id, lang) || "-";
+
+const findMasterRow = (list, id) => {
+  if (id == null || id === "") return null;
   const key = String(id);
-  const found = (list || []).find(
-    (item) =>
-      String(item?.id) === key ||
-      String(item?._id) === key ||
-      String(item?.value) === key ||
-      String(item?.uuid) === key
+  return (Array.isArray(list) ? list : []).find((row) =>
+    masterKeys(row).includes(key)
   );
-  return masterNameText(found) || "-";
 };
 
 const formatUserDate = (value) => {
@@ -69,6 +72,7 @@ export default function Profile() {
   } = UseRedux();
   const { notification, setNotification } = NotificationData();
   const user = auth?.user;
+  const lang = userLanguage(user);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -96,7 +100,12 @@ export default function Profile() {
             ? values.lastName.value || values.lastName.id
             : values.lastName;
         await updateUser(user.id, { ...values, lastName });
-        persistUpdatedUser(dispatch, user, { ...values, lastName });
+        const refreshed = await getCurrentUser().catch(() => null);
+        persistUpdatedUser(
+          dispatch,
+          user,
+          refreshed || { ...values, lastName }
+        );
         setNotification({ message: "Profile updated", type: "success" });
       } catch (err) {
         setNotification({
@@ -122,27 +131,59 @@ export default function Profile() {
       (item) => item.value === values.lastName || item.id === values.lastName
     ) || null;
 
-  useEffect(() => {
-    dispatch(getAllSurnameData);
-    dispatch(getAllCountryData);
-    dispatch(getAllStateData);
-    dispatch(getAllRegionData);
-    dispatch(getAllDistrictData);
-    dispatch(getAllCityData);
-    dispatch(getAllSamajData);
-  }, [dispatch]);
+  const locationIds = useMemo(() => {
+    const samajRow =
+      findMasterRow(samaj, user?.localSamaj) ||
+      findMasterRow(samaj, user?.samaj);
+    return {
+      country: user?.country || samajRow?.country_id || "",
+      state: user?.state || samajRow?.state_id || "",
+      region: user?.region || samajRow?.region_id || "",
+      district: user?.district || samajRow?.district_id || "",
+      city: user?.city || samajRow?.city_id || "",
+      localSamaj:
+        user?.localSamaj || pickMasterId(samajRow) || "",
+    };
+  }, [user, samaj]);
 
   useEffect(() => {
-    const loadUser = async () => {
+    let cancelled = false;
+    const load = async () => {
+      await Promise.all([
+        dispatch(getAllSurnameData),
+        dispatch(getAllCountryData),
+        dispatch(getAllStateData),
+        dispatch(getAllRegionData),
+        dispatch(getAllDistrictData),
+        dispatch(getAllCityData),
+        dispatch(getAllSamajData),
+      ]);
       try {
         const data = await getCurrentUser();
-        persistUpdatedUser(dispatch, user, data);
+        if (cancelled) return;
+        let stored = {};
+        try {
+          stored = JSON.parse(localStorage.getItem("user") || "{}") || {};
+        } catch (e) {
+          stored = {};
+        }
+        persistUpdatedUser(
+          dispatch,
+          {
+            ...stored,
+            token: stored?.token || localStorage.getItem("token"),
+          },
+          data
+        );
       } catch (e) {
         // Keep persisted user if refresh fails
       }
     };
-    loadUser();
-  }, []);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
 
   return (
     <Box>
@@ -271,7 +312,7 @@ export default function Profile() {
                   sm={4}
                   label={"Country"}
                   name="country"
-                  value={lookupName(country, user?.country)}
+                  value={lookupName(country, locationIds.country, lang)}
                   readOnly
                 />
                 <CustomInput
@@ -280,7 +321,7 @@ export default function Profile() {
                   sm={4}
                   label={"State"}
                   name="state"
-                  value={lookupName(state, user?.state)}
+                  value={lookupName(state, locationIds.state, lang)}
                   readOnly
                 />
                 <CustomInput
@@ -289,7 +330,7 @@ export default function Profile() {
                   sm={4}
                   label={"Region"}
                   name="region"
-                  value={lookupName(region, user?.region)}
+                  value={lookupName(region, locationIds.region, lang)}
                   readOnly
                 />
                 <CustomInput
@@ -298,7 +339,7 @@ export default function Profile() {
                   sm={4}
                   label={"District"}
                   name="district"
-                  value={lookupName(district, user?.district)}
+                  value={lookupName(district, locationIds.district, lang)}
                   readOnly
                 />
                 <CustomInput
@@ -307,7 +348,7 @@ export default function Profile() {
                   sm={4}
                   label={"City"}
                   name="city"
-                  value={lookupName(city, user?.city)}
+                  value={lookupName(city, locationIds.city, lang)}
                   readOnly
                 />
                 <CustomInput
@@ -316,7 +357,7 @@ export default function Profile() {
                   sm={4}
                   label={"Local samaj"}
                   name="localSamaj"
-                  value={lookupName(samaj, user?.localSamaj)}
+                  value={lookupName(samaj, locationIds.localSamaj, lang)}
                   readOnly
                 />
                 <CustomInput

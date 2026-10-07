@@ -103,13 +103,14 @@ export const interleaveAdsIntoList = (yuvaRows = [], ads = [], every = 4) => {
 };
 
 /** Compact banner (login/signup) — cycles ads. */
-export const AdBanner = ({ page, className = "" }) => {
+export const AdBanner = React.memo(function AdBanner({ page, className = "" }) {
   const ads = usePageAds(page);
   const [index, setIndex] = useState(0);
+  const adsKey = ads.map((ad) => ad.id || ad.uuid || "").join("|");
 
   useEffect(() => {
     setIndex(0);
-  }, [ads]);
+  }, [adsKey]);
 
   useEffect(() => {
     if (ads.length <= 1) return undefined;
@@ -117,7 +118,7 @@ export const AdBanner = ({ page, className = "" }) => {
       setIndex((prev) => (prev + 1) % ads.length);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [ads]);
+  }, [ads.length, adsKey]);
 
   if (!ads.length) {
     return null;
@@ -130,6 +131,8 @@ export const AdBanner = ({ page, className = "" }) => {
         src={current.image.url}
         alt={current.name || "Advertisement"}
         className="w-full max-h-40 object-contain rounded-lg bg-white"
+        loading="lazy"
+        decoding="async"
       />
       <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wide bg-primary text-white shadow-card">
         AD
@@ -168,7 +171,7 @@ export const AdBanner = ({ page, className = "" }) => {
       ) : null}
     </div>
   );
-};
+});
 
 /** Two ads side-by-side. Pass `ads` to reuse a loaded list, or `page` to fetch. */
 export const AdPairRow = ({
