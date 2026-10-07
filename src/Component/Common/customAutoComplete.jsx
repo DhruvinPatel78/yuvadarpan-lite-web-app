@@ -71,16 +71,25 @@ export default function CustomAutoComplete({
   openOnFocus = false,
   autoHighlight = true,
   autoComplete = false,
+  autoSelect = false,
+  clearOnBlur = false,
   onMouseDown,
   ...rest
 }) {
   const { language } = useFormLanguage();
-  const optionLabel = (option) => {
-    if (option == null || option === "") return "";
-    if (typeof option === "string") return option;
-    return masterNameText(option, language) || String(option.label || "");
-  };
-  const selected = multiple ? value || [] : resolveOption(list, value);
+  const optionLabel = React.useCallback(
+    (option) => {
+      if (option == null || option === "") return "";
+      if (typeof option === "string") return option;
+      return masterNameText(option, language) || String(option.label || "");
+    },
+    [language]
+  );
+  const options = React.useMemo(
+    () => (Array.isArray(list) ? list : []),
+    [list]
+  );
+  const selected = multiple ? value || [] : resolveOption(options, value);
   const hasValue = multiple
     ? (Array.isArray(selected) ? selected.length > 0 : false)
     : Boolean(selected);
@@ -93,9 +102,9 @@ export default function CustomAutoComplete({
         disablePortal={disablePortal}
         autoHighlight={autoHighlight}
         autoComplete={autoComplete}
-        autoSelect={!multiple}
+        autoSelect={multiple ? false : autoSelect}
         blurOnSelect={multiple ? false : "touch"}
-        clearOnBlur={!multiple}
+        clearOnBlur={multiple ? false : clearOnBlur}
         openOnFocus={openOnFocus}
         onMouseDown={onMouseDown}
         {...(open !== undefined ? { open, onOpen, onClose } : { onOpen, onClose })}
@@ -130,17 +139,19 @@ export default function CustomAutoComplete({
           },
         }}
         defaultValue={defaultValue}
-        options={Array.isArray(list) ? list : []}
+        options={options}
         value={selected}
         getOptionLabel={optionLabel}
-        isOptionEqualToValue={(option, selected) => {
-          if (!option || selected == null || selected === "") return false;
+        isOptionEqualToValue={(option, selectedOption) => {
+          if (!option || selectedOption == null || selectedOption === "") {
+            return false;
+          }
           const optionId = optionIdOf(option);
-          const selectedId = optionIdOf(selected);
+          const selectedId = optionIdOf(selectedOption);
           if (optionId && selectedId) {
             return optionId === selectedId;
           }
-          return optionLabel(option) === optionLabel(selected);
+          return optionLabel(option) === optionLabel(selectedOption);
         }}
         multiple={multiple}
         id={`autoComplete-${name}`}
@@ -158,7 +169,7 @@ export default function CustomAutoComplete({
             required={Boolean(required)}
             InputLabelProps={{
               ...params.InputLabelProps,
-              ...(label && hasValue ? { shrink: true } : null),
+              shrink: label && hasValue ? true : params.InputLabelProps?.shrink,
             }}
             inputProps={{
               ...params.inputProps,
@@ -177,7 +188,7 @@ export default function CustomAutoComplete({
         limitTags={limitTags}
       />
       {showError ? (
-        <p className={"text-error text-sm transition-all"}>{errors}</p>
+        <p className={"text-error text-sm"}>{errors}</p>
       ) : null}
     </Grid>
   );

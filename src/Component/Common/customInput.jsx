@@ -169,7 +169,7 @@ const CustomInput = ({
         }}
       />
       {showError ? (
-        <p className={"text-error text-sm transition-all"}>{errors}</p>
+        <p className={"text-error text-sm"}>{errors}</p>
       ) : null}
     </Grid>
   );
