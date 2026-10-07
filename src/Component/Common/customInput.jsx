@@ -82,10 +82,10 @@ const CustomInput = ({
         multiline={multiline}
         InputLabelProps={{
           ...InputLabelProps,
-          ...(filled ? { shrink: true } : null),
+          ...(label && filled ? { shrink: true } : null),
         }}
         InputProps={{
-          notched: filled ? true : undefined,
+          notched: label && filled ? true : undefined,
           readOnly: locked,
           rows: 5,
           endAdornment: type === "password" && (

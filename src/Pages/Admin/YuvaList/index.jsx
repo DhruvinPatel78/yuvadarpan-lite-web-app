@@ -57,9 +57,8 @@ import {
   getAllStateData,
   getAllSurnameData,
 } from "../../../util/getAPICall";
-import { endLoading, startLoading } from "../../../store/authSlice";
 import { completeModalMutation } from "../../../util/completeModalMutation";
-import { masterNameText, pickYuvaLangText } from "../../../util/bhasha";
+import { pickYuvaLangText } from "../../../util/bhasha";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
 import ExportYuvaModal from "./ExportYuvaModal";
 
@@ -335,7 +334,6 @@ const YuvaList = () => {
 
   const handleRequestList = async (isRest = false, options = {}) => {
     const append = Boolean(options.append);
-    const skipLoader = Boolean(options.skipLoader);
     const limit = isMobile ? MOBILE_PAGE_SIZE : rowsPerPage;
     const pageNum = append ? options.pageNum : isMobile ? 1 : page + 1;
     try {

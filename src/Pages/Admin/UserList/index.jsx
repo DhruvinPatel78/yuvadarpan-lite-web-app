@@ -607,23 +607,9 @@ function Index() {
     isSubmitting,
   } = formik;
 
-  const samajOptions = useMemo(() => {
-    const loaded = asOptions(samajList);
-    if (loaded.length) return loaded;
-    const regionId = values?.region;
-    if (!regionId) return [];
-    const regionDoc = findOption(regionOptions, regionId);
-    const regionKeys = optionKeys(regionDoc).concat(regionId);
-    return asOptions(samaj).filter((item) =>
-      regionKeys.some(
-        (key) => sameId(item.region_id, key) || sameId(item.region, key)
-      )
-    );
-  }, [samajList, samaj, values?.region, regionOptions]);
+
 
   const selectedLastNameOption = findOption(lastNameOptions, values?.lastName);
-  const selectedRegionOption = findOption(regionOptions, values?.region);
-  const selectedSamajOption = findOption(samajOptions, values?.localSamaj);
 
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);

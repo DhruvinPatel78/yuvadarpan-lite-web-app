@@ -43,6 +43,17 @@ import { labeledOptions } from "../../../../i18n/yuvaForm";
 import { flattenYuvaForm, masterNameText, toEnGuPayload, langText, isFilledValue } from "../../../../util/bhasha";
 import { getListById as fetchChildList, pickMasterId } from "../../../../Component/constant";
 import { loadImageForCrop } from "../../../../util/cropImage";
+import {
+  activityList,
+  bloodGroupList,
+  buildYuvaPhotoName,
+  educationList,
+  fieldsToOtherGuObject,
+  fieldsToOtherObject,
+  higherEducation,
+  maritalStatusList,
+  relationList,
+} from "../BulkAddYuva/formConfig";
 
 const sameMasterKey = (left, right) => {
   if (left == null || right == null || left === "" || right === "") return false;
@@ -86,21 +97,6 @@ const findMasterOption = (options, raw) => {
   );
 };
 
-const slugPart = (value) =>
-  langText(value)
-    .trim()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-zA-Z0-9]/g, "") || "na";
-
-const buildYuvaPhotoName = (yuva) =>
-  `yuva_${slugPart(yuva?.firstName)}_${slugPart(yuva?.fatherName)}_${slugPart(
-    yuva?.grandFatherName
-  )}_${slugPart(yuva?.familyId)}_${
-    yuva?.dob && dayjs(yuva.dob).isValid()
-      ? dayjs(yuva.dob).format("DDMMYYYY")
-      : "na"
-  }`;
-
 const otherObjectToFields = (other, otherGu = {}) => {
   if (!other || typeof other !== "object" || Array.isArray(other)) {
     return [];
@@ -128,55 +124,6 @@ const FormSection = ({ title, children, action = null }) => (
     {children}
   </Card>
 );
-
-const higherEducation = [
-  "Diploma",
-  "Graduate",
-  "Post Graduate",
-  "PHD",
-  "OTHER",
-];
-
-const fieldsToOtherGuObject = (list = [], draft) => {
-  const rows = [...list];
-  const draftTitle = String(draft?.title || "").trim();
-  const draftDescriptionGu = String(
-    draft?.descriptionGu || draft?.description || ""
-  ).trim();
-  if (draftTitle && draftDescriptionGu) {
-    rows.push({
-      title: draftTitle,
-      descriptionGu: draftDescriptionGu,
-    });
-  }
-  return rows.reduce((acc, item) => {
-    const title = String(item?.title || "").trim();
-    const descriptionGu = String(
-      item?.descriptionGu || item?.description || ""
-    ).trim();
-    if (title && descriptionGu) {
-      acc[title.replace(/\s+/g, "_")] = descriptionGu;
-    }
-    return acc;
-  }, {});
-};
-
-const fieldsToOtherObject = (list = [], draft) => {
-  const rows = [...list];
-  const draftTitle = String(draft?.title || "").trim();
-  const draftDescription = String(draft?.description || "").trim();
-  if (draftTitle && draftDescription) {
-    rows.push({ title: draftTitle, description: draftDescription });
-  }
-  return rows.reduce((acc, item) => {
-    const title = String(item?.title || "").trim();
-    const description = String(item?.description || "").trim();
-    if (title && description) {
-      acc[title.replace(/\s+/g, "_")] = description;
-    }
-    return acc;
-  }, {});
-};
 
 const AddYuva = () => {
   const location = useLocation();
@@ -923,15 +870,6 @@ const AddYuva = () => {
     const filterList = newFieldList.filter((item, i) => i !== index);
     setNewFieldList(filterList);
   };
-  const newFieldValueHandler = (e, index, label) => {
-    const value = e.target.value;
-    const clone = [...newFieldList];
-    const findIndex = newFieldList.findIndex((item, i) => i === index);
-    if (findIndex !== -1) {
-      clone[findIndex][label] = value;
-    }
-    setNewFieldList(clone);
-  };
 
   useEffect(() => {
     if (location?.state) {
@@ -1059,64 +997,10 @@ const AddYuva = () => {
     navigate,
   ]);
 
-  const maritalOptions = labeledOptions(language, "marital", [
-    "single",
-    "engaged",
-    "married",
-    "divorce",
-    "seprated",
-    "widow",
-    "widower",
-  ]);
-  const activityOptions = labeledOptions(language, "activity", [
-    "abroad",
-    "business",
-    "child",
-    "farming",
-    "house hold",
-    "house wife",
-    "job seeker",
-    "job/service",
-    "retired",
-    "self employed",
-    "study",
-  ]);
-  const educationOptions = [
-    "1st std",
-    "2nd std",
-    "3rd std",
-    "4th std",
-    "5th std",
-    "6th std",
-    "7th std",
-    "8th std",
-    "9th std",
-    "10th std (SSC)",
-    "11th std",
-    "12th std (HSC)",
-    "Diploma",
-    "Graduate",
-    "Post Graduate",
-    "PHD",
-    "OTHER",
-  ];
-  const relationOptions = labeledOptions(language, "relation", [
-    "Grandfather",
-    "Grandmother",
-    "Father",
-    "Mother",
-    "Uncle",
-    "Aunty",
-    "Brother",
-    "Sister",
-    "Fai",
-    "Fuva",
-    "Mama",
-    "Mami",
-    "Masa",
-    "Masi",
-    "Guardian",
-  ]);
+  const maritalOptions = labeledOptions(language, "marital", maritalStatusList);
+  const activityOptions = labeledOptions(language, "activity", activityList);
+  const educationOptions = educationList;
+  const relationOptions = labeledOptions(language, "relation", relationList);
 
   return (
     <Box className={language === "gu" ? "form-lang-gu" : ""}>
@@ -1651,17 +1535,7 @@ const AddYuva = () => {
                   {/*  />*/}
                   {/*) : null}*/}
                   <CustomSelect
-                    list={[
-                      "NOT KNOWN",
-                      "A+",
-                      "A-",
-                      "B+",
-                      "B-",
-                      "AB+",
-                      "AB-",
-                      "O+",
-                      "O-",
-                    ]}
+                    list={bloodGroupList}
                     label={t("bloodGroup")}
                     placeholder={t("bloodGroupPh")}
                     name={"bloodGroup"}

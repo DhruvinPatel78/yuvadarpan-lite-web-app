@@ -17,6 +17,9 @@ export const fieldControlCss = `
     max-width: calc(133% - 32px);
   }
   & .MuiOutlinedInput-notchedOutline legend {
+    padding: 0;
+  }
+  & .MuiOutlinedInput-notchedOutline legend > span {
     padding: 0 6px;
   }
   & .MuiFilledInput-root:after {
