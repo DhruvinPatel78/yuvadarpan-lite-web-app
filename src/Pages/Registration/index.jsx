@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Grid, Link, Typography } from "@mui/material";
 import CustomInput from "../../Component/Common/customInput";
 import { AuthShell, Button } from "../../Component/UI";
@@ -21,10 +21,56 @@ import { messaging } from "../../firebase";
 import { getToken } from "firebase/messaging";
 import getMessagingRegistration from "../../util/getMessagingRegistration";
 import AdBanner from "../../Component/Common/AdBanner";
+import { masterNameText } from "../../util/bhasha";
 
 const FCM_WAIT_MS = 3500;
 
-export default function Index() {
+const GENDER_OPTIONS = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+];
+
+const TODAY = moment().format("YYYY-MM-DD");
+
+const validationSchema = Yup.object({
+  firstName: Yup.string().required("Required"),
+  middleName: Yup.string().required("Required"),
+  familyId: Yup.string().required("Required"),
+  lastName: Yup.string().required("Required"),
+  localSamaj: Yup.string().required("Required"),
+  region: Yup.string().required("Required"),
+  gender: Yup.string().required("Required"),
+  email: Yup.string()
+    .matches(
+      "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+      "Enter a valid email"
+    )
+    .required("Required"),
+  mobile: Yup.string()
+    .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
+    .required("Required"),
+  password: Yup.string().required("Required"),
+  confirmPassword: Yup.string().required("Required"),
+  dob: Yup.date()
+    .required("Required")
+    .min(new Date("1950-01-01"), "Date cannot be before 1950")
+    .max(new Date(), "Date cannot be in the future"),
+});
+
+const toOptionList = (rows = []) =>
+  (Array.isArray(rows) ? rows : []).map((data) => ({
+    ...data,
+    label: masterNameText(data) || data?.label || "",
+    value: data?.id,
+  }));
+
+const optionId = (option) => {
+  if (option == null || option === "") return "";
+  if (typeof option !== "object") return String(option);
+  return String(option.uuid || option.id || option.value || option._id || "");
+};
+
+function RegistrationForm() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loading } = UseRedux();
@@ -35,30 +81,36 @@ export default function Index() {
   const [selectedLastName, setSelectedLastName] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [selectedSamaj, setSelectedSamaj] = useState(null);
-  const today = moment().format("YYYY-MM-DD");
-
-  const getList = (feild) => {
-    useAxios.get(`/${feild}/get-all-list`).then((res) => {
-      const list = res?.data?.map((data) => ({
-        ...data,
-        label: data?.name,
-        value: data?.id,
-      }));
-      if (list) {
-        feild === "surname" ? setLastNameList(list) : setRegionList(list);
-      }
-    });
-  };
-
-  const getSamajList = (regionId) => {
-    useAxios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
-      setSamajList(res.data);
-    });
-  };
 
   useEffect(() => {
-    getList("surname");
-    getList("region");
+    let active = true;
+    const load = async () => {
+      try {
+        const [surnameRes, regionRes] = await Promise.all([
+          useAxios.get("/surname/get-all-list"),
+          useAxios.get("/region/get-all-list"),
+        ]);
+        if (!active) return;
+        setLastNameList(toOptionList(surnameRes?.data));
+        setRegionList(toOptionList(regionRes?.data));
+      } catch (e) {
+        // Keep empty lists if masters fail to load
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const getSamajList = useCallback((regionId) => {
+    if (!regionId) {
+      setSamajList([]);
+      return;
+    }
+    useAxios.get(`/samaj/listByRegion/${regionId}`).then((res) => {
+      setSamajList(toOptionList(res?.data));
+    });
   }, []);
 
   const getFcmToken = async () => {
@@ -79,47 +131,6 @@ export default function Index() {
     return null;
   };
 
-  const handleSubmit = async (value, { resetForm }) => {
-    if (value.password !== value.confirmPassword) {
-      setNotification({
-        type: "error",
-        message: "Passwords do not match.",
-      });
-      return;
-    }
-    dispatch(startLoading());
-    try {
-      const fcmToken = await getFcmToken();
-      await registerUser({
-        familyId: value?.familyId,
-        firstName: value?.firstName,
-        middleName: value?.middleName,
-        lastName: value?.lastName,
-        email: value?.email,
-        mobile: value?.mobile,
-        password: value?.password,
-        dob: moment(value?.dob).format(),
-        region: value?.region,
-        localSamaj: value?.localSamaj,
-        role: "USER",
-        gender: value?.gender,
-        language: "gu",
-        fcmToken: fcmToken,
-      });
-      resetForm();
-      setSelectedLastName(null);
-      setSelectedRegion(null);
-      setSelectedSamaj(null);
-      dispatch(endLoading());
-      navigate("/thankyou");
-    } catch (e) {
-      dispatch(endLoading());
-      setNotification({
-        type: "error",
-        message: e?.response?.data?.message || "Registration failed.",
-      });
-    }
-  };
   const formik = useFormik({
     initialValues: {
       familyId: "",
@@ -135,34 +146,53 @@ export default function Index() {
       localSamaj: "",
       gender: "male",
     },
-    validationSchema: Yup.object({
-      firstName: Yup.string().required("Required"),
-      middleName: Yup.string().required("Required"),
-      familyId: Yup.string().required("Required"),
-      lastName: Yup.string().required("Required"),
-      localSamaj: Yup.string().required("Required"),
-      region: Yup.string().required("Required"),
-      gender: Yup.string().required("Required"),
-      email: Yup.string()
-        .matches(
-          "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-          "Enter a valid email",
-        )
-        .required("Required"),
-      mobile: Yup.string()
-        .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
-        .required("Required"),
-      password: Yup.string().required("Required"),
-      confirmPassword: Yup.string().required("Required"),
-      dob: Yup.date()
-        .required("Required")
-        .min(new Date("1950-01-01"), "Date cannot be before 1950")
-        .max(new Date(), "Date cannot be in the future"),
-    }),
-    onSubmit: async (values, helpers) => {
-      await handleSubmit(values, helpers);
+    validationSchema,
+    validateOnChange: false,
+    validateOnBlur: true,
+    onSubmit: async (value, { resetForm }) => {
+      if (value.password !== value.confirmPassword) {
+        setNotification({
+          type: "error",
+          message: "Passwords do not match.",
+        });
+        return;
+      }
+      dispatch(startLoading());
+      try {
+        const fcmToken = await getFcmToken();
+        await registerUser({
+          familyId: value?.familyId,
+          firstName: value?.firstName,
+          middleName: value?.middleName,
+          lastName: value?.lastName,
+          email: value?.email,
+          mobile: value?.mobile,
+          password: value?.password,
+          dob: moment(value?.dob).format(),
+          region: value?.region,
+          localSamaj: value?.localSamaj,
+          role: "USER",
+          gender: value?.gender,
+          language: "gu",
+          fcmToken: fcmToken,
+        });
+        resetForm();
+        setSelectedLastName(null);
+        setSelectedRegion(null);
+        setSelectedSamaj(null);
+        setSamajList([]);
+        dispatch(endLoading());
+        navigate("/thankyou");
+      } catch (e) {
+        dispatch(endLoading());
+        setNotification({
+          type: "error",
+          message: e?.response?.data?.message || "Registration failed.",
+        });
+      }
     },
   });
+
   const {
     isSubmitting,
     setFieldValue,
@@ -173,243 +203,247 @@ export default function Index() {
     handleBlur,
   } = formik;
 
+  const fieldError = useCallback(
+    (name) => (touched[name] && errors[name] ? errors[name] : ""),
+    [touched, errors]
+  );
+
+  const digitsOnly = useCallback(
+    (name, maxLen) => (event) => {
+      const digits = String(event.target.value || "")
+        .replace(/\D/g, "")
+        .slice(0, maxLen);
+      setFieldValue(name, digits, false);
+    },
+    [setFieldValue]
+  );
+
+  const regionOptions = useMemo(() => regionList, [regionList]);
+  const samajOptions = useMemo(() => samajList, [samajList]);
+  const surnameOptions = useMemo(() => lastNameList, [lastNameList]);
+
   return (
     <>
-      <AuthShell
-        maxWidthClass="sm:max-w-[600px]"
-        beforeCard={<AdBanner page="signup" />}
-      >
-        <FormikProvider value={formik}>
-          <Form>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Typography
-                  className="text-center text-primary !font-semibold !text-[22px]"
-                  variant="h3"
-                >
-                  Create an account
-                </Typography>
-                <p className="text-center text-sm text-mutedText mt-1.5">
-                  Join the Yuvadarpan directory
-                </p>
-              </Grid>
-              <CustomInput
-                type={"text"}
-                xs={12}
-                md={4}
-                label={"First Name"}
-                placeholder={"Enter Your First Name"}
-                name="firstName"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.firstName}
-                errors={
-                  touched.firstName && errors.firstName && errors.firstName
-                }
-              />
-              <CustomInput
-                type={"text"}
-                xs={12}
-                md={4}
-                label={"Middle Name"}
-                placeholder={"Enter Your Middle Name"}
-                name="middleName"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.middleName}
-                errors={
-                  touched.middleName && errors.middleName && errors.middleName
-                }
-              />
-              <CustomAutoComplete
-                list={lastNameList}
-                label={"Last Name"}
-                placeholder={"Select Your Last Name"}
-                xs={12}
-                md={4}
-                name="lastName"
-                onChange={(e, lastName) => {
-                  setFieldValue("lastName", lastName?.id || "");
-                  setSelectedLastName(lastName?.name || null);
-                }}
-                onBlur={handleBlur}
-                errors={touched.lastName && errors.lastName && errors.lastName}
-                value={selectedLastName}
-              />
-              <CustomInput
-                type={"text"}
-                xs={12}
-                md={6}
-                label={"Email"}
-                placeholder={"Enter Your Email"}
-                name="email"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                errors={touched.email && errors.email && errors.email}
-                value={values.email}
-              />
-              <CustomInput
-                type={"tel"}
-                xs={12}
-                md={6}
-                label={"Mobile"}
-                placeholder={"Enter 10-digit mobile"}
-                name="mobile"
-                onChange={(event) => {
-                  const digits = String(event.target.value || "")
-                    .replace(/\D/g, "")
-                    .slice(0, 10);
-                  setFieldValue("mobile", digits);
-                }}
-                onBlur={handleBlur}
-                errors={touched.mobile && errors.mobile && errors.mobile}
-                value={values.mobile}
-              />
-              <CustomInput
-                type={"password"}
-                xs={12}
-                md={6}
-                label={"Password"}
-                placeholder={"Create Your Password"}
-                name="password"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                errors={touched.password && errors.password && errors.password}
-                value={values.password}
-              />
-              <CustomInput
-                type={"password"}
-                xs={12}
-                md={6}
-                label={"Confirm Password"}
-                placeholder={"Confirm your Password"}
-                name="confirmPassword"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.confirmPassword}
-                errors={
-                  touched.confirmPassword &&
-                  errors.confirmPassword &&
-                  errors.confirmPassword
-                }
-              />
-              <CustomAutoComplete
-                list={regionList}
-                label={"Region"}
-                placeholder={"Select Your Region"}
-                name={"region"}
-                xs={12}
-                md={6}
-                value={selectedRegion}
-                errors={touched?.region && errors?.region && errors?.region}
-                onChange={(e, region) => {
-                  setFieldValue("region", region.id);
-                  getSamajList(region.id);
-                  setSelectedRegion(region.name);
-                }}
-                onBlur={handleBlur}
-              />
-              <CustomAutoComplete
-                list={samajList}
-                label={"Local Samaj"}
-                placeholder={"Select Your Samaj"}
-                name={"localSamaj"}
-                xs={12}
-                md={6}
-                value={selectedSamaj}
-                errors={
-                  touched?.localSamaj &&
-                  errors?.localSamaj &&
-                  errors?.localSamaj
-                }
-                disabled={!selectedRegion}
-                onChange={(e, localSamaj) => {
-                  setFieldValue("localSamaj", localSamaj.id);
-                  setSelectedSamaj(localSamaj.name);
-                }}
-                onBlur={handleBlur}
-              />
-              <CustomInput
-                type={"text"}
-                xs={12}
-                sm={6}
-                label={"Family ID"}
-                placeholder={"Enter Your Family Id"}
-                name="familyId"
-                inputProps={{ inputMode: "numeric", maxLength: 10 }}
-                onChange={(event) => {
-                  const digits = String(event.target.value || "")
-                    .replace(/\D/g, "")
-                    .slice(0, 10);
-                  setFieldValue("familyId", digits);
-                }}
-                onBlur={handleBlur}
-                errors={touched.familyId && errors.familyId && errors.familyId}
-                value={values.familyId}
-              />
-              <CustomInput
-                type={"date"}
-                xs={12}
-                sm={6}
-                label={"Date of birth"}
-                placeholder={"Select Your DOB"}
-                name="dob"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                errors={touched.dob && errors.dob && errors.dob}
-                value={values.dob}
-                max={today}
-                min="1950-01-01"
-              />
-              <CustomRadio
-                list={[
-                  { label: "Male", value: "male" },
-                  { label: "Female", value: "female" },
-                ]}
-                label={"Gender"}
-                name={"gender"}
-                xs={12}
-                sm={6}
-                value={values?.gender}
-                errors={touched?.gender && errors?.gender && errors?.gender}
-                className={"flex flex-row"}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              />
-              <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  fullWidth
-                  disabled={loading || isSubmitting}
-                  loading={loading || isSubmitting}
-                >
-                  Sign Up
-                </Button>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography className="flex justify-center flex-wrap text-sm text-mutedText">
-                  Already have an account?
-                  <Link
-                    href={"/login"}
-                    className="px-1 !text-primary !no-underline !font-semibold"
-                  >
-                    Sign in
-                  </Link>
-                </Typography>
-              </Grid>
-              <Grid item xs={12} className="!pt-0">
-                <Link
-                  href={"/register"}
-                  className="flex justify-center !text-xs !text-mutedText !no-underline"
-                >
-                  Need help?
-                </Link>
-              </Grid>
+      <FormikProvider value={formik}>
+        <Form noValidate>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography
+                className="text-center text-primary !font-semibold !text-[22px]"
+                variant="h3"
+              >
+                Create an account
+              </Typography>
+              <p className="text-center text-sm text-mutedText mt-1.5">
+                Join the Yuvadarpan directory
+              </p>
             </Grid>
-          </Form>
-        </FormikProvider>
-      </AuthShell>
+            <CustomInput
+              type={"text"}
+              xs={12}
+              md={4}
+              label={"First Name"}
+              placeholder={"Enter Your First Name"}
+              name="firstName"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.firstName}
+              errors={fieldError("firstName")}
+            />
+            <CustomInput
+              type={"text"}
+              xs={12}
+              md={4}
+              label={"Middle Name"}
+              placeholder={"Enter Your Middle Name"}
+              name="middleName"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.middleName}
+              errors={fieldError("middleName")}
+            />
+            <CustomAutoComplete
+              list={surnameOptions}
+              label={"Last Name"}
+              placeholder={"Select Your Last Name"}
+              xs={12}
+              md={4}
+              name="lastName"
+              onChange={(e, lastName) => {
+                setFieldValue("lastName", optionId(lastName), false);
+                setSelectedLastName(lastName || null);
+              }}
+              onBlur={handleBlur}
+              errors={fieldError("lastName")}
+              value={selectedLastName}
+            />
+            <CustomInput
+              type={"text"}
+              xs={12}
+              md={6}
+              label={"Email"}
+              placeholder={"Enter Your Email"}
+              name="email"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              errors={fieldError("email")}
+              value={values.email}
+            />
+            <CustomInput
+              type={"tel"}
+              xs={12}
+              md={6}
+              label={"Mobile"}
+              placeholder={"Enter 10-digit mobile"}
+              name="mobile"
+              onChange={digitsOnly("mobile", 10)}
+              onBlur={handleBlur}
+              errors={fieldError("mobile")}
+              value={values.mobile}
+            />
+            <CustomInput
+              type={"password"}
+              xs={12}
+              md={6}
+              label={"Password"}
+              placeholder={"Create Your Password"}
+              name="password"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              errors={fieldError("password")}
+              value={values.password}
+            />
+            <CustomInput
+              type={"password"}
+              xs={12}
+              md={6}
+              label={"Confirm Password"}
+              placeholder={"Confirm your Password"}
+              name="confirmPassword"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.confirmPassword}
+              errors={fieldError("confirmPassword")}
+            />
+            <CustomAutoComplete
+              list={regionOptions}
+              label={"Region"}
+              placeholder={"Select Your Region"}
+              name={"region"}
+              xs={12}
+              md={6}
+              value={selectedRegion}
+              errors={fieldError("region")}
+              onChange={(e, region) => {
+                const id = optionId(region);
+                setFieldValue("region", id, false);
+                setFieldValue("localSamaj", "", false);
+                setSelectedRegion(region || null);
+                setSelectedSamaj(null);
+                getSamajList(id);
+              }}
+              onBlur={handleBlur}
+            />
+            <CustomAutoComplete
+              list={samajOptions}
+              label={"Local Samaj"}
+              placeholder={"Select Your Samaj"}
+              name={"localSamaj"}
+              xs={12}
+              md={6}
+              value={selectedSamaj}
+              errors={fieldError("localSamaj")}
+              disabled={!selectedRegion}
+              onChange={(e, localSamaj) => {
+                setFieldValue("localSamaj", optionId(localSamaj), false);
+                setSelectedSamaj(localSamaj || null);
+              }}
+              onBlur={handleBlur}
+            />
+            <CustomInput
+              type={"text"}
+              xs={12}
+              sm={6}
+              label={"Family ID"}
+              placeholder={"Enter Your Family Id"}
+              name="familyId"
+              inputProps={{ inputMode: "numeric", maxLength: 10 }}
+              onChange={digitsOnly("familyId", 10)}
+              onBlur={handleBlur}
+              errors={fieldError("familyId")}
+              value={values.familyId}
+            />
+            <CustomInput
+              type={"date"}
+              xs={12}
+              sm={6}
+              label={"Date of birth"}
+              placeholder={"Select Your DOB"}
+              name="dob"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              errors={fieldError("dob")}
+              value={values.dob}
+              max={TODAY}
+              min="1950-01-01"
+            />
+            <CustomRadio
+              list={GENDER_OPTIONS}
+              label={"Gender"}
+              name={"gender"}
+              xs={12}
+              sm={6}
+              value={values?.gender}
+              errors={fieldError("gender")}
+              className={"flex flex-row"}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
+            <Grid item xs={12}>
+              <Button
+                type="submit"
+                fullWidth
+                disabled={loading || isSubmitting}
+                loading={loading || isSubmitting}
+              >
+                Sign Up
+              </Button>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography className="flex justify-center flex-wrap text-sm text-mutedText">
+                Already have an account?
+                <Link
+                  href={"/login"}
+                  className="px-1 !text-primary !no-underline !font-semibold"
+                >
+                  Sign in
+                </Link>
+              </Typography>
+            </Grid>
+            <Grid item xs={12} className="!pt-0">
+              <Link
+                href={"/register"}
+                className="flex justify-center !text-xs !text-mutedText !no-underline"
+              >
+                Need help?
+              </Link>
+            </Grid>
+          </Grid>
+        </Form>
+      </FormikProvider>
       <NotificationSnackbar notification={notification} />
     </>
+  );
+}
+
+/** Shell stays mounted so the ad banner does not re-render on every keystroke. */
+export default function Index() {
+  return (
+    <AuthShell
+      maxWidthClass="sm:max-w-[600px]"
+      beforeCard={<AdBanner page="signup" />}
+    >
+      <RegistrationForm />
+    </AuthShell>
   );
 }
