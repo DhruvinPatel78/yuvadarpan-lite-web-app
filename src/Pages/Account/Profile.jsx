@@ -90,7 +90,9 @@ export default function Profile() {
       middleName: Yup.string().required("Required"),
       lastName: Yup.string().required("Required"),
       email: Yup.string().email("Enter a valid email").required("Required"),
-      mobile: Yup.string().required("Required"),
+      mobile: Yup.string()
+        .required("Required")
+        .matches(/^[0-9]{10}$/, "Enter a valid 10-digit phone number"),
     }),
     onSubmit: async (values) => {
       dispatch(startLoading());
@@ -203,13 +205,13 @@ export default function Profile() {
             <Form>
               <Grid container spacing={2.5}>
                 <CustomInput
-                    type={"text"}
-                    xs={12}
-                    sm={4}
-                    label={"Family ID"}
-                    name="familyId"
-                    value={user?.familyId || "-"}
-                    readOnly
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Family ID"}
+                  name="familyId"
+                  value={user?.familyId || "-"}
+                  readOnly
                 />
                 <CustomInput
                   type={"text"}
@@ -267,6 +269,10 @@ export default function Profile() {
                   label={"Mobile"}
                   name="mobile"
                   value={values.mobile}
+                  inputProps={{
+                    maxLength: 10,
+                    inputMode: "numeric",
+                  }}
                   onChange={handleChange}
                   onBlur={handleBlur}
                   errors={touched.mobile && errors.mobile}
@@ -295,7 +301,6 @@ export default function Profile() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                 />
-
 
                 <CustomInput
                   type={"text"}

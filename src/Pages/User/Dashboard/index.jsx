@@ -19,10 +19,7 @@ import moment from "moment";
 import { UseRedux } from "../../../Component/useRedux";
 import ProfileCard from "../../../Component/Common/profileCard";
 import AdCard from "../../../Component/Common/AdCard";
-import {
-  interleaveAdsIntoList,
-  usePageAds,
-} from "../../../Component/Common/AdBanner";
+import { placeAdsBesideProfiles, usePageAds } from "../../../Component/Common/AdBanner";
 import CustomAutoComplete from "../../../Component/Common/customAutoComplete";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -135,6 +132,10 @@ const Home = () => {
   const dispatch = useDispatch();
   const canShortlist = isRegularUser(auth?.user?.role);
   const isMobile = useMediaQuery("(max-width:767.95px)");
+  const isDirectorySm = useMediaQuery("(min-width:640px)");
+  const isDirectoryLg = useMediaQuery("(min-width:1024px)");
+  const isDirectoryXl = useMediaQuery("(min-width:1280px)");
+  const directoryColumns = isDirectoryXl ? 4 : isDirectoryLg ? 3 : isDirectorySm ? 2 : 1;
   const [yuvaList, setYuvaList] = useState([]);
   const [keywordSearch, setKeywordSearch] = useState("");
   const [hasMore, setHasMore] = useState(false);
@@ -164,10 +165,10 @@ const Home = () => {
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
   const [shortlistedIds, setShortlistedIds] = useState([]);
   const homeAds = usePageAds("dashboard");
-  const feedItems = useMemo(() => {
-    // Wait until ads are considered with the yuva page so slots stay fixed on refresh.
-    return interleaveAdsIntoList(yuvaList || [], homeAds, 4);
-  }, [yuvaList, homeAds]);
+  const feedItems = useMemo(
+    () => placeAdsBesideProfiles(yuvaList || [], homeAds, directoryColumns),
+    [yuvaList, homeAds, directoryColumns]
+  );
 
   const gotraOptions = useMemo(() => gotraOptionList(gotraList), [gotraList]);
   const surnameFilterList = useMemo(
@@ -906,7 +907,7 @@ const Home = () => {
             if (item.type === "ad") {
               return (
                 <AdCard
-                  key={`ad-${item.data?.id || index}`}
+                  key={`ad-${item.data?.id || item.data?.uuid || index}`}
                   ad={item.data}
                 />
               );

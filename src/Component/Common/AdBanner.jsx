@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getAdvertisementsByPage } from "../../util/advertisementApi";
 import AdCard from "./AdCard";
 
@@ -72,34 +72,178 @@ export const usePageAds = (page, { fallbackPages = [] } = {}) => {
 };
 
 /**
- * Insert ads into a yuva list every N items, in fixed priority order.
- * Same inputs always produce the same feed (no random).
+ * Put one ad beside profile cards. The ad slot moves each row so two ads
+ * never sit side by side. Extra ads wait until more profiles can separate them.
  */
-export const interleaveAdsIntoList = (yuvaRows = [], ads = [], every = 4) => {
-  const orderedAds = sortAdsByPriority(ads);
-  if (!orderedAds.length) {
-    return yuvaRows.map((row) => ({ type: "yuva", data: row }));
+export const placeAdsBesideProfiles = (profiles = [], ads = [], columns = 4) => {
+  const cols = Math.max(1, Number(columns) || 1);
+  const people = Array.isArray(profiles) ? profiles : [];
+  const posters = Array.isArray(ads) ? ads : [];
+
+  if (!posters.length) {
+    return people.map((data) => ({ type: "yuva", data }));
+  }
+  if (!people.length) {
+    return [];
   }
 
-  const result = [];
+  const items = [];
+  let profileIndex = 0;
   let adIndex = 0;
-  const spacing = Math.max(2, every);
 
-  yuvaRows.forEach((row, index) => {
-    result.push({ type: "yuva", data: row });
-    if ((index + 1) % spacing === 0 && adIndex < orderedAds.length) {
-      result.push({ type: "ad", data: orderedAds[adIndex] });
-      adIndex += 1;
+  if (cols === 1) {
+    while (profileIndex < people.length) {
+      items.push({ type: "yuva", data: people[profileIndex] });
+      profileIndex += 1;
+      if (adIndex < posters.length && profileIndex < people.length) {
+        items.push({ type: "ad", data: posters[adIndex] });
+        adIndex += 1;
+      }
     }
-  });
+    if (people.length === 1 && adIndex < posters.length) {
+      items.push({ type: "ad", data: posters[adIndex] });
+    }
+    return items;
+  }
+  let adColumn = cols - 1;
+  let gapRow = false;
+  while (profileIndex < people.length) {
+    const peopleLeft = people.length - profileIndex;
+    const wantAd = !gapRow && adIndex < posters.length;
+    const profileSlots = wantAd ? cols - 1 : cols;
+    const take = Math.min(profileSlots, peopleLeft);
+    if (!wantAd) {
+      for (let i = 0; i < take; i += 1) {
+        items.push({ type: "yuva", data: people[profileIndex] });
+        profileIndex += 1;
+      }
+      gapRow = false;
+      continue;
+    }
 
-  // Remaining ads stay in priority order at the end (still not random).
-  while (adIndex < orderedAds.length) {
-    result.push({ type: "ad", data: orderedAds[adIndex] });
-    adIndex += 1;
+    if (take < cols - 1) {
+      for (let i = 0; i < take; i += 1) {
+        items.push({ type: "yuva", data: people[profileIndex] });
+        profileIndex += 1;
+      }
+      items.push({ type: "ad", data: posters[adIndex] });
+      break;
+    }
+
+    const rowProfiles = [];
+    for (let i = 0; i < cols - 1; i += 1) {
+      rowProfiles.push(people[profileIndex]);
+      profileIndex += 1;
+    }
+    let rowProfileIndex = 0;
+    for (let column = 0; column < cols; column += 1) {
+      if (column === adColumn) {
+        items.push({ type: "ad", data: posters[adIndex] });
+        adIndex += 1;
+      } else {
+        items.push({ type: "yuva", data: rowProfiles[rowProfileIndex] });
+        rowProfileIndex += 1;
+      }
+    }
+    adColumn = (adColumn - 1 + cols) % cols;
+    if (cols <= 2) {
+      gapRow = true;
+    }
   }
 
-  return result;
+  return items;
+};
+
+/**
+ * Horizontal shelf of separate ad posters.
+ * Several show at once. The user scrolls to the rest. Nothing auto-rotates.
+ */
+export const AdShelf = ({ ads = [], title = "Sponsored" }) => {
+  const scrollerRef = useRef(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+
+  const updateArrows = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 8);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  };
+
+  useEffect(() => {
+    updateArrows();
+    const el = scrollerRef.current;
+    if (!el) return undefined;
+    el.addEventListener("scroll", updateArrows, { passive: true });
+    window.addEventListener("resize", updateArrows);
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      window.removeEventListener("resize", updateArrows);
+    };
+  }, [ads]);
+
+  if (!ads.length) return null;
+
+  const scrollByCard = (direction) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const card = el.querySelector("[data-ad-card]");
+    const amount = (card?.getBoundingClientRect().width || 220) + 16;
+    el.scrollBy({ left: direction * amount, behavior: "smooth" });
+  };
+
+  return (
+    <section aria-label={title || "Advertisements"} className="mb-5">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+          <h2 className="text-sm font-WorkSemiBold tracking-wide text-primary truncate">
+            {title}
+          </h2>
+        </div>
+        {canPrev || canNext ? (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              aria-label="Show previous advertisements"
+              disabled={!canPrev}
+              onClick={() => scrollByCard(-1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-primary shadow-sm transition-colors hover:bg-[#f6f6fa] disabled:opacity-30"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M10 3.5 5.5 8 10 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Show next advertisements"
+              disabled={!canNext}
+              onClick={() => scrollByCard(1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-primary shadow-sm transition-colors hover:bg-[#f6f6fa] disabled:opacity-30"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        ) : null}
+      </div>
+      <div
+        ref={scrollerRef}
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {ads.map((ad, index) => (
+          <div
+            key={ad.id || ad.uuid || ad._id || index}
+            data-ad-card
+            className="snap-start shrink-0 w-[200px] sm:w-[230px] h-[280px] sm:h-[300px]"
+          >
+            <AdCard ad={ad} className="!h-full !min-h-0" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 };
 
 /** Compact banner (login/signup) — cycles ads. */
