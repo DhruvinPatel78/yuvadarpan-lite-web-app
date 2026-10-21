@@ -18,11 +18,7 @@ const AdCard = ({ ad, className = "" }) => {
     return null;
   }
 
-  const content = (
-    <div
-      className={`group relative w-full h-full min-h-[290px] min-w-0 rounded-2xl overflow-hidden bg-gradient-to-b from-[#fffcf8] via-surface to-[#fdf8f2] border-2 border-amber-500/35 shadow-sm hover:shadow-[0_12px_32px_rgba(217,119,6,0.2)] hover:border-amber-500/70 transition-all duration-300 transform hover:-translate-y-1 ${className}`.trim()}
-    >
-      {imageUrl && !failed ? (
+  const media = imageUrl && !failed ? (
         <>
           <img
             src={imageUrl}
@@ -45,13 +41,21 @@ const AdCard = ({ ad, className = "" }) => {
             Advertisement
           </span>
         </div>
-      )}
+  );
 
+  const badge = (
       <div className="absolute top-3 right-3 z-30 flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-600/95 to-amber-700/95 backdrop-blur-md border border-amber-300/40 text-white text-[10px] font-extrabold tracking-widest uppercase shadow-md pointer-events-none group-hover:scale-105 transition-all">
         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
         AD
       </div>
+  );
 
+  const content = (
+    <div
+      className={`group relative w-full h-full min-h-[240px] min-w-0 rounded-2xl overflow-hidden bg-gradient-to-b from-[#fffcf8] via-surface to-[#fdf8f2] border-2 border-amber-500/40 shadow-sm hover:shadow-[0_12px_32px_rgba(217,119,6,0.2)] hover:border-amber-500/80 transition-all duration-300 ${className}`.trim()}
+    >
+      {media}
+      {badge}
     </div>
   );
 

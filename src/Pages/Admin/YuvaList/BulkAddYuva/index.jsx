@@ -894,22 +894,30 @@ const BulkAddYuva = () => {
                     onBlur={handleBlur}
                   />
                   <CustomInput
-                    type="text"
+                    type="tel"
                     label="Contact Person Phone"
-                    placeholder="Enter Your Contact Person Phone"
+                    placeholder="Enter 10-digit phone number"
                     name="contactInfo.phone"
                     xs={12}
                     sm={6}
                     md={6}
+                    required
                     value={values?.contactInfo?.phone}
                     errors={showErr(
                       touched?.contactInfo?.phone,
                       errors?.contactInfo?.phone
                     )}
                     onBlur={handleBlur}
-                    onChange={(e) =>
-                      setFieldValue("contactInfo.phone", e?.target?.value)
-                    }
+                    inputProps={{
+                      maxLength: 10,
+                      inputMode: "numeric",
+                    }}
+                    onChange={(e) => {
+                      const next = String(e?.target?.value || "")
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+                      setFieldValue("contactInfo.phone", next);
+                    }}
                   />
                   <CustomSelect
                     list={bilingualOptions(relationList, "relation")}

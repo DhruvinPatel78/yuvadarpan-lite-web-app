@@ -325,8 +325,9 @@ export const bulkAddValidationSchema = Yup.object({
       .required("Contact Last Name Is Required"),
     relation: Yup.string().required("Contact Relation Is Required"),
     phone: Yup.string()
-      .matches("^(\\+\\d{1,3}[- ]?)?\\d{10}$", "Enter a valid phone number")
-      .required("Contact Phone Number Is Required"),
+      .transform((value) => String(value ?? "").replace(/\D/g, ""))
+      .required("Contact Phone Number Is Required")
+      .matches(/^[0-9]{10}$/, "Enter a valid 10-digit phone number"),
   }),
   yuvas: Yup.array()
     .of(

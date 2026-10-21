@@ -15,7 +15,7 @@ import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import moment from "moment/moment";
 import ContainerPage from "../../Component/Container";
-import { usePageAds } from "../../Component/Common/AdBanner";
+import { AdShelf, usePageAds } from "../../Component/Common/AdBanner";
 import AdCard from "../../Component/Common/AdCard";
 import { UseRedux } from "../../Component/useRedux";
 import CustomTabPanel from "./CustomTabPanel";
@@ -774,11 +774,10 @@ const ProfilePage = () => {
                 </div>
               </Card>
               {detailsAds.length ? (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {detailsAds.map((ad) => (
-                    <AdCard key={ad.id || ad.uuid || ad._id} ad={ad} />
-                  ))}
-                </div>
+                <AdShelf
+                  ads={detailsAds}
+                  title={language === "en" ? "Sponsored" : "જાહેરાત"}
+                />
               ) : null}
             </div>
           </div>
