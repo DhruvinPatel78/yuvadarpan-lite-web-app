@@ -71,9 +71,29 @@ try {
     const options = {
       body: payload?.notification?.body || "",
       icon: `${process.env.PUBLIC_URL}/apple-touch-icon.png`,
+      data: payload?.data || {},
     };
     self.registration.showNotification(title, options);
   });
 } catch (error) {
   console.log("Firebase messaging in service worker skipped.", error);
 }
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const path = event.notification?.data?.path || "/";
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(path);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(path);
+      }
+      return undefined;
+    }),
+  );
+});

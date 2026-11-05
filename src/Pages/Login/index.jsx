@@ -22,6 +22,7 @@ import { loginUser } from "../../util/authApi";
 import { getCurrentUser } from "../../util/userApi";
 import { resolveUserFamilyIdExists } from "../../util/familyIdApi";
 import { isRegularUser } from "../../util/util";
+import { registerStaffPush } from "../../util/pushNotifications";
 import AdBanner from "../../Component/Common/AdBanner";
 
 function LoginForm() {
@@ -68,6 +69,7 @@ function LoginForm() {
           setNotification({ message: "Signed in.", type: "success" });
           loadLocationMasters(dispatch);
           dispatch(login({ ...me, token: res?.token }));
+          registerStaffPush(me).catch(() => {});
           resetForm();
           navigate(
             isRegularUser(me?.role) && !familyIdExists
