@@ -17,13 +17,9 @@ import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import CustomRadio from "../../Component/Common/customRadio";
 import { registerUser } from "../../util/authApi";
-import { messaging } from "../../firebase";
-import { getToken } from "firebase/messaging";
-import getMessagingRegistration from "../../util/getMessagingRegistration";
+import { getFcmToken } from "../../util/pushNotifications";
 import AdBanner from "../../Component/Common/AdBanner";
 import { masterNameText } from "../../util/bhasha";
-
-const FCM_WAIT_MS = 3500;
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -112,24 +108,6 @@ function RegistrationForm() {
       setSamajList(toOptionList(res?.data));
     });
   }, []);
-
-  const getFcmToken = async () => {
-    try {
-      const tokenPromise = (async () =>
-        getToken(messaging, {
-          vapidKey:
-            "BJL8nmbe31A9I8MuiulNUL8Ip-6ZL3rYihhIG7oA_4Q-WBZAU53BENLfw6y94Zz6m9YQQZgrXpeZ-BtXNy_R3i8",
-          serviceWorkerRegistration: await getMessagingRegistration(),
-        }))();
-      return await Promise.race([
-        tokenPromise,
-        new Promise((resolve) => setTimeout(() => resolve(null), FCM_WAIT_MS)),
-      ]);
-    } catch (err) {
-      console.error("FCM token error:", err);
-    }
-    return null;
-  };
 
   const formik = useFormik({
     initialValues: {
