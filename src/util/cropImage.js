@@ -59,10 +59,6 @@ export async function prepareImageFileForCrop(file) {
   });
 }
 
-export const readFileAsDataUrl = async (file) => {
-  const prepared = await prepareImageFileForCrop(file);
-  return fileToDataUrl(prepared);
-};
 
 export async function loadImageForCrop(file) {
   const prepared = await prepareImageFileForCrop(file);

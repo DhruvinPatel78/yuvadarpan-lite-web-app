@@ -72,7 +72,8 @@ function ChoiceGroup({ label, value, options, onChange }) {
   );
 }
 
-export default function ExportYuvaModal({ open, onClose }) {
+export default function ExportYuvaModal({ open, onClose, ids = [] }) {
+  const selectedCount = ids.length;
   const [format, setFormat] = useState("csv");
   const [exportLanguage, setExportLanguage] = useState("gu");
   const [loading, setLoading] = useState(false);
@@ -102,7 +103,11 @@ export default function ExportYuvaModal({ open, onClose }) {
     setError("");
     try {
       const response = await exportYuvaList(
-        { format, language: exportLanguage },
+        {
+          format,
+          language: exportLanguage,
+          ...(selectedCount ? { ids: ids.join(",") } : {}),
+        },
         { signal: controller.signal }
       );
       downloadBlob(
@@ -123,9 +128,18 @@ export default function ExportYuvaModal({ open, onClose }) {
   };
 
   return (
-    <FormModal open={open} onClose={handleClose} title="Export Yuva List" maxWidth="480px">
+    <FormModal
+      open={open}
+      onClose={handleClose}
+      title={selectedCount ? "Export Selected" : "Export Yuva List"}
+      maxWidth="480px"
+    >
       <p className="text-sm text-mutedText mb-4">
-        Download the directory as CSV or PDF. Address is not included.
+        {selectedCount
+          ? `Download ${selectedCount} selected ${
+              selectedCount === 1 ? "profile" : "profiles"
+            } as CSV or PDF. Address is not included.`
+          : "Download the directory as CSV or PDF. Address is not included."}
       </p>
       <div className="flex flex-col gap-4">
         <ChoiceGroup label="Format" value={format} options={FORMATS} onChange={setFormat} />
