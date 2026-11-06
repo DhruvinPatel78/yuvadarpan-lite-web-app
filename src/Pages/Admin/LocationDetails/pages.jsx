@@ -14,6 +14,13 @@ import {
   deleteRegion,
 } from "../../../util/regionApi";
 import {
+  getVibhagInfo,
+  getVibhagsByRegion,
+  addVibhag,
+  updateVibhag,
+  deleteVibhag,
+} from "../../../util/vibhagApi";
+import {
   getDistrictInfo,
   getDistrictsByRegion,
   addDistrict,
@@ -61,8 +68,8 @@ export const locationDetailsConfig = {
     listTitle: "Region List",
     fetchParent: getStateInfo,
     fetchChildren: getRegionsByState,
-    countField: "districtCount",
-    countHeader: "Districts",
+    countField: "vibhagCount",
+    countHeader: "Vibhags",
     childViewPath: (id) => `/admin/region/${id}`,
     childLabel: "Region",
     addButtonLabel: "Add Region",
@@ -78,8 +85,29 @@ export const locationDetailsConfig = {
   region: {
     entityLabel: "Region",
     listPath: "/admin/region",
-    listTitle: "District List",
+    listTitle: "Vibhag List",
     fetchParent: getRegionInfo,
+    fetchChildren: getVibhagsByRegion,
+    countField: "districtCount",
+    countHeader: "Districts",
+    childViewPath: (id) => `/admin/vibhag/${id}`,
+    childLabel: "Vibhag",
+    addButtonLabel: "Add Vibhag",
+    addChild: addVibhag,
+    getChildPayload: (parent, parentId) => ({
+      country_id: parent?.country_id,
+      state_id: parent?.state_id,
+      region_id: parentId,
+    }),
+    updateChild: updateVibhag,
+    deleteChild: deleteVibhag,
+    deleteEntity: "vibhag",
+  },
+  vibhag: {
+    entityLabel: "Vibhag",
+    listPath: "/admin/vibhag",
+    listTitle: "District List",
+    fetchParent: getVibhagInfo,
     fetchChildren: getDistrictsByRegion,
     countField: "cityCount",
     countHeader: "Cities",
@@ -90,7 +118,8 @@ export const locationDetailsConfig = {
     getChildPayload: (parent, parentId) => ({
       country_id: parent?.country_id,
       state_id: parent?.state_id,
-      region_id: parentId,
+      region_id: parent?.region_id,
+      vibhag_id: parentId,
     }),
     updateChild: updateDistrict,
     deleteChild: deleteDistrict,
@@ -112,6 +141,7 @@ export const locationDetailsConfig = {
       country_id: parent?.country_id,
       state_id: parent?.state_id,
       region_id: parent?.region_id,
+      vibhag_id: parent?.vibhag_id,
       district_id: parentId,
     }),
     updateChild: updateCity,
@@ -135,6 +165,7 @@ export const locationDetailsConfig = {
       country_id: parent?.country_id,
       state_id: parent?.state_id,
       region_id: parent?.region_id,
+      vibhag_id: parent?.vibhag_id,
       district_id: parent?.district_id,
       city_id: parentId,
     }),
@@ -152,6 +183,9 @@ export const StateDetails = () => (
 );
 export const RegionDetails = () => (
   <LocationDetails config={locationDetailsConfig.region} />
+);
+export const VibhagDetails = () => (
+  <LocationDetails config={locationDetailsConfig.vibhag} />
 );
 export const DistrictDetails = () => (
   <LocationDetails config={locationDetailsConfig.district} />

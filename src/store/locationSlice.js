@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   region: [],
   state: [],
+  vibhag: [],
   district: [],
   city: [],
   samaj: [],
@@ -23,6 +24,9 @@ const locationReducer = createSlice({
     },
     state: (state, action) => {
       state.state = action.payload;
+    },
+    vibhag: (state, action) => {
+      state.vibhag = action.payload;
     },
     district: (state, action) => {
       state.district = action.payload;
@@ -54,6 +58,7 @@ const locationReducer = createSlice({
     clearLocation: (state) => {
       state.region = [];
       state.state = [];
+      state.vibhag = [];
       state.district = [];
       state.city = [];
       state.samaj = [];
@@ -68,6 +73,7 @@ const locationReducer = createSlice({
 
 export const {
   state,
+  vibhag,
   district,
   surname,
   samaj,

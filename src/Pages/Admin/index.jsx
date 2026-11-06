@@ -9,11 +9,13 @@ import {
   CountryDetails,
   StateDetails,
   RegionDetails,
+  VibhagDetails,
   DistrictDetails,
   CityDetails,
 } from "./LocationDetails/pages";
 import State from "./State";
 import Region from "./Region";
+import Vibhag from "./Vibhag";
 import District from "./District";
 import City from "./City";
 import Samaj from "./Samaj";
@@ -40,6 +42,8 @@ export {
   StateDetails,
   Region,
   RegionDetails,
+  Vibhag,
+  VibhagDetails,
   District,
   DistrictDetails,
   City,

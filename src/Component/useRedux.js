@@ -7,6 +7,7 @@ export const UseRedux = () =>
       auth: state.auth,
       surname: state.location.surname,
       region: state.location.region,
+      vibhag: state.location.vibhag,
       samaj: state.location.samaj,
       state: state.location.state,
       city: state.location.city,

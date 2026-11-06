@@ -122,6 +122,7 @@ const comparableUserValues = (vals) => {
     country: String(vals?.country || ""),
     state: String(vals?.state || ""),
     region: String(vals?.region || ""),
+    vibhag: String(vals?.vibhag || ""),
     district: String(vals?.district || ""),
     city: String(vals?.city || ""),
     localSamaj: String(vals?.localSamaj || ""),
@@ -403,7 +404,7 @@ function UserPasswordPanel({
 
 function Index() {
   const dispatch = useDispatch();
-  const { loading, surname, region, samaj, country, state, district, city, auth, gotra: gotraList } = UseRedux();
+  const { loading, surname, region, vibhag, samaj, country, state, district, city, auth, gotra: gotraList } = UseRedux();
   const copy = useFilterCopy();
   const lastNameOptions = useMemo(() => asOptions(surname), [surname]);
   const regionOptions = useMemo(() => asOptions(region), [region]);
@@ -414,6 +415,8 @@ function Index() {
     String(auth?.user?.role || "").toUpperCase() === "CITY_MANAGER";
   const isDistrictManager =
     String(auth?.user?.role || "").toUpperCase() === "DISTRICT_MANAGER";
+  const isVibhagManager =
+    String(auth?.user?.role || "").toUpperCase() === "VIBHAG_MANAGER";
   const isRegionManager =
     String(auth?.user?.role || "").toUpperCase() === "REGION_MANAGER";
   const isStateManager =
@@ -424,6 +427,7 @@ function Index() {
     isSamajManager ||
     isCityManager ||
     isDistrictManager ||
+    isVibhagManager ||
     isRegionManager ||
     isStateManager ||
     isCountryManager;
@@ -446,6 +450,7 @@ function Index() {
   const [selectedCountryName, setSelectedCountryName] = useState(null);
   const [selectedStateName, setSelectedStateName] = useState(null);
   const [selectedRegionName, setSelectedRegionName] = useState(null);
+  const [selectedVibhagName, setSelectedVibhagName] = useState(null);
   const [selectedDistrictName, setSelectedDistrictName] = useState(null);
   const [selectedCityName, setSelectedCityName] = useState(null);
   const [selectedGotra, setSelectedGotra] = useState([]);
@@ -461,6 +466,7 @@ function Index() {
   const [samajList, setSamajList] = useState([]);
   const [stateList, setStateList] = useState([]);
   const [regionList, setRegionList] = useState([]);
+  const [vibhagList, setVibhagList] = useState([]);
   const [districtList, setDistrictList] = useState([]);
   const [cityList, setCityList] = useState([]);
   const [selectedRole, setSelectedRole] = useState([]);
@@ -479,6 +485,7 @@ function Index() {
         isSamajManager ||
         isCityManager ||
         isDistrictManager ||
+        isVibhagManager ||
         isRegionManager ||
         isStateManager ||
         isCountryManager
@@ -495,6 +502,7 @@ function Index() {
         district: formValues.district || "",
         city: formValues.city || "",
         region: formValues.region || "",
+        vibhag: formValues.vibhag || "",
         localSamaj: formValues.localSamaj || "",
         dob: formValues.dob ? moment(formValues.dob).format() : formValues.dob,
         gender: String(formValues.gender || "").toLowerCase(),
@@ -529,6 +537,7 @@ function Index() {
       active: false,
       allowed: false,
       region: "",
+      vibhag: "",
       country: "",
       state: "",
       district: "",
@@ -574,6 +583,7 @@ function Index() {
         country: Yup.string().required("Required"),
         state: Yup.string().required("Required"),
         region: Yup.string().required("Required"),
+        vibhag: Yup.string().required("Required"),
         district: Yup.string().required("Required"),
         city: Yup.string().required("Required"),
         localSamaj: Yup.string().required("Required"),
@@ -769,6 +779,7 @@ function Index() {
       country: userInfo?.country || samajOpt.country_id || "",
       state: userInfo?.state || samajOpt.state_id || "",
       region: userInfo?.region || samajOpt.region_id || "",
+      vibhag: userInfo?.vibhag || samajOpt.vibhag_id || "",
       district: userInfo?.district || samajOpt.district_id || "",
       city: userInfo?.city || samajOpt.city_id || "",
       localSamaj:
@@ -816,10 +827,25 @@ function Index() {
       pickMasterId(regionOpt) || String(source?.region || "").trim();
     setSelectedRegionName(regionOpt || null);
 
-    let nextDistricts = [];
+    let nextVibhags = [];
     if (regionId) {
       try {
-        nextDistricts = (await getListById("district", regionId)) || [];
+        nextVibhags = (await getListById("vibhag", regionId)) || [];
+      } catch (e) {
+        nextVibhags = [];
+      }
+    }
+    const vibhagOptions = asOptions(nextVibhags);
+    setVibhagList(nextVibhags);
+    const vibhagOpt = findOption(vibhagOptions, source?.vibhag);
+    const vibhagId =
+      pickMasterId(vibhagOpt) || String(source?.vibhag || "").trim();
+    setSelectedVibhagName(vibhagOpt || null);
+
+    let nextDistricts = [];
+    if (vibhagId) {
+      try {
+        nextDistricts = (await getListById("district", vibhagId)) || [];
       } catch (e) {
         nextDistricts = [];
       }
@@ -864,6 +890,7 @@ function Index() {
       country: countryId,
       state: stateId,
       region: regionId,
+      vibhag: vibhagId,
       district: districtId,
       city: cityId,
       localSamaj: localSamajId,
@@ -905,6 +932,7 @@ function Index() {
         active: enriched?.active,
         allowed: enriched?.allowed,
         region: enriched?.region || "",
+        vibhag: enriched?.vibhag || "",
         country: enriched?.country || "",
         state: enriched?.state || "",
         district: enriched?.district || "",
@@ -994,10 +1022,12 @@ function Index() {
     setSelectedCountryName(null);
     setSelectedStateName(null);
     setSelectedRegionName(null);
+    setSelectedVibhagName(null);
     setSelectedDistrictName(null);
     setSelectedCityName(null);
     setStateList([]);
     setRegionList([]);
+    setVibhagList([]);
     setDistrictList([]);
     setCityList([]);
     setSamajList([]);
@@ -1022,9 +1052,18 @@ function Index() {
     }
   };
 
-  const getDistrictList = async (regionId) => {
+  const getVibhagList = async (regionId) => {
     try {
-      const data = await getListById("district", regionId);
+      const data = await getListById("vibhag", regionId);
+      setVibhagList(data || []);
+    } catch (e) {
+      setVibhagList([]);
+    }
+  };
+
+  const getDistrictList = async (vibhagId) => {
+    try {
+      const data = await getListById("district", vibhagId);
       setDistrictList(data || []);
     } catch (e) {
       setDistrictList([]);
@@ -1658,6 +1697,10 @@ function Index() {
             value={lookupName(region, viewUser?.region)}
           />
           <UserDetailItem
+            label="Vibhag"
+            value={lookupName(vibhag, viewUser?.vibhag)}
+          />
+          <UserDetailItem
             label="District"
             value={lookupName(district, viewUser?.district)}
           />
@@ -1899,15 +1942,18 @@ function Index() {
                         setFieldValue("country", selectedCountry?.id || "");
                         setFieldValue("state", "");
                         setFieldValue("region", "");
+                        setFieldValue("vibhag", "");
                         setFieldValue("district", "");
                         setFieldValue("city", "");
                         setFieldValue("localSamaj", "");
                         setSelectedCountryName(selectedCountry || null);
                         setSelectedStateName(null);
                         setSelectedRegionName(null);
+                        setSelectedVibhagName(null);
                         setSelectedDistrictName(null);
                         setSelectedCityName(null);
                         setRegionList([]);
+                        setVibhagList([]);
                         setDistrictList([]);
                         setCityList([]);
                         setSamajList([]);
@@ -1939,13 +1985,16 @@ function Index() {
                       onChange={(e, selectedState) => {
                         setFieldValue("state", selectedState?.id || "");
                         setFieldValue("region", "");
+                        setFieldValue("vibhag", "");
                         setFieldValue("district", "");
                         setFieldValue("city", "");
                         setFieldValue("localSamaj", "");
                         setSelectedStateName(selectedState || null);
                         setSelectedRegionName(null);
+                        setSelectedVibhagName(null);
                         setSelectedDistrictName(null);
                         setSelectedCityName(null);
+                        setVibhagList([]);
                         setDistrictList([]);
                         setCityList([]);
                         setSamajList([]);
@@ -1976,16 +2025,54 @@ function Index() {
                       }
                       onChange={(e, regionValue) => {
                         setFieldValue("region", regionValue?.id || "");
+                        setFieldValue("vibhag", "");
                         setFieldValue("district", "");
                         setFieldValue("city", "");
                         setFieldValue("localSamaj", "");
                         setSelectedRegionName(regionValue || null);
+                        setSelectedVibhagName(null);
+                        setSelectedDistrictName(null);
+                        setSelectedCityName(null);
+                        setDistrictList([]);
+                        setCityList([]);
+                        setSamajList([]);
+                        if (regionValue?.id) {
+                          getVibhagList(regionValue.id);
+                        } else {
+                          setVibhagList([]);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      list={asOptions(vibhagList)}
+                      label={"Vibhag"}
+                      placeholder={"Select Your Vibhag"}
+                      name={"vibhag"}
+                      value={
+                        findOption(asOptions(vibhagList), values?.vibhag) ||
+                        selectedVibhagName
+                      }
+                      disabled={!values?.region}
+                      errors={
+                        touched?.vibhag && errors?.vibhag && errors?.vibhag
+                      }
+                      onChange={(e, vibhagValue) => {
+                        setFieldValue("vibhag", vibhagValue?.id || "");
+                        setFieldValue("district", "");
+                        setFieldValue("city", "");
+                        setFieldValue("localSamaj", "");
+                        setSelectedVibhagName(vibhagValue || null);
                         setSelectedDistrictName(null);
                         setSelectedCityName(null);
                         setCityList([]);
                         setSamajList([]);
-                        if (regionValue?.id) {
-                          getDistrictList(regionValue.id);
+                        if (vibhagValue?.id) {
+                          getDistrictList(vibhagValue.id);
                         } else {
                           setDistrictList([]);
                         }
@@ -2007,7 +2094,7 @@ function Index() {
                           values?.district
                         ) || selectedDistrictName
                       }
-                      disabled={!values?.region}
+                      disabled={!values?.vibhag}
                       errors={
                         touched?.district &&
                         errors?.district &&

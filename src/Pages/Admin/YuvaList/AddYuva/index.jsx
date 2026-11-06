@@ -130,7 +130,7 @@ const AddYuva = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { language, t } = useFormLanguage();
-  const { loading, country, state, region, district, city, samaj, surname, auth } =
+  const { loading, country, state, region, vibhag, district, city, samaj, surname, auth } =
     UseRedux();
   const selectArr = [
     "surname",
@@ -138,6 +138,7 @@ const AddYuva = () => {
     "country",
     "state",
     "region",
+    "vibhag",
     "district",
     "city",
     "samaj",
@@ -162,6 +163,8 @@ const AddYuva = () => {
   const [selectedState, setSelectedState] = useState(null);
   const [regionList, setRegionList] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState(null);
+  const [vibhagList, setVibhagList] = useState([]);
+  const [selectedVibhag, setSelectedVibhag] = useState(null);
   const [districtList, setDistrictList] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [samajList, setSamajList] = useState([]);
@@ -240,6 +243,9 @@ const AddYuva = () => {
       case "region":
         setRegionList(list);
         break;
+      case "vibhag":
+        setVibhagList(list);
+        break;
       case "district":
         setDistrictList(list);
         break;
@@ -269,6 +275,7 @@ const AddYuva = () => {
     if (!id) {
       if (field === "state") setStateList([]);
       if (field === "region") setRegionList([]);
+      if (field === "vibhag") setVibhagList([]);
       if (field === "district") setDistrictList([]);
       if (field === "city") setCityList([]);
       return [];
@@ -277,6 +284,7 @@ const AddYuva = () => {
       const list = (await fetchChildList(field, id)) || [];
       if (field === "state") setStateList(list);
       else if (field === "region") setRegionList(list);
+      else if (field === "vibhag") setVibhagList(list);
       else if (field === "district") setDistrictList(list);
       else if (field === "city") setCityList(list);
       return list;
@@ -284,6 +292,7 @@ const AddYuva = () => {
       console.log(error);
       if (field === "state") setStateList([]);
       else if (field === "region") setRegionList([]);
+      else if (field === "vibhag") setVibhagList([]);
       else if (field === "district") setDistrictList([]);
       else if (field === "city") setCityList([]);
       return [];
@@ -347,6 +356,13 @@ const AddYuva = () => {
         region.forEach((data) => {
           if (String(location?.state?.data?.region) === String(data.id)) {
             setSelectedRegion(masterNameText(data));
+          }
+        });
+        break;
+      case "vibhag":
+        vibhag.forEach((data) => {
+          if (String(location?.state?.data?.vibhag) === String(data.id)) {
+            setSelectedVibhag(masterNameText(data));
           }
         });
         break;
@@ -456,6 +472,7 @@ const AddYuva = () => {
         address: filledField(requiredText("address", "Address Is Required"), "addressGu"),
         state: filledField(requiredText("state", "State Is Required")),
         region: filledField(requiredText("region", "Region Is Required")),
+        vibhag: filledField(requiredText("vibhag", "Vibhag Is Required")),
         district: filledField(requiredText("district", "District Is Required")),
         city: filledField(requiredText("city", "City Is Required")),
         native: filledField(requiredText("native", "Native Is Required")),
@@ -540,6 +557,7 @@ const AddYuva = () => {
       address: "",
       state: "",
       region: "",
+      vibhag: "",
       district: "",
       city: "",
       native: "",
@@ -627,6 +645,7 @@ const AddYuva = () => {
         setSelectedCountry(null);
         setStateList([]);
         setRegionList([]);
+        setVibhagList([]);
         setDistrictList([]);
         setCityList([]);
         setSamajList([]);
@@ -646,6 +665,7 @@ const AddYuva = () => {
         setFieldValue("state", "");
         setSelectedState(null);
         setRegionList([]);
+        setVibhagList([]);
         setDistrictList([]);
         setCityList([]);
         setSamajList([]);
@@ -663,6 +683,7 @@ const AddYuva = () => {
       if (!regionOpt || !regionId) {
         setFieldValue("region", "");
         setSelectedRegion(null);
+        setVibhagList([]);
         setDistrictList([]);
         setCityList([]);
         setSamajList([]);
@@ -671,7 +692,24 @@ const AddYuva = () => {
       setFieldValue("region", regionId);
       setSelectedRegion(regionOpt);
 
-      const districts = (await getListById("district", regionId)) || [];
+      const vibhags = (await getListById("vibhag", regionId)) || [];
+      const vibhagOpt = findMasterOption(
+        vibhags,
+        record?.vibhag ?? record?.labels?.vibhag
+      );
+      const vibhagId = pickMasterId(vibhagOpt);
+      if (!vibhagOpt || !vibhagId) {
+        setFieldValue("vibhag", "");
+        setSelectedVibhag(null);
+        setDistrictList([]);
+        setCityList([]);
+        setSamajList([]);
+        return;
+      }
+      setFieldValue("vibhag", vibhagId);
+      setSelectedVibhag(vibhagOpt);
+
+      const districts = (await getListById("district", vibhagId)) || [];
       const districtOpt = findMasterOption(
         districts,
         record?.district ?? record?.labels?.district
@@ -977,6 +1015,7 @@ const AddYuva = () => {
         samaj,
         city,
         district,
+        vibhag,
         region,
         state,
         country,
@@ -991,6 +1030,7 @@ const AddYuva = () => {
     samaj,
     city,
     district,
+    vibhag,
     region,
     state,
     country,
@@ -1275,16 +1315,19 @@ const AddYuva = () => {
                       setSelectedCountry(country || null);
                       setFieldValue("state", "");
                       setFieldValue("region", "");
+                      setFieldValue("vibhag", "");
                       setFieldValue("district", "");
                       setFieldValue("city", "");
                       setFieldValue("localSamaj", "");
                       setSelectedState(null);
                       setSelectedRegion(null);
+                      setSelectedVibhag(null);
                       setSelectedDistrict(null);
                       setSelectedCity(null);
                       setSelectedSamaj(null);
                       setStateList([]);
                       setRegionList([]);
+                      setVibhagList([]);
                       setDistrictList([]);
                       setCityList([]);
                       setSamajList([]);
@@ -1307,14 +1350,17 @@ const AddYuva = () => {
                       setFieldValue("state", stateId);
                       setSelectedState(state || null);
                       setFieldValue("region", "");
+                      setFieldValue("vibhag", "");
                       setFieldValue("district", "");
                       setFieldValue("city", "");
                       setFieldValue("localSamaj", "");
                       setSelectedRegion(null);
+                      setSelectedVibhag(null);
                       setSelectedDistrict(null);
                       setSelectedCity(null);
                       setSelectedSamaj(null);
                       setRegionList([]);
+                      setVibhagList([]);
                       setDistrictList([]);
                       setCityList([]);
                       setSamajList([]);
@@ -1337,6 +1383,37 @@ const AddYuva = () => {
                       const regionId = pickMasterId(region);
                       setFieldValue("region", regionId);
                       setSelectedRegion(region || null);
+                      setFieldValue("vibhag", "");
+                      setFieldValue("district", "");
+                      setFieldValue("city", "");
+                      setFieldValue("localSamaj", "");
+                      setSelectedVibhag(null);
+                      setSelectedDistrict(null);
+                      setSelectedCity(null);
+                      setSelectedSamaj(null);
+                      setVibhagList([]);
+                      setDistrictList([]);
+                      setCityList([]);
+                      setSamajList([]);
+                      if (regionId) getListById("vibhag", regionId);
+                    }}
+                    onBlur={handleBlur}
+                    disabled={!values.state}
+                  />
+                  <CustomAutoComplete
+                    list={vibhagList}
+                    label={t("vibhag")}
+                    placeholder={t("vibhagPh")}
+                    name={"vibhag"}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    value={values.vibhag}
+                    errors={touched?.vibhag && errors?.vibhag && errors?.vibhag}
+                    onChange={(e, vibhagItem) => {
+                      const vibhagId = pickMasterId(vibhagItem);
+                      setFieldValue("vibhag", vibhagId);
+                      setSelectedVibhag(vibhagItem || null);
                       setFieldValue("district", "");
                       setFieldValue("city", "");
                       setFieldValue("localSamaj", "");
@@ -1346,10 +1423,10 @@ const AddYuva = () => {
                       setDistrictList([]);
                       setCityList([]);
                       setSamajList([]);
-                      if (regionId) getListById("district", regionId);
+                      if (vibhagId) getListById("district", vibhagId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!values.state}
+                    disabled={!values.region}
                   />
                   <CustomAutoComplete
                     list={districtList}
@@ -1376,7 +1453,7 @@ const AddYuva = () => {
                       if (districtId) getListById("city", districtId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!values.region}
+                    disabled={!values.vibhag}
                   />
                   <CustomAutoComplete
                     list={cityList}

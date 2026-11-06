@@ -53,6 +53,7 @@ import {
   getAllGotraData,
   getAllNativeData,
   getAllRegionData,
+  getAllVibhagData,
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
@@ -106,7 +107,7 @@ const YuvaList = () => {
   const loadMoreRef = useRef(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const { surname, city, state, region, district, samaj, country, auth, native: nativeList, gotra: gotraList } = UseRedux();
+  const { surname, city, state, region, vibhag, district, samaj, country, auth, native: nativeList, gotra: gotraList } = UseRedux();
   const copy = useFilterCopy();
   const isSamajManager =
     String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
@@ -130,8 +131,8 @@ const YuvaList = () => {
   const [ownUserList, setOwnUserList] = useState(false);
   const canAct = !hasOwnListToggle || ownUserList;
   const locationLists = useMemo(
-    () => ({ samaj, city, district, region, state, country }),
-    [samaj, city, district, region, state, country]
+    () => ({ samaj, city, district, vibhag, region, state, country }),
+    [samaj, city, district, vibhag, region, state, country]
   );
   const canEditRow = useCallback(
     (yuva) => {
@@ -161,6 +162,7 @@ const YuvaList = () => {
     dispatch(getAllCountryData);
     dispatch(getAllStateData);
     dispatch(getAllRegionData);
+    dispatch(getAllVibhagData);
     dispatch(getAllDistrictData);
     dispatch(getAllCityData);
     dispatch(getAllSamajData);
