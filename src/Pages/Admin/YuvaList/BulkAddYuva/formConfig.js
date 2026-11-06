@@ -298,7 +298,7 @@ export const bulkAddValidationSchema = Yup.object({
     (value) => String(value ?? "").trim() !== ""
   ),
   native: Yup.string().required("Native Is Required"),
-  firm: Yup.string().required("Firm Is Required"),
+  firm: Yup.string(),
   country: Yup.string().required("Country Is Required"),
   state: Yup.string().required("State Is Required"),
   region: Yup.string().required("Region Is Required"),
