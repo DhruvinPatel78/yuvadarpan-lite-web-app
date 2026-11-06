@@ -6,7 +6,8 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import LoadableImage from "./LoadableImage";
-import { asDisplayText } from "../../util/bhasha";
+import { asDisplayText, userLanguage } from "../../util/bhasha";
+import { UseRedux } from "../useRedux";
 
 const ProfileCard = ({
   name,
@@ -23,6 +24,8 @@ const ProfileCard = ({
   shortlisted = false,
   onToggleShortlist,
 }) => {
+  const {  auth } = UseRedux();
+  const language = userLanguage(auth?.user);
   const fullName = [name, mother, father, surname]
     .map((part) => asDisplayText(part))
     .filter(Boolean)
@@ -34,7 +37,7 @@ const ProfileCard = ({
   const ageNum = Number(age);
   const ageText =
     Number.isFinite(ageNum) && ageNum >= 0 && ageNum <= 120
-      ? `${ageNum} વર્ષ`
+      ? `${ageNum} ${language === "en" ? "Year" : "વર્ષ"} `
       : "";
 
   return (

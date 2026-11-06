@@ -186,9 +186,7 @@ export default function Index() {
   });
   const {
     errors,
-    values,
     resetForm,
-    handleChange,
     handleBlur,
     touched,
     setFieldValue,

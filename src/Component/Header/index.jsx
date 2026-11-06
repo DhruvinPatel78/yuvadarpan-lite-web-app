@@ -60,8 +60,8 @@ const Header = () => {
 
   return (
     <>
-    <AppBar position="fixed" className={"bg-primary top-0 !z-[1100] shadow-none"}>
-      <Container className="max-w-[1600px]">
+    <AppBar position="fixed" className={"bg-primary top-0 !left-0 !right-0 !w-auto !z-[1100] shadow-none"}>
+      <Container maxWidth={false} className="w-full">
         <Toolbar disableGutters className={"justify-between min-h-[56px] md:min-h-[72px] max-md:gap-3"}>
           <YuvadarpanLogo
             className={"app-header-logo cursor-pointer !w-auto min-w-0"}

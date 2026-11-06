@@ -26,11 +26,11 @@ export const higherEducation = [
 ];
 
 export const maritalStatusList = [
-  "divorce",
+  "single",
   "engaged",
   "married",
+  "divorce",
   "seprated",
-  "single",
   "widow",
   "widower",
 ];
@@ -111,6 +111,30 @@ export const fieldsToOtherObject = (list = [], draft) => {
     const description = String(item?.description || "").trim();
     if (title && description) {
       acc[title.replace(/\s+/g, "_")] = description;
+    }
+    return acc;
+  }, {});
+};
+
+export const fieldsToOtherGuObject = (list = [], draft) => {
+  const rows = [...list];
+  const draftTitle = String(draft?.title || "").trim();
+  const draftDescriptionGu = String(
+    draft?.descriptionGu || draft?.description || ""
+  ).trim();
+  if (draftTitle && draftDescriptionGu) {
+    rows.push({
+      title: draftTitle,
+      descriptionGu: draftDescriptionGu,
+    });
+  }
+  return rows.reduce((acc, item) => {
+    const title = String(item?.title || "").trim();
+    const descriptionGu = String(
+      item?.descriptionGu || item?.description || ""
+    ).trim();
+    if (title && descriptionGu) {
+      acc[title.replace(/\s+/g, "_")] = descriptionGu;
     }
     return acc;
   }, {});
@@ -301,8 +325,9 @@ export const bulkAddValidationSchema = Yup.object({
       .required("Contact Last Name Is Required"),
     relation: Yup.string().required("Contact Relation Is Required"),
     phone: Yup.string()
-      .matches("^(\\+\\d{1,3}[- ]?)?\\d{10}$", "Enter a valid phone number")
-      .required("Contact Phone Number Is Required"),
+      .transform((value) => String(value ?? "").replace(/\D/g, ""))
+      .required("Contact Phone Number Is Required")
+      .matches(/^[0-9]{10}$/, "Enter a valid 10-digit phone number"),
   }),
   yuvas: Yup.array()
     .of(
