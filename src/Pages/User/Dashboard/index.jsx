@@ -36,6 +36,7 @@ import {
   getAllGotraData,
   getAllNativeData,
   getAllRegionData,
+  getAllVibhagData,
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
@@ -101,6 +102,7 @@ const emptyAppliedFilters = {
   lastNameIds: [],
   stateIds: [],
   regionIds: [],
+  vibhagIds: [],
   districtIds: [],
   cityIds: [],
   samajIds: [],
@@ -125,7 +127,7 @@ const sanitizeAgeInput = (raw) => {
 };
 
 const Home = () => {
-  const { surname, city, state, region, district, samaj, auth, gotra: gotraList, native: nativeList } = UseRedux();
+  const { surname, city, state, region, vibhag, district, samaj, auth, gotra: gotraList, native: nativeList } = UseRedux();
   const language = userLanguage(auth?.user);
   const copy = useFilterCopy();
   const navigate = useNavigate();
@@ -148,6 +150,7 @@ const Home = () => {
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
+  const [selectedVibhag, setSelectedVibhag] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState([]);
   const [selectedCity, setSelectedCity] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
@@ -159,7 +162,8 @@ const Home = () => {
   const [minAge, setMinAge] = useState("");
   const [maxAge, setMaxAge] = useState("");
   const [regionListByState, setRegionListByState] = useState(region);
-  const [districtListByRegion, setDistrictListByRegion] = useState(district);
+  const [vibhagListByRegion, setVibhagListByRegion] = useState(vibhag);
+  const [districtListByVibhag, setDistrictListByVibhag] = useState(district);
   const [cityListByDistrict, setCityListByDistrict] = useState(city);
   const [samajListByParent, setSamajListByParent] = useState(samaj);
   const [appliedFilters, setAppliedFilters] = useState(emptyAppliedFilters);
@@ -202,6 +206,9 @@ const Home = () => {
       }
       if (appliedFilters.regionIds.length) {
         params.region = appliedFilters.regionIds;
+      }
+      if (appliedFilters.vibhagIds.length) {
+        params.vibhag = appliedFilters.vibhagIds;
       }
       if (appliedFilters.districtIds.length) {
         params.district = appliedFilters.districtIds;
@@ -257,6 +264,7 @@ const Home = () => {
     dispatch(getAllCityData);
     dispatch(getAllStateData);
     dispatch(getAllRegionData);
+    dispatch(getAllVibhagData);
     dispatch(getAllDistrictData);
     dispatch(getAllSamajData);
     dispatch(getAllSurnameData);
@@ -305,19 +313,24 @@ const Home = () => {
       setRegionListByState(region);
     }
     if (selectedRegion.length === 0) {
-      setDistrictListByRegion(district);
+      setVibhagListByRegion(vibhag);
       setSamajListByParent(samaj);
+    }
+    if (selectedVibhag.length === 0) {
+      setDistrictListByVibhag(district);
     }
     if (selectedDistrict.length === 0) {
       setCityListByDistrict(city);
     }
   }, [
     region,
+    vibhag,
     district,
     city,
     samaj,
     selectedState.length,
     selectedRegion.length,
+    selectedVibhag.length,
     selectedDistrict.length,
   ]);
 
@@ -327,6 +340,7 @@ const Home = () => {
     appliedFilters.lastNameIds.length,
     appliedFilters.stateIds.length,
     appliedFilters.regionIds.length,
+    appliedFilters.vibhagIds.length,
     appliedFilters.districtIds.length,
     appliedFilters.cityIds.length,
     appliedFilters.samajIds.length,
@@ -370,6 +384,7 @@ const Home = () => {
     const nextSurname = overrides.surname ?? selectedSurname;
     const nextState = overrides.state ?? selectedState;
     const nextRegion = overrides.region ?? selectedRegion;
+    const nextVibhag = overrides.vibhag ?? selectedVibhag;
     const nextDistrict = overrides.district ?? selectedDistrict;
     const nextCity = overrides.city ?? selectedCity;
     const nextSamaj = overrides.samaj ?? selectedSamaj;
@@ -400,6 +415,7 @@ const Home = () => {
       ),
       stateIds: getFilteredIds(nextState),
       regionIds: getFilteredIds(nextRegion),
+      vibhagIds: getFilteredIds(nextVibhag),
       districtIds: getFilteredIds(nextDistrict),
       cityIds: getFilteredIds(nextCity),
       samajIds: getFilteredIds(nextSamaj),
@@ -439,6 +455,7 @@ const Home = () => {
     setDebouncedKeyword("");
     setSelectedState([]);
     setSelectedRegion([]);
+    setSelectedVibhag([]);
     setSelectedDistrict([]);
     setSelectedCity([]);
     setSelectedSamaj([]);
@@ -450,7 +467,8 @@ const Home = () => {
     setMinAge("");
     setMaxAge("");
     setRegionListByState(region);
-    setDistrictListByRegion(district);
+    setVibhagListByRegion(vibhag);
+    setDistrictListByVibhag(district);
     setCityListByDistrict(city);
     setSamajListByParent(samaj);
     setAppliedFilters(emptyAppliedFilters);
@@ -461,6 +479,7 @@ const Home = () => {
     const nextSurname = overrides.surname ?? selectedSurname;
     const nextState = overrides.state ?? selectedState;
     const nextRegion = overrides.region ?? selectedRegion;
+    const nextVibhag = overrides.vibhag ?? selectedVibhag;
     const nextDistrict = overrides.district ?? selectedDistrict;
     const nextCity = overrides.city ?? selectedCity;
     const nextSamaj = overrides.samaj ?? selectedSamaj;
@@ -477,6 +496,7 @@ const Home = () => {
       (nextSurname || []).some((item) => !isAllOption(item)) ||
       (nextState || []).some((item) => !isAllOption(item)) ||
       (nextRegion || []).some((item) => !isAllOption(item)) ||
+      (nextVibhag || []).some((item) => !isAllOption(item)) ||
       (nextDistrict || []).some((item) => !isAllOption(item)) ||
       (nextCity || []).some((item) => !isAllOption(item)) ||
       (nextSamaj || []).some((item) => !isAllOption(item)) ||
@@ -497,6 +517,7 @@ const Home = () => {
   const showReset =
     selectedState?.length > 0 ||
     selectedRegion?.length > 0 ||
+    selectedVibhag?.length > 0 ||
     selectedDistrict?.length > 0 ||
     selectedCity?.length > 0 ||
     selectedGotra?.length > 0 ||
@@ -555,10 +576,12 @@ const Home = () => {
           const nextState = selected ? getSelectedData(selectedState, selected, e) : [];
           setSelectedState(nextState);
           setSelectedRegion([]);
+          setSelectedVibhag([]);
           setSelectedDistrict([]);
           setSelectedCity([]);
           setSelectedSamaj([]);
-          setDistrictListByRegion(district);
+          setVibhagListByRegion(vibhag);
+          setDistrictListByVibhag(district);
           setCityListByDistrict(city);
           setSamajListByParent(samaj);
 
@@ -571,6 +594,7 @@ const Home = () => {
           checkAutoResetOnLastClear({
             state: nextState,
             region: [],
+            vibhag: [],
             district: [],
             city: [],
             samaj: [],
@@ -588,24 +612,27 @@ const Home = () => {
         onChange={async (e, selected) => {
           const nextRegion = selected ? getSelectedData(selectedRegion, selected, e) : [];
           setSelectedRegion(nextRegion);
+          setSelectedVibhag([]);
           setSelectedDistrict([]);
           setSelectedCity([]);
           setSelectedSamaj([]);
+          setDistrictListByVibhag(district);
           setCityListByDistrict(city);
 
           if (selected && selected.length > 0) {
-            const [districtData, samajData] = await Promise.all([
-              handleListById("district", selected),
+            const [vibhagData, samajData] = await Promise.all([
+              handleListById("vibhag", selected),
               handleListById("samaj", selected),
             ]);
-            setDistrictListByRegion(districtData);
+            setVibhagListByRegion(vibhagData);
             setSamajListByParent(samajData);
           } else {
-            setDistrictListByRegion(district);
+            setVibhagListByRegion(vibhag);
             setSamajListByParent(samaj);
           }
           checkAutoResetOnLastClear({
             region: nextRegion,
+            vibhag: [],
             district: [],
             city: [],
             samaj: [],
@@ -613,7 +640,45 @@ const Home = () => {
         }}
       />
       <CustomAutoComplete
-        list={listHandler(districtListByRegion)}
+        list={listHandler(vibhagListByRegion)}
+        multiple={true}
+        label={copy.vibhag}
+        placeholder={copy.vibhagPh}
+        {...fieldSize}
+        name="vibhag"
+        value={selectedVibhag}
+        onChange={async (e, selected) => {
+          const nextVibhag = selected ? getSelectedData(selectedVibhag, selected, e) : [];
+          setSelectedVibhag(nextVibhag);
+          setSelectedDistrict([]);
+          setSelectedCity([]);
+          setSelectedSamaj([]);
+          setCityListByDistrict(city);
+
+          if (selected && selected.length > 0) {
+            const districtData = await handleListById("district", selected);
+            setDistrictListByVibhag(districtData);
+            const vibhagIds = selected
+              .filter((item) => !isAllOption(item))
+              .map((item) => item.id);
+            const matchingSamaj = vibhagIds.length
+              ? samaj.filter((item) => vibhagIds.includes(item.vibhag_id))
+              : samaj;
+            setSamajListByParent(matchingSamaj.length ? matchingSamaj : samaj);
+          } else {
+            setDistrictListByVibhag(district);
+            setSamajListByParent(samaj);
+          }
+          checkAutoResetOnLastClear({
+            vibhag: nextVibhag,
+            district: [],
+            city: [],
+            samaj: [],
+          });
+        }}
+      />
+      <CustomAutoComplete
+        list={listHandler(districtListByVibhag)}
         multiple={true}
         label={copy.district}
         placeholder={copy.districtPh}

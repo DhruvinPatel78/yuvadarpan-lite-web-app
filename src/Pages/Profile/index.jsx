@@ -34,6 +34,7 @@ import {
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
+  getAllVibhagData,
 } from "../../util/getAPICall";
 import { getPublicYuva, getYuvaById } from "../../util/yuvaAdminApi";
 import { canEditYuvaRecord, isRegularUser } from "../../util/util";
@@ -230,6 +231,7 @@ const ProfilePage = () => {
     surname,
     country,
     region,
+    vibhag,
     district,
     samaj,
     native: nativeList,
@@ -254,6 +256,7 @@ const ProfilePage = () => {
         samaj,
         city,
         district,
+        vibhag,
         region,
         state: stateList,
         country,
@@ -303,6 +306,7 @@ const ProfilePage = () => {
     dispatch(getAllCountryData);
     dispatch(getAllStateData);
     dispatch(getAllRegionData);
+    dispatch(getAllVibhagData);
     dispatch(getAllDistrictData);
     dispatch(getAllCityData);
     dispatch(getAllSamajData);
@@ -386,6 +390,10 @@ const ProfilePage = () => {
     {
       label: tLabel("region"),
       value: pickMaster(region, data?.region, labels.region),
+    },
+    {
+      label: tLabel("vibhag"),
+      value: pickMaster(vibhag, data?.vibhag, labels.vibhag),
     },
     {
       label: tLabel("district"),
@@ -565,6 +573,7 @@ const ProfilePage = () => {
           surname,
           country,
           region,
+          vibhag,
           district,
           samaj,
           nativeList,

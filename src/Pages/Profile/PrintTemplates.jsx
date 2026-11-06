@@ -87,8 +87,17 @@ const BiodataSection = ({ title, fields, caps = false }) => {
 };
 
 const buildPrintModel = (data, lists, lang = "en") => {
-  const { city, state, surname, country, region, district, samaj, nativeList } =
-    lists;
+  const {
+    city,
+    state,
+    surname,
+    country,
+    region,
+    vibhag,
+    district,
+    samaj,
+    nativeList,
+  } = lists;
   const labels = data?.labels || {};
   const t = (key) => tForm(lang, key);
   const lookup = (list, id, fallback) =>
@@ -206,6 +215,7 @@ const buildPrintModel = (data, lists, lang = "en") => {
       { key: "country", label: t("country"), value: lookup(country, data?.country, labels.country) },
       { key: "state", label: t("state"), value: lookup(state, data?.state, labels.state) },
       { key: "region", label: t("region"), value: lookup(region, data?.region, labels.region) },
+      { key: "vibhag", label: t("vibhag"), value: lookup(vibhag, data?.vibhag, labels.vibhag) },
       { key: "district", label: t("district"), value: lookup(district, data?.district, labels.district) },
       { key: "city", label: t("city"), value: lookup(city, data?.city, labels.city) },
       { key: "native", label: t("native"), value: lookup(nativeList, data?.native, labels.native) },

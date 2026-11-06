@@ -32,6 +32,9 @@ export const isCityManager = (role) => normalizeRole(role) === "CITY_MANAGER";
 export const isDistrictManager = (role) =>
   normalizeRole(role) === "DISTRICT_MANAGER";
 
+export const isVibhagManager = (role) =>
+  normalizeRole(role) === "VIBHAG_MANAGER";
+
 export const isRegionManager = (role) =>
   normalizeRole(role) === "REGION_MANAGER";
 
@@ -63,6 +66,7 @@ export const isLocationMasterReadOnly = (role) =>
   isSamajManager(role) ||
   isCityManager(role) ||
   isDistrictManager(role) ||
+  isVibhagManager(role) ||
   isRegionManager(role) ||
   isStateManager(role) ||
   isCountryManager(role);
@@ -70,6 +74,7 @@ export const isLocationMasterReadOnly = (role) =>
 export const hideLocationRowActions = (role) =>
   isCityManager(role) ||
   isDistrictManager(role) ||
+  isVibhagManager(role) ||
   isRegionManager(role) ||
   isStateManager(role) ||
   isCountryManager(role);
@@ -128,9 +133,11 @@ const resolveManagerLocationScope = (user, lists = {}) => {
   const inheritFromCity =
     inheritFromSamaj || role === "DISTRICT_MANAGER";
   const inheritFromDistrict =
-    inheritFromCity || role === "REGION_MANAGER";
+    inheritFromCity || role === "VIBHAG_MANAGER";
+  const inheritFromVibhag =
+    inheritFromDistrict || role === "REGION_MANAGER";
   const inheritFromRegion =
-    inheritFromDistrict || role === "STATE_MANAGER";
+    inheritFromVibhag || role === "STATE_MANAGER";
   const inheritFromState =
     inheritFromRegion || role === "COUNTRY_MANAGER";
 
@@ -143,10 +150,18 @@ const resolveManagerLocationScope = (user, lists = {}) => {
       ? findEntityById(lists.district, cityDoc?.district_id) ||
         findEntityById(lists.district, samajDoc?.district_id)
       : null);
+  const vibhagDoc =
+    findEntityById(lists.vibhag, user?.vibhag) ||
+    (inheritFromDistrict
+      ? findEntityById(lists.vibhag, districtDoc?.vibhag_id) ||
+        findEntityById(lists.vibhag, cityDoc?.vibhag_id) ||
+        findEntityById(lists.vibhag, samajDoc?.vibhag_id)
+      : null);
   const regionDoc =
     findEntityById(lists.region, user?.region) ||
-    (inheritFromDistrict
-      ? findEntityById(lists.region, districtDoc?.region_id) ||
+    (inheritFromVibhag
+      ? findEntityById(lists.region, vibhagDoc?.region_id) ||
+        findEntityById(lists.region, districtDoc?.region_id) ||
         findEntityById(lists.region, cityDoc?.region_id) ||
         findEntityById(lists.region, samajDoc?.region_id)
       : null);
@@ -154,6 +169,7 @@ const resolveManagerLocationScope = (user, lists = {}) => {
     findEntityById(lists.state, user?.state) ||
     (inheritFromRegion
       ? findEntityById(lists.state, regionDoc?.state_id) ||
+        findEntityById(lists.state, vibhagDoc?.state_id) ||
         findEntityById(lists.state, districtDoc?.state_id) ||
         findEntityById(lists.state, cityDoc?.state_id) ||
         findEntityById(lists.state, samajDoc?.state_id)
@@ -163,6 +179,7 @@ const resolveManagerLocationScope = (user, lists = {}) => {
     (inheritFromState
       ? findEntityById(lists.country, stateDoc?.country_id) ||
         findEntityById(lists.country, regionDoc?.country_id) ||
+        findEntityById(lists.country, vibhagDoc?.country_id) ||
         findEntityById(lists.country, samajDoc?.country_id)
       : null);
 
@@ -181,10 +198,19 @@ const resolveManagerLocationScope = (user, lists = {}) => {
     inheritFromCity ? cityDoc?.district_id : null,
     inheritFromSamaj ? samajDoc?.district_id : null
   );
+  const vibhagIds = collectEntityIds(
+    user?.vibhag,
+    vibhagDoc?.id,
+    vibhagDoc?._id,
+    inheritFromDistrict ? districtDoc?.vibhag_id : null,
+    inheritFromCity ? cityDoc?.vibhag_id : null,
+    inheritFromSamaj ? samajDoc?.vibhag_id : null
+  );
   const regionIds = collectEntityIds(
     user?.region,
     regionDoc?.id,
     regionDoc?._id,
+    inheritFromVibhag ? vibhagDoc?.region_id : null,
     inheritFromDistrict ? districtDoc?.region_id : null,
     inheritFromCity ? cityDoc?.region_id : null,
     inheritFromSamaj ? samajDoc?.region_id : null
@@ -194,6 +220,7 @@ const resolveManagerLocationScope = (user, lists = {}) => {
     stateDoc?.id,
     stateDoc?._id,
     inheritFromRegion ? regionDoc?.state_id : null,
+    inheritFromVibhag ? vibhagDoc?.state_id : null,
     inheritFromDistrict ? districtDoc?.state_id : null,
     inheritFromCity ? cityDoc?.state_id : null,
     inheritFromSamaj ? samajDoc?.state_id : null
@@ -204,10 +231,19 @@ const resolveManagerLocationScope = (user, lists = {}) => {
     countryDoc?._id,
     inheritFromState ? stateDoc?.country_id : null,
     inheritFromRegion ? regionDoc?.country_id : null,
+    inheritFromVibhag ? vibhagDoc?.country_id : null,
     inheritFromSamaj ? samajDoc?.country_id : null
   );
 
-  return { samajIds, cityIds, districtIds, regionIds, stateIds, countryIds };
+  return {
+    samajIds,
+    cityIds,
+    districtIds,
+    vibhagIds,
+    regionIds,
+    stateIds,
+    countryIds,
+  };
 };
 
 export const canEditYuvaRecord = (user, yuva, lists = {}) => {
@@ -247,6 +283,19 @@ export const canEditYuvaRecord = (user, yuva, lists = {}) => {
       entityInScope(lists.samaj, scope.districtIds, "district_id", yuva.localSamaj)
     );
   }
+  if (role === "VIBHAG_MANAGER") {
+    return (
+      scopeHasId(
+        scope.vibhagIds,
+        yuva.vibhag,
+        yuvaSamaj?.vibhag_id,
+        yuvaCity?.vibhag_id
+      ) ||
+      entityInScope(lists.district, scope.vibhagIds, "vibhag_id", yuva.district) ||
+      entityInScope(lists.city, scope.vibhagIds, "vibhag_id", yuva.city) ||
+      entityInScope(lists.samaj, scope.vibhagIds, "vibhag_id", yuva.localSamaj)
+    );
+  }
   if (role === "REGION_MANAGER") {
     return (
       scopeHasId(
@@ -255,6 +304,7 @@ export const canEditYuvaRecord = (user, yuva, lists = {}) => {
         yuvaSamaj?.region_id,
         yuvaCity?.region_id
       ) ||
+      entityInScope(lists.vibhag, scope.regionIds, "region_id", yuva.vibhag) ||
       entityInScope(lists.district, scope.regionIds, "region_id", yuva.district) ||
       entityInScope(lists.city, scope.regionIds, "region_id", yuva.city) ||
       entityInScope(lists.samaj, scope.regionIds, "region_id", yuva.localSamaj)
@@ -269,6 +319,7 @@ export const canEditYuvaRecord = (user, yuva, lists = {}) => {
         yuvaCity?.state_id
       ) ||
       entityInScope(lists.region, scope.stateIds, "state_id", yuva.region) ||
+      entityInScope(lists.vibhag, scope.stateIds, "state_id", yuva.vibhag) ||
       entityInScope(lists.district, scope.stateIds, "state_id", yuva.district) ||
       entityInScope(lists.city, scope.stateIds, "state_id", yuva.city) ||
       entityInScope(lists.samaj, scope.stateIds, "state_id", yuva.localSamaj)
@@ -283,6 +334,7 @@ export const canEditYuvaRecord = (user, yuva, lists = {}) => {
         yuvaCity?.country_id
       ) ||
       entityInScope(lists.region, scope.countryIds, "country_id", yuva.region) ||
+      entityInScope(lists.vibhag, scope.countryIds, "country_id", yuva.vibhag) ||
       entityInScope(lists.state, scope.countryIds, "country_id", yuva.state) ||
       entityInScope(lists.district, scope.countryIds, "country_id", yuva.district) ||
       entityInScope(lists.city, scope.countryIds, "country_id", yuva.city) ||

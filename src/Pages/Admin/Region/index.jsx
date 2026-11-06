@@ -99,14 +99,14 @@ export default function Index() {
       filterable: false,
     },
     {
-      field: "districtCount",
-      headerName: "Districts",
+      field: "vibhagCount",
+      headerName: "Vibhags",
       flex: 1,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
-      renderCell: (record) => record?.row?.districtCount ?? 0,
+      renderCell: (record) => record?.row?.vibhagCount ?? 0,
     },
     {
       field: "active",
@@ -427,7 +427,7 @@ export default function Index() {
           selectedIds={selectedIds}
           onToggleSelect={toggleCardSelection}
           canSelect={canAct}
-          getDetails={(row) => [`Districts: ${row.districtCount ?? 0}`]}
+          getDetails={(row) => [`Vibhags: ${row.vibhagCount ?? 0}`]}
           activeDisabled={!canAct}
           onView={
             hideRowActions
