@@ -678,8 +678,8 @@ const BulkAddYuva = () => {
                   />
                   <CustomAutoComplete
                     list={vibhagList}
-                    label="Vibhag"
-                    placeholder="Select Your Vibhag"
+                    label="Division"
+                    placeholder="Select Your Division"
                     name="vibhag"
                     xs={12}
                     sm={6}

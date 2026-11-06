@@ -331,7 +331,7 @@ export default function Index() {
       >
         <PageHeader
           className="w-full"
-          title="Vibhag"
+          title="Division"
           actions={
           <div className={"flex flex-col-reverse md:flex-row md:items-center items-stretch gap-2 md:gap-3 w-full md:w-auto"}>
             {regionManager || stateManager || countryManager ? (
@@ -361,7 +361,7 @@ export default function Index() {
                 }
                 label={
                   <span className={"font-semibold text-primary"}>
-                    Your Vibhag
+                    Your Division
                   </span>
                 }
               />
@@ -374,7 +374,7 @@ export default function Index() {
                 setVibhagAddEditModel(!vibhagAddEditModel);
               }}
             >
-              Add Vibhag
+              Add Division
             </ActionButton>
             ) : null}
           </div>
@@ -518,7 +518,7 @@ export default function Index() {
         <FormModal
           open={vibhagAddEditModel}
           onClose={() => vibhagAddEditModalClose()}
-          title="Vibhag"
+          title="Division"
         >
             <MasterLangWrap>
             <FormikProvider value={formik}>
@@ -584,7 +584,7 @@ export default function Index() {
                       <BilingualInput
                         enName={"name"}
                         id="vibhag"
-                        label="Vibhag"
+                        label="Division"
                         variant="outlined"
                         disabled={!values.region_id}
                         onBlur={handleBlur}

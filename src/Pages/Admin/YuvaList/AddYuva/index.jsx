@@ -472,7 +472,7 @@ const AddYuva = () => {
         address: filledField(requiredText("address", "Address Is Required"), "addressGu"),
         state: filledField(requiredText("state", "State Is Required")),
         region: filledField(requiredText("region", "Region Is Required")),
-        vibhag: filledField(requiredText("vibhag", "Vibhag Is Required")),
+        vibhag: filledField(requiredText("vibhag", "Division Is Required")),
         district: filledField(requiredText("district", "District Is Required")),
         city: filledField(requiredText("city", "City Is Required")),
         native: filledField(requiredText("native", "Native Is Required")),

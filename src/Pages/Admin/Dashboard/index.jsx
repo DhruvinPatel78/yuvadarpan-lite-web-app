@@ -21,7 +21,7 @@ const dashboardItems = {
     { id: 4, title: "Country", href: "/admin/country" },
     { id: 5, title: "State", href: "/admin/state" },
     { id: 6, title: "Region", href: "/admin/region" },
-    { id: 7, title: "Vibhag", href: "/admin/vibhag" },
+    { id: 7, title: "Division", href: "/admin/vibhag" },
     { id: 8, title: "District", href: "/admin/district" },
     { id: 9, title: "City", href: "/admin/city" },
     { id: 10, title: "Samaj", href: "/admin/samaj" },
