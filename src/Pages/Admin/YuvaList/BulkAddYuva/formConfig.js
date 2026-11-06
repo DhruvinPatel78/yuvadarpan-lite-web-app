@@ -302,7 +302,7 @@ export const bulkAddValidationSchema = Yup.object({
   country: Yup.string().required("Country Is Required"),
   state: Yup.string().required("State Is Required"),
   region: Yup.string().required("Region Is Required"),
-  vibhag: Yup.string().required("Vibhag Is Required"),
+  vibhag: Yup.string().required("Division Is Required"),
   district: Yup.string().required("District Is Required"),
   city: Yup.string().required("City Is Required"),
   localSamaj: Yup.string().required("Local Samaj Required"),
