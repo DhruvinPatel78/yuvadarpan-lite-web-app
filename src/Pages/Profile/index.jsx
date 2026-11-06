@@ -217,11 +217,11 @@ const AdditionalInfoFields = ({ additionalFields, heading }) =>
 
 const ProfilePage = () => {
   const { id: routeId } = useParams();
-  const { pathname, state } = useLocation();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const isPublicView = pathname.startsWith("/yuva");
   const id = getYuvaShareId(routeId);
-  const [data, setData] = React.useState(state || null);
+  const [data, setData] = React.useState(null);
   const [loadError, setLoadError] = React.useState("");
   const [tabValue, setTabValue] = React.useState(0);
   const [photoOpen, setPhotoOpen] = React.useState(false);
@@ -283,23 +283,31 @@ const ProfilePage = () => {
 
   React.useEffect(() => {
     if (!id) return;
+    let cancelled = false;
+    setData(null);
+    setLoadError("");
     dispatch(startLoading());
-      // getPublicYuva(id)
     const load = auth?.loggedIn ? getYuvaById(id) : getPublicYuva(id);
     load
       .then((yuva) => {
+        if (cancelled) return;
         setData(yuva);
         setLoadError("");
       })
       .catch(() => {
-        if (!state) {
-          setLoadError(tForm(isPublicView ? "gu" : "en", "yuvaNotFound"));
-        }
+        if (cancelled) return;
+        setData(null);
+        setLoadError(tForm(isPublicView ? "gu" : "en", "yuvaNotFound"));
       })
       .finally(() => {
-        dispatch(endLoading());
+        if (!cancelled) {
+          dispatch(endLoading());
+        }
       });
-  }, [id, auth?.loggedIn]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, auth?.loggedIn, isPublicView, dispatch]);
 
   React.useEffect(() => {
     if (isPublicView) return;

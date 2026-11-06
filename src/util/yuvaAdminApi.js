@@ -1,8 +1,20 @@
 import axios from "./useAxios";
 
+const noStoreConfig = () => ({
+  params: { t: Date.now() },
+  headers: {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+  },
+});
+
 export const getPublicYuva = async (id) => {
   try {
-    const response = await axios.get(`/yuvaList/public/${id}`);
+    const response = await axios.get(
+      `/yuvaList/public/${id}`,
+      noStoreConfig()
+    );
     return response.data;
   } catch (error) {
     throw error;
@@ -11,7 +23,7 @@ export const getPublicYuva = async (id) => {
 
 export const getYuvaById = async (id) => {
   try {
-    const response = await axios.get(`/yuvaList/list/${id}`);
+    const response = await axios.get(`/yuvaList/list/${id}`, noStoreConfig());
     return response.data;
   } catch (error) {
     throw error;
