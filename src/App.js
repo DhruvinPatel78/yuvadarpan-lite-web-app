@@ -18,6 +18,8 @@ import {
   Advertisement,
   Region,
   RegionDetails,
+  Vibhag,
+  VibhagDetails,
   Roles,
   Samaj,
   Surname,
@@ -295,6 +297,14 @@ function App() {
               path=":id"
               exact
               element={<PrivateRoute Component={RegionDetails} />}
+            />
+          </Route>
+          <Route path={"vibhag"}>
+            <Route index element={<PrivateRoute Component={Vibhag} />} />
+            <Route
+              path=":id"
+              exact
+              element={<PrivateRoute Component={VibhagDetails} />}
             />
           </Route>
           <Route path={"district"}>

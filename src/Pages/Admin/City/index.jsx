@@ -37,7 +37,7 @@ import {
 } from "../../../Component/constant";
 import { UseRedux } from "../../../Component/useRedux";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
-import { isLocationMasterReadOnly, isDistrictManager, isRegionManager, isStateManager, isCountryManager } from "../../../util/util";
+import { isLocationMasterReadOnly, isDistrictManager, isVibhagManager, isRegionManager, isStateManager, isCountryManager } from "../../../util/util";
 import {
   getCityList,
   addCity,
@@ -50,13 +50,15 @@ import { fillMasterName, toNameEnGuPayload } from "../../../util/bhasha";
 export default function Index() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, country, state, region, district, auth } = UseRedux();
+  const { loading, country, state, region, vibhag, district, auth } = UseRedux();
   const copy = useFilterCopy();
   const districtManager = isDistrictManager(auth?.user?.role);
+  const vibhagManager = isVibhagManager(auth?.user?.role);
   const regionManager = isRegionManager(auth?.user?.role);
   const stateManager = isStateManager(auth?.user?.role);
   const countryManager = isCountryManager(auth?.user?.role);
   const [ownDistrictList, setOwnDistrictList] = useState(false);
+  const [ownVibhagList, setOwnVibhagList] = useState(false);
   const [ownRegionList, setOwnRegionList] = useState(false);
   const [ownStateList, setOwnStateList] = useState(false);
   const [ownCountryList, setOwnCountryList] = useState(false);
@@ -66,11 +68,14 @@ export default function Index() {
     ? ownStateList
     : regionManager
       ? ownRegionList
-      : districtManager
-        ? ownDistrictList
-        : !isLocationMasterReadOnly(auth?.user?.role);
+      : vibhagManager
+        ? ownVibhagList
+        : districtManager
+          ? ownDistrictList
+          : !isLocationMasterReadOnly(auth?.user?.role);
   const hideRowActions =
     (districtManager && !ownDistrictList) ||
+    (vibhagManager && !ownVibhagList) ||
     (regionManager && !ownRegionList) ||
     (stateManager && !ownStateList) ||
     (countryManager && !ownCountryList);
@@ -86,19 +91,21 @@ export default function Index() {
   const [selectedCountry, setSelectedCountry] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
+  const [selectedVibhag, setSelectedVibhag] = useState([]);
   const [selectedDistrict, setSelectedDistrict] = useState([]);
   const skipSearchEffect = useRef(true);
-  const filterCols = filterFieldCols(4);
+  const filterCols = filterFieldCols(5);
   const filterCount =
     Number(Boolean(selectedSearchByText.trim())) +
     Number(Boolean(selectedCountry?.length > 0)) +
     Number(Boolean(selectedState?.length > 0)) +
     Number(Boolean(selectedRegion?.length > 0)) +
+    Number(Boolean(selectedVibhag?.length > 0)) +
     Number(Boolean(selectedDistrict?.length > 0));
 
   useEffect(() => {
     handleCityList();
-  }, [page, rowsPerPage, ownDistrictList, ownRegionList, ownStateList, ownCountryList]);
+  }, [page, rowsPerPage, ownDistrictList, ownVibhagList, ownRegionList, ownStateList, ownCountryList]);
 
   const cityListColumn = [
     {
@@ -165,6 +172,7 @@ export default function Index() {
                     setFieldValue("country_id", resolveMasterId(record?.row.country_id, country));
                     setFieldValue("state_id", resolveMasterId(record?.row.state_id, state));
                     setFieldValue("region_id", resolveMasterId(record?.row.region_id, region));
+                    setFieldValue("vibhag_id", resolveMasterId(record?.row.vibhag_id, vibhag));
                     setFieldValue("district_id", resolveMasterId(record?.row.district_id, district));
                   }}
                 />
@@ -187,6 +195,7 @@ export default function Index() {
       country_id: "",
       state_id: "",
       region_id: "",
+      vibhag_id: "",
       district_id: "",
       name: "",
       nameGu: "",
@@ -239,9 +248,13 @@ export default function Index() {
     () => optionsByParent(region, "state_id", values.state_id, state),
     [region, values.state_id, state]
   );
+  const vibhagOptions = useMemo(
+    () => optionsByParent(vibhag, "region_id", values.region_id, region),
+    [vibhag, values.region_id, region]
+  );
   const districtOptions = useMemo(
-    () => optionsByParent(district, "region_id", values.region_id, region),
-    [district, values.region_id, region]
+    () => optionsByParent(district, "vibhag_id", values.vibhag_id, vibhag),
+    [district, values.vibhag_id, vibhag]
   );
 
   const cityAddEditModalClose = () => {
@@ -263,6 +276,7 @@ export default function Index() {
   const filteredCountryIds = useFilteredIds(selectedCountry, "value", "label");
   const filteredStateIds = useFilteredIds(selectedState, "value", "label");
   const filteredRegionIds = useFilteredIds(selectedRegion, "value", "label");
+  const filteredVibhagIds = useFilteredIds(selectedVibhag, "value", "label");
   const filteredDistrictIds = useFilteredIds(
     selectedDistrict,
     "value",
@@ -283,11 +297,15 @@ export default function Index() {
         country: isRest ? [] : filteredCountryIds,
         state: isRest ? [] : filteredStateIds,
         region: isRest ? [] : filteredRegionIds,
+        vibhag: isRest ? [] : filteredVibhagIds,
         district: isRest ? [] : filteredDistrictIds,
         ...text,
       };
       if (districtManager) {
         params.ownDistrict = ownDistrictList;
+      }
+      if (vibhagManager) {
+        params.ownVibhag = ownVibhagList;
       }
       if (regionManager) {
         params.ownRegion = ownRegionList;
@@ -310,6 +328,7 @@ export default function Index() {
     setSelectedCountry([]);
     setSelectedState([]);
     setSelectedRegion([]);
+    setSelectedVibhag([]);
     setSelectedDistrict([]);
     handleCityList(true);
   };
@@ -346,7 +365,7 @@ export default function Index() {
           title="City"
           actions={
           <div className={"flex flex-col-reverse md:flex-row md:items-center items-stretch gap-2 md:gap-3 w-full md:w-auto"}>
-            {districtManager || regionManager || stateManager || countryManager ? (
+            {districtManager || vibhagManager || regionManager || stateManager || countryManager ? (
               <FormControlLabel
                 labelPlacement="start"
                 className={"!mr-0"}
@@ -355,15 +374,19 @@ export default function Index() {
                     checked={
                       districtManager
                         ? ownDistrictList
-                        : regionManager
-                          ? ownRegionList
-                          : stateManager
-                            ? ownStateList
-                            : ownCountryList
+                        : vibhagManager
+                          ? ownVibhagList
+                          : regionManager
+                            ? ownRegionList
+                            : stateManager
+                              ? ownStateList
+                              : ownCountryList
                     }
                     onChange={(e) => {
                       if (districtManager) {
                         setOwnDistrictList(e.target.checked);
+                      } else if (vibhagManager) {
+                        setOwnVibhagList(e.target.checked);
                       } else if (regionManager) {
                         setOwnRegionList(e.target.checked);
                       } else if (stateManager) {
@@ -423,6 +446,7 @@ export default function Index() {
                     setSelectedCountry((pre) => getSelectedData(pre, countryItems, e));
                     setSelectedState([]);
                     setSelectedRegion([]);
+                    setSelectedVibhag([]);
                     setSelectedDistrict([]);
                   }
                 }}
@@ -443,6 +467,7 @@ export default function Index() {
                   if (stateItems) {
                     setSelectedState((pre) => getSelectedData(pre, stateItems, e));
                     setSelectedRegion([]);
+                    setSelectedVibhag([]);
                     setSelectedDistrict([]);
                   }
                 }}
@@ -462,14 +487,34 @@ export default function Index() {
                 onChange={(e, regionItems) => {
                   if (regionItems) {
                     setSelectedRegion((pre) => getSelectedData(pre, regionItems, e));
+                    setSelectedVibhag([]);
                     setSelectedDistrict([]);
                   }
                 }}
               />
               <CustomAutoComplete
                 list={listHandler(
-                  filterMastersByParents(district, "region_id", selectedRegion, {
+                  filterMastersByParents(vibhag, "region_id", selectedRegion, {
                     parentList: region,
+                  })
+                )}
+                multiple={true}
+                label={copy.vibhag}
+                placeholder={copy.vibhagPh}
+                {...filterCols}
+                value={selectedVibhag}
+                name="vibhag"
+                onChange={(e, vibhagItems) => {
+                  if (vibhagItems) {
+                    setSelectedVibhag((pre) => getSelectedData(pre, vibhagItems, e));
+                    setSelectedDistrict([]);
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(
+                  filterMastersByParents(district, "vibhag_id", selectedVibhag, {
+                    parentList: vibhag,
                   })
                 )}
                 multiple={true}
@@ -477,7 +522,7 @@ export default function Index() {
                 placeholder={copy.districtPh}
                 {...filterCols}
                 value={selectedDistrict}
-                name="state"
+                name="district"
                 onChange={(e, districtItems) => {
                   if (districtItems) {
                     setSelectedDistrict((pre) =>
@@ -540,6 +585,7 @@ export default function Index() {
                   setFieldValue("country_id", resolveMasterId(row.country_id, country));
                   setFieldValue("state_id", resolveMasterId(row.state_id, state));
                   setFieldValue("region_id", resolveMasterId(row.region_id, region));
+                  setFieldValue("vibhag_id", resolveMasterId(row.vibhag_id, vibhag));
                   setFieldValue("district_id", resolveMasterId(row.district_id, district));
                 }
               : undefined
@@ -585,6 +631,7 @@ export default function Index() {
                           setFieldValue("country_id", pickMasterId(countryItem));
                           setFieldValue("state_id", "");
                           setFieldValue("region_id", "");
+                          setFieldValue("vibhag_id", "");
                           setFieldValue("district_id", "");
                         }}
                         onBlur={handleBlur}
@@ -602,6 +649,7 @@ export default function Index() {
                           if (!stateItem) return;
                           setFieldValue("state_id", pickMasterId(stateItem));
                           setFieldValue("region_id", "");
+                          setFieldValue("vibhag_id", "");
                           setFieldValue("district_id", "");
                         }}
                         onBlur={handleBlur}
@@ -619,10 +667,28 @@ export default function Index() {
                         onChange={(e, regionItem) => {
                           if (!regionItem) return;
                           setFieldValue("region_id", pickMasterId(regionItem));
+                          setFieldValue("vibhag_id", "");
                           setFieldValue("district_id", "");
                         }}
                         onBlur={handleBlur}
                         disabled={!values.state_id}
+                      />
+                      <CustomAutoComplete
+                        list={vibhagOptions}
+                        label={"Vibhag"}
+                        placeholder={"Select Your Vibhag"}
+                        name={"vibhag_id"}
+                        value={values.vibhag_id}
+                        errors={
+                          touched?.vibhag && errors?.vibhag && errors?.vibhag
+                        }
+                        onChange={(e, vibhagItem) => {
+                          if (!vibhagItem) return;
+                          setFieldValue("vibhag_id", pickMasterId(vibhagItem));
+                          setFieldValue("district_id", "");
+                        }}
+                        onBlur={handleBlur}
+                        disabled={!values.region_id}
                       />
                       <CustomAutoComplete
                         list={districtOptions}
@@ -640,7 +706,7 @@ export default function Index() {
                           setFieldValue("district_id", pickMasterId(districtItem));
                         }}
                         onBlur={handleBlur}
-                        disabled={!values.region_id}
+                        disabled={!values.vibhag_id}
                       />
                       <BilingualInput
                         enName={"name"}

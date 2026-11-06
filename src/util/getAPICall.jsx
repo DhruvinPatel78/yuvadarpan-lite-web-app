@@ -2,6 +2,7 @@ import axios from "./useAxios";
 import {
   city,
   district,
+  vibhag,
   region,
   state,
   samaj,
@@ -18,6 +19,7 @@ const inflight = {};
 const MASTER_MAP = {
   region: { path: "region", action: region },
   city: { path: "city", action: city },
+  vibhag: { path: "vibhag", action: vibhag },
   district: { path: "district", action: district },
   samaj: { path: "samaj", action: samaj },
   state: { path: "state", action: state },
@@ -79,6 +81,7 @@ const fetchAll = (key) => runFetch(key);
 
 export const getAllRegionData = fetchAll("region");
 export const getAllCityData = fetchAll("city");
+export const getAllVibhagData = fetchAll("vibhag");
 export const getAllDistrictData = fetchAll("district");
 export const getAllSamajData = fetchAll("samaj");
 export const getAllStateData = fetchAll("state");
@@ -102,6 +105,7 @@ export const loadLocationMasters = (dispatch) => {
   dispatch(getAllCountryData);
   dispatch(getAllStateData);
   dispatch(getAllRegionData);
+  dispatch(getAllVibhagData);
   dispatch(getAllDistrictData);
   dispatch(getAllCityData);
   dispatch(getAllSamajData);
