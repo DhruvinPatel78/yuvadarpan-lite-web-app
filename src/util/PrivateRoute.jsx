@@ -12,7 +12,7 @@ const PrivateRoute = ({
   const { loggedIn, user } = useSelector((state) => state.auth);
 
   if (!loggedIn) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" replace />;
   }
   if (userOnly && !isRegularUser(user?.role)) {
     return <Navigate to="/" replace />;
