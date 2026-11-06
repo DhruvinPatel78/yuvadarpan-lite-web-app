@@ -464,7 +464,7 @@ const AddYuva = () => {
           ),
         height: filledField(requiredText("height", "Height Is Required")),
         weight: filledField(requiredText("weight", "Weight Is Required")),
-        firm: filledField(requiredText("firm", "Firm Is Required"), "firmGu"),
+        firm: Yup.mixed(),
         firmAddress: filledField(
           requiredText("firmAddress", "Firm Address Is Required"),
           "firmAddressGu"
