@@ -307,7 +307,7 @@ export const bulkAddValidationSchema = Yup.object({
   city: Yup.string().required("City Is Required"),
   localSamaj: Yup.string().required("Local Samaj Required"),
   address: Yup.string().required("Address Is Required"),
-  firmAddress: Yup.string().required("Firm Address Is Required"),
+  firmAddress: Yup.string(),
   mamaInfo: Yup.object({
     name: Yup.string().required("Mama Name Is Required"),
     lastName: Yup.string().required("Mama Last Name Is Required"),
