@@ -622,8 +622,8 @@ export default function Index() {
                       />
                       <CustomAutoComplete
                         list={vibhagOptions}
-                        label={"Vibhag"}
-                        placeholder={"Select Your Vibhag"}
+                        label={"Division"}
+                        placeholder={"Select Your Division"}
                         name={"vibhag_id"}
                         value={values.vibhag_id}
                         errors={

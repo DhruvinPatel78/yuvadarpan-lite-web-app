@@ -100,7 +100,7 @@ export default function Index() {
     },
     {
       field: "vibhagCount",
-      headerName: "Vibhags",
+      headerName: "Divisions",
       flex: 1,
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
@@ -427,7 +427,7 @@ export default function Index() {
           selectedIds={selectedIds}
           onToggleSelect={toggleCardSelection}
           canSelect={canAct}
-          getDetails={(row) => [`Vibhags: ${row.vibhagCount ?? 0}`]}
+          getDetails={(row) => [`Divisions: ${row.vibhagCount ?? 0}`]}
           activeDisabled={!canAct}
           onView={
             hideRowActions

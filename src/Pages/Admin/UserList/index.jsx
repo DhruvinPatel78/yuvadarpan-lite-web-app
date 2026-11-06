@@ -1697,7 +1697,7 @@ function Index() {
             value={lookupName(region, viewUser?.region)}
           />
           <UserDetailItem
-            label="Vibhag"
+            label="Division"
             value={lookupName(vibhag, viewUser?.vibhag)}
           />
           <UserDetailItem
@@ -2050,8 +2050,8 @@ function Index() {
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
                       list={asOptions(vibhagList)}
-                      label={"Vibhag"}
-                      placeholder={"Select Your Vibhag"}
+                      label={"Division"}
+                      placeholder={"Select Your Division"}
                       name={"vibhag"}
                       value={
                         findOption(asOptions(vibhagList), values?.vibhag) ||
