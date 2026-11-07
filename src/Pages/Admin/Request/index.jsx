@@ -41,6 +41,7 @@ import {
   getAllCountryData,
   getAllStateData,
   getAllRegionData,
+  getAllVibhagData,
   getAllDistrictData,
   getAllCityData,
   getAllSamajData,
@@ -77,15 +78,16 @@ const formatUserDate = (value) => {
 
 export default function Index() {
   const { notification, setNotification } = NotificationData();
-  const { samaj, region, state, surname, country, district, city, auth, gotra: gotraList } = UseRedux();
+  const { samaj, region, vibhag, state, surname, country, district, city, auth, gotra: gotraList } = UseRedux();
   const copy = useFilterCopy();
   const isSamajManager = String(auth?.user?.role || "").toUpperCase() === "SAMAJ_MANAGER";
   const isCityManager = String(auth?.user?.role || "").toUpperCase() === "CITY_MANAGER";
   const isDistrictManager = String(auth?.user?.role || "").toUpperCase() === "DISTRICT_MANAGER";
+  const isVibhagManager = String(auth?.user?.role || "").toUpperCase() === "VIBHAG_MANAGER";
   const isRegionManager = String(auth?.user?.role || "").toUpperCase() === "REGION_MANAGER";
   const isStateManager = String(auth?.user?.role || "").toUpperCase() === "STATE_MANAGER";
   const isCountryManager = String(auth?.user?.role || "").toUpperCase() === "COUNTRY_MANAGER";
-  const hideLocationFilters = isSamajManager || isCityManager || isDistrictManager || isRegionManager || isStateManager || isCountryManager;
+  const hideLocationFilters = isSamajManager || isCityManager || isDistrictManager || isVibhagManager || isRegionManager || isStateManager || isCountryManager;
   const [requestInfoModel, setRequestInfoModel] = useState(false);
   const [userList, setUserList] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -102,6 +104,7 @@ export default function Index() {
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedState, setSelectedState] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
+  const [selectedVibhag, setSelectedVibhag] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
     name: "",
@@ -110,6 +113,7 @@ export default function Index() {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [regionListByState, setRegionListByState] = useState(region);
+  const [vibhagListByRegion, setVibhagListByRegion] = useState(vibhag);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const dispatch = useDispatch();
 
@@ -153,6 +157,7 @@ export default function Index() {
   const filteredSurnameIds = useFilteredIds(selectedSurname, "id");
   const filteredStateIds = useFilteredIds(selectedState, "id");
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
+  const filteredVibhagIds = useFilteredIds(selectedVibhag, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
   const filterCols = filterFieldCols(3);
 
@@ -191,6 +196,9 @@ export default function Index() {
       }
       if (!isRest && filteredRegionIds.length) {
         params.region = filteredRegionIds;
+      }
+      if (!isRest && filteredVibhagIds.length) {
+        params.vibhag = filteredVibhagIds;
       }
       if (!isRest && filteredSamajIds.length) {
         params.samaj = filteredSamajIds;
@@ -236,10 +244,27 @@ export default function Index() {
     dispatch(getAllCountryData);
     dispatch(getAllStateData);
     dispatch(getAllRegionData);
+    dispatch(getAllVibhagData);
     dispatch(getAllDistrictData);
     dispatch(getAllCityData);
     dispatch(getAllSamajData);
   }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedState.length === 0) {
+      setRegionListByState(region);
+    }
+    if (selectedRegion.length === 0) {
+      setVibhagListByRegion(vibhag);
+      setSamajListByRegion(samaj);
+    }
+  }, [
+    region,
+    vibhag,
+    samaj,
+    selectedState.length,
+    selectedRegion.length,
+  ]);
 
   const loadMoreRequests = () => {
     if (!isMobile || loadingMoreLock.current || loadingMore || !hasMore) {
@@ -285,8 +310,10 @@ export default function Index() {
     setSelectedSurname([]);
     setSelectedState([]);
     setSelectedRegion([]);
+    setSelectedVibhag([]);
     setSelectedSamaj([]);
     setRegionListByState(region);
+    setVibhagListByRegion(vibhag);
     setSamajListByRegion(samaj);
     handleRequestList(true);
   };
@@ -498,6 +525,7 @@ export default function Index() {
             Number(Boolean(selectedSurname?.length > 0)) +
             Number(Boolean(selectedState?.length > 0)) +
             Number(Boolean(selectedRegion?.length > 0)) +
+            Number(Boolean(selectedVibhag?.length > 0)) +
             Number(Boolean(selectedSamaj?.length > 0))
           }
           isFilterOpen={isFilterOpen}
@@ -545,11 +573,25 @@ export default function Index() {
                 {...filterCols}
                 name="state"
                 value={selectedState}
-                onChange={async (e, state) => {
-                  if (state) {
-                    const Data = await handleListById("region", state);
-                    setRegionListByState(Data);
-                    setSelectedState((pre) => getSelectedData(pre, state, e));
+                onChange={async (e, stateValue) => {
+                  if (stateValue) {
+                    const nextState = getSelectedData(
+                      selectedState,
+                      stateValue,
+                      e
+                    );
+                    setSelectedState(nextState);
+                    setSelectedRegion([]);
+                    setSelectedVibhag([]);
+                    setSelectedSamaj([]);
+                    setVibhagListByRegion(vibhag);
+                    setSamajListByRegion(samaj);
+                    if (stateValue.length > 0) {
+                      const Data = await handleListById("region", stateValue);
+                      setRegionListByState(Data);
+                    } else {
+                      setRegionListByState(region);
+                    }
                   }
                 }}
               />
@@ -561,11 +603,67 @@ export default function Index() {
                 {...filterCols}
                 name="region"
                 value={selectedRegion}
-                onChange={async (e, region) => {
-                  if (region) {
-                    const data = await handleListById("samaj", region);
-                    setSamajListByRegion(data);
-                    setSelectedRegion((pre) => getSelectedData(pre, region, e));
+                onChange={async (e, regionValue) => {
+                  if (regionValue) {
+                    const nextRegion = getSelectedData(
+                      selectedRegion,
+                      regionValue,
+                      e
+                    );
+                    setSelectedRegion(nextRegion);
+                    setSelectedVibhag([]);
+                    setSelectedSamaj([]);
+                    if (regionValue.length > 0) {
+                      const [vibhagData, samajData] = await Promise.all([
+                        handleListById("vibhag", regionValue),
+                        handleListById("samaj", regionValue),
+                      ]);
+                      setVibhagListByRegion(vibhagData);
+                      setSamajListByRegion(samajData);
+                    } else {
+                      setVibhagListByRegion(vibhag);
+                      setSamajListByRegion(samaj);
+                    }
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(vibhagListByRegion)}
+                multiple={true}
+                label={copy.vibhag}
+                placeholder={copy.vibhagPh}
+                {...filterCols}
+                name="vibhag"
+                value={selectedVibhag}
+                onChange={(e, vibhagValue) => {
+                  if (vibhagValue) {
+                    const nextVibhag = getSelectedData(
+                      selectedVibhag,
+                      vibhagValue,
+                      e
+                    );
+                    setSelectedVibhag(nextVibhag);
+                    setSelectedSamaj([]);
+                    if (vibhagValue.length > 0) {
+                      const vibhagIds = vibhagValue
+                        .map((item) => item?.id)
+                        .filter(Boolean)
+                        .map(String);
+                      const matchingSamaj = vibhagIds.length
+                        ? samaj.filter((item) =>
+                            vibhagIds.includes(String(item.vibhag_id))
+                          )
+                        : samaj;
+                      setSamajListByRegion(
+                        matchingSamaj.length ? matchingSamaj : samaj
+                      );
+                    } else if (selectedRegion.length > 0) {
+                      handleListById("samaj", selectedRegion).then((data) =>
+                        setSamajListByRegion(data)
+                      );
+                    } else {
+                      setSamajListByRegion(samaj);
+                    }
                   }
                 }}
               />
@@ -577,9 +675,11 @@ export default function Index() {
                 {...filterCols}
                 name="samaj"
                 value={selectedSamaj}
-                onChange={(e, samaj) => {
-                  if (samaj) {
-                    setSelectedSamaj((pre) => getSelectedData(pre, samaj, e));
+                onChange={(e, samajValue) => {
+                  if (samajValue) {
+                    setSelectedSamaj((pre) =>
+                      getSelectedData(pre, samajValue, e)
+                    );
                   }
                 }}
               />
@@ -610,6 +710,7 @@ export default function Index() {
                       selectedGotra?.length > 0 ||
                       selectedState?.length > 0 ||
                       selectedRegion?.length > 0 ||
+                      selectedVibhag?.length > 0 ||
                       selectedSurname?.length > 0 ||
                       selectedSamaj?.length > 0
                   )}
@@ -778,6 +879,10 @@ export default function Index() {
           <RequestDetailItem
             label="Region"
             value={lookupName(region, selectedUser?.region)}
+          />
+          <RequestDetailItem
+            label="Division"
+            value={lookupName(vibhag, selectedUser?.vibhag)}
           />
           <RequestDetailItem
             label="District"

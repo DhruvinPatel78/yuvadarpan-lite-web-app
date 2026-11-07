@@ -35,6 +35,7 @@ import {
 import { langText, masterNameText } from "../../../../util/bhasha";
 import { bilingualOptions } from "../../../../i18n/yuvaForm";
 import { loadImageForCrop } from "../../../../util/cropImage";
+import { pickMasterId } from "../../../../Component/constant";
 
 const FormSection = ({ title, description, children }) => (
   <Card className="w-full">
@@ -223,6 +224,7 @@ const BulkAddYuva = () => {
   const {
     errors,
     values,
+    setValues,
     setFieldValue,
     touched,
     handleChange,
@@ -235,50 +237,51 @@ const BulkAddYuva = () => {
   const showErr = (isTouched, error) =>
     (isTouched || submitCount > 0) && error ? error : "";
 
-  const resetLocationBelow = (level) => {
-    const reset = {
-      country: {
-        state: true,
-        region: true,
-        vibhag: true,
-        district: true,
-        city: true,
-        samaj: true,
-      },
-      state: { region: true, vibhag: true, district: true, city: true, samaj: true },
-      region: { vibhag: true, district: true, city: true, samaj: true },
-      vibhag: { district: true, city: true, samaj: true },
-      district: { city: true, samaj: true },
-    }[level];
-    if (reset?.state) {
+  const LOCATION_CHAIN = [
+    "country",
+    "state",
+    "region",
+    "vibhag",
+    "district",
+    "city",
+    "localSamaj",
+  ];
+
+  const resetLocationBelow = (level, parentValue = {}) => {
+    const start = LOCATION_CHAIN.indexOf(level);
+    setValues((prev) => {
+      const next = { ...prev, ...parentValue };
+      if (start >= 0) {
+        LOCATION_CHAIN.slice(start + 1).forEach((key) => {
+          next[key] = "";
+        });
+      }
+      return next;
+    });
+
+    if (start < LOCATION_CHAIN.indexOf("state")) {
       setSelectedState(null);
       setStateList([]);
-      setFieldValue("state", "");
     }
-    if (reset?.region) {
+    if (start < LOCATION_CHAIN.indexOf("region")) {
       setSelectedRegion(null);
       setRegionList([]);
-      setFieldValue("region", "");
     }
-    if (reset?.vibhag) {
+    if (start < LOCATION_CHAIN.indexOf("vibhag")) {
       setSelectedVibhag(null);
       setVibhagList([]);
-      setFieldValue("vibhag", "");
     }
-    if (reset?.district) {
+    if (start < LOCATION_CHAIN.indexOf("district")) {
       setSelectedDistrict(null);
       setDistrictList([]);
-      setFieldValue("district", "");
     }
-    if (reset?.city) {
+    if (start < LOCATION_CHAIN.indexOf("city")) {
       setSelectedCity(null);
       setCityList([]);
-      setFieldValue("city", "");
     }
-    if (reset?.samaj) {
+    if (start < LOCATION_CHAIN.indexOf("localSamaj")) {
       setSelectedSamaj(null);
       setSamajList([]);
-      setFieldValue("localSamaj", "");
     }
   };
 
@@ -602,26 +605,26 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedCountry}
+                    value={values?.country || null}
                     errors={showErr(touched?.country, errors?.country)}
                     onChange={(e, countryItem) => {
-                      if (!countryItem) return;
-                      setFieldValue("country", countryItem.id);
-                      setSelectedCountry(countryItem.name);
-                      resetLocationBelow("country");
+                      const countryId = pickMasterId(countryItem);
+                      setSelectedCountry(countryItem || null);
+                      resetLocationBelow("country", { country: countryId });
                       setIsLocation({
-                        country: true,
+                        country: Boolean(countryId),
                         state: false,
                         region: false,
                         vibhag: false,
                         district: false,
                         city: false,
                       });
-                      getListById("state", countryItem.id);
+                      if (countryId) getListById("state", countryId);
                     }}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
+                    key={`bulk-state-${values?.country || "none"}`}
                     list={stateList}
                     label="State"
                     placeholder="Select Your State"
@@ -629,27 +632,27 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedState}
+                    value={values?.state || null}
                     errors={showErr(touched?.state, errors?.state)}
                     onChange={(e, stateItem) => {
-                      if (!stateItem) return;
-                      setFieldValue("state", stateItem.id);
-                      setSelectedState(stateItem.name);
-                      resetLocationBelow("state");
+                      const stateId = pickMasterId(stateItem);
+                      setSelectedState(stateItem || null);
+                      resetLocationBelow("state", { state: stateId });
                       setIsLocation((pre) => ({
                         ...pre,
-                        state: true,
+                        state: Boolean(stateId),
                         region: false,
                         vibhag: false,
                         district: false,
                         city: false,
                       }));
-                      getListById("region", stateItem.id);
+                      if (stateId) getListById("region", stateId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.country}
+                    disabled={!values?.country}
                   />
                   <CustomAutoComplete
+                    key={`bulk-region-${values?.state || "none"}`}
                     list={regionList}
                     label="Region"
                     placeholder="Select Your Region"
@@ -657,26 +660,26 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedRegion}
+                    value={values?.region || null}
                     errors={showErr(touched?.region, errors?.region)}
                     onChange={(e, regionItem) => {
-                      if (!regionItem) return;
-                      setFieldValue("region", regionItem.id);
-                      setSelectedRegion(regionItem.name);
-                      resetLocationBelow("region");
+                      const regionId = pickMasterId(regionItem);
+                      setSelectedRegion(regionItem || null);
+                      resetLocationBelow("region", { region: regionId });
                       setIsLocation((pre) => ({
                         ...pre,
-                        region: true,
+                        region: Boolean(regionId),
                         vibhag: false,
                         district: false,
                         city: false,
                       }));
-                      getListById("vibhag", regionItem.id);
+                      if (regionId) getListById("vibhag", regionId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.state}
+                    disabled={!values?.state}
                   />
                   <CustomAutoComplete
+                    key={`bulk-vibhag-${values?.region || "none"}`}
                     list={vibhagList}
                     label="Division"
                     placeholder="Select Your Division"
@@ -684,25 +687,25 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedVibhag}
+                    value={values?.vibhag || null}
                     errors={showErr(touched?.vibhag, errors?.vibhag)}
                     onChange={(e, vibhagItem) => {
-                      if (!vibhagItem) return;
-                      setFieldValue("vibhag", vibhagItem.id);
-                      setSelectedVibhag(vibhagItem.name);
-                      resetLocationBelow("vibhag");
+                      const vibhagId = pickMasterId(vibhagItem);
+                      setSelectedVibhag(vibhagItem || null);
+                      resetLocationBelow("vibhag", { vibhag: vibhagId });
                       setIsLocation((pre) => ({
                         ...pre,
-                        vibhag: true,
+                        vibhag: Boolean(vibhagId),
                         district: false,
                         city: false,
                       }));
-                      getListById("district", vibhagItem.id);
+                      if (vibhagId) getListById("district", vibhagId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.region}
+                    disabled={!values?.region}
                   />
                   <CustomAutoComplete
+                    key={`bulk-district-${values?.vibhag || "none"}`}
                     list={districtList}
                     label="District"
                     placeholder="Select Your District"
@@ -710,24 +713,24 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedDistrict}
+                    value={values?.district || null}
                     errors={showErr(touched?.district, errors?.district)}
                     onChange={(e, districtItem) => {
-                      if (!districtItem) return;
-                      setFieldValue("district", districtItem.id);
-                      setSelectedDistrict(districtItem.name);
-                      resetLocationBelow("district");
+                      const districtId = pickMasterId(districtItem);
+                      setSelectedDistrict(districtItem || null);
+                      resetLocationBelow("district", { district: districtId });
                       setIsLocation((pre) => ({
                         ...pre,
-                        district: true,
+                        district: Boolean(districtId),
                         city: false,
                       }));
-                      getListById("city", districtItem.id);
+                      if (districtId) getListById("city", districtId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.vibhag}
+                    disabled={!values?.vibhag}
                   />
                   <CustomAutoComplete
+                    key={`bulk-city-${values?.district || "none"}`}
                     list={cityList}
                     label="City"
                     placeholder="Select Your City"
@@ -735,21 +738,23 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedCity}
+                    value={values?.city || null}
                     errors={showErr(touched?.city, errors?.city)}
                     onChange={(e, cityItem) => {
-                      if (!cityItem) return;
-                      setFieldValue("city", cityItem.id);
-                      setSelectedCity(cityItem.name);
-                      setIsLocation((pre) => ({ ...pre, city: true }));
-                      setFieldValue("localSamaj", "");
-                      setSelectedSamaj(null);
-                      getSamajList(cityItem.id);
+                      const cityId = pickMasterId(cityItem);
+                      setSelectedCity(cityItem || null);
+                      resetLocationBelow("city", { city: cityId });
+                      setIsLocation((pre) => ({
+                        ...pre,
+                        city: Boolean(cityId),
+                      }));
+                      if (cityId) getSamajList(cityId);
                     }}
                     onBlur={handleBlur}
-                    disabled={!isLocation.district}
+                    disabled={!values?.district}
                   />
                   <CustomAutoComplete
+                    key={`bulk-samaj-${values?.city || "none"}`}
                     list={samajList}
                     label="Local Samaj"
                     placeholder="Select Your Samaj"
@@ -757,13 +762,12 @@ const BulkAddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={selectedSamaj}
+                    value={values?.localSamaj || null}
                     errors={showErr(touched?.localSamaj, errors?.localSamaj)}
-                    disabled={!isLocation.city}
+                    disabled={!values?.city}
                     onChange={(e, localSamaj) => {
-                      if (!localSamaj) return;
-                      setFieldValue("localSamaj", localSamaj.id);
-                      setSelectedSamaj(localSamaj.name);
+                      setFieldValue("localSamaj", pickMasterId(localSamaj));
+                      setSelectedSamaj(localSamaj || null);
                     }}
                     onBlur={handleBlur}
                   />
