@@ -153,9 +153,14 @@ const YuvaList = () => {
   const [selectedSearchByText, setSelectedSearchByText] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [exportIds, setExportIds] = useState([]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+  const openExport = (ids = []) => {
+    setExportIds(ids);
+    setExportOpen(true);
   };
   useEffect(() => {
     dispatch(getAllSurnameData);
@@ -535,7 +540,7 @@ const YuvaList = () => {
               variant="secondary"
               className="max-md:w-full"
               icon={<FileDownloadOutlinedIcon sx={{ fontSize: 18 }} />}
-              onClick={() => setExportOpen(true)}
+              onClick={() => openExport()}
             >
               Export
             </ActionButton>
@@ -672,15 +677,26 @@ const YuvaList = () => {
             <span className={"text-primary font-semibold"}>
               {selectedYuvas.length} Selected
             </span>
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<DeleteIcon />}
-              className={"!bg-primary !text-white max-md:!w-full"}
-              onClick={() => setBulkDeleteOpen(true)}
-            >
-              Delete Selected
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<FileDownloadOutlinedIcon />}
+                className={"!border-primary !text-primary max-md:!w-full"}
+                onClick={() => openExport(selectedYuvas)}
+              >
+                Export Selected
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<DeleteIcon />}
+                className={"!bg-primary !text-white max-md:!w-full"}
+                onClick={() => setBulkDeleteOpen(true)}
+              >
+                Delete Selected
+              </Button>
+            </div>
           </div>
         ) : null}
         <div className={"hidden md:block w-full min-w-0"}>
@@ -698,6 +714,18 @@ const YuvaList = () => {
             checkboxSelection={canAct}
             onDeleteSelected={canAct ? deleteAPI : undefined}
             deleteEntity="yuva"
+            bulkActions={
+              canAct
+                ? [
+                    {
+                      label: "Export Selected",
+                      variant: "outlined",
+                      icon: <FileDownloadOutlinedIcon sx={{ fontSize: 18 }} />,
+                      onClick: (ids) => openExport(ids),
+                    },
+                  ]
+                : []
+            }
           />
         </div>
         <div className={"md:hidden w-full flex flex-col gap-3"}>
@@ -1091,6 +1119,7 @@ const YuvaList = () => {
       </AppModal>
       <ExportYuvaModal
         open={exportOpen}
+        ids={exportIds}
         onClose={() => setExportOpen(false)}
       />
       <DeleteConfirmFlow

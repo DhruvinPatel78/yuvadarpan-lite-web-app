@@ -4,7 +4,7 @@ import {
   CircularProgress,
   Grid,
 } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CustomInput from "../../../../Component/Common/customInput";
 import CustomAutoComplete from "../../../../Component/Common/customAutoComplete";
 import CustomRadio from "../../../../Component/Common/customRadio";
@@ -156,26 +156,14 @@ const AddYuva = () => {
   const cropRequestId = useRef(0);
   const [newFieldList, setNewFieldList] = useState([]);
   const [lastNameList, setLastNameList] = useState(surname);
-  const [selectedLastName, setSelectedLastName] = useState(null);
   const [countryList, setCountryList] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState(null);
   const [stateList, setStateList] = useState([]);
-  const [selectedState, setSelectedState] = useState(null);
   const [regionList, setRegionList] = useState([]);
-  const [selectedRegion, setSelectedRegion] = useState(null);
   const [vibhagList, setVibhagList] = useState([]);
-  const [selectedVibhag, setSelectedVibhag] = useState(null);
   const [districtList, setDistrictList] = useState([]);
-  const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [samajList, setSamajList] = useState([]);
-  const [selectedSamaj, setSelectedSamaj] = useState(null);
   const [cityList, setCityList] = useState([]);
-  const [selectedCity, setSelectedCity] = useState(null);
   const [nativeList, setNativeList] = useState([]);
-  const [selectedNative, setSelectedNative] = useState(null);
-  const [selectedMamaLastName, setSelectedMamaLastName] = useState(null);
-  const [selectedMamaNative, setSelectedMamaNative] = useState(null);
-  const [selectedContactLastName, setSelectedContactLastName] = useState(null);
   const [newField, setNewField] = useState({
     title: "",
     description: "",
@@ -296,99 +284,6 @@ const AddYuva = () => {
       else if (field === "district") setDistrictList([]);
       else if (field === "city") setCityList([]);
       return [];
-    }
-  };
-  const selectedValueSetName = (field) => {
-    switch (field) {
-      case "surname":
-        surname.forEach((data) => {
-          if (location?.state?.data?.lastName === data.id) {
-            setSelectedLastName(masterNameText(data));
-          }
-          if (location?.state?.data?.mamaInfo?.lastName === data.id) {
-            setSelectedMamaLastName(masterNameText(data));
-          }
-          if (location?.state?.data?.contactInfo?.lastName === data.id) {
-            setSelectedContactLastName(masterNameText(data));
-          }
-        });
-        break;
-      case "native":
-        if (location?.state?.data?.native) {
-          axios
-            .get(`/${field}/getInfo/${location?.state?.data?.native}`)
-            .then((res) => {
-              const native = Array.isArray(res.data) ? res.data[0] : res.data;
-              if (native?.name) setSelectedNative(masterNameText(native));
-            })
-            .catch(function (error) {
-              console.log(error);
-            });
-        }
-        if (location?.state?.data?.mamaInfo?.native) {
-          axios
-            .get(`/${field}/getInfo/${location?.state?.data?.mamaInfo?.native}`)
-            .then((res) => {
-              const native = Array.isArray(res.data) ? res.data[0] : res.data;
-              if (native?.name) setSelectedMamaNative(masterNameText(native));
-            })
-            .catch(function (error) {
-              console.log(error);
-            });
-        }
-        break;
-
-      case "country":
-        country.forEach((data) => {
-          if (String(location?.state?.data?.country) === String(data.id)) {
-            setSelectedCountry(masterNameText(data));
-          }
-        });
-        break;
-      case "state":
-        state.forEach((data) => {
-          if (String(location?.state?.data?.state) === String(data.id)) {
-            setSelectedState(masterNameText(data));
-          }
-        });
-        break;
-      case "region":
-        region.forEach((data) => {
-          if (String(location?.state?.data?.region) === String(data.id)) {
-            setSelectedRegion(masterNameText(data));
-          }
-        });
-        break;
-      case "vibhag":
-        vibhag.forEach((data) => {
-          if (String(location?.state?.data?.vibhag) === String(data.id)) {
-            setSelectedVibhag(masterNameText(data));
-          }
-        });
-        break;
-      case "district":
-        district.forEach((data) => {
-          if (String(location?.state?.data?.district) === String(data.id)) {
-            setSelectedDistrict(masterNameText(data));
-          }
-        });
-        break;
-      case "city":
-        city.forEach((data) => {
-          if (String(location?.state?.data?.city) === String(data.id)) {
-            setSelectedCity(masterNameText(data));
-          }
-        });
-        break;
-      case "samaj":
-        samaj.forEach((data) => {
-          if (String(location?.state?.data?.localSamaj) === String(data.id)) {
-            setSelectedSamaj(masterNameText(data));
-          }
-        });
-        break;
-      default:
-        return null;
     }
   };
 
@@ -646,30 +541,12 @@ const AddYuva = () => {
       return next;
     });
 
-    if (start < LOCATION_CHAIN.indexOf("state")) {
-      setSelectedState(null);
-      setStateList([]);
-    }
-    if (start < LOCATION_CHAIN.indexOf("region")) {
-      setSelectedRegion(null);
-      setRegionList([]);
-    }
-    if (start < LOCATION_CHAIN.indexOf("vibhag")) {
-      setSelectedVibhag(null);
-      setVibhagList([]);
-    }
-    if (start < LOCATION_CHAIN.indexOf("district")) {
-      setSelectedDistrict(null);
-      setDistrictList([]);
-    }
-    if (start < LOCATION_CHAIN.indexOf("city")) {
-      setSelectedCity(null);
-      setCityList([]);
-    }
-    if (start < LOCATION_CHAIN.indexOf("localSamaj")) {
-      setSelectedSamaj(null);
-      setSamajList([]);
-    }
+    if (start < LOCATION_CHAIN.indexOf("state")) setStateList([]);
+    if (start < LOCATION_CHAIN.indexOf("region")) setRegionList([]);
+    if (start < LOCATION_CHAIN.indexOf("vibhag")) setVibhagList([]);
+    if (start < LOCATION_CHAIN.indexOf("district")) setDistrictList([]);
+    if (start < LOCATION_CHAIN.indexOf("city")) setCityList([]);
+    if (start < LOCATION_CHAIN.indexOf("localSamaj")) setSamajList([]);
   };
 
   const locationHydratedFor = useRef("");
@@ -687,7 +564,6 @@ const AddYuva = () => {
       const countryId = pickMasterId(countryOpt);
       if (!countryOpt || !countryId) {
         setFieldValue("country", "");
-        setSelectedCountry(null);
         setStateList([]);
         setRegionList([]);
         setVibhagList([]);
@@ -698,7 +574,6 @@ const AddYuva = () => {
       }
       setCountryList(countries);
       setFieldValue("country", countryId);
-      setSelectedCountry(countryOpt);
 
       const states = (await getListById("state", countryId)) || [];
       const stateOpt = findMasterOption(
@@ -708,7 +583,6 @@ const AddYuva = () => {
       const stateId = pickMasterId(stateOpt);
       if (!stateOpt || !stateId) {
         setFieldValue("state", "");
-        setSelectedState(null);
         setRegionList([]);
         setVibhagList([]);
         setDistrictList([]);
@@ -717,7 +591,6 @@ const AddYuva = () => {
         return;
       }
       setFieldValue("state", stateId);
-      setSelectedState(stateOpt);
 
       const regions = (await getListById("region", stateId)) || [];
       const regionOpt = findMasterOption(
@@ -727,7 +600,6 @@ const AddYuva = () => {
       const regionId = pickMasterId(regionOpt);
       if (!regionOpt || !regionId) {
         setFieldValue("region", "");
-        setSelectedRegion(null);
         setVibhagList([]);
         setDistrictList([]);
         setCityList([]);
@@ -735,7 +607,6 @@ const AddYuva = () => {
         return;
       }
       setFieldValue("region", regionId);
-      setSelectedRegion(regionOpt);
 
       const vibhags = (await getListById("vibhag", regionId)) || [];
       const vibhagOpt = findMasterOption(
@@ -745,14 +616,12 @@ const AddYuva = () => {
       const vibhagId = pickMasterId(vibhagOpt);
       if (!vibhagOpt || !vibhagId) {
         setFieldValue("vibhag", "");
-        setSelectedVibhag(null);
         setDistrictList([]);
         setCityList([]);
         setSamajList([]);
         return;
       }
       setFieldValue("vibhag", vibhagId);
-      setSelectedVibhag(vibhagOpt);
 
       const districts = (await getListById("district", vibhagId)) || [];
       const districtOpt = findMasterOption(
@@ -762,13 +631,11 @@ const AddYuva = () => {
       const districtId = pickMasterId(districtOpt);
       if (!districtOpt || !districtId) {
         setFieldValue("district", "");
-        setSelectedDistrict(null);
         setCityList([]);
         setSamajList([]);
         return;
       }
       setFieldValue("district", districtId);
-      setSelectedDistrict(districtOpt);
 
       const cities = (await getListById("city", districtId)) || [];
       const cityOpt = findMasterOption(
@@ -778,12 +645,10 @@ const AddYuva = () => {
       const cityId = pickMasterId(cityOpt);
       if (!cityOpt || !cityId) {
         setFieldValue("city", "");
-        setSelectedCity(null);
         setSamajList([]);
         return;
       }
       setFieldValue("city", cityId);
-      setSelectedCity(cityOpt);
 
       await new Promise((resolve) => {
         axios
@@ -798,16 +663,13 @@ const AddYuva = () => {
             const samajId = pickMasterId(samajOpt);
             if (samajOpt && samajId) {
               setFieldValue("localSamaj", samajId);
-              setSelectedSamaj(samajOpt);
             } else {
               setFieldValue("localSamaj", "");
-              setSelectedSamaj(null);
             }
           })
           .catch(() => {
             setSamajList([]);
             setFieldValue("localSamaj", "");
-            setSelectedSamaj(null);
           })
           .finally(resolve);
       });
@@ -978,9 +840,6 @@ const AddYuva = () => {
         otherObjectToFields(flat.other, flat.otherGu)
       );
       setNewField({ title: "", description: "", titleGu: "", descriptionGu: "" });
-      selectArr.forEach((data) => {
-        selectedValueSetName(data);
-      });
     } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
@@ -1006,29 +865,6 @@ const AddYuva = () => {
     hydrateLocationCascade(record);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, location?.state?.data, countryList, country, hydrateLocationCascade]);
-
-  useEffect(() => {
-    if (!nativeList.length) return;
-    const matchName = (id) => {
-      if (!id) return "";
-      const key = String(id);
-      const found = nativeList.find(
-        (item) =>
-          String(item?.id) === key ||
-          String(item?.value) === key ||
-          String(item?._id) === key ||
-          String(item?.uuid) === key
-      );
-      return found?.label || masterNameText(found, language) || "";
-    };
-    const nativeName = matchName(location?.state?.data?.native || values?.native);
-    const mamaName = matchName(
-      location?.state?.data?.mamaInfo?.native || values?.mamaInfo?.native
-    );
-    if (nativeName) setSelectedNative(nativeName);
-    if (mamaName) setSelectedMamaNative(mamaName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nativeList]);
 
   useEffect(() => {
     if (surname?.length) {
@@ -1233,7 +1069,6 @@ const AddYuva = () => {
                     }
                     onChange={(e, lastName) => {
                       setFieldValue("lastName", pickMasterId(lastName));
-                      setSelectedLastName(lastName);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1326,7 +1161,6 @@ const AddYuva = () => {
                     errors={touched.native && errors.native && errors.native}
                     onChange={(e, native) => {
                       setFieldValue("native", pickMasterId(native));
-                      setSelectedNative(native || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1356,7 +1190,6 @@ const AddYuva = () => {
                     onSelect={handleChange}
                     onChange={(e, country) => {
                       const countryId = pickMasterId(country);
-                      setSelectedCountry(country || null);
                       resetLocationChildren("country", { country: countryId });
                       if (countryId) getListById("state", countryId);
                     }}
@@ -1375,7 +1208,6 @@ const AddYuva = () => {
                     errors={touched?.state && errors?.state && errors?.state}
                     onChange={(e, state) => {
                       const stateId = pickMasterId(state);
-                      setSelectedState(state || null);
                       resetLocationChildren("state", { state: stateId });
                       if (stateId) getListById("region", stateId);
                     }}
@@ -1395,7 +1227,6 @@ const AddYuva = () => {
                     errors={touched?.region && errors?.region && errors?.region}
                     onChange={(e, region) => {
                       const regionId = pickMasterId(region);
-                      setSelectedRegion(region || null);
                       resetLocationChildren("region", { region: regionId });
                       if (regionId) getListById("vibhag", regionId);
                     }}
@@ -1415,7 +1246,6 @@ const AddYuva = () => {
                     errors={touched?.vibhag && errors?.vibhag && errors?.vibhag}
                     onChange={(e, vibhagItem) => {
                       const vibhagId = pickMasterId(vibhagItem);
-                      setSelectedVibhag(vibhagItem || null);
                       resetLocationChildren("vibhag", { vibhag: vibhagId });
                       if (vibhagId) getListById("district", vibhagId);
                     }}
@@ -1437,7 +1267,6 @@ const AddYuva = () => {
                     }
                     onChange={(e, district) => {
                       const districtId = pickMasterId(district);
-                      setSelectedDistrict(district || null);
                       resetLocationChildren("district", {
                         district: districtId,
                       });
@@ -1459,7 +1288,6 @@ const AddYuva = () => {
                     errors={touched?.city && errors?.city && errors?.city}
                     onChange={(e, city) => {
                       const cityId = pickMasterId(city);
-                      setSelectedCity(city || null);
                       resetLocationChildren("city", { city: cityId });
                       if (cityId) getSamajList(cityId);
                     }}
@@ -1484,7 +1312,6 @@ const AddYuva = () => {
                     disabled={!values.city}
                     onChange={(e, localSamaj) => {
                       setFieldValue("localSamaj", pickMasterId(localSamaj));
-                      setSelectedSamaj(localSamaj || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1674,7 +1501,6 @@ const AddYuva = () => {
                         ...values?.mamaInfo,
                         lastName: pickMasterId(lastName),
                       });
-                      setSelectedMamaLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1697,7 +1523,6 @@ const AddYuva = () => {
                         ...values?.mamaInfo,
                         native: pickMasterId(native),
                       });
-                      setSelectedMamaNative(native || null);
                     }}
                     onBlur={handleBlur}
                   />
@@ -1756,7 +1581,6 @@ const AddYuva = () => {
                         "contactInfo.lastName",
                         pickMasterId(lastName)
                       );
-                      setSelectedContactLastName(lastName || null);
                     }}
                     onBlur={handleBlur}
                   />
