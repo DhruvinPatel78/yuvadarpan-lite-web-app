@@ -78,3 +78,12 @@ export const uploadAdvertisementImage = async (file, filename) => {
   const response = await axios.post("/image/upload", formData);
   return response.data?.data;
 };
+
+export const deleteAdvertisementImage = async (awsId) => {
+  const key = String(awsId || "").trim();
+  if (!key) return null;
+  const response = await axios.delete("/image/delete", {
+    data: { awsId: key },
+  });
+  return response.data;
+};
