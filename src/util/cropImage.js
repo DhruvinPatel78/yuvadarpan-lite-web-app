@@ -84,13 +84,13 @@ export async function getCroppedImageFile(
     throw new Error("Could not crop image.");
   }
 
-  const sourceSize = Math.max(
-    1,
-    Math.round(Math.min(pixelCrop.width, pixelCrop.height))
-  );
-  const size = Math.min(MAX_CROP_EDGE, sourceSize);
-  canvas.width = size;
-  canvas.height = size;
+  const cropW = Math.max(1, Math.round(pixelCrop.width));
+  const cropH = Math.max(1, Math.round(pixelCrop.height));
+  const scale = Math.min(1, MAX_CROP_EDGE / Math.max(cropW, cropH));
+  const width = Math.max(1, Math.round(cropW * scale));
+  const height = Math.max(1, Math.round(cropH * scale));
+  canvas.width = width;
+  canvas.height = height;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
@@ -102,8 +102,8 @@ export async function getCroppedImageFile(
     pixelCrop.height,
     0,
     0,
-    size,
-    size
+    width,
+    height
   );
 
   const blob = await new Promise((resolve, reject) => {
