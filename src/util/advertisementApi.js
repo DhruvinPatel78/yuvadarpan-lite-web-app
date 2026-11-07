@@ -74,8 +74,7 @@ export const uploadAdvertisementImage = async (file, filename) => {
   if (filename) {
     formData.append("filename", filename);
   }
-  const response = await axios.post("/image/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  // Do not set Content-Type — the browser must add the multipart boundary.
+  const response = await axios.post("/image/upload", formData);
   return response.data?.data;
 };
