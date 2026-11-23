@@ -1,3 +1,0 @@
-/og-image/:id  /.netlify/functions/yuva-og-image  200!
-/yuva/:id  /.netlify/functions/yuva-og  200!
-/*    /index.html   200
