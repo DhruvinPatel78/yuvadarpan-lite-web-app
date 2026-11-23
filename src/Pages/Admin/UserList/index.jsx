@@ -76,6 +76,7 @@ import {
 import {
   getAllSurnameData,
   getAllRegionData,
+  getAllVibhagData,
   getAllSamajData,
   getAllCountryData,
   getAllStateData,
@@ -447,15 +448,10 @@ function Index() {
   const [isAddUser, setIsAddUser] = useState(false);
   const [roleFieldReady, setRoleFieldReady] = useState(false);
   const [userList, setUserList] = useState(null);
-  const [selectedCountryName, setSelectedCountryName] = useState(null);
-  const [selectedStateName, setSelectedStateName] = useState(null);
-  const [selectedRegionName, setSelectedRegionName] = useState(null);
-  const [selectedVibhagName, setSelectedVibhagName] = useState(null);
-  const [selectedDistrictName, setSelectedDistrictName] = useState(null);
-  const [selectedCityName, setSelectedCityName] = useState(null);
   const [selectedGotra, setSelectedGotra] = useState([]);
   const [selectedSurname, setSelectedSurname] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState([]);
+  const [selectedVibhag, setSelectedVibhag] = useState([]);
   const [selectedSamaj, setSelectedSamaj] = useState([]);
   const [selectedSearchBy, setSelectedSearchBy] = useState({
     name: "",
@@ -470,6 +466,7 @@ function Index() {
   const [districtList, setDistrictList] = useState([]);
   const [cityList, setCityList] = useState([]);
   const [selectedRole, setSelectedRole] = useState([]);
+  const [vibhagListByRegion, setVibhagListByRegion] = useState(vibhag);
   const [samajListByRegion, setSamajListByRegion] = useState(samaj);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -548,6 +545,7 @@ function Index() {
       language: "gu",
       role: "",
     },
+    validateOnMount: true,
     onSubmit: async (formValues, { resetForm }) => {
       try {
         await completeModalMutation(dispatch, {
@@ -569,12 +567,13 @@ function Index() {
     },
     validationSchema: Yup.lazy(() =>
       Yup.object({
-        firstName: Yup.string().required("Required"),
-        middleName: Yup.string().required("Required"),
+        firstName: Yup.string().trim().required("Required"),
+        middleName: Yup.string().trim().required("Required"),
         lastName: Yup.string().required("Required"),
         familyId: Yup.number()
-          .typeError("Enter a number")
-          .positive()
+          .typeError("Family ID must be a number")
+          .integer("Family ID must be a whole number")
+          .positive("Family ID must be a positive number")
           .required("Required"),
         mobile: Yup.string()
           .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
@@ -592,6 +591,9 @@ function Index() {
           .required("Required")
           .min(new Date("1950-01-01"), "Date cannot be before 1950")
           .max(new Date(), "Date cannot be in the future"),
+        role: hasOwnListToggle
+          ? Yup.mixed().nullable()
+          : Yup.mixed().required("Required"),
         password: isAddUser
           ? Yup.string().required("Required")
           : Yup.string(),
@@ -615,9 +617,38 @@ function Index() {
     validateForm,
     setTouched,
     isSubmitting,
+    isValid,
   } = formik;
 
+  const LOCATION_CHAIN = [
+    "country",
+    "state",
+    "region",
+    "vibhag",
+    "district",
+    "city",
+    "localSamaj",
+  ];
 
+  const resetLocationChildren = (parentField, parentValue = {}) => {
+    const start = LOCATION_CHAIN.indexOf(parentField);
+    setValues((prev) => {
+      const next = { ...prev, ...parentValue };
+      if (start >= 0) {
+        LOCATION_CHAIN.slice(start + 1).forEach((key) => {
+          next[key] = "";
+        });
+      }
+      return next;
+    });
+
+    if (start < LOCATION_CHAIN.indexOf("state")) setStateList([]);
+    if (start < LOCATION_CHAIN.indexOf("region")) setRegionList([]);
+    if (start < LOCATION_CHAIN.indexOf("vibhag")) setVibhagList([]);
+    if (start < LOCATION_CHAIN.indexOf("district")) setDistrictList([]);
+    if (start < LOCATION_CHAIN.indexOf("city")) setCityList([]);
+    if (start < LOCATION_CHAIN.indexOf("localSamaj")) setSamajList([]);
+  };
 
   const selectedLastNameOption = findOption(lastNameOptions, values?.lastName);
 
@@ -628,6 +659,7 @@ function Index() {
     [surname, selectedGotra]
   );
   const filteredRegionIds = useFilteredIds(selectedRegion, "id");
+  const filteredVibhagIds = useFilteredIds(selectedVibhag, "id");
   const filteredRolesIds = useFilteredIds(selectedRole, "id");
   const filteredSamajIds = useFilteredIds(selectedSamaj, "id");
   const filterCols = filterFieldCols(3);
@@ -667,6 +699,9 @@ function Index() {
       }
       if (!isRest && filteredRegionIds.length) {
         params.region = filteredRegionIds;
+      }
+      if (!isRest && filteredVibhagIds.length) {
+        params.vibhag = filteredVibhagIds;
       }
       if (!isRest && filteredSamajIds.length) {
         params.samaj = filteredSamajIds;
@@ -722,6 +757,7 @@ function Index() {
   useEffect(() => {
     dispatch(getAllSurnameData);
     dispatch(getAllRegionData);
+    dispatch(getAllVibhagData);
     dispatch(getAllSamajData);
     dispatch(getAllCountryData);
     dispatch(getAllStateData);
@@ -729,6 +765,13 @@ function Index() {
     dispatch(getAllCityData);
     dispatch(getAllGotraData);
   }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedRegion.length === 0) {
+      setVibhagListByRegion(vibhag);
+      setSamajListByRegion(samaj);
+    }
+  }, [vibhag, samaj, selectedRegion.length]);
 
   useEffect(() => {
     handleUserList();
@@ -793,7 +836,6 @@ function Index() {
     const countryOpt = findOption(countryOptions, source?.country);
     const countryId =
       pickMasterId(countryOpt) || String(source?.country || "").trim();
-    setSelectedCountryName(countryOpt || null);
 
     let nextStates = [];
     if (countryId) {
@@ -808,7 +850,6 @@ function Index() {
     const stateOpt = findOption(stateOptions, source?.state);
     const stateId =
       pickMasterId(stateOpt) || String(source?.state || "").trim();
-    setSelectedStateName(stateOpt || null);
 
     let nextRegions = [];
     if (stateId) {
@@ -825,7 +866,6 @@ function Index() {
       findOption(regionOptions, source?.region);
     const regionId =
       pickMasterId(regionOpt) || String(source?.region || "").trim();
-    setSelectedRegionName(regionOpt || null);
 
     let nextVibhags = [];
     if (regionId) {
@@ -840,7 +880,6 @@ function Index() {
     const vibhagOpt = findOption(vibhagOptions, source?.vibhag);
     const vibhagId =
       pickMasterId(vibhagOpt) || String(source?.vibhag || "").trim();
-    setSelectedVibhagName(vibhagOpt || null);
 
     let nextDistricts = [];
     if (vibhagId) {
@@ -855,7 +894,6 @@ function Index() {
     const districtOpt = findOption(districtOptions, source?.district);
     const districtId =
       pickMasterId(districtOpt) || String(source?.district || "").trim();
-    setSelectedDistrictName(districtOpt || null);
 
     let nextCities = [];
     if (districtId) {
@@ -870,7 +908,6 @@ function Index() {
     const cityOpt = findOption(cityOptions, source?.city);
     const cityId =
       pickMasterId(cityOpt) || String(source?.city || "").trim();
-    setSelectedCityName(cityOpt || null);
 
     let loadedSamaj = [];
     if (cityId) {
@@ -955,19 +992,17 @@ function Index() {
         ...withResolved,
       }));
       originalUserRef.current = comparableUserValues(withResolved);
+      await validateForm(withResolved);
     } else {
       originalUserRef.current = "";
-      setSelectedCountryName(null);
-      setSelectedStateName(null);
-      setSelectedRegionName(null);
-      setSelectedDistrictName(null);
-      setSelectedCityName(null);
       setStateList([]);
       setRegionList([]);
+      setVibhagList([]);
       setDistrictList([]);
       setCityList([]);
       setSamajList([]);
       resetForm();
+      await validateForm();
     }
   };
 
@@ -979,6 +1014,11 @@ function Index() {
     const readyTimer = window.setTimeout(() => setRoleFieldReady(true), 100);
     return () => window.clearTimeout(readyTimer);
   }, [userInfoModel, modalView]);
+
+  useEffect(() => {
+    if (!userInfoModel || modalView !== "form") return;
+    validateForm();
+  }, [userInfoModel, modalView, isAddUser, validateForm]);
 
   useEffect(() => {
     if (!userInfoModel || modalView !== "form" || !isAddUser || !roleFieldReady) {
@@ -1019,12 +1059,6 @@ function Index() {
     setIsAddUser(false);
     setModalView("form");
     originalUserRef.current = "";
-    setSelectedCountryName(null);
-    setSelectedStateName(null);
-    setSelectedRegionName(null);
-    setSelectedVibhagName(null);
-    setSelectedDistrictName(null);
-    setSelectedCityName(null);
     setStateList([]);
     setRegionList([]);
     setVibhagList([]);
@@ -1125,8 +1159,10 @@ function Index() {
     setSelectedGotra([]);
     setSelectedSurname([]);
     setSelectedRegion([]);
+    setSelectedVibhag([]);
     setSelectedSamaj([]);
     setSelectedRole([]);
+    setVibhagListByRegion(vibhag);
     setSamajListByRegion(samaj);
     handleUserList(true);
   };
@@ -1285,11 +1321,12 @@ function Index() {
     );
   };
 
-  const hasError = Object.keys(errors)?.length || 0;
   const hasUnsavedUserChanges =
     !isAddUser &&
     Boolean(originalUserRef.current) &&
     comparableUserValues(values) !== originalUserRef.current;
+  const isUserFormReady =
+    isValid && Object.keys(errors || {}).length === 0;
 
   const handleChangePasswordClick = async () => {
     if (hasUnsavedUserChanges) {
@@ -1340,6 +1377,7 @@ function Index() {
                   setModalView("form");
                   resetForm();
                   setUserInfoModel(true);
+                  validateForm();
                 }}
               >
                 Add User
@@ -1374,6 +1412,7 @@ function Index() {
             Number(Boolean(selectedGotra?.length > 0)) +
             Number(Boolean(selectedSurname?.length > 0)) +
             Number(Boolean(selectedRegion?.length > 0)) +
+            Number(Boolean(selectedVibhag?.length > 0)) +
             Number(Boolean(selectedSamaj?.length > 0)) +
             Number(Boolean(selectedRole?.length > 0))
           }
@@ -1420,11 +1459,67 @@ function Index() {
                 {...filterCols}
                 name="region"
                 value={selectedRegion}
-                onChange={async (e, region) => {
-                  if (region) {
-                    const data = await handleListById("samaj", region);
-                    setSamajListByRegion(data);
-                    setSelectedRegion((pre) => getSelectedData(pre, region, e));
+                onChange={async (e, regionValue) => {
+                  if (regionValue) {
+                    const nextRegion = getSelectedData(
+                      selectedRegion,
+                      regionValue,
+                      e
+                    );
+                    setSelectedRegion(nextRegion);
+                    setSelectedVibhag([]);
+                    setSelectedSamaj([]);
+                    if (regionValue.length > 0) {
+                      const [vibhagData, samajData] = await Promise.all([
+                        handleListById("vibhag", regionValue),
+                        handleListById("samaj", regionValue),
+                      ]);
+                      setVibhagListByRegion(vibhagData);
+                      setSamajListByRegion(samajData);
+                    } else {
+                      setVibhagListByRegion(vibhag);
+                      setSamajListByRegion(samaj);
+                    }
+                  }
+                }}
+              />
+              <CustomAutoComplete
+                list={listHandler(vibhagListByRegion)}
+                multiple={true}
+                label={copy.vibhag}
+                placeholder={copy.vibhagPh}
+                {...filterCols}
+                name="vibhag"
+                value={selectedVibhag}
+                onChange={(e, vibhagValue) => {
+                  if (vibhagValue) {
+                    const nextVibhag = getSelectedData(
+                      selectedVibhag,
+                      vibhagValue,
+                      e
+                    );
+                    setSelectedVibhag(nextVibhag);
+                    setSelectedSamaj([]);
+                    if (vibhagValue.length > 0) {
+                      const vibhagIds = vibhagValue
+                        .map((item) => item?.id)
+                        .filter(Boolean)
+                        .map(String);
+                      const matchingSamaj = vibhagIds.length
+                        ? samaj.filter((item) =>
+                            vibhagIds.includes(String(item.vibhag_id))
+                          )
+                        : samaj;
+                      setSamajListByRegion(
+                        matchingSamaj.length ? matchingSamaj : samaj
+                      );
+                    } else if (selectedRegion.length > 0) {
+                      handleListById("samaj", selectedRegion).then((data) =>
+                        setSamajListByRegion(data)
+                      );
+                    } else {
+                      setSamajListByRegion(samaj);
+                    }
                   }
                 }}
               />
@@ -1436,9 +1531,11 @@ function Index() {
                 {...filterCols}
                 name="samaj"
                 value={selectedSamaj}
-                onChange={(e, samaj) => {
-                  if (samaj) {
-                    setSelectedSamaj((pre) => getSelectedData(pre, samaj, e));
+                onChange={(e, samajValue) => {
+                  if (samajValue) {
+                    setSelectedSamaj((pre) =>
+                      getSelectedData(pre, samajValue, e)
+                    );
                   }
                 }}
               />
@@ -1482,6 +1579,7 @@ function Index() {
                       selectedSearchBy.name ||
                       selectedGotra?.length > 0 ||
                       selectedRegion?.length > 0 ||
+                      selectedVibhag?.length > 0 ||
                       selectedSurname?.length > 0 ||
                       selectedSamaj?.length > 0 ||
                       selectedRole?.length > 0
@@ -1772,7 +1870,9 @@ function Index() {
                     <CustomInput
                       name={"familyId"}
                       id="familyId"
+                      type="number"
                       label="Family ID"
+                      placeholder="e.g. 1001"
                       value={values?.familyId}
                       variant="outlined"
                       autoFocus={isAddUser}
@@ -1834,7 +1934,7 @@ function Index() {
                         touched.lastName && errors.lastName && errors.lastName
                       }
                       onChange={(e, lastName) => {
-                        setFieldValue("lastName", lastName?.id || lastName?.value || "");
+                        setFieldValue("lastName", pickMasterId(lastName));
                       }}
                       onBlur={handleBlur}
                     />
@@ -1929,38 +2029,17 @@ function Index() {
                       label={"Country"}
                       placeholder={"Select Your Country"}
                       name={"country"}
-                      value={
-                        findOption(countryOptions, values?.country) ||
-                        selectedCountryName
-                      }
+                      value={values?.country || null}
                       errors={
                         touched?.country &&
                         errors?.country &&
                         errors?.country
                       }
                       onChange={(e, selectedCountry) => {
-                        setFieldValue("country", selectedCountry?.id || "");
-                        setFieldValue("state", "");
-                        setFieldValue("region", "");
-                        setFieldValue("vibhag", "");
-                        setFieldValue("district", "");
-                        setFieldValue("city", "");
-                        setFieldValue("localSamaj", "");
-                        setSelectedCountryName(selectedCountry || null);
-                        setSelectedStateName(null);
-                        setSelectedRegionName(null);
-                        setSelectedVibhagName(null);
-                        setSelectedDistrictName(null);
-                        setSelectedCityName(null);
-                        setRegionList([]);
-                        setVibhagList([]);
-                        setDistrictList([]);
-                        setCityList([]);
-                        setSamajList([]);
-                        if (selectedCountry?.id) {
-                          getStateList(selectedCountry.id);
-                        } else {
-                          setStateList([]);
+                        const countryId = pickMasterId(selectedCountry);
+                        resetLocationChildren("country", { country: countryId });
+                        if (countryId) {
+                          getStateList(countryId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -1970,38 +2049,21 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={`state-${values?.country || "none"}`}
                       list={asOptions(stateList)}
                       label={"State"}
                       placeholder={"Select Your State"}
                       name={"state"}
-                      value={
-                        findOption(asOptions(stateList), values?.state) ||
-                        selectedStateName
-                      }
+                      value={values?.state || null}
                       disabled={!values?.country}
                       errors={
                         touched?.state && errors?.state && errors?.state
                       }
                       onChange={(e, selectedState) => {
-                        setFieldValue("state", selectedState?.id || "");
-                        setFieldValue("region", "");
-                        setFieldValue("vibhag", "");
-                        setFieldValue("district", "");
-                        setFieldValue("city", "");
-                        setFieldValue("localSamaj", "");
-                        setSelectedStateName(selectedState || null);
-                        setSelectedRegionName(null);
-                        setSelectedVibhagName(null);
-                        setSelectedDistrictName(null);
-                        setSelectedCityName(null);
-                        setVibhagList([]);
-                        setDistrictList([]);
-                        setCityList([]);
-                        setSamajList([]);
-                        if (selectedState?.id) {
-                          getRegionList(selectedState.id);
-                        } else {
-                          setRegionList([]);
+                        const stateId = pickMasterId(selectedState);
+                        resetLocationChildren("state", { state: stateId });
+                        if (stateId) {
+                          getRegionList(stateId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -2011,35 +2073,21 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={`region-${values?.state || "none"}`}
                       list={asOptions(regionList)}
                       label={"Region"}
                       placeholder={"Select Your Region"}
                       name={"region"}
-                      value={
-                        findOption(asOptions(regionList), values?.region) ||
-                        selectedRegionName
-                      }
+                      value={values?.region || null}
                       disabled={!values?.state}
                       errors={
                         touched?.region && errors?.region && errors?.region
                       }
                       onChange={(e, regionValue) => {
-                        setFieldValue("region", regionValue?.id || "");
-                        setFieldValue("vibhag", "");
-                        setFieldValue("district", "");
-                        setFieldValue("city", "");
-                        setFieldValue("localSamaj", "");
-                        setSelectedRegionName(regionValue || null);
-                        setSelectedVibhagName(null);
-                        setSelectedDistrictName(null);
-                        setSelectedCityName(null);
-                        setDistrictList([]);
-                        setCityList([]);
-                        setSamajList([]);
-                        if (regionValue?.id) {
-                          getVibhagList(regionValue.id);
-                        } else {
-                          setVibhagList([]);
+                        const regionId = pickMasterId(regionValue);
+                        resetLocationChildren("region", { region: regionId });
+                        if (regionId) {
+                          getVibhagList(regionId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -2049,32 +2097,21 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={`vibhag-${values?.region || "none"}`}
                       list={asOptions(vibhagList)}
                       label={"Division"}
                       placeholder={"Select Your Division"}
                       name={"vibhag"}
-                      value={
-                        findOption(asOptions(vibhagList), values?.vibhag) ||
-                        selectedVibhagName
-                      }
+                      value={values?.vibhag || null}
                       disabled={!values?.region}
                       errors={
                         touched?.vibhag && errors?.vibhag && errors?.vibhag
                       }
                       onChange={(e, vibhagValue) => {
-                        setFieldValue("vibhag", vibhagValue?.id || "");
-                        setFieldValue("district", "");
-                        setFieldValue("city", "");
-                        setFieldValue("localSamaj", "");
-                        setSelectedVibhagName(vibhagValue || null);
-                        setSelectedDistrictName(null);
-                        setSelectedCityName(null);
-                        setCityList([]);
-                        setSamajList([]);
-                        if (vibhagValue?.id) {
-                          getDistrictList(vibhagValue.id);
-                        } else {
-                          setDistrictList([]);
+                        const vibhagId = pickMasterId(vibhagValue);
+                        resetLocationChildren("vibhag", { vibhag: vibhagId });
+                        if (vibhagId) {
+                          getDistrictList(vibhagId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -2084,16 +2121,12 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={`district-${values?.vibhag || "none"}`}
                       list={asOptions(districtList)}
                       label={"District"}
                       placeholder={"Select Your District"}
                       name={"district"}
-                      value={
-                        findOption(
-                          asOptions(districtList),
-                          values?.district
-                        ) || selectedDistrictName
-                      }
+                      value={values?.district || null}
                       disabled={!values?.vibhag}
                       errors={
                         touched?.district &&
@@ -2101,16 +2134,12 @@ function Index() {
                         errors?.district
                       }
                       onChange={(e, district) => {
-                        setFieldValue("district", district?.id || "");
-                        setFieldValue("city", "");
-                        setFieldValue("localSamaj", "");
-                        setSelectedDistrictName(district || null);
-                        setSelectedCityName(null);
-                        setSamajList([]);
-                        if (district?.id) {
-                          getCityList(district.id);
-                        } else {
-                          setCityList([]);
+                        const districtId = pickMasterId(district);
+                        resetLocationChildren("district", {
+                          district: districtId,
+                        });
+                        if (districtId) {
+                          getCityList(districtId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -2120,26 +2149,21 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={`city-${values?.district || "none"}`}
                       list={asOptions(cityList)}
                       label={"City"}
                       placeholder={"Select Your City"}
                       name={"city"}
-                      value={
-                        findOption(asOptions(cityList), values?.city) ||
-                        selectedCityName
-                      }
+                      value={values?.city || null}
                       disabled={!values?.district}
                       errors={
                         touched?.city && errors?.city && errors?.city
                       }
                       onChange={(e, city) => {
-                        setFieldValue("city", city?.id || "");
-                        setFieldValue("localSamaj", "");
-                        setSelectedCityName(city || null);
-                        if (city?.id) {
-                          getSamajList(city.id);
-                        } else {
-                          setSamajList([]);
+                        const cityId = pickMasterId(city);
+                        resetLocationChildren("city", { city: cityId });
+                        if (cityId) {
+                          getSamajList(cityId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -2149,16 +2173,12 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      key={`samaj-${values?.city || "none"}`}
                       list={asOptions(samajList)}
                       label={"Local Samaj"}
                       placeholder={"Select Your Samaj"}
                       name={"localSamaj"}
-                      value={findOption(
-                        asOptions(samajList).length
-                          ? asOptions(samajList)
-                          : asOptions(samaj),
-                        values?.localSamaj
-                      )}
+                      value={values?.localSamaj || null}
                       disabled={!values?.city}
                       errors={
                         touched?.localSamaj &&
@@ -2166,7 +2186,7 @@ function Index() {
                         errors?.localSamaj
                       }
                       onChange={(e, localSamaj) => {
-                        setFieldValue("localSamaj", localSamaj?.id || "");
+                        setFieldValue("localSamaj", pickMasterId(localSamaj));
                       }}
                       onBlur={handleBlur}
                     />
@@ -2256,7 +2276,7 @@ function Index() {
                   )}
                   <ActionButton
                     type={"submit"}
-                    disabled={hasError || isSubmitting}
+                    disabled={!isUserFormReady || isSubmitting}
                     loading={loading || isSubmitting}
                     className="max-md:w-full"
                   >

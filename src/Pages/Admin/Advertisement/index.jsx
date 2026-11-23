@@ -37,6 +37,7 @@ import {
   AD_DISPLAY_PAGES,
   addAdvertisement,
   deleteAdvertisement,
+  deleteAdvertisementImage,
   formatDisplayOn,
   getAdvertisementList,
   reorderAdvertisement,
@@ -194,7 +195,7 @@ export default function Index() {
           refresh: () => handleList(),
           close: () => {
             resetForm();
-            closeModal();
+            closeModal({ keepUploadedImage: true });
           },
         });
       } catch (e) {
@@ -223,6 +224,13 @@ export default function Index() {
     if (photoInputRef.current) {
       photoInputRef.current.value = "";
     }
+  };
+
+  const cleanupPendingUpload = (awsId, originalAwsId) => {
+    const key = String(awsId || "").trim();
+    const original = String(originalAwsId || "").trim();
+    if (!key || (original && key === original)) return;
+    deleteAdvertisementImage(key).catch(() => {});
   };
 
   const openPhotoCrop = async (file) => {
@@ -256,9 +264,12 @@ export default function Index() {
     const filename = String(values.name || "advertisement")
       .trim()
       .replace(/\s+/g, "_");
+    const previousAwsId = imageMeta?.awsId;
+    const originalAwsId = modalData?.image?.awsId;
     uploadAdvertisementImage(file, filename)
       .then((uploaded) => {
         if (!uploaded?.url) return;
+        cleanupPendingUpload(previousAwsId, originalAwsId);
         setImageMeta(uploaded);
         setImagePreview(uploaded.url);
         setImageTouched(true);
@@ -274,7 +285,10 @@ export default function Index() {
     imageUploadHandler(file);
   };
 
-  const closeModal = () => {
+  const closeModal = ({ keepUploadedImage = false } = {}) => {
+    if (!keepUploadedImage) {
+      cleanupPendingUpload(imageMeta?.awsId, modalData?.image?.awsId);
+    }
     setModalOpen(false);
     setModalData(null);
     setImageMeta(null);

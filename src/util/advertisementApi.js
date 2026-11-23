@@ -74,8 +74,16 @@ export const uploadAdvertisementImage = async (file, filename) => {
   if (filename) {
     formData.append("filename", filename);
   }
-  const response = await axios.post("/image/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  // Do not set Content-Type — the browser must add the multipart boundary.
+  const response = await axios.post("/image/upload", formData);
   return response.data?.data;
+};
+
+export const deleteAdvertisementImage = async (awsId) => {
+  const key = String(awsId || "").trim();
+  if (!key) return null;
+  const response = await axios.delete("/image/delete", {
+    data: { awsId: key },
+  });
+  return response.data;
 };

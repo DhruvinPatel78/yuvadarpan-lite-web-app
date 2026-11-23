@@ -519,6 +519,36 @@ const AddYuva = () => {
     submitCount,
   } = formik;
 
+  const LOCATION_CHAIN = [
+    "country",
+    "state",
+    "region",
+    "vibhag",
+    "district",
+    "city",
+    "localSamaj",
+  ];
+
+  const resetLocationChildren = (parentField, parentValue = {}) => {
+    const start = LOCATION_CHAIN.indexOf(parentField);
+    setValues((prev) => {
+      const next = { ...prev, ...parentValue };
+      if (start >= 0) {
+        LOCATION_CHAIN.slice(start + 1).forEach((key) => {
+          next[key] = "";
+        });
+      }
+      return next;
+    });
+
+    if (start < LOCATION_CHAIN.indexOf("state")) setStateList([]);
+    if (start < LOCATION_CHAIN.indexOf("region")) setRegionList([]);
+    if (start < LOCATION_CHAIN.indexOf("vibhag")) setVibhagList([]);
+    if (start < LOCATION_CHAIN.indexOf("district")) setDistrictList([]);
+    if (start < LOCATION_CHAIN.indexOf("city")) setCityList([]);
+    if (start < LOCATION_CHAIN.indexOf("localSamaj")) setSamajList([]);
+  };
+
   const locationHydratedFor = useRef("");
 
   const hydrateLocationCascade = useCallback(
@@ -1153,31 +1183,20 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.country}
+                    value={values.country || null}
                     errors={
                       touched?.country && errors?.country && errors?.country
                     }
                     onSelect={handleChange}
                     onChange={(e, country) => {
                       const countryId = pickMasterId(country);
-                      setFieldValue("country", countryId);
-                      setFieldValue("state", "");
-                      setFieldValue("region", "");
-                      setFieldValue("vibhag", "");
-                      setFieldValue("district", "");
-                      setFieldValue("city", "");
-                      setFieldValue("localSamaj", "");
-                      setStateList([]);
-                      setRegionList([]);
-                      setVibhagList([]);
-                      setDistrictList([]);
-                      setCityList([]);
-                      setSamajList([]);
+                      resetLocationChildren("country", { country: countryId });
                       if (countryId) getListById("state", countryId);
                     }}
                     onBlur={handleBlur}
                   />
                   <CustomAutoComplete
+                    key={`yuva-state-${values.country || "none"}`}
                     list={stateList}
                     label={t("state")}
                     placeholder={t("statePh")}
@@ -1185,27 +1204,18 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.state}
+                    value={values.state || null}
                     errors={touched?.state && errors?.state && errors?.state}
                     onChange={(e, state) => {
                       const stateId = pickMasterId(state);
-                      setFieldValue("state", stateId);
-                      setFieldValue("region", "");
-                      setFieldValue("vibhag", "");
-                      setFieldValue("district", "");
-                      setFieldValue("city", "");
-                      setFieldValue("localSamaj", "");
-                      setRegionList([]);
-                      setVibhagList([]);
-                      setDistrictList([]);
-                      setCityList([]);
-                      setSamajList([]);
+                      resetLocationChildren("state", { state: stateId });
                       if (stateId) getListById("region", stateId);
                     }}
                     onBlur={handleBlur}
                     disabled={!values.country}
                   />
                   <CustomAutoComplete
+                    key={`yuva-region-${values.state || "none"}`}
                     list={regionList}
                     label={t("region")}
                     placeholder={t("regionPh")}
@@ -1213,25 +1223,18 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.region}
+                    value={values.region || null}
                     errors={touched?.region && errors?.region && errors?.region}
                     onChange={(e, region) => {
                       const regionId = pickMasterId(region);
-                      setFieldValue("region", regionId);
-                      setFieldValue("vibhag", "");
-                      setFieldValue("district", "");
-                      setFieldValue("city", "");
-                      setFieldValue("localSamaj", "");
-                      setVibhagList([]);
-                      setDistrictList([]);
-                      setCityList([]);
-                      setSamajList([]);
+                      resetLocationChildren("region", { region: regionId });
                       if (regionId) getListById("vibhag", regionId);
                     }}
                     onBlur={handleBlur}
                     disabled={!values.state}
                   />
                   <CustomAutoComplete
+                    key={`yuva-vibhag-${values.region || "none"}`}
                     list={vibhagList}
                     label={t("vibhag")}
                     placeholder={t("vibhagPh")}
@@ -1239,23 +1242,18 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.vibhag}
+                    value={values.vibhag || null}
                     errors={touched?.vibhag && errors?.vibhag && errors?.vibhag}
                     onChange={(e, vibhagItem) => {
                       const vibhagId = pickMasterId(vibhagItem);
-                      setFieldValue("vibhag", vibhagId);
-                      setFieldValue("district", "");
-                      setFieldValue("city", "");
-                      setFieldValue("localSamaj", "");
-                      setDistrictList([]);
-                      setCityList([]);
-                      setSamajList([]);
+                      resetLocationChildren("vibhag", { vibhag: vibhagId });
                       if (vibhagId) getListById("district", vibhagId);
                     }}
                     onBlur={handleBlur}
                     disabled={!values.region}
                   />
                   <CustomAutoComplete
+                    key={`yuva-district-${values.vibhag || "none"}`}
                     list={districtList}
                     label={t("district")}
                     placeholder={t("districtPh")}
@@ -1263,23 +1261,22 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.district}
+                    value={values.district || null}
                     errors={
                       touched?.district && errors?.district && errors?.district
                     }
                     onChange={(e, district) => {
                       const districtId = pickMasterId(district);
-                      setFieldValue("district", districtId);
-                      setFieldValue("city", "");
-                      setFieldValue("localSamaj", "");
-                      setCityList([]);
-                      setSamajList([]);
+                      resetLocationChildren("district", {
+                        district: districtId,
+                      });
                       if (districtId) getListById("city", districtId);
                     }}
                     onBlur={handleBlur}
                     disabled={!values.vibhag}
                   />
                   <CustomAutoComplete
+                    key={`yuva-city-${values.district || "none"}`}
                     list={cityList}
                     label={t("city")}
                     placeholder={t("cityPh")}
@@ -1287,19 +1284,18 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.city}
+                    value={values.city || null}
                     errors={touched?.city && errors?.city && errors?.city}
                     onChange={(e, city) => {
                       const cityId = pickMasterId(city);
-                      setFieldValue("city", cityId);
-                      setFieldValue("localSamaj", "");
-                      setSamajList([]);
+                      resetLocationChildren("city", { city: cityId });
                       if (cityId) getSamajList(cityId);
                     }}
                     onBlur={handleBlur}
                     disabled={!values.district}
                   />
                   <CustomAutoComplete
+                    key={`yuva-samaj-${values.city || "none"}`}
                     list={samajList}
                     label={t("localSamaj")}
                     placeholder={t("localSamajPh")}
@@ -1307,7 +1303,7 @@ const AddYuva = () => {
                     xs={12}
                     sm={6}
                     md={4}
-                    value={values.localSamaj}
+                    value={values.localSamaj || null}
                     errors={
                       touched?.localSamaj &&
                       errors?.localSamaj &&

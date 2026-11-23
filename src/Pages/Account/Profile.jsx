@@ -32,6 +32,7 @@ import {
   getAllSamajData,
   getAllStateData,
   getAllSurnameData,
+  getAllVibhagData,
 } from "../../util/getAPICall";
 
 const toDateInputValue = (value) => {
@@ -66,6 +67,7 @@ export default function Profile() {
     country,
     state,
     region,
+    vibhag,
     district,
     city,
     samaj,
@@ -141,6 +143,7 @@ export default function Profile() {
       country: user?.country || samajRow?.country_id || "",
       state: user?.state || samajRow?.state_id || "",
       region: user?.region || samajRow?.region_id || "",
+      vibhag: user?.vibhag || samajRow?.vibhag_id || "",
       district: user?.district || samajRow?.district_id || "",
       city: user?.city || samajRow?.city_id || "",
       localSamaj:
@@ -156,6 +159,7 @@ export default function Profile() {
         dispatch(getAllCountryData),
         dispatch(getAllStateData),
         dispatch(getAllRegionData),
+        dispatch(getAllVibhagData),
         dispatch(getAllDistrictData),
         dispatch(getAllCityData),
         dispatch(getAllSamajData),
@@ -336,6 +340,15 @@ export default function Profile() {
                   label={"Region"}
                   name="region"
                   value={lookupName(region, locationIds.region, lang)}
+                  readOnly
+                />
+                <CustomInput
+                  type={"text"}
+                  xs={12}
+                  sm={4}
+                  label={"Division"}
+                  name="vibhag"
+                  value={lookupName(vibhag, locationIds.vibhag, lang)}
                   readOnly
                 />
                 <CustomInput

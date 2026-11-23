@@ -12,6 +12,7 @@ import {
   getAllCountryData,
   getAllStateData,
   getAllRegionData,
+  getAllVibhagData,
   getAllDistrictData,
   getAllCityData,
   getAllSamajData,
@@ -62,13 +63,15 @@ export default function UserDetails() {
   const snapshot = location.state && !location.state.backTo ? location.state : null;
   const [user, setUser] = useState(snapshot || null);
   const [missing, setMissing] = useState(false);
-  const { surname, region, samaj, country, state, district, city } = UseRedux();
+  const { surname, region, vibhag, samaj, country, state, district, city } =
+    UseRedux();
 
   useEffect(() => {
     dispatch(getAllSurnameData);
     dispatch(getAllCountryData);
     dispatch(getAllStateData);
     dispatch(getAllRegionData);
+    dispatch(getAllVibhagData);
     dispatch(getAllDistrictData);
     dispatch(getAllCityData);
     dispatch(getAllSamajData);
@@ -124,6 +127,7 @@ export default function UserDetails() {
               <DetailItem label="Country" value={lookupName(country, user?.country)} />
               <DetailItem label="State" value={lookupName(state, user?.state)} />
               <DetailItem label="Region" value={lookupName(region, user?.region)} />
+              <DetailItem label="Division" value={lookupName(vibhag, user?.vibhag)} />
               <DetailItem label="District" value={lookupName(district, user?.district)} />
               <DetailItem label="City" value={lookupName(city, user?.city)} />
               <DetailItem label="Local samaj" value={lookupName(samaj, user?.localSamaj)} />
