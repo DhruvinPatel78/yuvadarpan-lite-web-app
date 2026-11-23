@@ -1,4 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# JPEG preview image for WhatsApp / Facebook / Telegram.
 [[redirects]]
-    from = "/"
-    to = "/index.html"
-    status = 200
+  from = "/og-image/:id"
+  to = "/.netlify/functions/yuva-og-image"
+  status = 200
+  force = true
+
+# Profile share pages: serve Open Graph HTML to crawlers.
+[[redirects]]
+  from = "/yuva/:id"
+  to = "/.netlify/functions/yuva-og"
+  status = 200
+  force = true
+
+# SPA fallback for all other routes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

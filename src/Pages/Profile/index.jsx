@@ -42,6 +42,11 @@ import { asDisplayText, choiceLabel, pickOtherMap, pickYuvaLangText, userLanguag
 import { tForm } from "../../i18n/yuvaForm";
 import { endLoading, startLoading } from "../../store/authSlice";
 import {
+  applyProfileShareMeta,
+  buildProfileShareMeta,
+  clearProfileShareMeta,
+} from "../../util/profileShareMeta";
+import {
   addYuvaToShortlist,
   getShortlistIds,
   removeYuvaFromShortlist,
@@ -479,6 +484,35 @@ const ProfilePage = () => {
   ];
   const shareId = getYuvaShareId(data?.id || data?._id || id);
   const shareUrl = `${window.location.origin}/yuva/${shareId}`;
+  const activityLabel = choiceText(data?.activity, "activity");
+  const genderLabel = choiceText(data?.gender);
+
+  React.useEffect(() => {
+    if (!data) return undefined;
+    const previousTitle = applyProfileShareMeta(
+      buildProfileShareMeta({
+        fullName,
+        familyId: data?.familyId,
+        locationLabel,
+        activity: activityLabel,
+        gender: genderLabel,
+        photoUrl: photoUrl,
+        shareUrl,
+        profileId: shareId,
+      })
+    );
+    return () => {
+      clearProfileShareMeta(previousTitle || "Yuvadarpan");
+    };
+  }, [
+    data,
+    fullName,
+    locationLabel,
+    activityLabel,
+    genderLabel,
+    photoUrl,
+    shareUrl,
+  ]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -498,6 +532,16 @@ const ProfilePage = () => {
 
   const handleShare = async () => {
     try {
+      if (navigator.share) {
+        await navigator.share({
+          title: fullName || "Yuvadarpan",
+          text: fullName
+            ? `${fullName} — Yuvadarpan`
+            : "Yuvadarpan profile",
+          url: shareUrl,
+        });
+        return;
+      }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
       } else {
@@ -510,6 +554,7 @@ const ProfilePage = () => {
       }
       setNotification({ type: "success", message: tLabel("profileLinkCopied") });
     } catch (e) {
+      if (e?.name === "AbortError") return;
       setNotification({ type: "error", message: tLabel("unableToCopyLink") });
     }
   };
