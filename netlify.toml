@@ -2,3 +2,8 @@
     from = "/"
     to = "/index.html"
     status = 200
+[context.develop]
+  [[context.develop.headers]]
+    for = "/*"
+    [context.develop.headers.values]
+      X-Robots-Tag = "noindex, nofollow"    
