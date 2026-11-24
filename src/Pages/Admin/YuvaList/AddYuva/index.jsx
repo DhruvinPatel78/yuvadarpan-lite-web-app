@@ -361,7 +361,6 @@ const AddYuva = () => {
         weight: filledField(requiredText("weight", "Weight Is Required")),
         firm: Yup.mixed(),
         firmAddress: Yup.mixed(),
-        address: filledField(requiredText("address", "Address Is Required"), "addressGu"),
         state: filledField(requiredText("state", "State Is Required")),
         region: filledField(requiredText("region", "Region Is Required")),
         vibhag: filledField(requiredText("vibhag", "Division Is Required")),
@@ -446,7 +445,6 @@ const AddYuva = () => {
       firm: "",
       country: "",
       firmAddress: "",
-      address: "",
       state: "",
       region: "",
       vibhag: "",
@@ -1313,20 +1311,6 @@ const AddYuva = () => {
                     onChange={(e, localSamaj) => {
                       setFieldValue("localSamaj", pickMasterId(localSamaj));
                     }}
-                    onBlur={handleBlur}
-                  />
-                  <BilingualInput
-                    type={"text"}
-                    label={t("address")}
-                    placeholder={t("addressPh")}
-                    enName={"address"}
-                    multiline={true}
-                    xs={12}
-                    sm={6}
-                    md={6}
-                    errors={
-                      touched?.address && errors?.address && errors?.address
-                    }
                     onBlur={handleBlur}
                   />
                   <BilingualInput
