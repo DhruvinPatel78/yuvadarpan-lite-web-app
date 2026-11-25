@@ -108,11 +108,18 @@ const toDateInputValue = (value) => {
   return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
 };
 
+const roleValueOf = (role) =>
+  typeof role === "object" && role
+    ? role.value || role.id || ""
+    : role || "";
+
+const isManagerRole = (role) => {
+  const value = String(roleValueOf(role) || "").toUpperCase();
+  return value.endsWith("_MANAGER");
+};
+
 const comparableUserValues = (vals) => {
-  const role =
-    typeof vals?.role === "object" && vals?.role
-      ? vals.role.value || vals.role.id || ""
-      : vals?.role || "";
+  const role = roleValueOf(vals?.role);
   return JSON.stringify({
     familyId: String(vals?.familyId || ""),
     firstName: String(vals?.firstName || ""),
@@ -131,6 +138,7 @@ const comparableUserValues = (vals) => {
     gender: String(vals?.gender || "").toLowerCase(),
     language: String(vals?.language || "gu"),
     role: String(role),
+    newUserRequest: Boolean(vals?.newUserRequest),
   });
 };
 
@@ -477,7 +485,8 @@ function Index() {
 
   const saveUserRecord = async (formValues) => {
     try {
-      const { confirmPassword, password, role, ...rest } = formValues;
+      const { confirmPassword, password, role, newUserRequest, ...rest } =
+        formValues;
       const roleValue =
         isSamajManager ||
         isCityManager ||
@@ -505,6 +514,9 @@ function Index() {
         dob: formValues.dob ? moment(formValues.dob).format() : formValues.dob,
         gender: String(formValues.gender || "").toLowerCase(),
         language: formValues.language === "en" ? "en" : "gu",
+        Permission: isManagerRole(roleValue)
+          ? { newUserRequest: Boolean(newUserRequest) }
+          : {},
       };
       if (isAddUser) {
         await addUser({ ...payload, password });
@@ -545,6 +557,7 @@ function Index() {
       gender: "male",
       language: "gu",
       role: "",
+      newUserRequest: false,
     },
     validateOnMount: false,
     onSubmit: async (formValues, { resetForm }) => {
@@ -973,6 +986,7 @@ function Index() {
         gender: String(enriched?.gender || "").toLowerCase(),
         language: enriched?.language === "en" ? "en" : "gu",
         role: roleOption,
+        newUserRequest: Boolean(enriched?.Permission?.newUserRequest),
         id: enriched?.id || userInfo?.id,
       };
       setValues((pre) => ({
@@ -2252,12 +2266,34 @@ function Index() {
                       errors={touched?.role && errors?.role && errors?.role}
                       onChange={(e, role) => {
                         setFieldValue("role", role);
+                        if (!isManagerRole(role)) {
+                          setFieldValue("newUserRequest", false);
+                        }
                       }}
                       onBlur={handleBlur}
                     />
                   </FormControl>
                 </Grid>
                 )}
+                {!hasOwnListToggle && isManagerRole(values?.role) ? (
+                  <Grid item xs={12} sm={4} md={4}>
+                    <p className="text-sm font-semibold text-primary mb-0.5">
+                      New User Request
+                    </p>
+                    <div className="flex items-center gap-2 min-h-[40px]">
+                      <CustomSwitch
+                        checked={Boolean(values?.newUserRequest)}
+                        onChange={(e, checked) => {
+                          setFieldValue("newUserRequest", checked);
+                        }}
+                        name="newUserRequest"
+                      />
+                      <span className="text-sm text-primary">
+                        {values?.newUserRequest ? "Enabled" : "Disabled"}
+                      </span>
+                    </div>
+                  </Grid>
+                ) : null}
                 <Grid
                   item
                   xs={12}
