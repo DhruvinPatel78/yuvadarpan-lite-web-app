@@ -771,21 +771,6 @@ const BulkAddYuva = () => {
                     }}
                     onBlur={handleBlur}
                   />
-                  <GroupTitle>Address</GroupTitle>
-                  <CustomInput
-                    type="text"
-                    label="Address"
-                    placeholder="Enter Your Address"
-                    name="address"
-                    multiline
-                    xs={12}
-                    sm={6}
-                    md={6}
-                    value={values?.address}
-                    errors={showErr(touched?.address, errors?.address)}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                  />
                   <CustomInput
                     type="text"
                     label="Firm Address"

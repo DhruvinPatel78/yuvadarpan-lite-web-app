@@ -24,7 +24,6 @@ export const emptyYuvaGu = () => ({
   pob: "",
   firm: "",
   firmAddress: "",
-  address: "",
   mamaInfo: {
     name: "",
     city: "",
@@ -55,7 +54,6 @@ const GU_TEXT_PATHS = [
   "pob",
   "firm",
   "firmAddress",
-  "address",
   "mamaInfo.name",
   "mamaInfo.city",
   "contactInfo.name",
