@@ -54,7 +54,7 @@ const CustomInput = ({
       : value;
   const filled =
     isDate || (displayValue != null && String(displayValue).trim() !== "");
-  const showError = Boolean(errors) && !filled;
+  const showError = Boolean(errors);
   const locked = Boolean(disabled || readOnly);
 
   return (
