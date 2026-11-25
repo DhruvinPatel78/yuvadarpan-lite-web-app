@@ -65,13 +65,13 @@ const masterMatchKey = (raw) => {
   if (typeof raw === "object") {
     return String(
       pickMasterId(raw) ||
-        raw.en ||
-        raw.gu ||
-        masterNameText(raw, "en") ||
-        masterNameText(raw, "gu") ||
-        langText(raw, "en") ||
-        langText(raw, "gu") ||
-        ""
+      raw.en ||
+      raw.gu ||
+      masterNameText(raw, "en") ||
+      masterNameText(raw, "gu") ||
+      langText(raw, "en") ||
+      langText(raw, "gu") ||
+      ""
     ).trim();
   }
   return String(raw).trim();
@@ -829,12 +829,12 @@ const AddYuva = () => {
         other: flat.other || {},
         education:
           location?.state?.data?.education &&
-          typeof location?.state?.data?.education === "object"
+            typeof location?.state?.data?.education === "object"
             ? location.state.data.education
             : {
-                education: location?.state?.data?.education || "",
-                fieldOfStudy: location?.state?.data?.fieldOfStudy || "",
-              },
+              education: location?.state?.data?.education || "",
+              fieldOfStudy: location?.state?.data?.fieldOfStudy || "",
+            },
       });
       setNewFieldList(
         otherObjectToFields(flat.other, flat.otherGu)
@@ -957,11 +957,10 @@ const AddYuva = () => {
                         <LoadableImage
                           src={values?.profile?.url}
                           alt={values?.profile?.name || "profile"}
-                          className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border ${
-                            touched?.profileName && errors?.profileName
-                              ? "border-red-600"
-                              : "border-line"
-                          } group-hover:border-primary`}
+                          className={`w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full border ${touched?.profileName && errors?.profileName
+                            ? "border-red-600"
+                            : "border-line"
+                            } group-hover:border-primary`}
                           eager
                           spinnerSize={32}
                         />
@@ -1860,55 +1859,55 @@ const AddYuva = () => {
         title={t("createdTitle")}
         maxWidth="520px"
       >
-          <p className={"text-sm text-gray-600 mb-4"}>
-            {t("createdHint")}
-          </p>
-          <label htmlFor="created-yuva-upload" className="w-fit mx-auto block">
-            {loading ? (
-              <CircularProgress className="text-primary" />
-            ) : (
-              <LoadableImage
-                src={photoPreview}
-                alt="profile"
-                className="w-[160px] h-[160px] rounded-full border border-primary cursor-pointer"
-                eager
-                spinnerSize={32}
-              />
-            )}
-          </label>
-          <input
-            ref={createdPhotoInputRef}
-            type="file"
-            id="created-yuva-upload"
-            style={{ display: "none" }}
-            accept="image/*,.heic,.heif,image/heic,image/heif"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                openPhotoCrop(file, "created");
-              }
-            }}
-          />
-          <p className={"text-sm text-center break-all text-primary mt-4"}>
-            {buildYuvaPhotoName(createdYuva)}
-          </p>
-          <div className={"flex flex-col-reverse md:flex-row gap-3 mt-4"}>
-            <ActionButton
-              variant="secondary"
-              fullWidth
-              onClick={goToYuvaList}
-            >
-              {t("skip")}
-            </ActionButton>
-            <ActionButton
-              fullWidth
-              onClick={uploadCreatedYuvaPhoto}
-              disabled={!selectedPhoto || loading}
-              loading={loading}
-            >
-              {t("uploadPhoto")}
-            </ActionButton>
-          </div>
+        <p className={"text-sm text-gray-600 mb-4"}>
+          {t("createdHint")}
+        </p>
+        <label htmlFor="created-yuva-upload" className="w-fit mx-auto block">
+          {loading ? (
+            <CircularProgress className="text-primary" />
+          ) : (
+            <LoadableImage
+              src={photoPreview}
+              alt="profile"
+              className="w-[160px] h-[160px] rounded-full border border-primary cursor-pointer"
+              eager
+              spinnerSize={32}
+            />
+          )}
+        </label>
+        <input
+          ref={createdPhotoInputRef}
+          type="file"
+          id="created-yuva-upload"
+          style={{ display: "none" }}
+          accept="image/*,.heic,.heif,image/heic,image/heif"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              openPhotoCrop(file, "created");
+            }
+          }}
+        />
+        <p className={"text-sm text-center break-all text-primary mt-4"}>
+          {buildYuvaPhotoName(createdYuva)}
+        </p>
+        <div className={"flex flex-col-reverse md:flex-row gap-3 mt-4"}>
+          <ActionButton
+            variant="secondary"
+            fullWidth
+            onClick={goToYuvaList}
+          >
+            {t("skip")}
+          </ActionButton>
+          <ActionButton
+            fullWidth
+            onClick={uploadCreatedYuvaPhoto}
+            disabled={!selectedPhoto || loading}
+            loading={loading}
+          >
+            {t("uploadPhoto")}
+          </ActionButton>
+        </div>
       </FormModal>
       <PhotoCropModal
         open={cropLoading || Boolean(cropSrc)}
