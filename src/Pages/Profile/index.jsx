@@ -416,7 +416,6 @@ const ProfilePage = () => {
       label: tLabel("localSamaj"),
       value: pickMaster(samaj, data?.localSamaj, labels.localSamaj),
     },
-    { label: tLabel("address"), value: pick("address") },
   ];
   const mamaFields = [
     {
@@ -454,7 +453,6 @@ const ProfilePage = () => {
       label: tLabel("relation"),
       value: choiceText(data?.contactInfo?.relation, "relation"),
     },
-    { label: tLabel("address"), value: pick("address") },
   ];
   const additionalFields = extraOtherFields(pickOtherMap(data, language));
   const otherFields = [
