@@ -112,25 +112,6 @@ const textOf = (value, depth = 0) => {
   return "";
 };
 
-const educationOf = (edu) => {
-  if (!edu) return "";
-  if (typeof edu === "string") return textOf(edu);
-  if (typeof edu === "object") {
-    const main = textOf(edu.education || edu.name || edu.degree || edu.level);
-    const field = textOf(edu.fieldOfStudy || edu.field || edu.stream);
-    if (main && field) return `${main} (${field})`;
-    return main || field || "";
-  }
-  return "";
-};
-
-const occupationOf = (yuva) => {
-  const activity = textOf(yuva?.activity);
-  const firm = textOf(yuva?.firm);
-  if (activity && firm) return `${activity} - ${firm}`;
-  return activity || firm || "";
-};
-
 const locationOf = (yuva, labels = {}) => {
   const city = textOf(labels?.city) || textOf(yuva?.city);
   const state = textOf(labels?.state) || textOf(yuva?.state);
@@ -228,20 +209,10 @@ export default async (request, context) => {
         .replace(/\s+/g, " ")
         .trim() || "યુવાદર્પણ";
 
-    const native = textOf(labels.native) || textOf(yuva?.native);
     const location = locationOf(yuva, labels);
-    const edu = educationOf(yuva?.education);
-    const occupation = occupationOf(yuva);
-    const marital = textOf(yuva?.martialStatus);
-    const samaj = textOf(labels.localSamaj) || textOf(yuva?.localSamaj);
 
     const details = [];
-    if (native) details.push(`વતન: ${native}`);
     if (location) details.push(`સ્થળ: ${location}`);
-    if (edu) details.push(`અભ્યાસ: ${edu}`);
-    if (occupation) details.push(`વ્યવસાય: ${occupation}`);
-    if (marital) details.push(`વૈવાહિક સ્થિતિ: ${marital}`);
-    if (samaj) details.push(`સમાજ: ${samaj}`);
 
     const description = details.join(" • ") || "યુવાદર્પણ";
     const photo = typeof yuva?.profile === "string" ? yuva.profile : yuva?.profile?.url;
