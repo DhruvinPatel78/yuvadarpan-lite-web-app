@@ -302,7 +302,7 @@ const AddYuva = () => {
   const addYuvaListHandler = async (data) => {
     dispatch(startLoading());
     try {
-      const { profile, profileName, email, ...payload } = data;
+      const { profile, profileName, email, address, addressGu, ...payload } = data;
       const created = await addYuva(payload);
       setCreatedYuva(created);
       setShowProfileModal(true);
@@ -315,7 +315,7 @@ const AddYuva = () => {
   const updateAPIHandler = async (data) => {
     dispatch(startLoading());
     try {
-      const { email, ...rest } = data;
+      const { email, address, addressGu, ...rest } = data;
       await updateYuva(data?.id, {
         ...rest,
         updatedAt: new Date(),
@@ -818,8 +818,10 @@ const AddYuva = () => {
     if (location?.state) {
       setIsEdit(true);
       locationHydratedFor.current = "";
-      const { gu: _ignoredGu, ...record } = location.state.data || {};
+      const { gu: _ignoredGu, address: _ignoredAddress, addressGu: _ignoredAddressGu, ...record } = location.state.data || {};
       const flat = flattenYuvaForm(record);
+      delete flat.address;
+      delete flat.addressGu;
       setValues({
         ...values,
         ...flat,
@@ -1320,8 +1322,8 @@ const AddYuva = () => {
                     enName={"firmAddress"}
                     multiline={true}
                     xs={12}
-                    sm={6}
-                    md={6}
+                    sm={8}
+                    md={8}
                     errors={
                       touched?.firmAddress &&
                       errors?.firmAddress &&
