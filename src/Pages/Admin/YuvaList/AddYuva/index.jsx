@@ -23,7 +23,17 @@ import { useDispatch } from "react-redux";
 import ContainerPage from "../../../../Component/Container";
 import { endLoading, startLoading } from "../../../../store/authSlice";
 import { UseRedux } from "../../../../Component/useRedux";
-import { addYuva, updateYuva, updateYuvaProfile } from "../../../../util/yuvaAdminApi";
+import {
+  addYuva,
+  updateYuva,
+  updateYuvaProfile,
+  checkYuvaSlugAvailable,
+} from "../../../../util/yuvaAdminApi";
+import {
+  buildYuvaSlugPreview,
+  normalizeYuvaSlugInput,
+  validateYuvaSlugFormat,
+} from "../../../../util/yuvaSlug";
 import {
   canEditYuvaRecord,
   isAdmin,
@@ -173,6 +183,7 @@ const AddYuva = () => {
   // const [activityIsStudy, setActivityIsStudy] = useState(false);
   const [isEdit, setIsEdit] = useState(Boolean(location?.state));
   const editYuva = location?.state?.data || null;
+  const [slugStatus, setSlugStatus] = useState("");
 
   const getSamajList = (cityId) => {
     if (!cityId) {
@@ -303,7 +314,11 @@ const AddYuva = () => {
     dispatch(startLoading());
     try {
       const { profile, profileName, email, address, addressGu, ...payload } = data;
-      const created = await addYuva(payload);
+      const created = await addYuva({
+        ...payload,
+        slug: payload.slug,
+        slugManual: Boolean(payload.slugManual),
+      });
       setCreatedYuva(created);
       setShowProfileModal(true);
     } catch (e) {
@@ -426,6 +441,15 @@ const AddYuva = () => {
         }),
         YSKno: Yup.mixed(),
         localSamaj: filledField(requiredText("localSamaj", "Local Samaj Required")),
+        slug: Yup.string()
+          .required(requiredText("slug", "Slug Is Required"))
+          .test("slug-format", "Invalid slug", function (value) {
+            const message = validateYuvaSlugFormat(value);
+            if (message) {
+              return this.createError({ message });
+            }
+            return true;
+          }),
       }),
     // requiredText follows the selected form language
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -484,12 +508,16 @@ const AddYuva = () => {
       handicapDetails: "",
       YSKno: "",
       localSamaj: "",
+      slug: "",
+      slugManual: false,
     },
     onSubmit: async (values) => {
       const newValue = toEnGuPayload(values, {
         other: fieldsToOtherObject(newFieldList, newField),
         otherGu: fieldsToOtherGuObject(newFieldList, newField),
       });
+      newValue.slug = values.slug;
+      newValue.slugManual = Boolean(values.slugManual);
       const yuvaId = values?.id || location?.state?.data?.id;
       if (yuvaId) {
         await updateAPIHandler({ ...newValue, id: yuvaId });
@@ -516,6 +544,61 @@ const AddYuva = () => {
     setFieldTouched,
     submitCount,
   } = formik;
+
+  useEffect(() => {
+    if (isEdit || values.slugManual) return;
+    const next = buildYuvaSlugPreview({
+      firstName: values.firstName,
+      fatherName: values.fatherName,
+      grandFatherName: values.grandFatherName,
+      lastName: values.lastName,
+      surnameList: lastNameList,
+    });
+    if (next !== values.slug) {
+      setFieldValue("slug", next, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isEdit,
+    values.slugManual,
+    values.firstName,
+    values.fatherName,
+    values.grandFatherName,
+    values.lastName,
+    lastNameList,
+  ]);
+
+  useEffect(() => {
+    const slug = String(values.slug || "").trim();
+    const formatError = validateYuvaSlugFormat(slug);
+    if (!slug || formatError) {
+      setSlugStatus("");
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      checkYuvaSlugAvailable(
+        slug,
+        values?.id || location?.state?.data?.id || location?.state?.data?._id
+      )
+        .then((result) => {
+          setSlugStatus(result?.available ? "available" : "taken");
+        })
+        .catch(() => setSlugStatus(""));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [values.slug, values?.id, location?.state?.data?.id, location?.state?.data?._id]);
+
+  const resetSlugToAuto = () => {
+    const next = buildYuvaSlugPreview({
+      firstName: values.firstName,
+      fatherName: values.fatherName,
+      grandFatherName: values.grandFatherName,
+      lastName: values.lastName,
+      surnameList: lastNameList,
+    });
+    setFieldValue("slugManual", false);
+    setFieldValue("slug", next);
+  };
 
   const LOCATION_CHAIN = [
     "country",
@@ -825,6 +908,8 @@ const AddYuva = () => {
       setValues({
         ...values,
         ...flat,
+        slug: flat.slug || location?.state?.data?.slug || "",
+        slugManual: true,
         profileName: location?.state?.data?.profile?.name,
         other: flat.other || {},
         education:
@@ -1830,6 +1915,58 @@ const AddYuva = () => {
                   </Grid>
                 </Grid>
               </FormSection>
+              <FormSection title={t("profileSlug")}>
+                <Grid container spacing={2}>
+                  <CustomInput
+                    type={"text"}
+                    xs={12}
+                    md={8}
+                    label={t("slug")}
+                    placeholder={t("slugPh")}
+                    name="slug"
+                    required
+                    value={values.slug}
+                    onChange={(event) => {
+                      setFieldValue("slugManual", true);
+                      setFieldValue(
+                        "slug",
+                        normalizeYuvaSlugInput(event.target.value)
+                      );
+                    }}
+                    onBlur={handleBlur}
+                    errors={
+                      (touched?.slug || submitCount > 0) &&
+                      errors?.slug &&
+                      errors?.slug
+                    }
+                  />
+                  <Grid
+                    item
+                    xs={12}
+                    md={4}
+                    className="flex flex-col justify-end gap-1 pb-1"
+                  >
+                    <button
+                      type="button"
+                      className="text-sm text-primary underline underline-offset-2 text-left w-fit"
+                      onClick={resetSlugToAuto}
+                    >
+                      {t("slugResetAuto")}
+                    </button>
+                    {slugStatus === "available" ? (
+                      <p className="text-sm text-green-700">{t("slugAvailable")}</p>
+                    ) : null}
+                    {slugStatus === "taken" ? (
+                      <p className="text-sm text-error">{t("slugTaken")}</p>
+                    ) : null}
+                  </Grid>
+                  {isEdit ? (
+                    <Grid item xs={12}>
+                      <p className="text-sm text-amber-800">{t("slugEditWarning")}</p>
+                    </Grid>
+                  ) : null}
+                </Grid>
+              </FormSection>
               <div className="flex flex-col-reverse md:flex-row justify-start gap-2 md:gap-3 pt-1">
                 <ActionButton
                   type="button"
@@ -1842,7 +1979,7 @@ const AddYuva = () => {
                 <ActionButton
                   type={"submit"}
                   className="w-full md:w-[200px]"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || slugStatus === "taken"}
                   loading={loading}
                 >
                   {isEdit ? t("updateYuva") : t("addNewYuva")}

@@ -196,7 +196,7 @@ function App() {
           exact
           element={<PublicRoute Component={Registration} />}
         />
-        <Route path="yuva/:id" exact element={<Profile />} />
+        <Route path="yuva/:slug" exact element={<Profile />} />
 
         {/*Private Routes*/}
         <Route index element={<RootEntry />} />

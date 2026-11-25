@@ -30,6 +30,16 @@ export const getYuvaById = async (id) => {
   }
 };
 
+export const checkYuvaSlugAvailable = async (slug, excludeId) => {
+  const response = await axios.get("/yuvaList/slug-available", {
+    params: {
+      slug,
+      ...(excludeId ? { excludeId } : {}),
+    },
+  });
+  return response.data;
+};
+
 export const getYuvaList = async (params) => {
   try {
     const response = await axios.get("/yuvaList/list", { params });

@@ -216,11 +216,11 @@ const AdditionalInfoFields = ({ additionalFields, heading }) =>
   ) : null;
 
 const ProfilePage = () => {
-  const { id: routeId } = useParams();
+  const { slug: routeSlug, id: routeId } = useParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isPublicView = pathname.startsWith("/yuva");
-  const id = getYuvaShareId(routeId);
+  const id = getYuvaShareId(routeSlug || routeId);
   const [data, setData] = React.useState(null);
   const [loadError, setLoadError] = React.useState("");
   const [tabValue, setTabValue] = React.useState(0);
@@ -293,6 +293,11 @@ const ProfilePage = () => {
         if (cancelled) return;
         setData(yuva);
         setLoadError("");
+        const canonical = String(yuva?.redirectSlug || yuva?.slug || "").trim();
+        const current = String(routeSlug || routeId || "").trim();
+        if (isPublicView && canonical && canonical !== current) {
+          navigate(`/yuva/${canonical}`, { replace: true });
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -307,7 +312,7 @@ const ProfilePage = () => {
     return () => {
       cancelled = true;
     };
-  }, [id, auth?.loggedIn, isPublicView, dispatch]);
+  }, [id, auth?.loggedIn, isPublicView, dispatch, navigate, routeSlug, routeId]);
 
   React.useEffect(() => {
     if (isPublicView) return;
@@ -475,7 +480,9 @@ const ProfilePage = () => {
         ]
       : []),
   ];
-  const shareId = getYuvaShareId(data?.id || data?._id || id);
+  const shareId =
+    String(data?.slug || "").trim() ||
+    getYuvaShareId(data?.id || data?._id || id);
   const shareUrl = `${window.location.origin}/yuva/${shareId}`;
 
   const handleBack = () => {
