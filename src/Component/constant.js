@@ -1,6 +1,7 @@
 import axios from "../util/useAxios";
 import { masterNameText } from "../util/bhasha";
 import { bilingualLabel, bilingualOptions, tForm } from "../i18n/yuvaForm";
+import { getRoleRank } from "../util/util";
 import { useMemo } from "react";
 
 
@@ -239,8 +240,13 @@ const roleOptions = [
   label: tForm("en", `role.${value}`),
 }));
 
-export const rolesList = (includeAll = true) => {
-  return includeAll ? [allOptions, ...roleOptions] : roleOptions;
+export const rolesList = (includeAll = true, viewerRole = null) => {
+  const filtered = viewerRole
+    ? roleOptions.filter(
+        (option) => getRoleRank(option.value) >= getRoleRank(viewerRole)
+      )
+    : roleOptions;
+  return includeAll ? [allOptions, ...filtered] : filtered;
 };
 
 const searchFieldOption = (id, key) => ({

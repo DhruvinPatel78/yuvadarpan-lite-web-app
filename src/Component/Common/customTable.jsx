@@ -61,6 +61,7 @@ function CustomTable({
   setPageSize,
   pagination = true,
   checkboxSelection,
+  isRowSelectable,
   onDeleteSelected,
   bulkActions = [],
   deleteEntity,
@@ -204,6 +205,7 @@ function CustomTable({
         paginationModel={{ page: currentPage, pageSize: safePageSize }}
         onPaginationModelChange={() => {}}
         checkboxSelection={showCheckboxes}
+        isRowSelectable={isRowSelectable}
         rowSelectionModel={selectedIds}
         onRowSelectionModelChange={handleSelectionChange}
         getRowId={(row) => row.id || row.uuid || row._id}
