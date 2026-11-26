@@ -66,7 +66,6 @@ import { loadLocationMasters } from "./util/getAPICall";
 import { userLanguage } from "./util/bhasha";
 import { resolveUserFamilyIdExists } from "./util/familyIdApi";
 import { isRegularUser } from "./util/util";
-import { registerStaffPush } from "./util/pushNotifications";
 
 function RootEntry() {
   const { loggedIn } = useSelector((state) => state.auth);
@@ -150,7 +149,6 @@ function App() {
       .then(async (data) => {
         persistUpdatedUser(dispatch, { ...data, token }, data);
         loadLocationMasters(dispatch);
-        registerStaffPush(data).catch(() => {});
         if (isRegularUser(data?.role)) {
           const exists = await resolveUserFamilyIdExists(data);
           dispatch(setFamilyIdExists(exists));
