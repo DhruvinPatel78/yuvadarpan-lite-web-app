@@ -8,6 +8,7 @@ import { UseRedux } from "../../../Component/useRedux";
 import { Card, PageHeader } from "../../../Component/UI";
 import { getUserInfo } from "../../../util/userApi";
 import { languageLabel, masterNameText } from "../../../util/bhasha";
+import { roleLabel } from "../../../util/roleNames";
 import {
   getAllCountryData,
   getAllStateData,
@@ -43,12 +44,6 @@ const lookupName = (list, id) => {
   );
   return masterNameText(found) || "-";
 };
-
-const formatRole = (role) =>
-  String(role || "-")
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
 
 const formatUserDate = (value) => {
   if (!value) return "-";
@@ -106,7 +101,7 @@ export default function UserDetails() {
                 {[user?.firstName, user?.middleName].filter(Boolean).join(" ")}{" "}
                 {lookupName(surname, user?.lastName)}
               </h2>
-              <p className="text-sm text-mutedText mt-1">{formatRole(user?.role)}</p>
+              <p className="text-sm text-mutedText mt-1">{roleLabel(user?.role)}</p>
               <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
                 Family ID {user?.familyId || "-"}
               </span>

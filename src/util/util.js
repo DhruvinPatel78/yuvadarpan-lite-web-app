@@ -334,3 +334,30 @@ export const canEditYuvaRecord = (user, yuva, lists = {}) => {
   }
   return false;
 };
+
+/**
+ * Convert a separated string into Title Case words with spaces.
+ * @param {string} str - Input text
+ * @param {string} specialChar - Character that separates words
+ * @example toTitleCase("hello_world", "_") => "Hello World"
+ */
+export const toTitleCase = (str, specialChar) => {
+  if (str == null) return "";
+  const value = String(str).trim();
+  if (!value) return "";
+  if (specialChar == null || specialChar === "") return value;
+
+  const parts = value
+    .split(String(specialChar))
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (!parts.length) return "";
+
+  return parts
+    .map((part) => {
+      const word = part.toLowerCase();
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+};
