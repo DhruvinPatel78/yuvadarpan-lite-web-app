@@ -5,8 +5,6 @@ import { ExpirationPlugin } from "workbox-expiration";
 import { createHandlerBoundToURL, precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
 import { StaleWhileRevalidate } from "workbox-strategies";
-import { initializeApp } from "firebase/app";
-import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 
 clientsClaim();
 
@@ -54,46 +52,4 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
-});
-
-try {
-  const firebaseApp = initializeApp({
-    apiKey: "AIzaSyDs93nc_DBmoyZcxJZhPGlObIABhdlnSj8",
-    authDomain: "yuvadarpan-97eeb.firebaseapp.com",
-    projectId: "yuvadarpan-97eeb",
-    storageBucket: "yuvadarpan-97eeb.firebasestorage.app",
-    messagingSenderId: "925386428228",
-    appId: "1:925386428228:android:fe6a7a76772b1381ad1111",
-  });
-  const messaging = getMessaging(firebaseApp);
-  onBackgroundMessage(messaging, (payload) => {
-    const title = payload?.notification?.title || "Yuvadarpan";
-    const options = {
-      body: payload?.notification?.body || "",
-      icon: `${process.env.PUBLIC_URL}/apple-touch-icon.png`,
-      data: payload?.data || {},
-    };
-    self.registration.showNotification(title, options);
-  });
-} catch (error) {
-  console.log("Firebase messaging in service worker skipped.", error);
-}
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const path = event.notification?.data?.path || "/";
-  event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ("focus" in client) {
-          client.navigate(path);
-          return client.focus();
-        }
-      }
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(path);
-      }
-      return undefined;
-    }),
-  );
 });

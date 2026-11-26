@@ -17,7 +17,6 @@ import * as Yup from "yup";
 import CustomAutoComplete from "../../Component/Common/customAutoComplete";
 import CustomRadio from "../../Component/Common/customRadio";
 import { registerUser } from "../../util/authApi";
-import { getFcmToken } from "../../util/pushNotifications";
 import AdBanner from "../../Component/Common/AdBanner";
 import { masterNameText } from "../../util/bhasha";
 
@@ -132,7 +131,6 @@ function RegistrationForm() {
     onSubmit: async (value, { resetForm }) => {
       dispatch(startLoading());
       try {
-        const fcmToken = await getFcmToken();
         await registerUser({
           familyId: Number(value?.familyId),
           firstName: value?.firstName,
@@ -147,7 +145,6 @@ function RegistrationForm() {
           role: "USER",
           gender: value?.gender,
           language: "gu",
-          fcmToken: fcmToken,
         });
         resetForm();
         setSelectedLastName(null);

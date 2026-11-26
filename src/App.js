@@ -5,6 +5,8 @@ import Login from "./Pages/Login/index";
 import Registration from "./Pages/Registration/index";
 import Landing from "./Pages/Landing";
 import ThankYou from "./Pages/ThankYou";
+import Policy from "./Pages/Policy";
+import Contact from "./Pages/Contact";
 import Profile from "./Pages/Profile";
 import Status from "./Pages/Status";
 import {
@@ -64,7 +66,6 @@ import { loadLocationMasters } from "./util/getAPICall";
 import { userLanguage } from "./util/bhasha";
 import { resolveUserFamilyIdExists } from "./util/familyIdApi";
 import { isRegularUser } from "./util/util";
-import { registerStaffPush } from "./util/pushNotifications";
 
 function RootEntry() {
   const { loggedIn } = useSelector((state) => state.auth);
@@ -148,7 +149,6 @@ function App() {
       .then(async (data) => {
         persistUpdatedUser(dispatch, { ...data, token }, data);
         loadLocationMasters(dispatch);
-        registerStaffPush(data).catch(() => {});
         if (isRegularUser(data?.role)) {
           const exists = await resolveUserFamilyIdExists(data);
           dispatch(setFamilyIdExists(exists));
@@ -195,6 +195,16 @@ function App() {
           path="register"
           exact
           element={<PublicRoute Component={Registration} />}
+        />
+        <Route
+          path="policy"
+          exact
+          element={<PublicRoute Component={Policy} skipCheck={true} />}
+        />
+        <Route
+          path="contact"
+          exact
+          element={<PublicRoute Component={Contact} skipCheck={true} />}
         />
         <Route path="yuva/:id" exact element={<Profile />} />
 

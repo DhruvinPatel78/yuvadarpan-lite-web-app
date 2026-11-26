@@ -54,7 +54,21 @@ export default function Landing() {
             </Link>
           </div>
 
-          <p className="landing-foot">© {new Date().getFullYear()} Yuvadarpan</p>
+          <p className="landing-foot">
+            © {new Date().getFullYear()} Yuvadarpan
+            <span className="landing-foot__sep" aria-hidden="true">
+              ·
+            </span>
+            <Link to="/policy" className="landing-foot__link">
+              Policy
+            </Link>
+            <span className="landing-foot__sep" aria-hidden="true">
+              ·
+            </span>
+            <Link to="/contact" className="landing-foot__link">
+              Contact Us
+            </Link>
+          </p>
         </section>
       </div>
     </main>
