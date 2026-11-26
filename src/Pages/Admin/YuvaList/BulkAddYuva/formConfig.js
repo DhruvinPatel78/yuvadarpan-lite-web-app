@@ -192,7 +192,6 @@ export const familyInitialValues = {
   district: "",
   city: "",
   localSamaj: "",
-  address: "",
   firmAddress: "",
   mamaInfo: {
     name: "",
@@ -308,7 +307,6 @@ export const bulkAddValidationSchema = Yup.object({
   district: Yup.string().required("District Is Required"),
   city: Yup.string().required("City Is Required"),
   localSamaj: Yup.string().required("Local Samaj Required"),
-  address: Yup.string().required("Address Is Required"),
   firmAddress: Yup.string(),
   mamaInfo: Yup.object({
     name: Yup.string().required("Mama Name Is Required"),
@@ -373,7 +371,6 @@ const FAMILY_KEYS = [
   "district",
   "city",
   "localSamaj",
-  "address",
   "firmAddress",
   "mamaInfo",
   "contactInfo",

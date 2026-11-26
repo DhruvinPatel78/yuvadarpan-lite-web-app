@@ -3,7 +3,10 @@ import { Routes, Route } from "react-router-dom";
 import "./App.css";
 import Login from "./Pages/Login/index";
 import Registration from "./Pages/Registration/index";
+import Landing from "./Pages/Landing";
 import ThankYou from "./Pages/ThankYou";
+import Policy from "./Pages/Policy";
+import Contact from "./Pages/Contact";
 import Profile from "./Pages/Profile";
 import Status from "./Pages/Status";
 import {
@@ -55,7 +58,7 @@ import PwaPullToRefresh from "./Component/PwaPullToRefresh";
 import FullPageLoader from "./Component/Common/FullPageLoader";
 import { FormLanguageProvider } from "./context/FormLanguageContext";
 import { UseRedux } from "./Component/useRedux";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout, setFamilyIdExists } from "./store/authSlice";
 import { getCurrentUser } from "./util/userApi";
 import { persistUpdatedUser } from "./Pages/Account/persistUser";
@@ -64,6 +67,14 @@ import { userLanguage } from "./util/bhasha";
 import { resolveUserFamilyIdExists } from "./util/familyIdApi";
 import { isRegularUser } from "./util/util";
 import { registerStaffPush } from "./util/pushNotifications";
+
+function RootEntry() {
+  const { loggedIn } = useSelector((state) => state.auth);
+  if (loggedIn) {
+    return <PrivateRoute Component={Dashboard} requireFamilyId />;
+  }
+  return <Landing />;
+}
 
 const LOADER_HOLD_MS = 500;
 const LOADER_FADE_MS = 200;
@@ -187,13 +198,20 @@ function App() {
           exact
           element={<PublicRoute Component={Registration} />}
         />
+        <Route
+          path="policy"
+          exact
+          element={<PublicRoute Component={Policy} skipCheck={true} />}
+        />
+        <Route
+          path="contact"
+          exact
+          element={<PublicRoute Component={Contact} skipCheck={true} />}
+        />
         <Route path="yuva/:id" exact element={<Profile />} />
 
         {/*Private Routes*/}
-        <Route
-          index
-          element={<PrivateRoute Component={Dashboard} requireFamilyId />}
-        />
+        <Route index element={<RootEntry />} />
         <Route
           path="connect-samaj"
           exact

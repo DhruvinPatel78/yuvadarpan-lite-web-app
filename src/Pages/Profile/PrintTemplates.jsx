@@ -161,7 +161,6 @@ const buildPrintModel = (data, lists, lang = "en") => {
         label: t("relation"),
         value: codedText(data?.contactInfo?.relation, "relation", lang),
       },
-      { key: "address", label: t("address"), value: langText(data?.address, lang) },
     ],
     family: [
       { key: "fatherName", label: t("fatherName"), value: langText(data?.fatherName, lang) },
@@ -264,9 +263,7 @@ const TemplateTwo = ({ model }) => {
     { label: titles.company, value: fieldValue(model.career, "firm") },
     { label: titles.workLocation, value: fieldValue(model.career, "firmAddress") },
   ];
-  const contact = model.contact.filter((field) =>
-    ["phone", "address"].includes(field.key)
-  );
+  const contact = model.contact.filter((field) => field.key === "phone");
   const personalWithoutName = (model.personal || []).filter(
     (field) => field.key !== "firstName"
   );

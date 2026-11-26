@@ -24,7 +24,6 @@ export const emptyYuvaGu = () => ({
   pob: "",
   firm: "",
   firmAddress: "",
-  address: "",
   mamaInfo: {
     name: "",
     city: "",
@@ -55,7 +54,6 @@ const GU_TEXT_PATHS = [
   "pob",
   "firm",
   "firmAddress",
-  "address",
   "mamaInfo.name",
   "mamaInfo.city",
   "contactInfo.name",
@@ -210,6 +208,9 @@ export const flattenYuvaForm = (record = {}) => {
   }
   delete next.otherEn;
   delete next.gu;
+  delete next.address;
+  delete next.addressGu;
+  delete next.addressEn;
   CHOICE_FIELDS.forEach(([key]) => {
     next[key] = choiceCode(next[key]);
     delete next[`${key}En`];
@@ -223,7 +224,10 @@ export const toEnGuPayload = (values = {}, extra = {}) => {
     ...values,
     other: extra.other !== undefined ? extra.other : values.other,
   };
-  const { gu: _gu, profile, profileName, email, ...payload } = withOther;
+  const { gu: _gu, profile, profileName, email, address, addressGu, addressEn, ...payload } = withOther;
+  delete payload.address;
+  delete payload.addressGu;
+  delete payload.addressEn;
   const gu = fillMissingGujarati(withOther);
   if (extra.otherGu) {
     gu.other = extra.otherGu;

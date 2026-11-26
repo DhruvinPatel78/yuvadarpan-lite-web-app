@@ -46,7 +46,9 @@ const validationSchema = Yup.object({
     .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
     .required("Required"),
   password: Yup.string().required("Required"),
-  confirmPassword: Yup.string().required("Required"),
+  confirmPassword: Yup.string()
+    .required("Required")
+    .oneOf([Yup.ref("password")], "Passwords do not match"),
   dob: Yup.date()
     .required("Required")
     .min(new Date("1950-01-01"), "Date cannot be before 1950")
@@ -128,18 +130,11 @@ function RegistrationForm() {
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (value, { resetForm }) => {
-      if (value.password !== value.confirmPassword) {
-        setNotification({
-          type: "error",
-          message: "Passwords do not match.",
-        });
-        return;
-      }
       dispatch(startLoading());
       try {
         const fcmToken = await getFcmToken();
         await registerUser({
-          familyId: value?.familyId,
+          familyId: Number(value?.familyId),
           firstName: value?.firstName,
           middleName: value?.middleName,
           lastName: value?.lastName,
@@ -345,6 +340,7 @@ function RegistrationForm() {
               label={"Family ID"}
               placeholder={"Enter Your Family Id"}
               name="familyId"
+              required
               inputProps={{ inputMode: "numeric", maxLength: 10 }}
               onChange={digitsOnly("familyId", 10)}
               onBlur={handleBlur}

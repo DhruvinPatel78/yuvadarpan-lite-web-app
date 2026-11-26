@@ -108,11 +108,18 @@ const toDateInputValue = (value) => {
   return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
 };
 
+const roleValueOf = (role) =>
+  typeof role === "object" && role
+    ? role.value || role.id || ""
+    : role || "";
+
+const isManagerRole = (role) => {
+  const value = String(roleValueOf(role) || "").toUpperCase();
+  return value.endsWith("_MANAGER");
+};
+
 const comparableUserValues = (vals) => {
-  const role =
-    typeof vals?.role === "object" && vals?.role
-      ? vals.role.value || vals.role.id || ""
-      : vals?.role || "";
+  const role = roleValueOf(vals?.role);
   return JSON.stringify({
     familyId: String(vals?.familyId || ""),
     firstName: String(vals?.firstName || ""),
@@ -131,6 +138,7 @@ const comparableUserValues = (vals) => {
     gender: String(vals?.gender || "").toLowerCase(),
     language: String(vals?.language || "gu"),
     role: String(role),
+    newUserRequest: Boolean(vals?.newUserRequest),
   });
 };
 
@@ -477,7 +485,8 @@ function Index() {
 
   const saveUserRecord = async (formValues) => {
     try {
-      const { confirmPassword, password, role, ...rest } = formValues;
+      const { confirmPassword, password, role, newUserRequest, ...rest } =
+        formValues;
       const roleValue =
         isSamajManager ||
         isCityManager ||
@@ -493,6 +502,7 @@ function Index() {
             "USER";
       const payload = {
         ...rest,
+        familyId: Number(formValues.familyId),
         role: roleValue,
         country: formValues.country || "",
         state: formValues.state || "",
@@ -504,6 +514,9 @@ function Index() {
         dob: formValues.dob ? moment(formValues.dob).format() : formValues.dob,
         gender: String(formValues.gender || "").toLowerCase(),
         language: formValues.language === "en" ? "en" : "gu",
+        Permission: isManagerRole(roleValue)
+          ? { newUserRequest: Boolean(newUserRequest) }
+          : {},
       };
       if (isAddUser) {
         await addUser({ ...payload, password });
@@ -541,11 +554,12 @@ function Index() {
       city: "",
       localSamaj: "",
       dob: "",
-      gender: "",
+      gender: "male",
       language: "gu",
       role: "",
+      newUserRequest: false,
     },
-    validateOnMount: true,
+    validateOnMount: false,
     onSubmit: async (formValues, { resetForm }) => {
       try {
         await completeModalMutation(dispatch, {
@@ -579,12 +593,7 @@ function Index() {
           .matches(/^[6-9]\d{9}$/, "Enter a 10-digit mobile")
           .required("Required"),
         email: Yup.string().email("Enter a valid email").required("Required"),
-        country: Yup.string().required("Required"),
-        state: Yup.string().required("Required"),
         region: Yup.string().required("Required"),
-        vibhag: Yup.string().required("Required"),
-        district: Yup.string().required("Required"),
-        city: Yup.string().required("Required"),
         localSamaj: Yup.string().required("Required"),
         gender: Yup.string().required("Required"),
         dob: Yup.date()
@@ -627,7 +636,6 @@ function Index() {
     "vibhag",
     "district",
     "city",
-    "localSamaj",
   ];
 
   const resetLocationChildren = (parentField, parentValue = {}) => {
@@ -647,7 +655,6 @@ function Index() {
     if (start < LOCATION_CHAIN.indexOf("vibhag")) setVibhagList([]);
     if (start < LOCATION_CHAIN.indexOf("district")) setDistrictList([]);
     if (start < LOCATION_CHAIN.indexOf("city")) setCityList([]);
-    if (start < LOCATION_CHAIN.indexOf("localSamaj")) setSamajList([]);
   };
 
   const selectedLastNameOption = findOption(lastNameOptions, values?.lastName);
@@ -979,6 +986,7 @@ function Index() {
         gender: String(enriched?.gender || "").toLowerCase(),
         language: enriched?.language === "en" ? "en" : "gu",
         role: roleOption,
+        newUserRequest: Boolean(enriched?.Permission?.newUserRequest),
         id: enriched?.id || userInfo?.id,
       };
       setValues((pre) => ({
@@ -1016,7 +1024,7 @@ function Index() {
   }, [userInfoModel, modalView]);
 
   useEffect(() => {
-    if (!userInfoModel || modalView !== "form") return;
+    if (!userInfoModel || modalView !== "form" || isAddUser) return;
     validateForm();
   }, [userInfoModel, modalView, isAddUser, validateForm]);
 
@@ -1375,9 +1383,9 @@ function Index() {
                 onClick={() => {
                   setIsAddUser(true);
                   setModalView("form");
+                  setSamajList([]);
                   resetForm();
                   setUserInfoModel(true);
-                  validateForm();
                 }}
               >
                 Add User
@@ -2025,10 +2033,60 @@ function Index() {
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl className={"w-full"}>
                     <CustomAutoComplete
+                      list={regionOptions}
+                      label={"Region"}
+                      placeholder={"Select Your Region"}
+                      name={"region"}
+                      value={values?.region || null}
+                      errors={
+                        touched?.region && errors?.region && errors?.region
+                      }
+                      onChange={(e, regionValue) => {
+                        const regionId = pickMasterId(regionValue);
+                        resetLocationChildren("region", {
+                          region: regionId,
+                          localSamaj: "",
+                        });
+                        setSamajList([]);
+                        if (regionId) {
+                          getVibhagList(regionId);
+                          getSamajListByRegion(regionId, regionValue);
+                        }
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
+                      key={`samaj-${values?.region || "none"}`}
+                      list={asOptions(samajList)}
+                      label={"Local Samaj"}
+                      placeholder={"Select Your Samaj"}
+                      name={"localSamaj"}
+                      value={values?.localSamaj || null}
+                      disabled={!values?.region}
+                      errors={
+                        touched?.localSamaj &&
+                        errors?.localSamaj &&
+                        errors?.localSamaj
+                      }
+                      onChange={(e, localSamaj) => {
+                        setFieldValue("localSamaj", pickMasterId(localSamaj));
+                      }}
+                      onBlur={handleBlur}
+                    />
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl className={"w-full"}>
+                    <CustomAutoComplete
                       list={countryOptions}
                       label={"Country"}
                       placeholder={"Select Your Country"}
                       name={"country"}
+                      required={false}
                       value={values?.country || null}
                       errors={
                         touched?.country &&
@@ -2037,7 +2095,9 @@ function Index() {
                       }
                       onChange={(e, selectedCountry) => {
                         const countryId = pickMasterId(selectedCountry);
-                        resetLocationChildren("country", { country: countryId });
+                        setFieldValue("country", countryId);
+                        setFieldValue("state", "");
+                        setStateList([]);
                         if (countryId) {
                           getStateList(countryId);
                         }
@@ -2054,6 +2114,7 @@ function Index() {
                       label={"State"}
                       placeholder={"Select Your State"}
                       name={"state"}
+                      required={false}
                       value={values?.state || null}
                       disabled={!values?.country}
                       errors={
@@ -2061,33 +2122,9 @@ function Index() {
                       }
                       onChange={(e, selectedState) => {
                         const stateId = pickMasterId(selectedState);
-                        resetLocationChildren("state", { state: stateId });
+                        setFieldValue("state", stateId);
                         if (stateId) {
                           getRegionList(stateId);
-                        }
-                      }}
-                      onBlur={handleBlur}
-                    />
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4} md={4}>
-                  <FormControl className={"w-full"}>
-                    <CustomAutoComplete
-                      key={`region-${values?.state || "none"}`}
-                      list={asOptions(regionList)}
-                      label={"Region"}
-                      placeholder={"Select Your Region"}
-                      name={"region"}
-                      value={values?.region || null}
-                      disabled={!values?.state}
-                      errors={
-                        touched?.region && errors?.region && errors?.region
-                      }
-                      onChange={(e, regionValue) => {
-                        const regionId = pickMasterId(regionValue);
-                        resetLocationChildren("region", { region: regionId });
-                        if (regionId) {
-                          getVibhagList(regionId);
                         }
                       }}
                       onBlur={handleBlur}
@@ -2102,6 +2139,7 @@ function Index() {
                       label={"Division"}
                       placeholder={"Select Your Division"}
                       name={"vibhag"}
+                      required={false}
                       value={values?.vibhag || null}
                       disabled={!values?.region}
                       errors={
@@ -2126,6 +2164,7 @@ function Index() {
                       label={"District"}
                       placeholder={"Select Your District"}
                       name={"district"}
+                      required={false}
                       value={values?.district || null}
                       disabled={!values?.vibhag}
                       errors={
@@ -2154,39 +2193,14 @@ function Index() {
                       label={"City"}
                       placeholder={"Select Your City"}
                       name={"city"}
+                      required={false}
                       value={values?.city || null}
                       disabled={!values?.district}
                       errors={
                         touched?.city && errors?.city && errors?.city
                       }
                       onChange={(e, city) => {
-                        const cityId = pickMasterId(city);
-                        resetLocationChildren("city", { city: cityId });
-                        if (cityId) {
-                          getSamajList(cityId);
-                        }
-                      }}
-                      onBlur={handleBlur}
-                    />
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4} md={4}>
-                  <FormControl className={"w-full"}>
-                    <CustomAutoComplete
-                      key={`samaj-${values?.city || "none"}`}
-                      list={asOptions(samajList)}
-                      label={"Local Samaj"}
-                      placeholder={"Select Your Samaj"}
-                      name={"localSamaj"}
-                      value={values?.localSamaj || null}
-                      disabled={!values?.city}
-                      errors={
-                        touched?.localSamaj &&
-                        errors?.localSamaj &&
-                        errors?.localSamaj
-                      }
-                      onChange={(e, localSamaj) => {
-                        setFieldValue("localSamaj", pickMasterId(localSamaj));
+                        setFieldValue("city", pickMasterId(city));
                       }}
                       onBlur={handleBlur}
                     />
@@ -2252,12 +2266,34 @@ function Index() {
                       errors={touched?.role && errors?.role && errors?.role}
                       onChange={(e, role) => {
                         setFieldValue("role", role);
+                        if (!isManagerRole(role)) {
+                          setFieldValue("newUserRequest", false);
+                        }
                       }}
                       onBlur={handleBlur}
                     />
                   </FormControl>
                 </Grid>
                 )}
+                {!hasOwnListToggle && isManagerRole(values?.role) ? (
+                  <Grid item xs={12} sm={4} md={4}>
+                    <p className="text-sm font-semibold text-primary mb-0.5">
+                      New User Request
+                    </p>
+                    <div className="flex items-center gap-2 min-h-[40px]">
+                      <CustomSwitch
+                        checked={Boolean(values?.newUserRequest)}
+                        onChange={(e, checked) => {
+                          setFieldValue("newUserRequest", checked);
+                        }}
+                        name="newUserRequest"
+                      />
+                      <span className="text-sm text-primary">
+                        {values?.newUserRequest ? "Enabled" : "Disabled"}
+                      </span>
+                    </div>
+                  </Grid>
+                ) : null}
                 <Grid
                   item
                   xs={12}

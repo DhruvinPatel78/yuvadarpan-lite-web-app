@@ -93,7 +93,7 @@ export default function CustomAutoComplete({
   const hasValue = multiple
     ? (Array.isArray(selected) ? selected.length > 0 : false)
     : Boolean(selected);
-  const showError = Boolean(errors) && !hasValue;
+  const showError = Boolean(errors);
 
   return (
     <Grid item {...rest}>
