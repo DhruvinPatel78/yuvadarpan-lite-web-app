@@ -66,6 +66,7 @@ import {
   deleteUser,
   getUserInfo,
 } from "../../../util/userApi";
+import { roleLabel } from "../../../util/roleNames";
 import { getSamajByCity } from "../../../util/samajApi";
 import useAxios from "../../../util/useAxios";
 import {
@@ -1210,6 +1211,7 @@ function Index() {
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center flex px-8 outline-none",
       filterable: false,
+      renderCell: (record) => <>{roleLabel(record?.row?.role)}</>,
     },
     {
       field: "email",
@@ -1317,12 +1319,6 @@ function Index() {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
   };
-  const formatRole = (role) =>
-    String(role || "-")
-      .replace(/_/g, " ")
-      .toLowerCase()
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-
   const toggleCardSelection = (id) => {
     setSelectedUsers((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -1668,7 +1664,7 @@ function Index() {
                     </p>
                     {hasOwnListToggle ? null : (
                       <p className={"text-sm text-gray-600"}>
-                        Role: {row.role || "-"}
+                        Role: {roleLabel(row.role)}
                       </p>
                     )}
                     <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"}>
@@ -1771,7 +1767,7 @@ function Index() {
             {lookupName(surname, viewUser?.lastName)}
           </h2>
           <p className="text-sm text-mutedText mt-1">
-            {formatRole(viewUser?.role)}
+            {roleLabel(viewUser?.role)}
           </p>
           <span className="inline-block mt-2 text-[11px] font-semibold tracking-wide bg-muted text-primary px-2.5 py-1 rounded-full">
             Family ID {viewUser?.familyId || "-"}
