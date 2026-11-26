@@ -35,6 +35,30 @@ export const isStateManager = (role) =>
 export const isCountryManager = (role) =>
   normalizeRole(role) === "COUNTRY_MANAGER";
 
+export const ROLE_RANK = {
+  ADMIN: 0,
+  COUNTRY_MANAGER: 1,
+  STATE_MANAGER: 2,
+  REGION_MANAGER: 3,
+  VIBHAG_MANAGER: 4,
+  DISTRICT_MANAGER: 5,
+  CITY_MANAGER: 6,
+  SAMAJ_MANAGER: 7,
+  USER: 8,
+};
+
+export const getRoleRank = (role) => {
+  const normalized = normalizeRole(role);
+  return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalized)
+    ? ROLE_RANK[normalized]
+    : ROLE_RANK.USER;
+};
+
+export const getVisibleRolesForRole = (viewerRole) => {
+  const viewerRank = getRoleRank(viewerRole);
+  return Object.keys(ROLE_RANK).filter((role) => ROLE_RANK[role] >= viewerRank);
+};
+
 export const formatYuvaDob = (value) => {
   if (value == null || value === "") return "";
   const raw =

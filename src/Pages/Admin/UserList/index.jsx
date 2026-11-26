@@ -86,6 +86,7 @@ import {
   getAllGotraData,
 } from "../../../util/getAPICall";
 import { languageLabel, masterNameText } from "../../../util/bhasha";
+import { isAdmin } from "../../../util/util";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 const MOBILE_PAGE_SIZE = 20;
@@ -442,6 +443,9 @@ function Index() {
     isStateManager ||
     isCountryManager;
   const canAct = true;
+  const actorIsAdmin = isAdmin(auth?.user?.role);
+  const canModifyUserRow = (row) =>
+    canAct && (actorIsAdmin || !isAdmin(row?.role));
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [listLoading, setListLoading] = useState(true);
@@ -947,6 +951,9 @@ function Index() {
   };
 
   const userInfoModalOpen = async (userInfo) => {
+    if (isAddUser === false && userInfo && !canModifyUserRow(userInfo)) {
+      return;
+    }
     setUserInfoModel(true);
     setModalView("form");
     if (isAddUser === false && userInfo) {
@@ -1040,6 +1047,9 @@ function Index() {
   }, [userInfoModel, modalView, isAddUser, roleFieldReady]);
 
   const userActionHandler = async (userInfo, action, field) => {
+    if (!canModifyUserRow(userInfo)) {
+      return;
+    }
     const previous = userInfo?.[field];
     setUserList((prev) => ({
       ...prev,
@@ -1228,18 +1238,21 @@ function Index() {
       headerClassName: "bg-primary text-white outline-none",
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
-      renderCell: (record) => (
-        <div className={"flex gap-2"}>
-          <CustomSwitch
-            checked={Boolean(record?.row?.allowed)}
-            disabled={!canAct}
-            onChange={(event, checked) => {
-              if (!canAct) return;
-              userActionHandler(record?.row, checked, "allowed");
-            }}
-          />
-        </div>
-      ),
+      renderCell: (record) => {
+        const canModify = canModifyUserRow(record?.row);
+        return (
+          <div className={"flex gap-2"}>
+            <CustomSwitch
+              checked={Boolean(record?.row?.allowed)}
+              disabled={!canModify}
+              onChange={(event, checked) => {
+                if (!canModify) return;
+                userActionHandler(record?.row, checked, "allowed");
+              }}
+            />
+          </div>
+        );
+      },
     },
     {
       field: "active",
@@ -1249,18 +1262,21 @@ function Index() {
       cellClassName: "items-center justify-center flex px-8 outline-none",
       filterable: false,
       sortable: false,
-      renderCell: (record) => (
-        <div className={"flex gap-2"}>
-          <CustomSwitch
-            checked={Boolean(record?.row?.active)}
-            disabled={!canAct}
-            onChange={(event, checked) => {
-              if (!canAct) return;
-              userActionHandler(record?.row, checked, "active");
-            }}
-          />
-        </div>
-      ),
+      renderCell: (record) => {
+        const canModify = canModifyUserRow(record?.row);
+        return (
+          <div className={"flex gap-2"}>
+            <CustomSwitch
+              checked={Boolean(record?.row?.active)}
+              disabled={!canModify}
+              onChange={(event, checked) => {
+                if (!canModify) return;
+                userActionHandler(record?.row, checked, "active");
+              }}
+            />
+          </div>
+        );
+      },
     },
     {
       field: "action",
@@ -1270,34 +1286,37 @@ function Index() {
       cellClassName:
         "items-center justify-center flex px-8 outline-none cursor-pointer",
       filterable: false,
-      renderCell: (record) => (
-        <div className={"flex gap-2"}>
-          <Tooltip title={"View"}>
-            <VisibilityIcon
-              className={"text-primary cursor-pointer"}
-              onClick={() => setViewUser(record?.row)}
-            />
-          </Tooltip>
-          {canAct ? (
-            <>
-              <Tooltip title={"Edit"}>
-                <ModeEditIcon
-                  className={"text-primary cursor-pointer"}
-                  onClick={() => userInfoModalOpen(record?.row)}
-                />
-              </Tooltip>
-              <Tooltip title={"Delete"}>
-                <DeleteIcon
-                  className={"text-primary cursor-pointer"}
-                  onClick={() => setDeleteTarget(record?.row)}
-                />
-              </Tooltip>
-            </>
-          ) : null}
-        </div>
-      ),
+      renderCell: (record) => {
+        const canModify = canModifyUserRow(record?.row);
+        return (
+          <div className={"flex gap-2"}>
+            <Tooltip title={"View"}>
+              <VisibilityIcon
+                className={"text-primary cursor-pointer"}
+                onClick={() => setViewUser(record?.row)}
+              />
+            </Tooltip>
+            {canModify ? (
+              <>
+                <Tooltip title={"Edit"}>
+                  <ModeEditIcon
+                    className={"text-primary cursor-pointer"}
+                    onClick={() => userInfoModalOpen(record?.row)}
+                  />
+                </Tooltip>
+                <Tooltip title={"Delete"}>
+                  <DeleteIcon
+                    className={"text-primary cursor-pointer"}
+                    onClick={() => setDeleteTarget(record?.row)}
+                  />
+                </Tooltip>
+              </>
+            ) : null}
+          </div>
+        );
+      },
     },
-  ].filter((column) => !hasOwnListToggle || column.field !== "role");
+  ];
 
   const deleteAPI = async (id) => {
     const ids = Array.isArray(id) ? id : [id];
@@ -1543,9 +1562,8 @@ function Index() {
                   }
                 }}
               />
-              {hasOwnListToggle ? null : (
               <CustomAutoComplete
-                list={rolesList()}
+                list={rolesList(true, auth?.user?.role)}
                 multiple={true}
                 label={copy.role}
                 placeholder={copy.rolePh}
@@ -1558,7 +1576,6 @@ function Index() {
                   }
                 }}
               />
-              )}
               <CustomAutoComplete
                 list={requestFilterList}
                 label={copy.searchBy}
@@ -1625,6 +1642,7 @@ function Index() {
             page={page}
             setPage={setPage}
             loading={listLoading}
+            isRowSelectable={(params) => canModifyUserRow(params?.row)}
             onDeleteSelected={canAct ? deleteAPI : undefined}
             deleteEntity="user"
           />
@@ -1637,6 +1655,7 @@ function Index() {
                 .join(" ");
               const lastName = lookupName(surname, row.lastName);
               const isSelected = selectedUsers.includes(row.id);
+              const canModify = canModifyUserRow(row);
               return (
                 <Paper
                   key={row.id}
@@ -1648,7 +1667,7 @@ function Index() {
                       <p className={"font-bold text-primary text-base leading-tight min-w-0 pr-1 break-words"}>
                         {fullName} {lastName}
                       </p>
-                      {canAct ? (
+                      {canModify ? (
                         <Checkbox
                           checked={isSelected}
                           onChange={() => toggleCardSelection(row.id)}
@@ -1662,19 +1681,17 @@ function Index() {
                     <p className={"text-sm text-gray-600 break-all"}>
                       {row.email || "-"}
                     </p>
-                    {hasOwnListToggle ? null : (
                       <p className={"text-sm text-gray-600"}>
                         Role: {roleLabel(row.role)}
                       </p>
-                    )}
                     <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 mt-2"}>
                       <div className={"flex items-center gap-1"}>
                         <span className={"text-sm text-gray-600"}>Allowed</span>
                         <CustomSwitch
                           checked={Boolean(row.allowed)}
-                          disabled={!canAct}
+                          disabled={!canModify}
                           onChange={(event, checked) => {
-                            if (!canAct) return;
+                            if (!canModify) return;
                             userActionHandler(row, checked, "allowed");
                           }}
                         />
@@ -1683,16 +1700,16 @@ function Index() {
                         <span className={"text-sm text-gray-600"}>Active</span>
                         <CustomSwitch
                           checked={Boolean(row.active)}
-                          disabled={!canAct}
+                          disabled={!canModify}
                           onChange={(event, checked) => {
-                            if (!canAct) return;
+                            if (!canModify) return;
                             userActionHandler(row, checked, "active");
                           }}
                         />
                       </div>
                     </div>
                   </div>
-                  {canAct ? (
+                  {canModify ? (
                     <div className={"flex border-t border-[#ead9d9]"}>
                       <button
                         type="button"
