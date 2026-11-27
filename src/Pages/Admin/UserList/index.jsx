@@ -2287,6 +2287,17 @@ function Index() {
                       errors={touched?.role && errors?.role && errors?.role}
                       onChange={(e, role) => {
                         setFieldValue("role", role);
+                        if (role) {
+                          const nextRole = String(roleValueOf(role) || "")
+                            .trim()
+                            .toUpperCase();
+                          const nextLang =
+                            nextRole === "ADMIN" ||
+                            nextRole.endsWith("_MANAGER")
+                              ? "en"
+                              : "gu";
+                          setFieldValue("language", nextLang);
+                        }
                         if (!isManagerRole(role)) {
                           setFieldValue("newUserRequest", false);
                         }
