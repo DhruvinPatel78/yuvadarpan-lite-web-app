@@ -86,7 +86,7 @@ import {
   getAllGotraData,
 } from "../../../util/getAPICall";
 import { languageLabel, masterNameText } from "../../../util/bhasha";
-import { isAdmin } from "../../../util/util";
+import { getRoleRank, isAdmin } from "../../../util/util";
 import { useFilterCopy } from "../../../i18n/useFilterCopy";
 
 const MOBILE_PAGE_SIZE = 20;
@@ -444,8 +444,12 @@ function Index() {
     isCountryManager;
   const canAct = true;
   const actorIsAdmin = isAdmin(auth?.user?.role);
-  const canModifyUserRow = (row) =>
-    canAct && (actorIsAdmin || !isAdmin(row?.role));
+  const actorRank = getRoleRank(auth?.user?.role);
+  const canModifyUserRow = (row) => {
+    if (!canAct || !row) return false;
+    if (actorIsAdmin) return true;
+    return getRoleRank(row?.role) > actorRank;
+  };
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [listLoading, setListLoading] = useState(true);
